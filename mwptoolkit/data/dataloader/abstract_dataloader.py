@@ -8,14 +8,19 @@ class AbstractDataLoader(object):
         self.device=config["device"]
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
+        self.share_vocab=config["share_vocab"]
         self.dataset=dataset
+        self.equation_prefix=config["equation_fix"]
         self.in_pad_token=dataset.in_word2idx["<PAD>"]
         try:
             self.out_pad_token=dataset.out_symbol2idx["<PAD>"]
         except:
             self.out_pad_token=PAD_TOKEN_IDX
         self.in_unk_token=dataset.in_word2idx["<UNK>"]
-        self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
+        try:
+            self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
+        except:
+            self.out_unk_token=dataset.in_word2idx["<UNK>"]
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
     

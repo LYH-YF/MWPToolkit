@@ -1,7 +1,11 @@
 import sys
-import torch
 from logging import getLogger
+from enum import Enum
+
+import torch
+
 from mwptoolkit.utils.utils import read_json_data,get_model
+
 class Config(object):
     def __init__(self):
         super().__init__()
@@ -37,7 +41,7 @@ class Config(object):
                 continue
             try:
                 value = eval(param)
-                if not isinstance(value, (str, int, float, list, tuple, dict, bool, Enum)):
+                if not isinstance(value, (str, int, float, list, tuple, dict, bool, Enum,None)):
                     value = param
             except (NameError, SyntaxError, TypeError):
                 if isinstance(param, str):
@@ -45,6 +49,8 @@ class Config(object):
                         value = True
                     elif param.lower() == "false":
                         value = False
+                    elif param.lower() == "none":
+                        value=None
                     else:
                         value = param
                 else:
@@ -148,7 +154,10 @@ class Config(object):
         self.final_config_dict.update(self.external_config_dict)
     
     def _init_device(self):
-        self.final_config_dict['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if self.final_config_dict["use_gpu"]:
+            self.final_config_dict['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        else:
+            self.final_config_dict['device'] = torch.device("cpu")
     
     def __setitem__(self, key, value):
         if not isinstance(key, str):

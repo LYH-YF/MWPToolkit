@@ -1,8 +1,12 @@
 import torch
 import time
 from mwptoolkit.utils.utils import *
+from mwptoolkit.utils.enum_type import PAD_TOKEN
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
+from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.model.Seq2Tree.gts import GTS
+from mwptoolkit.model.Seq2Seq.rnnencdec import RNNEncDec
+
 class AbstractTrainer(object):
     def __init__(self,config,model,dataloader,evaluator):
         super().__init__()
@@ -30,6 +34,122 @@ class AbstractTrainer(object):
         raise NotImplementedError
     def evaluate(self):
         raise NotImplementedError
+
+class SingleEquationTrainer(AbstractTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+        self.model=RNNEncDec(config)
+        self._build_optimizer()
+        if config["resume"]:
+            self._load_checkpoint()
+        self._build_loss(config["symbol_size"],
+                            self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+    
+    def _build_optimizer(self):
+        self.optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["learning_rate"])
+    
+    def _save_checkpoint(self):
+        check_pnt = {
+            "model":self.model.state_dict(),
+            "optimizer":self.optimizer.state_dict(),
+            "start_epoch": self.epoch_i,
+            "value_acc": self.best_value_accuracy,
+            "equ_acc": self.best_equ_accuracy
+        }
+        torch.save(check_pnt, self.config["checkpoint_path"])
+    
+    def _load_checkpoint(self):
+        check_pnt = torch.load(self.config["checkpoint_path"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.optimizer.load_state_dict(check_pnt["optimizer"])
+        # other parameter
+        self.start_epoch = check_pnt["start_epoch"]
+        self.best_value_accuracy = check_pnt["value_acc"]
+        self.best_equ_accuracy = check_pnt["equ_acc"]
+    
+    def _build_loss(self,symbol_size,out_pad_token):
+        weight=torch.ones(symbol_size).to(self.config["device"])
+        pad=out_pad_token
+        self.loss=NLLLoss(weight,pad)
+    
+    def _train_batch(self,batch):
+        outputs=self.model(batch["question"],batch["ques len"],batch["equation"])
+        outputs=torch.nn.functional.log_softmax(outputs,dim=1)
+        if self.config["share_vocab"]:
+            raise NotImplementedError
+        else:
+            self.loss.eval_batch(outputs,batch["equation"].view(-1))
+        batch_loss = self.loss.get_loss()
+        return batch_loss
+    
+    def _eval_batch(self,batch):
+        test_out=self.model(batch["question"],batch["ques len"])
+        target=batch["equation"]
+        batch_size=target.size(0)
+        val_acc=[]
+        equ_acc=[]
+        for idx in range(batch_size):
+            val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx],target[idx],batch["num list"][idx])
+            val_acc.append(val_ac)
+            equ_acc.append(equ_ac)
+        return val_acc,equ_acc
+    def _train_epoch(self):
+        epoch_start_time = time.time()
+        loss_total = 0.
+        self.model.train()
+        for batch_idx, batch in enumerate(
+                self.dataloader.load_data("train")):
+            self.batch_idx = batch_idx + 1
+            self.model.zero_grad()
+            batch_loss = self._train_batch(batch)
+            loss_total += batch_loss
+            self.loss.backward()
+            self.optimizer.step()
+            self.loss.reset()
+        epoch_time_cost=time_since(time.time() -epoch_start_time)
+        return loss_total,epoch_time_cost
+    
+    def fit(self):
+        train_batch_size=self.config["train_batch_size"]
+        epoch_nums=self.config["epoch_nums"]
+        
+        self.train_batch_nums = int(
+            self.dataloader.trainset_nums / train_batch_size) + 1
+        
+        for epo in range(self.start_epoch, epoch_nums):
+            self.epoch_i = epo + 1
+            self.model.train()
+            loss_total,train_time_cost=self._train_epoch()
+            print("epoch [%2d] avr loss [%2.8f]"%(self.epoch_i,loss_total/self.train_batch_nums))
+            print("---------- train time {}".format(train_time_cost))
+            if epo % 2 == 0 or epo > epoch_nums - 5:
+                equation_ac,value_ac,eval_total,test_time_cost=self.evaluate()
+                print("---------- test equ acc [%2.3f] | test value acc [%2.3f]".format(equation_ac,value_ac))
+                print("---------- test time {}".format(test_time_cost))
+                if value_ac>=self.best_value_accuracy:
+                    self.best_value_accuracy=value_ac
+                    self.best_equ_accuracy=equation_ac
+                    self._save_model()
+            if epo%5==0:
+                self._save_checkpoint()
+    def evaluate(self):
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        test_start_time = time.time()
+        for batch in self.dataloader.load_data("test"):
+            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
+            value_ac+=batch_val_ac.count(True)
+            equation_ac+=batch_equ_ac.count(True)
+            eval_total+=len(batch_val_ac)
+            # value_ac += batch_val_ac.count(True)
+            # equation_ac += batch_equ_ac.count(True)
+            # eval_total += len(batch_val_ac)
+        test_time_cost=time_since(time.time()-test_start_time)
+        return equation_ac/eval_total,value_ac/eval_total,eval_total,test_time_cost
 
 class GTSTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):
@@ -189,10 +309,10 @@ class GTSTrainer(AbstractTrainer):
         self.train_batch_nums = int(
             self.dataloader.trainset_nums / train_batch_size) + 1
         for epo in range(self.start_epoch, epoch_nums):
-            self._scheduler_step()
             self.epoch_i = epo + 1
             self.model.train()
             loss_total,train_time_cost=self._train_epoch()
+            self._scheduler_step()
             print("epoch [%2d] avr loss [%2.8f]"%(self.epoch_i,loss_total/self.train_batch_nums))
             print("---------- train time {}".format(train_time_cost))
             if epo % 10 == 0 or epo > epoch_nums - 5:

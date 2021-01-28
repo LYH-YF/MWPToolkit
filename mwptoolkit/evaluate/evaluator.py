@@ -1,11 +1,66 @@
 import copy
 import re
+from mwptoolkit.utils.enum_type import PAD_TOKEN,EOS_TOKEN,SOS_TOKEN,UNK_TOKEN,OPERATORS
+class SeqEvaluater(object):
+    def __init__(self,symbol2idx,idx2symbol):
+        super().__init__()
+        self.symbol2idx=symbol2idx
+        self.idx2symbol=idx2symbol
+        self.eos_idx=symbol2idx[EOS_TOKEN]
+        self.pad_idx=symbol2idx[PAD_TOKEN]
+        self.sos_idx=symbol2idx[SOS_TOKEN]
+    def result(self,test_res,test_tar,num_list):
+        res_exp=self.out_expression(test_res)
+        tar_exp=self.out_expression(test_tar)
+        if res_exp==tar_exp:
+            return True,True,res_exp,tar_exp
+        res_ans=self.compute_expression(res_exp,num_list)
+        tar_ans=self.compute_expression(tar_exp,num_list)
+        if res_ans !=None:
+            if abs(res_ans-tar_ans)<1e-4:
+                return True,False,res_exp,tar_exp
+            else:
+                return False,False,res_exp,tar_exp
+        else:
+            return False,False,res_exp,tar_exp
+    def out_expression(self,test):
+        expression=[]
+        for idx in test:
+            if idx in [self.pad_idx,self.eos_idx,self.sos_idx]:
+                break
+            symbol=self.idx2symbol[idx]
+            expression.append(symbol)
+        return expression
+    def compute_expression(self,expression,num_list):
+        alphabet="abcdefghijklmnopqrstuvwxyz"
+        list_len=len(num_list)
+        equation=[]
+        for symbol in expression:
+            if symbol in OPERATORS:
+                equation.append(symbol)
+            elif symbol in ["(",")","[","]"]:
+                equation.append(symbol)
+            elif symbol.isdigit():
+                equation.append(symbol)
+            else:
+                idx=symbol[4]
+                num_idx=alphabet.index(idx)
+                if num_idx>=list_len:
+                    return None
+                else:
+                    equation.append(num_list[num_idx])
+        equation=''.join(equation)
+        try:
+            ans=eval(equation)
+            return ans
+        except:
+            return None
+
 class Evaluater(object):
     def __init__(self,symbol2idx,idx2symbol):
         super().__init__()
         self.symbol2idx=symbol2idx
         self.idx2symbol=idx2symbol
-    
     def prefix_tree_result(self,test_res,test_tar,num_list,num_stack):
         if len(num_stack) == 0 and test_res == test_tar:
             return True, True, test_res, test_tar

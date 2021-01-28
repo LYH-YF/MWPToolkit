@@ -5,7 +5,7 @@ from mwptoolkit.utils.enum_type import TaskType
 
 from mwptoolkit.config.configuration import Config
 from mwptoolkit.data.utils import *
-from mwptoolkit.evaluate.evaluator import Evaluater
+from mwptoolkit.evaluate.evaluator import Evaluater, SeqEvaluater
 from mwptoolkit.utils.utils import get_model, init_seed
 def get_trainer(task_type, model_name):
     r"""Automatically select trainer class based on model type and model name
@@ -21,7 +21,7 @@ def get_trainer(task_type, model_name):
         return getattr(importlib.import_module('mwptoolkit.trainer.trainer'), model_name + 'Trainer')
     except AttributeError:
         if task_type == TaskType.SingleEquation:
-            return getattr(importlib.import_module('mwptoolkit.trainer'), 'SingleEquationTrainer')
+            return getattr(importlib.import_module('mwptoolkit.trainer.trainer'), 'SingleEquationTrainer')
         else:
             return getattr(importlib.import_module('mwptoolkit.trainer'), 'Trainer')
 
@@ -36,14 +36,23 @@ def run_toolkit():
 
     dataset=create_dataset(config)
 
-    config["vocab_size"]=len(dataset.in_idx2word)
-    config["operator_nums"]=dataset.operator_nums
-    config["copy_nums"]=dataset.copy_nums
-    config["generate_size"]=len(dataset.generate_list)
+    if config["share_vocab"]:
+        raise NotImplementedError
+    else:
+        config["vocab_size"]=len(dataset.in_idx2word)
+        config["symbol_size"]=len(dataset.out_idx2symbol)
+        config["operator_nums"]=dataset.operator_nums
+        config["copy_nums"]=dataset.copy_nums
+        config["generate_size"]=len(dataset.generate_list)
+        config["out_sos_token"]=dataset.out_symbol2idx["<SOS>"]
 
     dataloader=create_dataloader(config)(config,dataset)
-
-    evaluator=Evaluater(dataset.out_symbol2idx,dataset.out_idx2symbol)
+    if config["equation_fix"] == "prefix":
+        evaluator=Evaluater(dataset.out_symbol2idx,dataset.out_idx2symbol)
+    elif config["equation_fix"] ==None:
+        evaluator=SeqEvaluater(dataset.out_symbol2idx,dataset.out_idx2symbol)
+    else:
+        raise NotImplementedError
 
     model=get_model(config["model"])(config).to(config["device"])
 

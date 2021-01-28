@@ -64,6 +64,38 @@ def seg_and_tag(st,nums_fraction,nums):  # seg the equation and tag the num
                 res.append(ss)
             return res
 
+def seg_and_tag_(st,nums_fraction,nums):  # seg the equation and tag the num
+            res = []
+            for n in nums_fraction:
+                if n in st:
+                    p_start = st.find(n)
+                    p_end = p_start + len(n)
+                    if p_start > 0:
+                        res += seg_and_tag_(st[:p_start],nums_fraction,nums)
+                    try:
+                        res.append(nums[n])
+                    except:
+                        res.append(n)
+                    if p_end < len(st):
+                        res += seg_and_tag_(st[p_end:],nums_fraction,nums)
+                    return res
+            pos_st = re.search("\d+\.\d+%?|\d+%?", st)
+            if pos_st:
+                p_start = pos_st.start()
+                p_end = pos_st.end()
+                if p_start > 0:
+                    res += seg_and_tag_(st[:p_start],nums_fraction,nums)
+                st_num = st[p_start:p_end]
+                try:
+                    res.append(nums[st_num])
+                except:
+                    res.append(st_num)
+                if p_end < len(st):
+                    res += seg_and_tag_(st[p_end:],nums_fraction,nums)
+                return res
+            for ss in st:
+                res.append(ss)
+            return res
 
 def number_transfer(data):  # transfer num into "NUM"
     '''
@@ -127,6 +159,102 @@ def number_transfer(data):  # transfer num into "NUM"
         new_data["question"]=input_seq
         new_data["equation"]=out_seq
         new_data["number list"]=nums
+        new_data["number position"]=num_pos
+        processed_datas.append(new_data)
+
+    generate_number = []
+    for g in generate_nums:
+        if generate_nums_dict[g] >= 5:
+            generate_number.append(g)
+    return processed_datas, generate_number, copy_nums
+
+def number_transfer_(data,mask_type="NUM"):  # transfer num into "NUM"
+    '''
+    Return:
+        processed_datas: list type.
+        generate_number: list type, symbols to generate extra.
+        copy_nums: int, the count of copied symbol from question to equation.
+    '''
+    if mask_type=="NUM":
+        sent_mask_list=["NUM"]
+    else:
+        sent_mask_list=["NUM_a","NUM_b","NUM_c","NUM_d","NUM_e","NUM_f","NUM_g","NUM_h","NUM_i","NUM_j","NUM_k","NUM_l","NUM_m","NUM_n","NUM_o","NUM_p","NUM_q","NUM_r","NUM_s","NUM_t","NUM_u","NUM_v","NUM_w","NUM_x","NUM_y","NUM_z"]
+    
+    equ_mask_list=["NUM_a","NUM_b","NUM_c","NUM_d","NUM_e","NUM_f","NUM_g","NUM_h","NUM_i","NUM_j","NUM_k","NUM_l","NUM_m","NUM_n","NUM_o","NUM_p","NUM_q","NUM_r","NUM_s","NUM_t","NUM_u","NUM_v","NUM_w","NUM_x","NUM_y","NUM_z"]
+
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
+    
+    generate_nums = []
+    generate_nums_dict = {}
+    copy_nums = 0
+    processed_datas = []
+    for d in data:
+        sent_idx=0
+        equ_idx=0
+        #nums = []
+        nums={}
+        num_list=[]
+        input_seq = []
+        seg = d["segmented_text"].split(" ")
+        equations = d["equation"][2:]
+
+        for s in seg:
+            if s == 0:
+                input_seq.append(s)
+            else:
+                pos = re.search(pattern, s)
+                if pos and pos.start() == 0:
+                    #nums.append(s[pos.start():pos.end()])
+                    try:
+                        if mask_type=="NUM":
+                            input_seq.append(sent_mask_list[sent_idx])
+                            nums[s[pos.start():pos.end()]]=equ_mask_list[equ_idx]
+                            sent_idx=(sent_idx+1)%len(sent_mask_list)
+                            equ_idx=(equ_idx+1)%len(equ_mask_list)
+                        else:
+                            input_seq.append(nums[s[pos.start():pos.end()]])
+                    except:
+                        nums[s[pos.start():pos.end()]]=equ_mask_list[equ_idx]
+                        input_seq.append(sent_mask_list[sent_idx])
+                        equ_idx=(equ_idx+1)%len(equ_mask_list)
+                        sent_idx=(sent_idx+1)%len(sent_mask_list)
+                    finally:
+                        num_list.append(s[pos.start():pos.end()])
+                    if pos.end() < len(s):
+                        input_seq.append(s[pos.end():])
+                else:
+                    input_seq.append(s)
+        nums_count=len(list(nums.keys()))
+        if copy_nums < nums_count:
+            copy_nums = nums_count
+        nums_fraction = []
+
+        for num,mask in nums.items():
+            if re.search("\d*\(\d+/\d+\)\d*", num):
+                nums_fraction.append(num)
+        nums_fraction = sorted(nums_fraction,
+                               key=lambda x: len(x),
+                               reverse=True)
+
+        out_seq = seg_and_tag_(equations,nums_fraction,nums)
+        for s in out_seq:  # tag the num which is generated
+            if s[0].isdigit() and s not in generate_nums and s not in num_list:
+                generate_nums.append(s)
+                generate_nums_dict[s] = 0
+            if s in generate_nums and s not in num_list:
+                generate_nums_dict[s] = generate_nums_dict[s] + 1
+
+        num_pos = []
+        for i, j in enumerate(input_seq):
+            if "NUM" in j:
+                num_pos.append(i)
+        assert len(num_list) == len(num_pos)
+
+        #copy data
+        new_data=d
+        new_data["question"]=input_seq
+        new_data["equation"]=out_seq
+        new_data["number list"]=num_list
         new_data["number position"]=num_pos
         processed_datas.append(new_data)
 

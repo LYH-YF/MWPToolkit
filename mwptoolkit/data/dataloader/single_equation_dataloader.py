@@ -84,12 +84,17 @@ class SingleEquationDataLoader(AbstractDataLoader):
                 except:
                     idx = self.in_unk_token
                 ques_tensor.append(idx)
-            
             for word in equation:
-                try:
-                    idx = self.dataset.out_symbol2idx[word]
-                except:
-                    idx = self.out_unk_token
+                if self.share_vocab:
+                    try:
+                        idx = self.dataset.in_word2idx[word]
+                    except:
+                        idx = self.in_unk_token
+                else:
+                    try:
+                        idx = self.dataset.out_symbol2idx[word]
+                    except:
+                        idx = self.out_unk_token
                 equ_tensor.append(idx)
             equ_len_batch.append(len(equ_tensor))
             ques_batch.append(ques_tensor)
@@ -106,7 +111,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
         equ_tensor_batch = torch.tensor(equ_batch).to(self.device)
         ques_mask_batch = torch.tensor(ques_mask_batch).to(self.device).bool()
         num_mask_batch = torch.tensor(num_mask_batch).to(self.device).bool()
-        ques_len_batch=torch.tensor(ques_len_batch).to(self.device).long()
+        ques_len_batch=torch.tensor(ques_len_batch).long()
         equ_mask_batch=torch.tensor(equ_mask_batch).to(self.device).bool()
         return {
             "question": ques_tensor_batch,

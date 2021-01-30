@@ -46,10 +46,18 @@ class SingleEquationDataset(AbstractDataset):
                 self.in_idx2word.append(key)
             if "NUM" in key:
                 self.in_idx2word.append(key)
-        if self.equation_fix is not None:
+        
+        if self.symbol_for_tree:
             self._build_symbol_for_tree()
         else:
             self._build_symbol()
+
+        if self.share_vocab:
+            for symbol in self.out_idx2symbol:
+                if symbol in self.in_idx2word:
+                    continue
+                else:
+                    self.in_idx2word.append(symbol)
 
         self.in_word2idx={}
         self.out_symbol2idx={}
@@ -66,7 +74,11 @@ class SingleEquationDataset(AbstractDataset):
         self.out_idx2symbol+=["NUM_"+alphabet[i] for i in range(self.copy_nums)]
         self.out_idx2symbol+=[UNK_TOKEN]
     def _build_symbol(self):
-        self.out_idx2symbol=[PAD_TOKEN]+[EOS_TOKEN]+[SOS_TOKEN]+OPERATORS
+        if self.share_vocab:
+            self.out_idx2symbol=[PAD_TOKEN]+[EOS_TOKEN]+OPERATORS
+        else:
+            self.out_idx2symbol=[PAD_TOKEN]+[EOS_TOKEN]+[SOS_TOKEN]+OPERATORS
+        
         self.num_start=len(self.out_idx2symbol)
         self.out_idx2symbol+=self.generate_list
         for data in self.trainset:

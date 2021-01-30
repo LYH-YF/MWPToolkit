@@ -78,12 +78,18 @@ class SingleEquationDataLoader(AbstractDataLoader):
             num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
             num_stack_batch.append(
                 self._build_num_stack(equation, data["number list"]))
+            if self.symbol_for_tree:
+                pass
+            else:
+                ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
             for word in sentence:
                 try:
                     idx = self.dataset.in_word2idx[word]
                 except:
                     idx = self.in_unk_token
                 ques_tensor.append(idx)
+            ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
+            
             for word in equation:
                 if self.share_vocab:
                     try:
@@ -96,6 +102,14 @@ class SingleEquationDataLoader(AbstractDataLoader):
                     except:
                         idx = self.out_unk_token
                 equ_tensor.append(idx)
+            if self.symbol_for_tree:
+                pass
+            else:
+                if self.share_vocab:
+                    equ_tensor.append(self.dataset.in_word2idx["<EOS>"])
+                else:
+                    equ_tensor.append(self.dataset.out_symbol2idx["<EOS>"])
+            
             equ_len_batch.append(len(equ_tensor))
             ques_batch.append(ques_tensor)
             equ_batch.append(equ_tensor)

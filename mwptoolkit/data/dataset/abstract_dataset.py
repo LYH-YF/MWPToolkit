@@ -6,6 +6,8 @@ class AbstractDataset(object):
         self.dataset_path=config["dataset_path"]
         self.min_word_keep=config["min_word_keep"]
         self.mask_symbol=config["mask_symbol"]
+        self.symbol_for_tree=config["symbol_for_tree"]
+        self.share_vocab=config["share_vocab"]
     
     def _load_dataset(self):
         trainset_file=self.dataset_path+"/trainset.json"

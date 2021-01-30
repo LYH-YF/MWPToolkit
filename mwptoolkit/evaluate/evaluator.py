@@ -2,13 +2,17 @@ import copy
 import re
 from mwptoolkit.utils.enum_type import PAD_TOKEN,EOS_TOKEN,SOS_TOKEN,UNK_TOKEN,OPERATORS
 class SeqEvaluater(object):
-    def __init__(self,symbol2idx,idx2symbol):
+    def __init__(self,symbol2idx,idx2symbol,config):
         super().__init__()
+        self.share_vocab=config["share_vocab"]
         self.symbol2idx=symbol2idx
         self.idx2symbol=idx2symbol
         self.eos_idx=symbol2idx[EOS_TOKEN]
         self.pad_idx=symbol2idx[PAD_TOKEN]
-        self.sos_idx=symbol2idx[SOS_TOKEN]
+        if self.share_vocab:
+            self.sos_idx=None
+        else:
+            self.sos_idx=symbol2idx[SOS_TOKEN]
     def result(self,test_res,test_tar,num_list):
         res_exp=self.out_expression(test_res)
         tar_exp=self.out_expression(test_tar)
@@ -36,19 +40,15 @@ class SeqEvaluater(object):
         list_len=len(num_list)
         equation=[]
         for symbol in expression:
-            if symbol in OPERATORS:
-                equation.append(symbol)
-            elif symbol in ["(",")","[","]"]:
-                equation.append(symbol)
-            elif symbol.isdigit():
-                equation.append(symbol)
-            else:
+            if "NUM" in symbol:
                 idx=symbol[4]
                 num_idx=alphabet.index(idx)
                 if num_idx>=list_len:
                     return None
                 else:
                     equation.append(num_list[num_idx])
+            else:
+                equation.append(symbol)
         equation=''.join(equation)
         try:
             ans=eval(equation)
@@ -57,7 +57,7 @@ class SeqEvaluater(object):
             return None
 
 class Evaluater(object):
-    def __init__(self,symbol2idx,idx2symbol):
+    def __init__(self,symbol2idx,idx2symbol,config):
         super().__init__()
         self.symbol2idx=symbol2idx
         self.idx2symbol=idx2symbol

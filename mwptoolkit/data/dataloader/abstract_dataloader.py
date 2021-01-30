@@ -9,20 +9,29 @@ class AbstractDataLoader(object):
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
         self.share_vocab=config["share_vocab"]
-        self.dataset=dataset
         self.equation_prefix=config["equation_fix"]
-        self.in_pad_token=dataset.in_word2idx["<PAD>"]
-        try:
-            self.out_pad_token=dataset.out_symbol2idx["<PAD>"]
-        except:
-            self.out_pad_token=PAD_TOKEN_IDX
-        self.in_unk_token=dataset.in_word2idx["<UNK>"]
-        try:
-            self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
-        except:
-            self.out_unk_token=dataset.in_word2idx["<UNK>"]
+        self.symbol_for_tree=config["symbol_for_tree"]
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
+        
+        self.dataset=dataset
+        self.in_pad_token=dataset.in_word2idx["<PAD>"]
+        self.in_unk_token=dataset.in_word2idx["<UNK>"]
+        if self.share_vocab:
+            self.out_pad_token=dataset.in_word2idx["<PAD>"]
+        else:
+            if self.symbol_for_tree:
+                self.out_pad_token=dataset.in_word2idx["<PAD>"]
+            else:
+                self.out_pad_token=dataset.out_symbol2idx["<PAD>"]
+        if self.symbol_for_tree:
+            self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
+        else:
+            if self.share_vocab:
+                self.out_unk_token=dataset.in_word2idx["<UNK>"]
+            else:
+                self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
+
     
     def _pad_input_batch(self,batch_seq,batch_seq_len):
         max_length=max(batch_seq_len)

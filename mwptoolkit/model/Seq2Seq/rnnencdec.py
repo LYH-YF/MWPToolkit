@@ -14,7 +14,14 @@ class RNNEncDec(nn.Module):
         self.attention=config["attention"]
         self.share_vocab=config["share_vocab"]
         self.max_gen_len=30
-        self.out_sos_token=config["out_sos_token"]
+        if config["share_vocab"]:
+            self.out_symbol2idx=config["out_symbol2idx"]
+            self.out_idx2symbol=config["out_idx2symbol"]
+            self.in_word2idx=config["in_word2idx"]
+            self.in_idx2word=config["in_idx2word"]
+            self.out_sos_token=config["out_sos_token"]
+        else:
+            self.out_sos_token=config["out_sos_token"]
 
         self.in_embedder=BaiscEmbedder(config["vocab_size"],config["embedding_size"],config["dropout_ratio"])
         if config["share_vocab"]:
@@ -44,9 +51,9 @@ class RNNEncDec(nn.Module):
         if self.bidirectional:
             encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
             if (self.rnn_cell_type == 'lstm'):
-                encoder_hidden = (encoder_hidden[0][::2], encoder_hidden[1][::2])
+                encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:
-                encoder_hidden = encoder_hidden[::2]
+                encoder_hidden = encoder_hidden[::2].contiguous()
         decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
         if target!=None:
             token_logits=self.generate_t(encoder_outputs,encoder_hidden,decoder_inputs)
@@ -73,7 +80,8 @@ class RNNEncDec(nn.Module):
             
             all_outputs.append(output)
             if self.share_vocab:
-                raise NotImplementedError
+                output=self.decode(output)
+                decoder_input=self.out_embedder(output)
             else:
                 decoder_input=self.out_embedder(output)
         all_outputs=torch.cat(all_outputs,dim=1)
@@ -86,3 +94,12 @@ class RNNEncDec(nn.Module):
             decoder_inputs=pad_var
         decoder_inputs=self.out_embedder(decoder_inputs)
         return decoder_inputs
+    def decode(self,output):
+        device=output.device
+
+        batch_size=output.size(0)
+        decoded_output=[]
+        for idx in range(batch_size):
+            decoded_output.append(self.in_word2idx[self.out_idx2symbol[output[idx]]])
+        decoded_output=torch.tensor(decoded_output).to(device).view(batch_size,-1)
+        return output

@@ -38,7 +38,6 @@ class AbstractTrainer(object):
 class SingleEquationTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)
-        self.model=RNNEncDec(config)
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
@@ -73,12 +72,24 @@ class SingleEquationTrainer(AbstractTrainer):
         weight=torch.ones(symbol_size).to(self.config["device"])
         pad=out_pad_token
         self.loss=NLLLoss(weight,pad)
-    
+    def _idx2word_2idx(self,batch_equation):
+        batch_size,length=batch_equation.size()
+        batch_equation_=[]
+        for b in range(batch_size):
+            equation=[]
+            for idx in range(length):
+                equation.append(self.dataloader.dataset.out_symbol2idx[\
+                                            self.dataloader.dataset.in_idx2word[\
+                                                batch_equation[b,idx]]])
+            batch_equation_.append(equation)
+        batch_equation_=torch.LongTensor(batch_equation_).to(self.config["device"])
+        return batch_equation_
     def _train_batch(self,batch):
         outputs=self.model(batch["question"],batch["ques len"],batch["equation"])
         outputs=torch.nn.functional.log_softmax(outputs,dim=1)
         if self.config["share_vocab"]:
-            raise NotImplementedError
+            batch_equation=self._idx2word_2idx(batch["equation"])
+            self.loss.eval_batch(outputs,batch_equation.view(-1))
         else:
             self.loss.eval_batch(outputs,batch["equation"].view(-1))
         batch_loss = self.loss.get_loss()
@@ -86,7 +97,10 @@ class SingleEquationTrainer(AbstractTrainer):
     
     def _eval_batch(self,batch):
         test_out=self.model(batch["question"],batch["ques len"])
-        target=batch["equation"]
+        if self.config["share_vocab"]:
+            target=self._idx2word_2idx(batch["equation"])
+        else:
+            target=batch["equation"]
         batch_size=target.size(0)
         val_acc=[]
         equ_acc=[]

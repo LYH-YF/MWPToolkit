@@ -13,7 +13,7 @@ class SeqEvaluater(object):
             self.sos_idx=None
         else:
             self.sos_idx=symbol2idx[SOS_TOKEN]
-    def result(self,test_res,test_tar,num_list):
+    def result(self,test_res,test_tar,num_list,num_stack=None):
         res_exp=self.out_expression(test_res)
         tar_exp=self.out_expression(test_tar)
         if res_exp==tar_exp:
@@ -46,9 +46,21 @@ class SeqEvaluater(object):
                 if num_idx>=list_len:
                     return None
                 else:
-                    equation.append(num_list[num_idx])
+                    num=num_list[num_idx]
+                    if "%" in num:
+                        num="("+num[:-1]+"/100"+")"
+                        equation.append(num)
+                    else:
+                        equation.append(num_list[num_idx])
             else:
-                equation.append(symbol)
+                if symbol=="^":
+                    equation.append("**")
+                elif symbol=="[":
+                    equation.append("(")
+                elif symbol=="]":
+                    equation.append(")")
+                else:
+                    equation.append(symbol)
         equation=''.join(equation)
         try:
             ans=eval(equation)
@@ -61,7 +73,7 @@ class Evaluater(object):
         super().__init__()
         self.symbol2idx=symbol2idx
         self.idx2symbol=idx2symbol
-    def prefix_tree_result(self,test_res,test_tar,num_list,num_stack):
+    def result(self,test_res,test_tar,num_list,num_stack):
         if len(num_stack) == 0 and test_res == test_tar:
             return True, True, test_res, test_tar
         test = self.out_expression_list(test_res, num_list)
@@ -80,17 +92,21 @@ class Evaluater(object):
             return False, False, test, tar
     
     def out_expression_list(self,test, num_list, num_stack=None):
+        alphabet="abcdefghijklmnopqrstuvwxyz"
+        num_len=len(num_list)
         max_index = len(self.idx2symbol)
         res = []
         for i in test:
             if i < max_index - 1:
-                idx = self.idx2symbol[i]
-                if idx[0] == "N":
-                    if int(idx[1:]) >= len(num_list):
+                symbol = self.idx2symbol[i]
+                if "NUM" in symbol:
+                    idx=symbol[4]
+                    num_idx=alphabet.index(idx)
+                    if num_idx >= num_len:
                         return None
-                    res.append(num_list[int(idx[1:])])
+                    res.append(num_list[num_idx])
                 else:
-                    res.append(idx)
+                    res.append(symbol)
             else:
                 pos_list = num_stack.pop()
                 c = num_list[pos_list[0]]

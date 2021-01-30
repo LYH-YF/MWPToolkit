@@ -51,7 +51,7 @@ class SingleEquationDataset(AbstractDataset):
             self._build_symbol_for_tree()
         else:
             self._build_symbol()
-
+        
         if self.share_vocab:
             for symbol in self.out_idx2symbol:
                 if symbol in self.in_idx2word:

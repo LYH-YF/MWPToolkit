@@ -197,6 +197,9 @@ def number_transfer_(data,mask_type="NUM"):  # transfer num into "NUM"
         input_seq = []
         seg = d["segmented_text"].split(" ")
         equations = d["equation"][2:]
+        if '千' in equations:
+            print(equations)
+            equations = equations[:equations.index('千')]
 
         for s in seg:
             if s == 0:

@@ -105,7 +105,7 @@ class SingleEquationTrainer(AbstractTrainer):
         val_acc=[]
         equ_acc=[]
         for idx in range(batch_size):
-            val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx],target[idx],batch["num list"][idx])
+            val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx],target[idx],batch["num list"][idx],batch["num stack"][idx])
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
         return val_acc,equ_acc
@@ -140,7 +140,7 @@ class SingleEquationTrainer(AbstractTrainer):
             print("---------- train time {}".format(train_time_cost))
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 equation_ac,value_ac,eval_total,test_time_cost=self.evaluate()
-                print("---------- test equ acc [%2.3f] | test value acc [%2.3f]".format(equation_ac,value_ac))
+                print("---------- test equ acc [%2.3f] | test value acc [%2.3f]"%(equation_ac,value_ac))
                 print("---------- test time {}".format(test_time_cost))
                 if value_ac>=self.best_value_accuracy:
                     self.best_value_accuracy=value_ac
@@ -295,7 +295,7 @@ class GTSTrainer(AbstractTrainer):
         test_out=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
                                 generate_nums,batch["num pos"],num_start)
         
-        val_ac, equ_ac, _, _ = self.evaluator.prefix_tree_result(
+        val_ac, equ_ac, _, _ = self.evaluator.result(
                 test_out, batch["equation"].tolist()[0],batch["num list"][0], batch["num stack"][0])
         return val_ac,equ_ac
         
@@ -331,7 +331,7 @@ class GTSTrainer(AbstractTrainer):
             print("---------- train time {}".format(train_time_cost))
             if epo % 10 == 0 or epo > epoch_nums - 5:
                 equation_ac,value_ac,eval_total,test_time_cost=self.evaluate()
-                print("---------- test equ acc [%2.3f] | test value acc [%2.3f]".format(equation_ac,value_ac))
+                print("---------- test equ acc [%2.3f] | test value acc [%2.3f]"%(equation_ac,value_ac))
                 print("---------- test time {}".format(test_time_cost))
                 if value_ac>=self.best_value_accuracy:
                     self.best_value_accuracy=value_ac

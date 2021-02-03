@@ -11,7 +11,7 @@ class PositionEmbedder(nn.Module):
         # 首先初始化为0
         pe = torch.zeros(max_len, embedding_size)
         position = torch.arange(0, max_len).float().unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, embedding_size, 2).float() * (-torch.log(10000.0) / embedding_size))
+        div_term = torch.exp(torch.arange(0, embedding_size, 2).float() * (-torch.log(torch.tensor(10000.0)) / embedding_size))
         # sine 和 cosine 来生成位置信息
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
@@ -25,7 +25,8 @@ class PositionEmbedder(nn.Module):
             input_embedding: torch.Tensor, [batch_size, seq_length, embedding_size].
         '''
         # 词经过嵌入层后，再加上位置信息
-        batch_size=input_embedding.size(0)
-        outputs=input_embedding+self.weight[:batch_size,:]
+        seq_len=input_embedding.size(1)
+        #outputs=input_embedding+self.weight[:batch_size,:]
+        outputs=input_embedding+self.weight.squeeze()[:seq_len]
         outputs=self.dropout(outputs)
         return outputs

@@ -73,7 +73,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             num_list_batch.append(data["number list"])
             num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
-            ques_len_batch.append(len(data["question"]))
+            #ques_len_batch.append(len(data["question"]))
             ans_batch.append(data["ans"])
             num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
             num_stack_batch.append(
@@ -111,6 +111,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
                     equ_tensor.append(self.dataset.out_symbol2idx["<EOS>"])
             
             equ_len_batch.append(len(equ_tensor))
+            ques_len_batch.append(len(ques_tensor))
             ques_batch.append(ques_tensor)
             equ_batch.append(equ_tensor)
         ques_batch=self._pad_input_batch(ques_batch,ques_len_batch)

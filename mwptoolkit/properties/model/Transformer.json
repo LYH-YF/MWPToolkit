@@ -1,0 +1,23 @@
+{
+    "embedding_size": 512,
+    "ffn_size": 1024,
+    "num_encoder_layers": 2,
+    "num_decoder_layers": 2,
+    "num_heads": 8,
+    "attn_dropout_ratio": 0.1,
+    "attn_weight_dropout_ratio": 0.1,
+    "ffn_dropout_ratio": 0.1,
+    "embedding_dropout_ratio":0.1,
+    "learning_rate": 1.0,
+    "learner": "schedule",
+    "warmup_steps": 4000,
+    "beam_size": 5,
+    "decoding_strategy": "beam_search",
+    "share_vocab":true,
+    "mask_symbol":"alphabet",
+    "symbol_for_tree":false,
+    "max_len":128,
+    "train_batch_size":32,
+    "test_batch_size":32,
+    "epoch_nums":80
+}

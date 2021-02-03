@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder,AttentionalRNNDecoder
@@ -32,10 +33,10 @@ class RNNEncDec(nn.Module):
         self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["rnn_cell_type"],config["dropout_ratio"])
         if self.attention:
-            self.decoder=AttentionalRNNDecoder(config["embedding_size"],config["hidden_size"],config["hidden_size"],\
+            self.decoder=AttentionalRNNDecoder(config["embedding_size"],config["decode_hidden_size"],config["hidden_size"],\
                                                 config["num_layers"],config["rnn_cell_type"],config["dropout_ratio"])
         else:
-            self.decoder=BasicRNNDecoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
+            self.decoder=BasicRNNDecoder(config["embedding_size"],config["decode_hidden_size"],config["num_layers"],\
                                             config["rnn_cell_type"],config["dropout_ratio"])
         
         self.dropout = nn.Dropout(config["dropout_ratio"])
@@ -66,6 +67,7 @@ class RNNEncDec(nn.Module):
         decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
         token_logits = self.generate_linear(decoder_outputs)
         token_logits=token_logits.view(-1, token_logits.size(-1))
+        token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
         return token_logits
     def generate_without_t(self,encoder_outputs,encoder_hidden,decoder_input):
         all_outputs=[]
@@ -75,7 +77,8 @@ class RNNEncDec(nn.Module):
             #attn_list.append(attn)
             step_output = decoder_output.squeeze(1)
             token_logits = self.generate_linear(step_output)
-            output=token_logits.topk(1,dim=1)[1]
+            predict=torch.nn.functional.log_softmax(token_logits,dim=1)
+            output=predict.topk(1,dim=1)[1]
             
             
             all_outputs.append(output)

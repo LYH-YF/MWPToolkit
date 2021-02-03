@@ -1,4 +1,5 @@
 import torch
+import math
 from torch import nn
 
 from mwptoolkit.module.Attention.multi_head_attention import MultiHeadAttention

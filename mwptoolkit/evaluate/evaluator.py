@@ -73,6 +73,18 @@ class Evaluater(object):
         super().__init__()
         self.symbol2idx=symbol2idx
         self.idx2symbol=idx2symbol
+        try:
+            self.eos_idx=symbol2idx[EOS_TOKEN]
+        except:
+            self.eos_idx=None
+        try:
+            self.pad_idx=symbol2idx[PAD_TOKEN]
+        except:
+            self.pad_idx=None
+        try:
+            self.sos_idx=symbol2idx[SOS_TOKEN]
+        except:
+            self.sos_idx=None
     def result(self,test_res,test_tar,num_list,num_stack):
         test = self.out_expression_list(test_res, num_list)
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
@@ -95,6 +107,8 @@ class Evaluater(object):
         max_index = len(self.idx2symbol)
         res = []
         for i in test:
+            if i in [self.pad_idx,self.eos_idx,self.sos_idx]:
+                break
             symbol = self.idx2symbol[i]
             if "NUM" in symbol:
                 idx=symbol[4]
@@ -149,7 +163,7 @@ class Evaluater(object):
             elif p == "^" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                if float(eval(b)) != 2.0 or float(eval(b)) != 3.0:
+                if float(b) != 2.0 and float(b) != 3.0:
                     return None
                 st.append(a ** b)
             else:

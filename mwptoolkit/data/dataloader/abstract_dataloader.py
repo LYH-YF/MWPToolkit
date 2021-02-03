@@ -13,6 +13,7 @@ class AbstractDataLoader(object):
         self.symbol_for_tree=config["symbol_for_tree"]
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
+        self.max_len=config["max_len"]
         
         self.dataset=dataset
         self.in_pad_token=dataset.in_word2idx["<PAD>"]
@@ -34,9 +35,16 @@ class AbstractDataLoader(object):
 
     
     def _pad_input_batch(self,batch_seq,batch_seq_len):
-        max_length=max(batch_seq_len)
+        if self.max_len != None:
+            max_length=self.max_len
+        else:
+            max_length=max(batch_seq_len)
         for idx,length in enumerate(batch_seq_len):
-            batch_seq[idx]+=[self.in_pad_token for i in range(max_length-length)]
+            if length<max_length:
+                x=batch_seq[idx]+[self.in_pad_token for i in range(max_length-length)]
+                batch_seq[idx]+=[self.in_pad_token for i in range(max_length-length)]
+            else:
+                batch_seq[idx]=batch_seq[idx][:max_length]
         return batch_seq
     
     def _pad_output_batch(self,batch_target,batch_target_len):

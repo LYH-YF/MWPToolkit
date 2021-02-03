@@ -74,8 +74,6 @@ class Evaluater(object):
         self.symbol2idx=symbol2idx
         self.idx2symbol=idx2symbol
     def result(self,test_res,test_tar,num_list,num_stack):
-        if len(num_stack) == 0 and test_res == test_tar:
-            return True, True, test_res, test_tar
         test = self.out_expression_list(test_res, num_list)
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         # print(test, tar)
@@ -97,20 +95,19 @@ class Evaluater(object):
         max_index = len(self.idx2symbol)
         res = []
         for i in test:
-            if i < max_index - 1:
-                symbol = self.idx2symbol[i]
-                if "NUM" in symbol:
-                    idx=symbol[4]
-                    num_idx=alphabet.index(idx)
-                    if num_idx >= num_len:
-                        return None
-                    res.append(num_list[num_idx])
-                else:
-                    res.append(symbol)
-            else:
+            symbol = self.idx2symbol[i]
+            if "NUM" in symbol:
+                idx=symbol[4]
+                num_idx=alphabet.index(idx)
+                if num_idx >= num_len:
+                    return None
+                res.append(num_list[num_idx])
+            elif symbol==UNK_TOKEN:
                 pos_list = num_stack.pop()
                 c = num_list[pos_list[0]]
                 res.append(c)
+            else:
+                res.append(symbol)
         return res
     
     def compute_prefix_expression(self,pre_fix):

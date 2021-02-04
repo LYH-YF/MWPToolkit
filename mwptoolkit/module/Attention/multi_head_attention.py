@@ -54,6 +54,7 @@ class MultiHeadAttention(nn.Module):
                 - attn_repre: shape: [batch_size, tgt_len, embedding_size]
                 - attn_weights: shape: [batch_size, tgt_len, src_len]
         """
+        device=query.device
         batch_size, tgt_len, embedding_size = query.size()
         src_len = key.size(1)
         assert key.size() == value.size()
@@ -71,14 +72,14 @@ class MultiHeadAttention(nn.Module):
 
         if attn_mask is not None:
             attn_weights.masked_fill_(
-                attn_mask.unsqueeze(0).unsqueeze(1),
-                float('-inf')
+                attn_mask.unsqueeze(0).unsqueeze(1).to(device),
+                float("-inf")
             )
 
         if key_padding_mask is not None:
             attn_weights.masked_fill_(
-                key_padding_mask.unsqueeze(1).unsqueeze(2),
-                float('-inf')
+                key_padding_mask.unsqueeze(1).unsqueeze(2).to(device),
+                float("-inf")
             )
 
         attn_weights = self.weight_dropout(F.softmax(attn_weights, dim=-1))

@@ -5,7 +5,7 @@ class PositionEmbedder(nn.Module):
     '''
     给原始序列添加位置编码
     '''
-    def __init__(self, embedding_size, dropout=0.1, max_len=1024):
+    def __init__(self, embedding_size,device, dropout=0.1, max_len=1024):
         super(PositionEmbedder, self).__init__()
         
         # 首先初始化为0
@@ -16,7 +16,7 @@ class PositionEmbedder(nn.Module):
         pe[:, 0::2] = torch.sin(position * div_term)
         pe[:, 1::2] = torch.cos(position * div_term)
         pe = pe.unsqueeze(0).transpose(0, 1)
-        self.weight=pe
+        self.weight=pe.to(device)
         self.dropout = nn.Dropout(p=dropout)
         
     def forward(self, input_embedding):

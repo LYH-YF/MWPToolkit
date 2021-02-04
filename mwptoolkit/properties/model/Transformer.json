@@ -12,7 +12,7 @@
     "learner": "schedule",
     "warmup_steps": 4000,
     "beam_size": 5,
-    "decoding_strategy": "beam_search",
+    "decoding_strategy": "topk_sampling",
     "share_vocab":true,
     "mask_symbol":"alphabet",
     "symbol_for_tree":false,

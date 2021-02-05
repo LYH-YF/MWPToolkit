@@ -8,4 +8,4 @@ def greedy_search(logits):
     Return:
         torch.Tensor: the chosen index of token
     """
-    return logits.squeeze(1).argmax(dim=-1)
+    return logits.argmax(dim=-1)

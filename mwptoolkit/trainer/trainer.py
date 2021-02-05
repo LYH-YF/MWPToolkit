@@ -4,6 +4,7 @@ from mwptoolkit.utils.utils import *
 from mwptoolkit.utils.enum_type import PAD_TOKEN
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
 from mwptoolkit.loss.nll_loss import NLLLoss
+from mwptoolkit.module.Optimizer.optim import WarmUpScheduler
 from mwptoolkit.model.Seq2Tree.gts import GTS
 from mwptoolkit.model.Seq2Seq.rnnencdec import RNNEncDec
 
@@ -370,8 +371,9 @@ class TransformerTrainer(AbstractTrainer):
                             self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
     
     def _build_optimizer(self):
-        self.optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["learning_rate"])
-        self.scheduler=torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=10,gamma=0.8)
+        optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["learning_rate"])
+        #self.scheduler=torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=5,gamma=0.8)
+        self.optimizer=WarmUpScheduler(optimizer,self.config["learning_rate"],self.config["embedding_size"],self.config["warmup_steps"])
     
     def _save_checkpoint(self):
         check_pnt = {
@@ -465,7 +467,7 @@ class TransformerTrainer(AbstractTrainer):
             loss_total,train_time_cost=self._train_epoch()
             print("epoch [%2d] avr loss [%2.8f]"%(self.epoch_i,loss_total/self.train_batch_nums))
             print("---------- train time {}".format(train_time_cost))
-            self.scheduler.step()
+            print("---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 equation_ac,value_ac,eval_total,test_time_cost=self.evaluate()
                 print("---------- test equ acc [%2.3f] | test value acc [%2.3f]"%(equation_ac,value_ac))

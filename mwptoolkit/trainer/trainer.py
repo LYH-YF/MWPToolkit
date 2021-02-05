@@ -59,7 +59,7 @@ class SingleEquationTrainer(AbstractTrainer):
     
     def _load_checkpoint(self):
         #check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
-        check_pnt = torch.load(self.config["checkpoint_path"])
+        check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
@@ -371,6 +371,7 @@ class TransformerTrainer(AbstractTrainer):
     
     def _build_optimizer(self):
         self.optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["learning_rate"])
+        self.scheduler=torch.optim.lr_scheduler.StepLR(self.optimizer,gamma=0.75)
     
     def _save_checkpoint(self):
         check_pnt = {

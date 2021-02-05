@@ -1,3 +1,4 @@
+import random
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -15,6 +16,7 @@ class RNNEncDec(nn.Module):
         self.attention=config["attention"]
         self.share_vocab=config["share_vocab"]
         self.max_gen_len=30
+        self.teacher_force_ratio=0.9
         if config["share_vocab"]:
             self.out_symbol2idx=config["out_symbol2idx"]
             self.out_idx2symbol=config["out_idx2symbol"]
@@ -64,11 +66,35 @@ class RNNEncDec(nn.Module):
             return all_outputs
 
     def generate_t(self,encoder_outputs,encoder_hidden,decoder_inputs):
-        decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
-        token_logits = self.generate_linear(decoder_outputs)
-        token_logits=token_logits.view(-1, token_logits.size(-1))
-        token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
+        with_t=random.random()
+        if with_t<self.teacher_force_ratio:
+            decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
+            token_logits = self.generate_linear(decoder_outputs)
+            token_logits=token_logits.view(-1, token_logits.size(-1))
+            token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
+        else:
+            seq_len=decoder_inputs.size(1)
+            decoder_hidden = encoder_hidden
+            decoder_input = decoder_inputs[:,0,:].unsqueeze(1)
+            token_logits=[]
+            for idx in range(seq_len):
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+                #attn_list.append(attn)
+                step_output = decoder_output.squeeze(1)
+                token_logit = self.generate_linear(step_output)
+                predict=torch.nn.functional.log_softmax(token_logit,dim=1)
+                output=predict.topk(1,dim=1)[1]
+                token_logits.append(predict)
+
+                if self.share_vocab:
+                    output=self.decode(output)
+                    decoder_input=self.out_embedder(output)
+                else:
+                    decoder_input=self.out_embedder(output)
+            token_logits=torch.stack(token_logits,dim=1)
+            token_logits=token_logits.view(-1,token_logits.size(-1))
         return token_logits
+    
     def generate_without_t(self,encoder_outputs,encoder_hidden,decoder_input):
         all_outputs=[]
         decoder_hidden = encoder_hidden
@@ -89,6 +115,7 @@ class RNNEncDec(nn.Module):
                 decoder_input=self.out_embedder(output)
         all_outputs=torch.cat(all_outputs,dim=1)
         return all_outputs
+    
     def init_decoder_inputs(self,target,device,batch_size):
         pad_var = torch.LongTensor([self.out_sos_token]*batch_size).to(device).view(batch_size,1)
         if target != None:

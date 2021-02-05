@@ -85,6 +85,7 @@ class Evaluater(object):
             self.sos_idx=symbol2idx[SOS_TOKEN]
         except:
             self.sos_idx=None
+    
     def result(self,test_res,test_tar,num_list,num_stack):
         test = self.out_expression_list(test_res, num_list)
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))

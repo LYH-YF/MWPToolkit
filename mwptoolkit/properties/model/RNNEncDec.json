@@ -1,7 +1,7 @@
 {
     "embedding_size":128,
     "hidden_size":512,
-    "decode_hidden_size":1024,
+    "decode_hidden_size":512,
     "learning_rate":1e-3,
     "train_batch_size":64,
     "rnn_cell_type":"lstm",

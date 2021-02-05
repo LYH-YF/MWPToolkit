@@ -65,7 +65,7 @@ class Transformer(nn.Module):
         seq_len=target.size(1)
         batch_size=encoder_outputs.size(0)
         device=encoder_outputs.device
-        if with_t<self.teacher_force_ratio:
+        if with_t>self.teacher_force_ratio:
             input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
             target=torch.cat((input_seq,target),dim=1)[:,:-1]
 
@@ -82,6 +82,7 @@ class Transformer(nn.Module):
         else:
             token_logits=[]
             input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
+            pre_tokens=[input_seq]
             for idx in range(seq_len):
                 self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
                 decoder_input = self.pos_embedder(self.out_embedder(input_seq))
@@ -99,9 +100,10 @@ class Transformer(nn.Module):
                 else:
                     raise NotImplementedError
                 if self.share_vocab:
-                    input_seq=self.decode(output)
+                    pre_tokens.append(self.decode(output))
                 else:
-                    input_seq=output
+                    pre_tokens.append(output)
+                input_seq=torch.cat(pre_tokens,dim=1)
             token_logits=torch.cat(token_logits,dim=1)
             token_logits=token_logits.view(-1,token_logits.size(-1))
         return token_logits
@@ -109,6 +111,7 @@ class Transformer(nn.Module):
         batch_size=encoder_outputs.size(0)
         device=encoder_outputs.device
         input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
+        pre_tokens=[input_seq]
         all_outputs=[]
         for gen_idx in range(self.max_output_len):
             self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
@@ -128,9 +131,10 @@ class Transformer(nn.Module):
                 raise NotImplementedError
             all_outputs.append(output)
             if self.share_vocab:
-                input_seq=self.decode(output)
+                pre_tokens.append(self.decode(output))
             else:
-                input_seq=output
+                pre_tokens.append(output)
+            input_seq=torch.cat(pre_tokens,dim=1)
         all_outputs=torch.cat(all_outputs,dim=1)
         return all_outputs
     def decode(self,output):

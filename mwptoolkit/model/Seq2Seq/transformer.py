@@ -1,3 +1,4 @@
+import random
 import torch
 from torch import nn
 
@@ -16,6 +17,7 @@ class Transformer(nn.Module):
         self.max_output_len=config["max_output_len"]
         self.share_vocab=config["share_vocab"]
         self.decoding_strategy=config["decoding_strategy"]
+        self.teacher_force_ratio=0.9
         
         self.in_pad_idx=config["in_word2idx"]["<PAD>"]
         if config["share_vocab"]:
@@ -59,21 +61,49 @@ class Transformer(nn.Module):
             return all_outputs
     
     def generate_t(self,target,encoder_outputs,source_padding_mask):
+        with_t=random.random()
+        seq_len=target.size(1)
         batch_size=encoder_outputs.size(0)
         device=encoder_outputs.device
-        input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
-        target=torch.cat((input_seq,target),dim=1)[:,:-1]
+        if with_t<self.teacher_force_ratio:
+            input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
+            target=torch.cat((input_seq,target),dim=1)[:,:-1]
 
-        decoder_inputs = self.pos_embedder(self.out_embedder(target))
-        self_padding_mask = torch.eq(target, self.out_pad_idx)
-        self_attn_mask = self.self_attentioner(target.size(-1)).bool()
-        decoder_outputs = self.decoder(decoder_inputs,
-                                       self_padding_mask=self_padding_mask,
-                                       self_attn_mask=self_attn_mask,
-                                       external_states=encoder_outputs,
-                                       external_padding_mask=source_padding_mask)
-        token_logits = self.out(decoder_outputs)
-        token_logits=token_logits.view(-1, token_logits.size(-1))
+            decoder_inputs = self.pos_embedder(self.out_embedder(target))
+            self_padding_mask = torch.eq(target, self.out_pad_idx)
+            self_attn_mask = self.self_attentioner(target.size(-1)).bool()
+            decoder_outputs = self.decoder(decoder_inputs,
+                                        self_padding_mask=self_padding_mask,
+                                        self_attn_mask=self_attn_mask,
+                                        external_states=encoder_outputs,
+                                        external_padding_mask=source_padding_mask)
+            token_logits = self.out(decoder_outputs)
+            token_logits=token_logits.view(-1, token_logits.size(-1))
+        else:
+            token_logits=[]
+            input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
+            for idx in range(seq_len):
+                self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
+                decoder_input = self.pos_embedder(self.out_embedder(input_seq))
+                decoder_outputs = self.decoder(decoder_input, 
+                                                self_attn_mask=self_attn_mask,
+                                                external_states=encoder_outputs, 
+                                                external_padding_mask=source_padding_mask)
+
+                token_logit = self.out(decoder_outputs[:, -1, :].unsqueeze(1))
+                token_logits.append(token_logit)
+                if self.decoding_strategy=="topk_sampling":
+                    output=topk_sampling(token_logit,top_k=5)
+                elif self.decoding_strategy=="greedy_search":
+                    output=greedy_search(token_logit)
+                else:
+                    raise NotImplementedError
+                if self.share_vocab:
+                    input_seq=self.decode(output)
+                else:
+                    input_seq=output
+            token_logits=torch.cat(token_logits,dim=1)
+            token_logits=token_logits.view(-1,token_logits.size(-1))
         return token_logits
     def generate_without_t(self,encoder_outputs,source_padding_mask):
         batch_size=encoder_outputs.size(0)

@@ -59,7 +59,7 @@ class SingleEquationTrainer(AbstractTrainer):
     
     def _load_checkpoint(self):
         #check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
-        check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
+        check_pnt = torch.load(self.config["checkpoint_path"])
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
@@ -371,7 +371,7 @@ class TransformerTrainer(AbstractTrainer):
     
     def _build_optimizer(self):
         self.optimizer=torch.optim.Adam(self.model.parameters(),lr=self.config["learning_rate"])
-        self.scheduler=torch.optim.lr_scheduler.StepLR(self.optimizer,gamma=0.75)
+        self.scheduler=torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=10,gamma=0.8)
     
     def _save_checkpoint(self):
         check_pnt = {
@@ -465,6 +465,7 @@ class TransformerTrainer(AbstractTrainer):
             loss_total,train_time_cost=self._train_epoch()
             print("epoch [%2d] avr loss [%2.8f]"%(self.epoch_i,loss_total/self.train_batch_nums))
             print("---------- train time {}".format(train_time_cost))
+            self.scheduler.step()
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 equation_ac,value_ac,eval_total,test_time_cost=self.evaluate()
                 print("---------- test equ acc [%2.3f] | test value acc [%2.3f]"%(equation_ac,value_ac))

@@ -136,7 +136,7 @@ class RNNVAE(nn.Module):
     def generate_without_t(self,decoder_input,decoder_hidden):
         all_outputs=[]
         for _ in range(self.max_length):
-            outputs, hidden_states = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden)
+            outputs, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden)
             token_logits = self.out(outputs)
             predict=torch.nn.functional.log_softmax(token_logits,dim=1)
             output = topk_sampling(predict)

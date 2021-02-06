@@ -30,7 +30,7 @@ class RNNEncDec(nn.Module):
         if config["share_vocab"]:
             self.out_embedder=self.in_embedder
         else:
-            self.out_embedder=BaiscEmbedder(config["vocab_size"],config["embedding_size"],config["dropout_ratio"])
+            self.out_embedder=BaiscEmbedder(config["symbol_size"],config["embedding_size"],config["dropout_ratio"])
 
         self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["rnn_cell_type"],config["dropout_ratio"])

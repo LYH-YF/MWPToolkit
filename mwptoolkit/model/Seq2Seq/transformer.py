@@ -65,7 +65,7 @@ class Transformer(nn.Module):
         seq_len=target.size(1)
         batch_size=encoder_outputs.size(0)
         device=encoder_outputs.device
-        if with_t>self.teacher_force_ratio:
+        if with_t<self.teacher_force_ratio:
             input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
             target=torch.cat((input_seq,target),dim=1)[:,:-1]
 

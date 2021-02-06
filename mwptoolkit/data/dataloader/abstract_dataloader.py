@@ -31,7 +31,10 @@ class AbstractDataLoader(object):
             if self.share_vocab:
                 self.out_unk_token=dataset.in_word2idx["<UNK>"]
             else:
-                self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
+                try:
+                    self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
+                except:
+                    self.out_unk_token=None
 
     
     def _pad_input_batch(self,batch_seq,batch_seq_len):

@@ -8,7 +8,7 @@
     "attn_weight_dropout_ratio": 0.5,
     "ffn_dropout_ratio": 0.5,
     "embedding_dropout_ratio":0.5,
-    "learning_rate": 0.03,
+    "learning_rate": 0.3,
     "learner": "schedule",
     "warmup_steps": 1500,
     "beam_size": 5,

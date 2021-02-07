@@ -9,7 +9,7 @@
     "num_decoder_layers": 2,
     "bidirectional": true,
     "dropout_ratio": 0.5,
-    "learning_rate": 0.001,
+    "learning_rate": 0.002,
     
     "///":"data process parameters",
     "share_vocab":false,

@@ -44,7 +44,7 @@ class RNNVAE(nn.Module):
 
         self.encoder = BasicRNNEncoder(config["embedding_size"], config['hidden_size'], config['num_encoder_layers'], config['rnn_cell_type'],
                                        config['dropout_ratio'], config["bidirectional"])
-        self.decoder = BasicRNNDecoder(config["embedding_size"], config['hidden_size'], config['num_decoder_layers'], config['rnn_cell_type'],
+        self.decoder = BasicRNNDecoder(config["embedding_size"]+config["latent_size"], config['hidden_size'], config['num_decoder_layers'], config['rnn_cell_type'],
                                        config['dropout_ratio'])
 
         self.dropout = nn.Dropout(config['dropout_ratio'])
@@ -88,26 +88,33 @@ class RNNVAE(nn.Module):
         z = torch.randn([batch_size, self.latent_size]).to(device)
         z = mean + z * torch.exp(0.5 * logvar)
 
-        hidden = self.latent_to_hidden(z)
+        #hidden = self.latent_to_hidden(z)
+        if self.bidirectional:
+            if (self.rnn_cell_type == 'lstm'):
+                hidden_states = (hidden_states[0][::2].contiguous(), hidden_states[1][::2].contiguous())
+            else:
+                hidden_states = hidden_states[::2].contiguous()
 
-        if self.rnn_cell_type == "lstm":
-            decoder_hidden = torch.chunk(hidden, 2, dim=-1)
-            h_0 = decoder_hidden[0].unsqueeze(0).expand(self.num_decoder_layers, -1, -1).contiguous()
-            c_0 = decoder_hidden[1].unsqueeze(0).expand(self.num_decoder_layers, -1, -1).contiguous()
-            decoder_hidden = (h_0, c_0)
-        else:
-            decoder_hidden = hidden.unsqueeze(0).expand(self.num_decoder_layers, -1, -1).contiguous()
+        # if self.rnn_cell_type == "lstm":
+        #     decoder_hidden = torch.chunk(hidden, 2, dim=-1)
+        #     h_0 = decoder_hidden[0].unsqueeze(0).expand(self.num_decoder_layers, -1, -1).contiguous()
+        #     c_0 = decoder_hidden[1].unsqueeze(0).expand(self.num_decoder_layers, -1, -1).contiguous()
+        #     decoder_hidden = (h_0, c_0)
+        # else:
+        #     decoder_hidden = hidden.unsqueeze(0).expand(self.num_decoder_layers, -1, -1).contiguous()
+        
         decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
         if target!=None:
-            token_logits=self.generate_t(decoder_inputs,decoder_hidden)
+            token_logits=self.generate_t(decoder_inputs,hidden_states,z)
             return token_logits
         else:
-            all_outputs=self.generate_without_t(decoder_inputs,decoder_hidden)
+            all_outputs=self.generate_without_t(decoder_inputs,hidden_states,z)
             return all_outputs
     
-    def generate_t(self,decoder_inputs,decoder_hidden):
+    def generate_t(self,decoder_inputs,decoder_hidden,z):
         with_t=random.random()
         if with_t<self.teacher_force_ratio:
+            decoder_inputs=torch.cat((decoder_inputs,z.unsqueeze(1).repeat(1,decoder_inputs.size(1),1)),dim=2)
             decoder_output, hidden_states = self.decoder(input_embeddings=decoder_inputs, hidden_states=decoder_hidden)
             token_logits = self.out(decoder_output)
             token_logits=token_logits.view(-1, token_logits.size(-1))
@@ -129,11 +136,12 @@ class RNNVAE(nn.Module):
                     decoder_input=self.out_embedder(output)
                 else:
                     decoder_input=self.out_embedder(output)
+                decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_inputs.size(1),1)),dim=2)
             token_logits=torch.cat(token_logits,dim=1)
             token_logits=token_logits.view(-1,token_logits.size(-1))
         return token_logits
     
-    def generate_without_t(self,decoder_input,decoder_hidden):
+    def generate_without_t(self,decoder_input,decoder_hidden,z):
         all_outputs=[]
         for _ in range(self.max_length):
             outputs, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden)
@@ -147,6 +155,7 @@ class RNNVAE(nn.Module):
                 decoder_input=self.out_embedder(output)
             else:
                 decoder_input=self.out_embedder(output)
+            decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
         all_outputs=torch.cat(all_outputs,dim=1)
         return all_outputs
     

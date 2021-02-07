@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
-from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder
+from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder,AttentionalRNNDecoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Strategy.sampling import topk_sampling
 
@@ -17,6 +17,7 @@ class RNNVAE(nn.Module):
         self.num_directions = 2 if config['bidirectional'] else 1
         self.rnn_cell_type=config['rnn_cell_type']
         self.bidirectional=config["bidirectional"]
+        self.attention=config["attention"]
         
         self.latent_size = config['latent_size']
         self.num_encoder_layers = config['num_encoder_layers']
@@ -44,7 +45,11 @@ class RNNVAE(nn.Module):
 
         self.encoder = BasicRNNEncoder(config["embedding_size"], config['hidden_size'], config['num_encoder_layers'], config['rnn_cell_type'],
                                        config['dropout_ratio'], config["bidirectional"])
-        self.decoder = BasicRNNDecoder(config["embedding_size"]+config["latent_size"], config['hidden_size'], config['num_decoder_layers'], config['rnn_cell_type'],
+        if self.attention:
+            self.decoder=AttentionalRNNDecoder(config["embedding_size"]+config["latent_size"],config["hidden_size"],config["hidden_size"],\
+                                                config["num_decoder_layers"],config["rnn_cell_type"],config["dropout_ratio"])
+        else:
+            self.decoder = BasicRNNDecoder(config["embedding_size"]+config["latent_size"], config['hidden_size'], config['num_decoder_layers'], config['rnn_cell_type'],
                                        config['dropout_ratio'])
 
         self.dropout = nn.Dropout(config['dropout_ratio'])
@@ -66,7 +71,7 @@ class RNNVAE(nn.Module):
         device=seq.device
 
         input_emb = self.in_embedder(seq)
-        _, hidden_states = self.encoder(input_emb, seq_length)
+        encoder_outputs, hidden_states = self.encoder(input_emb, seq_length)
 
         if self.rnn_cell_type == "lstm":
             h_n, c_n = hidden_states
@@ -111,20 +116,21 @@ class RNNVAE(nn.Module):
             all_outputs=self.generate_without_t(decoder_inputs,hidden_states,z)
             return all_outputs
     
-    def generate_t(self,decoder_inputs,decoder_hidden,z):
+    def generate_t(self,encoder_outputs,decoder_inputs,decoder_hidden,z):
         with_t=random.random()
         if with_t<self.teacher_force_ratio:
             decoder_inputs=torch.cat((decoder_inputs,z.unsqueeze(1).repeat(1,decoder_inputs.size(1),1)),dim=2)
-            decoder_output, hidden_states = self.decoder(input_embeddings=decoder_inputs, hidden_states=decoder_hidden)
+            decoder_output, hidden_states = self.decoder(input_embeddings=decoder_inputs, hidden_states=decoder_hidden,encoder_outputs=encoder_outputs)
             token_logits = self.out(decoder_output)
             token_logits=token_logits.view(-1, token_logits.size(-1))
             token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
         else:
             seq_len=decoder_inputs.size(1)
             decoder_input = decoder_inputs[:,0,:].unsqueeze(1)
+            decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
             token_logits=[]
             for idx in range(seq_len):
-                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden)
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
                 #step_output = decoder_output.squeeze(1)
                 token_logit = self.out(decoder_output)
                 predict=torch.nn.functional.log_softmax(token_logit,dim=1)
@@ -136,15 +142,16 @@ class RNNVAE(nn.Module):
                     decoder_input=self.out_embedder(output)
                 else:
                     decoder_input=self.out_embedder(output)
-                decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_inputs.size(1),1)),dim=2)
+                decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
             token_logits=torch.cat(token_logits,dim=1)
             token_logits=token_logits.view(-1,token_logits.size(-1))
         return token_logits
     
-    def generate_without_t(self,decoder_input,decoder_hidden,z):
+    def generate_without_t(self,encoder_outputs,decoder_input,decoder_hidden,z):
         all_outputs=[]
         for _ in range(self.max_length):
-            outputs, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden)
+            decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
+            outputs, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden,encoder_outputs=encoder_outputs)
             token_logits = self.out(outputs)
             predict=torch.nn.functional.log_softmax(token_logits,dim=1)
             output = topk_sampling(predict)
@@ -155,7 +162,6 @@ class RNNVAE(nn.Module):
                 decoder_input=self.out_embedder(output)
             else:
                 decoder_input=self.out_embedder(output)
-            decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
         all_outputs=torch.cat(all_outputs,dim=1)
         return all_outputs
     

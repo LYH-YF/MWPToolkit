@@ -95,6 +95,7 @@ class RNNVAE(nn.Module):
 
         #hidden = self.latent_to_hidden(z)
         if self.bidirectional:
+            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
             if (self.rnn_cell_type == 'lstm'):
                 hidden_states = (hidden_states[0][::2].contiguous(), hidden_states[1][::2].contiguous())
             else:
@@ -110,10 +111,10 @@ class RNNVAE(nn.Module):
         
         decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
         if target!=None:
-            token_logits=self.generate_t(decoder_inputs,hidden_states,z)
+            token_logits=self.generate_t(encoder_outputs,decoder_inputs,hidden_states,z)
             return token_logits
         else:
-            all_outputs=self.generate_without_t(decoder_inputs,hidden_states,z)
+            all_outputs=self.generate_without_t(encoder_outputs,decoder_inputs,hidden_states,z)
             return all_outputs
     
     def generate_t(self,encoder_outputs,decoder_inputs,decoder_hidden,z):
@@ -132,9 +133,11 @@ class RNNVAE(nn.Module):
             for idx in range(seq_len):
                 decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
                 #step_output = decoder_output.squeeze(1)
+                decoder_output = decoder_output.squeeze(1)
                 token_logit = self.out(decoder_output)
                 predict=torch.nn.functional.log_softmax(token_logit,dim=1)
-                output=topk_sampling(predict)
+                #output=topk_sampling(predict)
+                output=predict.topk(1,dim=1)[1]
                 token_logits.append(predict)
 
                 if self.share_vocab:
@@ -143,7 +146,7 @@ class RNNVAE(nn.Module):
                 else:
                     decoder_input=self.out_embedder(output)
                 decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
-            token_logits=torch.cat(token_logits,dim=1)
+            token_logits=torch.stack(token_logits,dim=1)
             token_logits=token_logits.view(-1,token_logits.size(-1))
         return token_logits
     
@@ -151,10 +154,12 @@ class RNNVAE(nn.Module):
         all_outputs=[]
         for _ in range(self.max_length):
             decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
-            outputs, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden,encoder_outputs=encoder_outputs)
-            token_logits = self.out(outputs)
+            decoder_output, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden,encoder_outputs=encoder_outputs)
+            decoder_output = decoder_output.squeeze(1)
+            token_logits = self.out(decoder_output)
             predict=torch.nn.functional.log_softmax(token_logits,dim=1)
-            output = topk_sampling(predict)
+            #output = topk_sampling(predict)
+            output=predict.topk(1,dim=1)[1]
             
             all_outputs.append(output)
             if self.share_vocab:

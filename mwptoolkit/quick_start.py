@@ -5,7 +5,7 @@ from mwptoolkit.utils.enum_type import TaskType
 
 from mwptoolkit.config.configuration import Config
 from mwptoolkit.data.utils import *
-from mwptoolkit.evaluate.evaluator import Evaluater, SeqEvaluater
+from mwptoolkit.evaluate.evaluator import Evaluater, SeqEvaluater,PostEvaluater
 from mwptoolkit.utils.utils import get_model, init_seed
 def get_trainer(task_type, model_name):
     r"""Automatically select trainer class based on model type and model name
@@ -59,6 +59,8 @@ def run_toolkit():
         evaluator=Evaluater(dataset.out_symbol2idx,dataset.out_idx2symbol,config)
     elif config["equation_fix"] ==None:
         evaluator=SeqEvaluater(dataset.out_symbol2idx,dataset.out_idx2symbol,config)
+    elif config["equation_fix"]== "postfix":
+        evaluator=PostEvaluater(dataset.out_symbol2idx,dataset.out_idx2symbol,config)
     else:
         raise NotImplementedError
 

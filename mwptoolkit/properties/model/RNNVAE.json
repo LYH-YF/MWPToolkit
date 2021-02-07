@@ -1,7 +1,7 @@
 {
     "//":"model parameters",
     "embedding_size": 128,
-    "hidden_size": 256,
+    "hidden_size": 512,
     "latent_size": 64,
     "rnn_cell_type": "lstm",
     "num_highway_layers": 2,

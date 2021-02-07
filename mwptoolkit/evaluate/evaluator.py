@@ -13,6 +13,7 @@ class SeqEvaluater(object):
             self.sos_idx=None
         else:
             self.sos_idx=symbol2idx[SOS_TOKEN]
+    
     def result(self,test_res,test_tar,num_list,num_stack=None):
         res_exp=self.out_expression(test_res)
         tar_exp=self.out_expression(test_tar)
@@ -27,6 +28,7 @@ class SeqEvaluater(object):
                 return False,False,res_exp,tar_exp
         else:
             return False,False,res_exp,tar_exp
+    
     def out_expression(self,test):
         expression=[]
         for idx in test:
@@ -35,6 +37,7 @@ class SeqEvaluater(object):
             symbol=self.idx2symbol[idx]
             expression.append(symbol)
         return expression
+    
     def compute_expression(self,expression,num_list):
         alphabet="abcdefghijklmnopqrstuvwxyz"
         list_len=len(num_list)
@@ -164,7 +167,106 @@ class Evaluater(object):
             elif p == "^" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                if float(b) != 2.0 and float(b) != 3.0:
+                if float(b) != 2.0 or float(b) != 3.0:
+                    return None
+                st.append(a ** b)
+            else:
+                return None
+        if len(st) == 1:
+            return st.pop()
+        return None
+
+class PostEvaluater(object):
+    def __init__(self,symbol2idx,idx2symbol,config):
+        super().__init__()
+        self.symbol2idx=symbol2idx
+        self.idx2symbol=idx2symbol
+        try:
+            self.eos_idx=symbol2idx[EOS_TOKEN]
+        except:
+            self.eos_idx=None
+        try:
+            self.pad_idx=symbol2idx[PAD_TOKEN]
+        except:
+            self.pad_idx=None
+        try:
+            self.sos_idx=symbol2idx[SOS_TOKEN]
+        except:
+            self.sos_idx=None
+    
+    def result(self,test_res,test_tar,num_list,num_stack):
+        test = self.out_expression_list(test_res, num_list)
+        tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
+        # print(test, tar)
+        if test is None:
+            return False, False, test, tar
+        if test == tar:
+            return True, True, test, tar
+        try:
+            if abs(self.compute_postfix_expression(test) - self.compute_postfix_expression(tar)) < 1e-4:
+                return True, False, test, tar
+            else:
+                return False, False, test, tar
+        except:
+            return False, False, test, tar
+    
+    def out_expression_list(self,test, num_list, num_stack=None):
+        alphabet="abcdefghijklmnopqrstuvwxyz"
+        num_len=len(num_list)
+        max_index = len(self.idx2symbol)
+        res = []
+        for i in test:
+            if i in [self.pad_idx,self.eos_idx,self.sos_idx]:
+                break
+            symbol = self.idx2symbol[i]
+            if "NUM" in symbol:
+                idx=symbol[4]
+                num_idx=alphabet.index(idx)
+                if num_idx >= num_len:
+                    return None
+                res.append(num_list[num_idx])
+            elif symbol==UNK_TOKEN:
+                pos_list = num_stack.pop()
+                c = num_list[pos_list[0]]
+                res.append(c)
+            else:
+                res.append(symbol)
+        return res
+    
+    def compute_postfix_expression(self,post_fix):
+        st = list()
+        operators = ["+", "-", "^", "*", "/"]
+        for p in post_fix:
+            if p not in operators:
+                pos = re.search("\d+\(", p)
+                if pos:
+                    st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
+                elif p[-1] == "%":
+                        st.append(float(p[:-1]) / 100)
+                else:
+                    st.append(eval(p))
+            elif p == "+" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(a + b)
+            elif p == "*" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(a * b)
+            elif p == "/" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if a == 0:
+                    return None
+                st.append(b / a)
+            elif p == "-" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(b - a)
+            elif p == "^" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if float(b) != 2.0 or float(b) != 3.0:
                     return None
                 st.append(a ** b)
             else:

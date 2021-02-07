@@ -11,4 +11,4 @@ example:
 |GTS       |0.73+     |-         |
 |RNN       |0.674     |0.578     |
 |Transformer|        -|         -|
-|RNNVAE    |-         |-         |
+|RNNVAE    |0.713     |0.607     |

@@ -57,7 +57,10 @@ class AbstractDataLoader(object):
         else:
             max_length=max(batch_target_len)
         for idx,length in enumerate(batch_target_len):
-            batch_target[idx]+=[self.out_pad_token for i in range(max_length-length)]
+            if length<max_length:
+                batch_target[idx]+=[self.out_pad_token for i in range(max_length-length)]
+            else:
+                batch_target[idx]=batch_target[idx][:max_length]
         return batch_target
     
     def _get_mask(self,batch_seq_len):

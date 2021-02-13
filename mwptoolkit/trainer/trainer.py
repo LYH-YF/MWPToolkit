@@ -667,9 +667,9 @@ class SeqGANTrainer(AbstractTrainer):
         self.train_batch_nums = int(
             self.dataloader.trainset_nums / train_batch_size) + 1
         # generator pretrain
-        #self.train_generator()
+        self.train_generator()
         # discriminator pretrain
-        #self.train_discriminator()
+        self.train_discriminator()
         # seqgan train
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1

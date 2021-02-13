@@ -545,7 +545,7 @@ class SeqGANTrainer(AbstractTrainer):
             for batch_idx, batch in enumerate(
                     self.dataloader.load_data("train")):
                 self.model.zero_grad()
-                outputs=self.model(batch["question"],batch["ques len"],batch["equation"])
+                outputs=self.model.generator.pre_train(batch["question"],batch["ques len"],batch["equation"])
                 #outputs=torch.nn.functional.log_softmax(outputs,dim=1)
                 if self.config["share_vocab"]:
                     batch_equation=self._idx2word_2idx(batch["equation"])

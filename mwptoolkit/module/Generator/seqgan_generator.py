@@ -181,7 +181,7 @@ class SeqGANGenerator(nn.Module):
                 output, prev_state = self.decoder(X, prev_state)
                 #output, prev_state = self.decoder(X)
                 P = F.softmax(self.generate_linear(output), dim = -1).squeeze(0) # b * v
-                for j in range(self.batch_size):
+                for j in range(batch_size):
                     sentences[j][i] = torch.multinomial(P[j], 1)[0]
                 X = self.out_embedder(sentences[:,i]).unsqueeze(1) # 1 * b * e
 
@@ -210,6 +210,48 @@ class SeqGANGenerator(nn.Module):
             samples.append(self._sample_batch(sample_num))
         samples = torch.cat(samples, dim = 0)
         return samples[:sample_num, :]
+    
+    def pre_train(self,seq,seq_length,target):
+        batch_size=seq.size(0)
+        device=seq.device
+
+        seq_emb=self.in_embedder(seq)
+        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
+
+        if self.bidirectional:
+            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+            if (self.rnn_cell_type == 'lstm'):
+                encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
+            else:
+                encoder_hidden = encoder_hidden[::2].contiguous()
+        decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
+
+        batch_size=encoder_outputs.size(0)
+        with_t=random.random()
+        seq_len=decoder_inputs.size(1)
+        decoder_hidden = encoder_hidden
+        tokens = decoder_inputs[:,0].unsqueeze(1)
+        monte_carlo_outputs=[]
+        token_logits=[]
+        P=[]
+        all_output=[]
+        for idx in range(seq_len):
+            if with_t<self.teacher_force_ratio:
+                tokens = decoder_inputs[:,idx].unsqueeze(1)
+            decoder_input=self.out_embedder(tokens)
+            decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden)
+            step_output = decoder_output.squeeze(1)
+            token_logit = self.generate_linear(step_output)
+            predict=torch.nn.functional.log_softmax(token_logit,dim=1)
+            tokens=predict.topk(1,dim=1)[1]
+
+            if self.share_vocab:
+                tokens=self.decode(tokens)
+            
+            token_logits.append(predict)
+        token_logits=torch.stack(token_logits,dim=1)
+        token_logits=token_logits.view(-1,token_logits.size(-1))
+        return token_logits
 
 
 

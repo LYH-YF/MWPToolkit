@@ -22,9 +22,12 @@ class SeqEvaluater(object):
         res_ans=self.compute_expression(res_exp,num_list)
         tar_ans=self.compute_expression(tar_exp,num_list)
         if res_ans !=None:
-            if abs(res_ans-tar_ans)<1e-4:
-                return True,False,res_exp,tar_exp
-            else:
+            try:
+                if abs(res_ans-tar_ans)<1e-4:
+                    return True,False,res_exp,tar_exp
+                else:
+                    return False,False,res_exp,tar_exp
+            except:
                 return False,False,res_exp,tar_exp
         else:
             return False,False,res_exp,tar_exp
@@ -167,7 +170,7 @@ class Evaluater(object):
             elif p == "^" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                if float(b) != 2.0 or float(b) != 3.0:
+                if float(b) != 2.0 and float(b) != 3.0:
                     return None
                 st.append(a ** b)
             else:
@@ -266,7 +269,7 @@ class PostEvaluater(object):
             elif p == "^" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                if float(b) != 2.0 or float(b) != 3.0:
+                if float(b) != 2.0 and float(b) != 3.0:
                     return None
                 st.append(a ** b)
             else:

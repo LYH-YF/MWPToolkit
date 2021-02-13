@@ -1,0 +1,28 @@
+{   
+    "//":"model parameters",
+    "generator_embedding_size": 32,
+    "discriminator_embedding_size": 64,
+    "hidden_size": 32,
+    "dropout_ratio": 0.25,
+    "l2_reg_lambda": 0.2,
+    "filter_sizes": [2, 3, 4],
+    "filter_nums": [200, 200, 200],
+    "Monte_Carlo_num": 16,
+    "learning_rate":0.001,
+    "rnn_cell_type":"lstm",
+    "num_layers":1,
+    "max_seq_length":30,
+    "bidirectional":true,
+    
+    "///":"data process parameters",
+    "share_vocab":false,
+    "mask_symbol":"alphabet",
+    "symbol_for_tree":false,
+    "equation_prefix":"None",
+    "max_equ_len":30,
+    
+    "////":"train parameters",
+    "train_batch_size":64,
+    "test_batch_size":64,
+    "epoch_nums":100
+}

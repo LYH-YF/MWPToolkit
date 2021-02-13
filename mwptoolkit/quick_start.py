@@ -47,6 +47,8 @@ def run_toolkit():
             pass
         else:
             config["out_sos_token"]=dataset.out_symbol2idx["<SOS>"]
+            config["out_eos_token"]=dataset.out_symbol2idx["<EOS>"]
+            config["out_pad_token"]=dataset.out_symbol2idx["<PAD>"]
     
     config["vocab_size"]=len(dataset.in_idx2word)
     config["symbol_size"]=len(dataset.out_idx2symbol)

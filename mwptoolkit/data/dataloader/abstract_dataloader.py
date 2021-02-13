@@ -14,6 +14,7 @@ class AbstractDataLoader(object):
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
         self.max_len=config["max_len"]
+        self.max_equ_len=config["max_equ_len"]
         
         self.dataset=dataset
         self.in_pad_token=dataset.in_word2idx["<PAD>"]
@@ -51,7 +52,10 @@ class AbstractDataLoader(object):
         return batch_seq
     
     def _pad_output_batch(self,batch_target,batch_target_len):
-        max_length=max(batch_target_len)
+        if self.max_equ_len != None:
+            max_length=self.max_equ_len
+        else:
+            max_length=max(batch_target_len)
         for idx,length in enumerate(batch_target_len):
             batch_target[idx]+=[self.out_pad_token for i in range(max_length-length)]
         return batch_target

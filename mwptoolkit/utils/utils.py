@@ -66,7 +66,8 @@ def get_model(model_name):
     model_submodule = [
         'Seq2Seq',
         'Seq2Tree',
-        'VAE'
+        'VAE',
+        'GAN'
     ]
     try:
         model_file_name = model_name.lower()

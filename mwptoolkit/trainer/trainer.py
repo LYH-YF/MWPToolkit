@@ -704,3 +704,27 @@ class SeqGANTrainer(AbstractTrainer):
             # eval_total += len(batch_val_ac)
         test_time_cost=time_since(time.time()-test_start_time)
         return equation_ac/eval_total,value_ac/eval_total,eval_total,test_time_cost
+
+class GPT2Trainer(TransformerTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+        self._build_loss(config["vocab_size"],self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+    
+    def _train_batch(self, batch):
+        outputs,target=self.model(batch["ques_source"],batch["equ_source"])
+        outputs=torch.nn.functional.log_softmax(outputs,dim=1)
+        
+        self.loss.eval_batch(outputs,target.view(-1))
+        batch_loss = self.loss.get_loss()
+        return batch_loss
+    def _eval_batch(self, batch):
+        test_out,_=self.model(batch["ques_source"])
+        target=batch["equ_source"]
+        batch_size=len(target)
+        val_acc=[]
+        equ_acc=[]
+        for idx in range(batch_size):
+            val_ac, equ_ac, _, _ = self.evaluator.eval_source(test_out[idx],target[idx],batch["num list"][idx],batch["num stack"][idx])
+            val_acc.append(val_ac)
+            equ_acc.append(equ_ac)
+        return val_acc,equ_acc

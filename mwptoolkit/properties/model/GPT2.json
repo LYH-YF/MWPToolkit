@@ -1,0 +1,13 @@
+{
+    "pretrained_model_path":"pretrain/gpt2",
+    "learner": "schedule",
+    "mask_symbol":"alphabet",
+    "learning_rate": 0.3,
+    "symbol_for_tree":false,
+    "max_len":256,
+    "warmup_steps": 1500,
+    "share_vocab":true,
+    "train_batch_size":4,
+    "test_batch_size":1,
+    "epoch_nums":80
+}

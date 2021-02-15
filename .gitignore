@@ -2,3 +2,4 @@
 __pycache__
 /dataset/math23k/partition.py
 *.pth
+/pretrain/gpt2

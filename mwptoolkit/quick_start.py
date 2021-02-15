@@ -67,7 +67,12 @@ def run_toolkit():
         raise NotImplementedError
 
     model=get_model(config["model"])(config).to(config["device"])
-
+    if config["pretrained_model_path"]:
+        config["vocab_size"]=len(model.tokenizer)
+        config["embedding_size"]=len(model.tokenizer)
+        config["in_word2idx"]=model.tokenizer.get_vocab()
+        config["in_idx2word"]=list(model.tokenizer.get_vocab().keys())
+        
     trainer=get_trainer(config["task_type"],config["model"])(config, model, dataloader, evaluator)
 
     trainer.fit()

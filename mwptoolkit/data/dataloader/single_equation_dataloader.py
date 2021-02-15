@@ -50,6 +50,9 @@ class SingleEquationDataLoader(AbstractDataLoader):
         '''
         ques_batch = []
         equ_batch = []
+        ques_source_batch=[]
+        equ_source_batch=[]
+
         num_list_batch = []
         num_pos_batch = []
         
@@ -70,6 +73,10 @@ class SingleEquationDataLoader(AbstractDataLoader):
             equ_tensor = []
             sentence = data["question"]
             equation = data["equation"]
+            ques_source=''.join(sentence)
+            #equ_source=''.join(equation)
+            ques_source_batch.append(ques_source)
+            equ_source_batch.append(equation)
             num_list_batch.append(data["number list"])
             num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
@@ -141,5 +148,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             "equ mask":equ_mask_batch,
             "num stack": num_stack_batch,
             "ans": ans_batch,
-            "num size":num_size_batch
+            "num size":num_size_batch,
+            "ques_source":ques_source_batch,
+            "equ_source":equ_source_batch
         }

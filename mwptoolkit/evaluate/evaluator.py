@@ -1,6 +1,6 @@
 import copy
 import re
-from mwptoolkit.utils.enum_type import PAD_TOKEN,EOS_TOKEN,SOS_TOKEN,UNK_TOKEN,OPERATORS
+from mwptoolkit.utils.enum_type import PAD_TOKEN,EOS_TOKEN,SOS_TOKEN,UNK_TOKEN,OPERATORS,NumMask
 class SeqEvaluater(object):
     def __init__(self,symbol2idx,idx2symbol,config):
         super().__init__()
@@ -31,7 +31,36 @@ class SeqEvaluater(object):
                 return False,False,res_exp,tar_exp
         else:
             return False,False,res_exp,tar_exp
-    
+    def eval_source(self,test_res,test_tar,num_list,num_stack=None):
+        new_test_res=[]
+        for symbol in test_res:
+            try:
+                number=eval(symbol)
+                flag=True
+            except:
+                flag=False
+            if symbol in OPERATORS:
+                new_test_res.append(symbol)
+            elif symbol in NumMask.alphabet:
+                new_test_res.append(symbol)
+            elif flag == True:
+                new_test_res.append(symbol)
+            elif symbol in ['(',')','[',']']:
+                new_test_res.append(symbol)
+            else:
+                break
+        res_ans=self.compute_expression(new_test_res,num_list)
+        tar_ans=self.compute_expression(test_tar,num_list)
+        if res_ans !=None:
+            try:
+                if abs(res_ans-tar_ans)<1e-4:
+                    return True,False,new_test_res,test_tar
+                else:
+                    return False,False,new_test_res,test_tar
+            except:
+                return False,False,new_test_res,test_tar
+        else:
+            return False,False,new_test_res,test_tar
     def out_expression(self,test):
         expression=[]
         for idx in test:
@@ -178,7 +207,34 @@ class Evaluater(object):
         if len(st) == 1:
             return st.pop()
         return None
-
+    def eval_source(self,test_res,test_tar,num_list,num_stack=None):
+        raise NotImplementedError
+        new_test_res=[]
+        for symbol in test_res:
+            try:
+                number=eval(symbol)
+                flag=True
+            except:
+                flag=False
+            if symbol in OPERATORS:
+                new_test_res.append(symbol)
+            elif symbol in NumMask.alphabet:
+                new_test_res.append(symbol)
+            elif flag == True:
+                new_test_res.append(symbol)
+            elif symbol in ['(',')','[',']']:
+                new_test_res.append(symbol)
+            else:
+                break
+        if new_test_res == test_tar:
+            return True, True, new_test_res, test_tar
+        try:
+            if abs(self.compute_prefix_expression(new_test_res) - self.compute_prefix_expression(test_tar)) < 1e-4:
+                return True, False, new_test_res,test_tar
+            else:
+                return False, False, new_test_res, test_tar
+        except:
+            return False, False, new_test_res, test_tar
 class PostEvaluater(object):
     def __init__(self,symbol2idx,idx2symbol,config):
         super().__init__()
@@ -277,3 +333,5 @@ class PostEvaluater(object):
         if len(st) == 1:
             return st.pop()
         return None
+    def eval_source(self):
+        raise NotImplementedError

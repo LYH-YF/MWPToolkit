@@ -53,9 +53,9 @@ class GPT2(nn.Module):
         attn_masks=encoding_dict['attention_mask']
         for b in range(len(start_idx)):
             target_idx.append(input_ids[b][start_idx[b]:start_idx[b]+output_len])
-        target_idx=torch.tensor(target_idx)
-        input_ids=torch.tensor(input_ids).long()
-        attn_masks=torch.tensor(attn_masks).bool()
+        target_idx=torch.tensor(target_idx).to(self.device)
+        input_ids=torch.tensor(input_ids).long().to(self.device)
+        attn_masks=torch.tensor(attn_masks).bool().to(self.device)
         
         outputs = self.decoder(input_ids,
                                 attention_mask=attn_masks)
@@ -73,8 +73,8 @@ class GPT2(nn.Module):
         encoding_dict=self.tokenizer.batch_encode_plus(seq)
         input_ids=encoding_dict['input_ids']
         attn_masks=encoding_dict['attention_mask']
-        input_ids=torch.tensor(input_ids).long()
-        attn_masks=torch.tensor(attn_masks).bool()
+        input_ids=torch.tensor(input_ids).long().to(self.device)
+        attn_masks=torch.tensor(attn_masks).bool().to(self.device)
         for idx in range(self.max_out_len):
             outputs = self.decoder(input_ids,
                                 attention_mask=attn_masks)

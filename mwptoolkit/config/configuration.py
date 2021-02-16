@@ -163,7 +163,7 @@ class Config(object):
         else:
             if self.final_config_dict["use_gpu"] != True:
                 self.final_config_dict["gpu_id"]=""
-        os.environ["CUDA_VISIBLE_DEVICES"]=str(self.file_config_dict["gpu_id"])
+        os.environ["CUDA_VISIBLE_DEVICES"]=str(self.final_config_dict["gpu_id"])
         self.final_config_dict['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.file_config_dict["map_location"]="cuda" if torch.cuda.is_available() else "cpu"
         

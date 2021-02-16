@@ -27,7 +27,8 @@ def get_trainer(task_type, model_name):
 
 def run_toolkit():
     config=Config()
-
+    print(config["device"])
+    print(config["gpu_id"])
     init_seed(config['random_seed'], True)
 
     logger = getLogger()

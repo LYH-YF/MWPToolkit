@@ -1,4 +1,5 @@
 import sys
+import os
 from logging import getLogger
 from enum import Enum
 
@@ -76,7 +77,7 @@ class Config(object):
                     cmd_config_dict[cmd_arg_name] = cmd_arg_value
         if len(unrecognized_args) > 0:
             logger = getLogger()
-            logger.warning('command line args [{}] will not be used in TextBox'.format(' '.join(unrecognized_args)))
+            logger.warning('command line args [{}] will not be used in Mwptoolkit'.format(' '.join(unrecognized_args)))
         cmd_config_dict = self._convert_config_dict(cmd_config_dict)
 
         if cmd_config_dict['task_type'] not in ['single_equation','multi_equation']:
@@ -154,10 +155,19 @@ class Config(object):
         self.final_config_dict.update(self.external_config_dict)
     
     def _init_device(self):
-        if self.final_config_dict["use_gpu"]:
-            self.final_config_dict['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        if self.final_config_dict["gpu_id"]==None:
+            if torch.cuda.is_available() and self.final_config_dict["use_gpu"]:
+                self.final_config_dict["gpu_id"]="0"
+            else:
+                self.final_config_dict["gpu_id"]=""
         else:
-            self.final_config_dict['device'] = torch.device("cpu")
+            if self.final_config_dict["use_gpu"] != True:
+                self.final_config_dict["gpu_id"]=""
+        os.environ["CUDA_VISIBLE_DEVICES"]=str(self.file_config_dict["gpu_id"])
+        self.final_config_dict['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.file_config_dict["map_location"]="cuda" if torch.cuda.is_available() else "cpu"
+        
+        
     
     def __setitem__(self, key, value):
         if not isinstance(key, str):

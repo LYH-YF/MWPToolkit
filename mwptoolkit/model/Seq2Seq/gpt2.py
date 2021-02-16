@@ -47,7 +47,7 @@ class GPT2(nn.Module):
             start_idx.append(len(seq[idx])+1)
             seq[idx]+=(["<ans>"]+t)
         encoding_dict=self.tokenizer.batch_encode_plus(seq,
-                                            max_length=128,
+                                            max_length=256,
                                             pad_to_max_length=True)
         input_ids=encoding_dict['input_ids']
         attn_masks=encoding_dict['attention_mask']

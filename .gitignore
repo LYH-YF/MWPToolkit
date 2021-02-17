@@ -1,5 +1,8 @@
 /.vscode
 __pycache__
 /dataset/math23k/partition.py
+/dataset/ape200k/process.py
+/dataset/mawps/dataprocess.py
+/dataset/mawps/MAWPS_.json
 *.pth
 /pretrain/gpt2

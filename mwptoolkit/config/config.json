@@ -1,5 +1,6 @@
 {
     "random_seed":2021,
     "use_gpu":true,
-    "max_output_len":30
+    "max_output_len":30,
+    "gpu_id":"0"
 }

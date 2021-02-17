@@ -1,6 +1,6 @@
 import random
 import torch
-from mwptoolkit.utils.enum_type import *
+from mwptoolkit.utils.enum_type import SpecialTokens
 
 class AbstractDataLoader(object):
     def __init__(self,config,dataset):
@@ -17,25 +17,20 @@ class AbstractDataLoader(object):
         self.max_equ_len=config["max_equ_len"]
         
         self.dataset=dataset
-        self.in_pad_token=dataset.in_word2idx["<PAD>"]
-        self.in_unk_token=dataset.in_word2idx["<UNK>"]
-        if self.share_vocab:
-            self.out_pad_token=dataset.in_word2idx["<PAD>"]
-        else:
-            if self.symbol_for_tree:
-                self.out_pad_token=dataset.in_word2idx["<PAD>"]
-            else:
-                self.out_pad_token=dataset.out_symbol2idx["<PAD>"]
+        self.in_pad_token=dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
+        self.in_unk_token=dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
+        
         if self.symbol_for_tree:
-            self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
+            self.out_pad_token=self.in_pad_token
+            self.out_unk_token=dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
         else:
             if self.share_vocab:
-                self.out_unk_token=dataset.in_word2idx["<UNK>"]
+                self.out_pad_token=self.in_pad_token
+                self.out_unk_token=self.in_unk_token
             else:
-                try:
-                    self.out_unk_token=dataset.out_symbol2idx["<UNK>"]
-                except:
-                    self.out_unk_token=None
+                self.out_pad_token=dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+                self.out_unk_token=dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
+                
 
     
     def _pad_input_batch(self,batch_seq,batch_seq_len):

@@ -15,7 +15,7 @@ class NLLLoss(AbstractLoss):
         #weight = weight.cuda()
         super(NLLLoss, self).__init__(
               self._NAME,
-              nn.NLLLoss(weight=weight, size_average=size_average))
+              nn.NLLLoss(weight=weight, reduction="mean"))
     
     def get_loss(self):
         if isinstance(self.acc_loss, int):

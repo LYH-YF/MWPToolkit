@@ -27,7 +27,7 @@ class SeqAttention(nn.Module):
 
         combined = torch.cat((mix, output), dim=2)
 
-        output = F.tanh(self.linear_out(combined.view(-1, 2*self.hidden_size)))\
+        output = torch.tanh(self.linear_out(combined.view(-1, 2*self.hidden_size)))\
                             .view(batch_size, -1, self.hidden_size)
 
         # output: (b, o, dim)

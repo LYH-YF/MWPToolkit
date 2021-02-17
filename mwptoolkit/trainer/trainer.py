@@ -1,7 +1,7 @@
 import torch
 import time
-from mwptoolkit.utils.utils import *
-from mwptoolkit.utils.enum_type import PAD_TOKEN
+from mwptoolkit.utils.utils import time_since
+from mwptoolkit.utils.enum_type import PAD_TOKEN,DatasetType
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
 from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.loss.binary_cross_entropy_loss import BinaryCrossEntropyLoss
@@ -26,13 +26,22 @@ class AbstractTrainer(object):
         state_dict={"model":self.model.state_dict()}
         torch.save(state_dict,self.config["trained_model_path"])
     def _load_model(self):
-        state_dict=torch.load(self.config["trained_model_path"])
+        state_dict=torch.load(self.config["trained_model_path"],map_location=self.config["map_location"])
         self.model.load_state_dict(state_dict["model"])
     def _build_optimizer(self):
         raise NotImplementedError
+    def _train_batch(self):
+        raise NotADirectoryError
+    def _eval_batch(self):
+        raise NotImplementedError
+    def _train_epoch(self):
+        raise NotImplementedError
     def fit(self):
         raise NotImplementedError
-    def evaluate(self):
+    def evaluate(self,eval_set):
+        raise NotImplementedError
+    
+    def test(self):
         raise NotImplementedError
 
 class SingleEquationTrainer(AbstractTrainer):
@@ -59,7 +68,7 @@ class SingleEquationTrainer(AbstractTrainer):
     
     def _load_checkpoint(self):
         #check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
-        check_pnt = torch.load(self.config["checkpoint_path"])
+        check_pnt = torch.load(self.config["checkpoint_path"],map_location=self.config["map_location"])
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
@@ -117,7 +126,7 @@ class SingleEquationTrainer(AbstractTrainer):
         loss_total = 0.
         self.model.train()
         for batch_idx, batch in enumerate(
-                self.dataloader.load_data("train")):
+                self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
@@ -151,13 +160,15 @@ class SingleEquationTrainer(AbstractTrainer):
                     self._save_model()
             if epo%5==0:
                 self._save_checkpoint()
-    def evaluate(self):
+    
+    def evaluate(self,eval_set):
         self.model.eval()
         value_ac = 0
         equation_ac = 0
         eval_total = 0
         test_start_time = time.time()
-        for batch in self.dataloader.load_data("test"):
+        
+        for batch in self.dataloader.load_data(eval_set):
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac+=batch_val_ac.count(True)
             equation_ac+=batch_equ_ac.count(True)
@@ -167,6 +178,23 @@ class SingleEquationTrainer(AbstractTrainer):
             # eval_total += len(batch_val_ac)
         test_time_cost=time_since(time.time()-test_start_time)
         return equation_ac/eval_total,value_ac/eval_total,eval_total,test_time_cost
+    
+    def test(self):
+        self._load_model()
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        test_start_time = time.time()
+        
+        for batch in self.dataloader.load_data(DatasetType.Test):
+            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
+            value_ac+=batch_val_ac.count(True)
+            equation_ac+=batch_equ_ac.count(True)
+            eval_total+=len(batch_val_ac)
+        test_time_cost=time_since(time.time()-test_start_time)
+        print("---------- test equ acc [%2.3f] | test value acc [%2.3f]"%(equation_ac/eval_total,value_ac/eval_total))
+        print("---------- test time {}".format(test_time_cost))
 
 class GTSTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):
@@ -223,7 +251,7 @@ class GTSTrainer(AbstractTrainer):
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
     def _load_checkpoint(self):    
-        check_pnt = torch.load(self.config["checkpoint_path"])
+        check_pnt = torch.load(self.config["checkpoint_path"],map_location=self.config["map_location"])
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
@@ -300,14 +328,14 @@ class GTSTrainer(AbstractTrainer):
         
         val_ac, equ_ac, _, _ = self.evaluator.result(
                 test_out, batch["equation"].tolist()[0],batch["num list"][0], batch["num stack"][0])
-        return val_ac,equ_ac
+        return [val_ac],[equ_ac]
         
     def _train_epoch(self):
         epoch_start_time = time.time()
         loss_total = 0.
         self._model_train()
         for batch_idx, batch in enumerate(
-                self.dataloader.load_data("train")):
+                self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             self._model_zero_grad()
             batch_loss = self._train_batch(batch)
@@ -343,22 +371,18 @@ class GTSTrainer(AbstractTrainer):
             if epo%5==0:
                 self._save_checkpoint()
     
-    def evaluate(self):
+    def evaluate(self,eval_set):
         self._model_eval()
         value_ac = 0
         equation_ac = 0
         eval_total = 0
         test_start_time = time.time()
-        for batch in self.dataloader.load_data("test"):
+        for batch in self.dataloader.load_data(eval_set):
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
-            if batch_val_ac:
-                value_ac+=1
-            if batch_equ_ac:
-                equation_ac+=1
-            eval_total+=1
-            # value_ac += batch_val_ac.count(True)
-            # equation_ac += batch_equ_ac.count(True)
-            # eval_total += len(batch_val_ac)
+            value_ac+=batch_val_ac.count(True)
+            equation_ac+=batch_equ_ac.count(True)
+            eval_total+=len(batch_val_ac)
+            
         test_time_cost=time_since(time.time()-test_start_time)
         return equation_ac/eval_total,value_ac/eval_total,eval_total,test_time_cost
 
@@ -388,7 +412,7 @@ class TransformerTrainer(AbstractTrainer):
     
     def _load_checkpoint(self):
         #check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
-        check_pnt = torch.load(self.config["checkpoint_path"])
+        check_pnt = torch.load(self.config["checkpoint_path"],map_location=self.config["map_location"])
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
@@ -444,7 +468,7 @@ class TransformerTrainer(AbstractTrainer):
         loss_total = 0.
         self.model.train()
         for batch_idx, batch in enumerate(
-                self.dataloader.load_data("train")):
+                self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
@@ -479,20 +503,18 @@ class TransformerTrainer(AbstractTrainer):
                     self._save_model()
             if epo%5==0:
                 self._save_checkpoint()
-    def evaluate(self):
+    def evaluate(self,eval_set):
         self.model.eval()
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        
         test_start_time = time.time()
-        for batch in self.dataloader.load_data("test"):
+        for batch in self.dataloader.load_data(eval_set):
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac+=batch_val_ac.count(True)
             equation_ac+=batch_equ_ac.count(True)
             eval_total+=len(batch_val_ac)
-            # value_ac += batch_val_ac.count(True)
-            # equation_ac += batch_equ_ac.count(True)
-            # eval_total += len(batch_val_ac)
         test_time_cost=time_since(time.time()-test_start_time)
         return equation_ac/eval_total,value_ac/eval_total,eval_total,test_time_cost
 
@@ -526,7 +548,7 @@ class SeqGANTrainer(AbstractTrainer):
         torch.save(check_pnt, self.config["checkpoint_path"])
     def _load_checkpoint(self):
         #check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
-        check_pnt = torch.load(self.config["checkpoint_path"])
+        check_pnt = torch.load(self.config["checkpoint_path"],map_location=self.config["map_location"])
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
@@ -646,7 +668,7 @@ class SeqGANTrainer(AbstractTrainer):
         d_loss_total = 0.
         self.model.train()
         for batch_idx, batch in enumerate(
-                self.dataloader.load_data("train")):
+                self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             self.model.zero_grad()
             g_batch_loss,d_batch_loss = self._train_batch(batch)
@@ -688,20 +710,17 @@ class SeqGANTrainer(AbstractTrainer):
                     self._save_model()
             if epo%5==0:
                 self._save_checkpoint()
-    def evaluate(self):
+    def evaluate(self,eval_set):
         self.model.eval()
         value_ac = 0
         equation_ac = 0
         eval_total = 0
         test_start_time = time.time()
-        for batch in self.dataloader.load_data("test"):
+        for batch in self.dataloader.load_data(eval_set):
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac+=batch_val_ac.count(True)
             equation_ac+=batch_equ_ac.count(True)
             eval_total+=len(batch_val_ac)
-            # value_ac += batch_val_ac.count(True)
-            # equation_ac += batch_equ_ac.count(True)
-            # eval_total += len(batch_val_ac)
         test_time_cost=time_since(time.time()-test_start_time)
         return equation_ac/eval_total,value_ac/eval_total,eval_total,test_time_cost
 

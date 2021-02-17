@@ -1,6 +1,8 @@
 import re
 from copy import deepcopy
 
+from mwptoolkit.utils.enum_type import MaskSymbol,NumMask
+
 def split_number(text_list):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
     new_text = []
@@ -168,19 +170,28 @@ def number_transfer(data):  # transfer num into "NUM"
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums
 
-def number_transfer_(data,mask_type="NUM"):  # transfer num into "NUM"
-    '''
+def number_transfer_(data,mask_type="NUM",min_generate_keep=5):
+    '''transfer num process
+
+    Args:
+        data: list.
+        mask_type: str | default 'NUM', the way to mask num, optinal['NUM', 'alphabet', 'number'].
+        min_generate_keep: int | default 5, the number to control if the numbers of equations will be kept as generating number.
+
     Return:
         processed_datas: list type.
         generate_number: list type, symbols to generate extra.
         copy_nums: int, the count of copied symbol from question to equation.
     '''
-    if mask_type=="NUM":
-        sent_mask_list=["NUM"]
-    else:
-        sent_mask_list=["NUM_a","NUM_b","NUM_c","NUM_d","NUM_e","NUM_f","NUM_g","NUM_h","NUM_i","NUM_j","NUM_k","NUM_l","NUM_m","NUM_n","NUM_o","NUM_p","NUM_q","NUM_r","NUM_s","NUM_t","NUM_u","NUM_v","NUM_w","NUM_x","NUM_y","NUM_z"]
-    
-    equ_mask_list=["NUM_a","NUM_b","NUM_c","NUM_d","NUM_e","NUM_f","NUM_g","NUM_h","NUM_i","NUM_j","NUM_k","NUM_l","NUM_m","NUM_n","NUM_o","NUM_p","NUM_q","NUM_r","NUM_s","NUM_t","NUM_u","NUM_v","NUM_w","NUM_x","NUM_y","NUM_z"]
+    if mask_type==MaskSymbol.NUM:
+        sent_mask_list=NumMask.NUM
+        equ_mask_list=NumMask.number
+    elif mask_type==MaskSymbol.alphabet:
+        sent_mask_list=NumMask.alphabet
+        equ_mask_list=NumMask.alphabet
+    elif mask_type==MaskSymbol.number:
+        sent_mask_list=NumMask.number
+        equ_mask_list=NumMask.number
 
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
     
@@ -262,11 +273,13 @@ def number_transfer_(data,mask_type="NUM"):  # transfer num into "NUM"
 
     generate_number = []
     for g in generate_nums:
-        if generate_nums_dict[g] >= 5:
+        if generate_nums_dict[g] >= min_generate_keep:
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums
 
 def from_infix_to_postfix(expression):
+    r"""postfix for expression
+    """
     st = list()
     res = list()
     priority = {"+": 0, "-": 0, "*": 1, "/": 1, "^": 2}
@@ -295,6 +308,8 @@ def from_infix_to_postfix(expression):
 
 
 def from_infix_to_prefix(expression):
+    r"""prefix for expression
+    """
     st = list()
     res = list()
     priority = {"+": 0, "-": 0, "*": 1, "/": 1, "^": 2}

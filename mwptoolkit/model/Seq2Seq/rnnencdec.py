@@ -71,8 +71,8 @@ class RNNEncDec(nn.Module):
             decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
             token_logits = self.generate_linear(decoder_outputs)
             token_logits=token_logits.view(-1, token_logits.size(-1))
-            #token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
-            token_logits=torch.log_softmax(token_logits,dim=1)
+            token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
+            #token_logits=torch.log_softmax(token_logits,dim=1)
         else:
             seq_len=decoder_inputs.size(1)
             decoder_hidden = encoder_hidden
@@ -83,8 +83,8 @@ class RNNEncDec(nn.Module):
                 #attn_list.append(attn)
                 step_output = decoder_output.squeeze(1)
                 token_logit = self.generate_linear(step_output)
-                #predict=torch.nn.functional.log_softmax(token_logit,dim=1)
-                predict=torch.log_softmax(token_logits,dim=1)
+                predict=torch.nn.functional.log_softmax(token_logit,dim=1)
+                #predict=torch.log_softmax(token_logit,dim=1)
                 output=predict.topk(1,dim=1)[1]
                 token_logits.append(predict)
 

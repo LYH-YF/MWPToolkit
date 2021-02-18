@@ -1,3 +1,4 @@
+import copy
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import number_transfer_, from_infix_to_postfix, from_infix_to_prefix
 from mwptoolkit.utils.enum_type import MaskSymbol, OPERATORS, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType
@@ -45,7 +46,7 @@ class SingleEquationDataset(AbstractDataset):
                 except:
                     words_count[word] = 1
 
-        self.in_idx2word = SPECIAL_TOKENS
+        self.in_idx2word = copy.deepcopy(SPECIAL_TOKENS)
 
         for key, value in words_count.items():
             if value > self.min_word_keep or "NUM" in key:

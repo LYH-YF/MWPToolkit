@@ -1,6 +1,9 @@
 import copy
 import re
+import sympy as sym
 from mwptoolkit.utils.enum_type import SpecialTokens,OPERATORS,NumMask,MaskSymbol
+from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
+
 class AbstractEvaluater(object):
     def __init__(self,symbol2idx,idx2symbol,config):
         super().__init__()
@@ -8,9 +11,10 @@ class AbstractEvaluater(object):
         self.mask_symbol=config["mask_symbol"]
         self.symbol2idx=symbol2idx
         self.idx2symbol=idx2symbol
+        self.task_type=config["task_type"]
 
         if self.mask_symbol==MaskSymbol.NUM:
-            self.mask_list=NumMask.NUM
+            self.mask_list=NumMask.number
         elif self.mask_symbol==MaskSymbol.alphabet:
             self.mask_list=NumMask.alphabet
         elif self.mask_symbol==MaskSymbol.number:
@@ -57,6 +61,22 @@ class SeqEvaluater(AbstractEvaluater):
                 return False,False,res_exp,tar_exp
         else:
             return False,False,res_exp,tar_exp
+    
+    def result_multi(self,test_res,test_tar,num_list,num_stack):
+        res_exp=self.out_expression_list(test_res,num_list,num_stack)
+        tar_exp=self.out_expression_list(test_tar,num_list,num_stack)
+        if res_exp==tar_exp:
+            return True,True,res_exp,tar_exp
+        ans_res,unk_symbols_res=self.compute_expression_by_postfix(res_exp)
+        ans_tar,unk_symbols_tar=self.compute_expression_by_postfix(tar_exp)
+        if ans_res == None:
+            return False,False,res_exp,tar_exp
+        else:
+            if abs(ans_res[0]-ans_tar[0])<1e-4:
+                return True,False,res_exp,tar_exp
+            else:
+                return False,False,res_exp,tar_exp
+        
     def eval_source(self,test_res,test_tar,num_list,num_stack):
         new_test_res=[]
         for symbol in test_res:
@@ -100,24 +120,60 @@ class SeqEvaluater(AbstractEvaluater):
                     expression.append(str(c))
                 except:
                     expression.append(SpecialTokens.UNK_TOKEN)
+            else:
+                symbol=self.idx2symbol[idx]
+                expression.append(symbol)
+        return expression
+
+    def out_expression_list(self,test, num_list, num_stack=None):
+        expression=[]
+        for idx in test:
+            if idx in [self.pad_idx,self.eos_idx,self.sos_idx]:
+                break
+            if idx == self.unk_idx:
+                try:
+                    pos_list = num_stack.pop()
+                    c = num_list[pos_list[0]]
+                    expression.append(str(c))
+                except:
+                    expression.append(SpecialTokens.UNK_TOKEN)
             symbol=self.idx2symbol[idx]
             expression.append(symbol)
-        return expression
-    
-    def compute_expression(self,expression,num_list):
-        alphabet="abcdefghijklmnopqrstuvwxyz"
+        #mask to num
+        if "=" not in expression:
+            return None
         list_len=len(num_list)
         equation=[]
         for symbol in expression:
+            if symbol == SpecialTokens.UNK_TOKEN:
+                return None
             if "NUM" in symbol:
-                idx=symbol[4]
-                num_idx=alphabet.index(idx)
+                num_idx=self.mask_list.index(symbol)
                 if num_idx>=list_len:
                     return None
                 else:
                     num=num_list[num_idx]
                     if "%" in num:
-                        num="("+num[:-1]+"/100"+")"
+                        num=str(eval(num[:-1]+"/100"))
+                        equation.append(num)
+                    else:
+                        equation.append(num_list[num_idx])
+            else:
+                equation.append(symbol)
+        return equation
+    def compute_expression(self,expression,num_list):
+        #alphabet="abcdefghijklmnopqrstuvwxyz"
+        list_len=len(num_list)
+        equation=[]
+        for symbol in expression:
+            if "NUM" in symbol:
+                num_idx=self.mask_list.index(symbol)
+                if num_idx>=list_len:
+                    return None
+                else:
+                    num=num_list[num_idx]
+                    if "%" in num:
+                        num=str(eval(num[:-1]+"/100"))
                         equation.append(num)
                     else:
                         equation.append(num_list[num_idx])
@@ -137,6 +193,73 @@ class SeqEvaluater(AbstractEvaluater):
         except:
             return None
 
+    def compute_expression_by_postfix(self,expression):
+        try:
+            eq_idx=expression.index("=")
+        except:
+            return None,None
+        left_exp,right_exp=expression[:eq_idx],expression[eq_idx+1:]
+        left_exp=from_infix_to_postfix(left_exp)
+        right_exp=from_infix_to_postfix(right_exp)
+        self.unk_symbols={}
+        left_s=self.compute_postfix_expression(left_exp)
+        right_s=self.compute_postfix_expression(right_exp)
+        if left_s!=None and right_s != None:
+            unk_list=list(self.unk_symbols.values())
+            f=sym.Eq(left_s,right_s)
+            solves=sym.solve(f,unk_list)
+            return solves,unk_list
+        else:
+            return None,None
+    
+    def compute_postfix_expression(self,post_exp):
+        st = list()
+        operators = ["+", "-", "^", "*", "/"]
+        for p in post_exp:
+            if p not in operators:
+                pos = re.search("\d+\(", p)
+                if pos:
+                    st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
+                elif p[-1] == "%":
+                        st.append(float(p[:-1]) / 100)
+                elif p.isalpha():
+                    if p in self.unk_symbols:
+                        st.append(self.unk_symbols[p])
+                    else:
+                        x=sym.symbols(p)
+                        st.append(x)
+                        self.unk_symbols[p]=x
+                else:
+                    st.append(eval(p))
+            elif p == "+" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(a + b)
+            elif p == "*" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(a * b)
+            elif p == "/" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if a == 0:
+                    return None
+                st.append(b / a)
+            elif p == "-" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(b - a)
+            elif p == "^" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if float(b) != 2.0 and float(b) != 3.0:
+                    return None
+                st.append(a ** b)
+            else:
+                return None
+        if len(st) == 1:
+            return st.pop()
+        return None
 class PreEvaluater(AbstractEvaluater):
     def __init__(self, symbol2idx, idx2symbol, config):
         super().__init__(symbol2idx, idx2symbol, config)

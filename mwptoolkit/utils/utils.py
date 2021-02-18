@@ -111,8 +111,12 @@ def get_trainer(task_type, model_name):
             return getattr(
                 importlib.import_module('mwptoolkit.trainer.trainer'),
                 'SingleEquationTrainer')
+        elif task_type == TaskType.MultiEquation:
+            return getattr(
+                importlib.import_module('mwptoolkit.trainer.trainer'),
+                'MultiEquationTrainer')
         else:
-            return getattr(importlib.import_module('mwptoolkit.trainer'),
+            return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
                            'Trainer')
 
 

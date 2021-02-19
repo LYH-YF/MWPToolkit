@@ -63,10 +63,10 @@ class SeqEvaluater(AbstractEvaluater):
             return False,False,res_exp,tar_exp
     
     def result_multi(self,test_res,test_tar,num_list,num_stack):
-        if num_stack != []:
-            print(1)
+        
         res_exp=self.out_expression_list(test_res,num_list,copy.deepcopy(num_stack))
         tar_exp=self.out_expression_list(test_tar,num_list,copy.deepcopy(num_stack))
+
         if res_exp==tar_exp:
             return True,True,res_exp,tar_exp
         ans_res,unk_symbols_res=self.compute_expression_by_postfix(res_exp)
@@ -163,6 +163,7 @@ class SeqEvaluater(AbstractEvaluater):
             else:
                 equation.append(symbol)
         return equation
+    
     def compute_expression(self,expression,num_list):
         #alphabet="abcdefghijklmnopqrstuvwxyz"
         list_len=len(num_list)
@@ -201,12 +202,18 @@ class SeqEvaluater(AbstractEvaluater):
         except:
             return None,None
         left_exp,right_exp=expression[:eq_idx],expression[eq_idx+1:]
-        left_exp=from_infix_to_postfix(left_exp)
-        right_exp=from_infix_to_postfix(right_exp)
+        try:
+            left_exp=from_infix_to_postfix(left_exp)
+            right_exp=from_infix_to_postfix(right_exp)
+        except:
+            return None,None
         self.unk_symbols={}
-        left_s=self.compute_postfix_expression(left_exp)
-        right_s=self.compute_postfix_expression(right_exp)
-        if left_s!=None and right_s != None:
+        try:
+            left_s=self.compute_postfix_expression(left_exp)
+            right_s=self.compute_postfix_expression(right_exp)
+        except:
+            return None,None
+        if left_s !=None and right_s != None:
             unk_list=list(self.unk_symbols.values())
             f=sym.Eq(left_s,right_s)
             solves=sym.solve(f,unk_list)

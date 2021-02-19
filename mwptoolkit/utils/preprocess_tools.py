@@ -322,7 +322,10 @@ def seg_and_tag_mawps(st,nums_fraction,nums):  # seg the equation and tag the nu
         except:
             try:
                 number=str(int(eval(st_num)))
-                res.append(nums[number])
+                if abs(eval(number)-eval(st_num))<1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
             except:
                 res.append(st_num)
         if p_end < len(st):

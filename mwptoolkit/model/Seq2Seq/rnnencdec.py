@@ -37,7 +37,7 @@ class RNNEncDec(nn.Module):
                                         config["encoder_rnn_cell_type"],config["dropout_ratio"])
         if self.attention:
             self.decoder=AttentionalRNNDecoder(config["embedding_size"],config["decode_hidden_size"],config["hidden_size"],\
-                                                config["num_layers"],config["rnn_cell_type"],config["dropout_ratio"])
+                                                config["num_layers"],config["decoder_rnn_cell_type"],config["dropout_ratio"])
         else:
             self.decoder=BasicRNNDecoder(config["embedding_size"],config["decode_hidden_size"],config["num_layers"],\
                                             config["decoder_rnn_cell_type"],config["dropout_ratio"])

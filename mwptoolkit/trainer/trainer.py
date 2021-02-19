@@ -168,18 +168,18 @@ class Trainer(AbstractTrainer):
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
 
-            self.logger.info("epoch [%2d] avr loss [%2.8f] | train time {}"\
+            self.logger.info("epoch [%2d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                self.logger.info("---------- valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time {}"\
-                                %(valid_equ_ac,valid_val_ac,valid_time_cost))
+                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(test_equ_ac,test_val_ac,test_time_cost))
+                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
                 if valid_val_ac >= self.best_valid_value_accuracy:
                     self.best_valid_value_accuracy = valid_val_ac
@@ -220,8 +220,8 @@ class Trainer(AbstractTrainer):
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
         test_time_cost = time_since(time.time() - test_start_time)
-        self.logger.info("---------- test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
 
 
 class SingleEquationTrainer(Trainer):
@@ -330,18 +330,18 @@ class SingleEquationTrainer(Trainer):
             self.epoch_i = epo + 1
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
-            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time {}"\
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                self.logger.info("---------- valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time {}"\
-                                %(valid_equ_ac,valid_val_ac,valid_time_cost))
+                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(test_equ_ac,test_val_ac,test_time_cost))
+                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
                 if valid_val_ac >= self.best_valid_value_accuracy:
                     self.best_valid_value_accuracy = valid_val_ac
@@ -382,8 +382,8 @@ class SingleEquationTrainer(Trainer):
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
         test_time_cost = time_since(time.time() - test_start_time)
-        self.logger.info("test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
 
 class MultiEquationTrainer(Trainer):
     def __init__(self, config, model, dataloader, evaluator):
@@ -492,18 +492,18 @@ class MultiEquationTrainer(Trainer):
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
 
-            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time {}"\
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                self.logger.info("---------- valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time {}"\
-                                %(valid_equ_ac,valid_val_ac,valid_time_cost))
+                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(test_equ_ac,test_val_ac,test_time_cost))
+                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
                 if valid_val_ac >= self.best_valid_value_accuracy:
                     self.best_valid_value_accuracy = valid_val_ac
@@ -543,8 +543,8 @@ class MultiEquationTrainer(Trainer):
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
         test_time_cost = time_since(time.time() - test_start_time)
-        self.logger.info("test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
 
 
 class GTSTrainer(AbstractTrainer):
@@ -699,18 +699,18 @@ class GTSTrainer(AbstractTrainer):
             loss_total, train_time_cost = self._train_epoch()
             self._scheduler_step()
             
-            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time {}"\
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % 10 == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                self.logger.info("---------- valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time {}"\
-                                %(valid_equ_ac,valid_val_ac,valid_time_cost))
+                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(test_equ_ac,test_val_ac,test_time_cost))
+                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
                 if valid_val_ac >= self.best_valid_value_accuracy:
                     self.best_valid_value_accuracy = valid_val_ac
@@ -750,8 +750,8 @@ class GTSTrainer(AbstractTrainer):
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
         test_time_cost = time_since(time.time() - test_start_time)
-        self.logger.info("test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
 
 class TransformerTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):
@@ -859,21 +859,21 @@ class TransformerTrainer(AbstractTrainer):
 
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
-            # self.model.train()
-            # loss_total, train_time_cost = self._train_epoch()
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time {}"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost)\
-            #                     +"\n---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
+            self.model.train()
+            loss_total, train_time_cost = self._train_epoch()
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
+                                %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost)\
+                                +"\n---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
 
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Train)
 
-                self.logger.info("---------- valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time {}"\
-                                %(valid_equ_ac,valid_val_ac,valid_time_cost))
+                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- test equ acc [%2.3f] | test value acc [%2.3f] | test time {}"\
-                                %(test_equ_ac,test_val_ac,test_time_cost))
+                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
                 if valid_val_ac >= self.best_valid_value_accuracy:
                     self.best_valid_value_accuracy = valid_val_ac
@@ -899,6 +899,22 @@ class TransformerTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
+    def test(self):
+        self._load_model()
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        test_start_time = time.time()
+
+        for batch in self.dataloader.load_data(DatasetType.Test):
+            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
+            value_ac += batch_val_ac.count(True)
+            equation_ac += batch_equ_ac.count(True)
+            eval_total += len(batch_val_ac)
+        test_time_cost = time_since(time.time() - test_start_time)
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
 
 class SeqGANTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):

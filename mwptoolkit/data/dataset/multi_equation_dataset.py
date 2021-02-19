@@ -117,11 +117,11 @@ class MultiEquationDataset(AbstractDataset):
 
     def _build_symbol(self):
         if self.share_vocab:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [
-                SpecialTokens.EOS_TOKEN
-            ] + [SpecialTokens.UNK_TOKEN] + OPERATORS
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + OPERATORS
         else:
-            self.out_idx2symbol = SPECIAL_TOKENS + OPERATORS
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + OPERATORS
+        
+        self.num_start = len(self.out_idx2symbol)
         
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
@@ -157,8 +157,7 @@ class MultiEquationDataset(AbstractDataset):
             raise NotImplementedError(
                 "the type of masking number ({}) is not implemented".format(
                     self.mask_symbol))
-        #self.out_idx2symbol += self.generate_list
-        self.num_start = len(self.out_idx2symbol)
+
         self.out_idx2symbol += self.generate_list
         for data in self.trainset:
             words_list = data["equation"]
@@ -167,8 +166,13 @@ class MultiEquationDataset(AbstractDataset):
                     continue
                 elif word[0].isdigit():
                     continue
+                elif (word[0].isalpha() or word[0].isdigit()) is not True:
+                    self.out_idx2symbol.insert(self.num_start,word)
+                    self.num_start+=1
+                    continue
                 else:
                     self.out_idx2symbol.append(word)
-
+        self.out_idx2symbol +=[SpecialTokens.UNK_TOKEN]
+    
     def get_vocab_size(self):
         return len(self.in_idx2word), len(self.out_idx2symbol)

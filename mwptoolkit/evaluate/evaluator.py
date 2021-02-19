@@ -63,8 +63,10 @@ class SeqEvaluater(AbstractEvaluater):
             return False,False,res_exp,tar_exp
     
     def result_multi(self,test_res,test_tar,num_list,num_stack):
-        res_exp=self.out_expression_list(test_res,num_list,num_stack)
-        tar_exp=self.out_expression_list(test_tar,num_list,num_stack)
+        if num_stack != []:
+            print(1)
+        res_exp=self.out_expression_list(test_res,num_list,copy.deepcopy(num_stack))
+        tar_exp=self.out_expression_list(test_tar,num_list,copy.deepcopy(num_stack))
         if res_exp==tar_exp:
             return True,True,res_exp,tar_exp
         ans_res,unk_symbols_res=self.compute_expression_by_postfix(res_exp)

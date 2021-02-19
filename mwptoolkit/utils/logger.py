@@ -16,14 +16,9 @@ def init_logger(config):
         >>> logger.debug(train_state)
         >>> logger.info(train_result)
     """
-    LOGROOT = './log/'
-    dir_name = os.path.dirname(LOGROOT)
-    if not os.path.exists(dir_name):
-        os.makedirs(dir_name)
+    
 
-    logfilename = config['filename'] + '.log'
-
-    logfilepath = os.path.join(LOGROOT, logfilename)
+    logfilepath = config['log_path']
 
     filefmt = "%(asctime)-15s %(levelname)s %(message)s"
     filedatefmt = "%a %d %b %Y %H:%M:%S"

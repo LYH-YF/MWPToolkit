@@ -187,7 +187,7 @@ def number_transfer(data):  # transfer num into "NUM"
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums
 
-def number_transfer_(data,mask_type="NUM",min_generate_keep=5):
+def number_transfer_(data,mask_type="NUM",min_generate_keep=0):
     '''transfer num process
 
     Args:
@@ -334,7 +334,7 @@ def seg_and_tag_mawps(st,nums_fraction,nums):  # seg the equation and tag the nu
         else:
             res.append(ss)
     return res
-def num_transfer_mawps(data,mask_type="number",min_generate_keep=5):
+def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
     '''transfer num process
 
     Args:

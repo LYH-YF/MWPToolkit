@@ -1,5 +1,4 @@
 from logging import getLogger
-
 import torch
 
 from mwptoolkit.config.configuration import Config
@@ -7,6 +6,7 @@ from mwptoolkit.evaluate.evaluator import SeqEvaluater, PostEvaluater, PreEvalua
 from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
+from mwptoolkit.utils.logger import init_logger
 
 
 def train_cross_validation(config):
@@ -67,6 +67,7 @@ def run_toolkit():
     print(config["gpu_id"])
     init_seed(config['random_seed'], True)
 
+    init_logger(config)
     logger = getLogger()
 
     logger.info(config)

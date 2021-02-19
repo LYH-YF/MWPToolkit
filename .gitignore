@@ -6,3 +6,4 @@ __pycache__
 /dataset/mawps/MAWPS_.json
 *.pth
 /pretrain/gpt2
+*.log

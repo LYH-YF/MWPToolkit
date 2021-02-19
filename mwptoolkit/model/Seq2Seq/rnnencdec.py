@@ -12,7 +12,8 @@ class RNNEncDec(nn.Module):
         super().__init__()
         self.bidirectional=config["bidirectional"]
         self.hidden_size=config["hidden_size"]
-        self.rnn_cell_type=config["rnn_cell_type"]
+        self.encoder_rnn_cell_type=config["encoder_rnn_cell_type"]
+        self.decoder_rnn_cell_type=config["decoder_rnn_cell_type"]
         self.attention=config["attention"]
         self.share_vocab=config["share_vocab"]
         self.max_gen_len=30
@@ -33,13 +34,13 @@ class RNNEncDec(nn.Module):
             self.out_embedder=BaiscEmbedder(config["symbol_size"],config["embedding_size"],config["dropout_ratio"])
 
         self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
-                                        config["rnn_cell_type"],config["dropout_ratio"])
+                                        config["encoder_rnn_cell_type"],config["dropout_ratio"])
         if self.attention:
             self.decoder=AttentionalRNNDecoder(config["embedding_size"],config["decode_hidden_size"],config["hidden_size"],\
                                                 config["num_layers"],config["rnn_cell_type"],config["dropout_ratio"])
         else:
             self.decoder=BasicRNNDecoder(config["embedding_size"],config["decode_hidden_size"],config["num_layers"],\
-                                            config["rnn_cell_type"],config["dropout_ratio"])
+                                            config["decoder_rnn_cell_type"],config["dropout_ratio"])
         
         self.dropout = nn.Dropout(config["dropout_ratio"])
         self.generate_linear = nn.Linear(config["hidden_size"], config["symbol_size"])
@@ -53,10 +54,21 @@ class RNNEncDec(nn.Module):
 
         if self.bidirectional:
             encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
-            if (self.rnn_cell_type == 'lstm'):
+            if (self.encoder_rnn_cell_type == 'lstm'):
                 encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:
                 encoder_hidden = encoder_hidden[::2].contiguous()
+        if self.encoder.rnn_cell_type == self.decoder.rnn_cell_type:
+            pass
+        elif (self.encoder.rnn_cell_type == 'gru') and (self.decoder.rnn_cell_type == 'lstm'):
+            encoder_hidden = (encoder_hidden, encoder_hidden)
+        elif (self.encoder.rnn_cell_type == 'rnn') and (self.decoder.rnn_cell_type == 'lstm'):
+            encoder_hidden = (encoder_hidden, encoder_hidden)
+        elif (self.encoder.rnn_cell_type == 'lstm') and (self.decoder.rnn_cell_type == 'gru' or self.decoder.rnn_cell_type == 'rnn'):
+            encoder_hidden = encoder_hidden[0]
+        else:
+            pass
+
         decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
         if target!=None:
             token_logits=self.generate_t(encoder_outputs,encoder_hidden,decoder_inputs)

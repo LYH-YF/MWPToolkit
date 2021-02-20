@@ -1,5 +1,6 @@
 import re
 from copy import deepcopy
+from collections import OrderedDict
 
 from mwptoolkit.utils.enum_type import MaskSymbol,NumMask
 
@@ -220,7 +221,7 @@ def number_transfer_(data,mask_type="NUM",min_generate_keep=0):
         sent_idx=0
         equ_idx=0
         #nums = []
-        nums={}
+        nums=OrderedDict()
         num_list=[]
         input_seq = []
         seg = d["segmented_text"].split(" ")
@@ -370,8 +371,8 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
         sent_idx=0
         equ_idx=0
         #nums = []
-        nums={}
-        num_list=[]
+        nums=OrderedDict()
+        #num_list=[]
         input_seq = []
         seg = d["segmented_text"].split(" ")
         equations = d["equation"]
@@ -396,8 +397,6 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
                         input_seq.append(sent_mask_list[sent_idx])
                         equ_idx=(equ_idx+1)%len(equ_mask_list)
                         sent_idx=(sent_idx+1)%len(sent_mask_list)
-                    finally:
-                        num_list.append(s[pos.start():pos.end()])
                     if pos.end() < len(s):
                         input_seq.append(s[pos.end():])
                 else:
@@ -413,8 +412,9 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
         nums_fraction = sorted(nums_fraction,
                                key=lambda x: len(x),
                                reverse=True)
-
+        
         out_seq = seg_and_tag_mawps(equations,nums_fraction,nums)
+        num_list=list(nums.keys())
         for s in out_seq:  # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
@@ -423,9 +423,11 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
         num_pos = []
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_pos.append(i)
+        for num in num_list:
+            try:
+                num_pos.append(input_seq.index(num))
+            except:
+                continue
         assert len(num_list) == len(num_pos)
 
         #copy data

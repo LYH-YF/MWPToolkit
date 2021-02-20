@@ -16,6 +16,12 @@ class MultiEquationDataLoader(AbstractDataLoader):
         self.trainset_nums=len(dataset.trainset)
         self.validset_nums=len(dataset.validset)
         self.testset_nums=len(dataset.testset)
+    def _get_number_position(self,seq,num_list):
+        num_pos=[]
+        for num in num_list:
+            num_idx=self.dataset.in_word2idx[num]
+            num_pos.append(seq.index(num_idx))
+        return num_pos
     
     def load_data(self,type):
         if type == "train":
@@ -78,7 +84,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
             ques_source_batch.append(ques_source)
             equ_source_batch.append(equation)
             num_list_batch.append(data["number list"])
-            num_pos_batch.append(data["number position"])
+            #num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
             #ques_len_batch.append(len(data["question"]))
             ans_batch.append(data["ans"])
@@ -97,6 +103,12 @@ class MultiEquationDataLoader(AbstractDataLoader):
                 ques_tensor.append(idx)
             ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
             
+            try:
+                num_pos=self._get_number_position(equ_tensor,data["number list"])
+            except:
+                num_pos=data["number position"]
+            num_pos_batch.append(num_pos)
+
             for word in equation:
                 if self.share_vocab:
                     try:

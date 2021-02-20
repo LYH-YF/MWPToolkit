@@ -15,7 +15,7 @@
     "step_size":20,
 
     "share_vocab":false,
-    "mask_symbol":"alphabet",
+    "mask_symbol":"number",
     "attention":true,
     "symbol_for_tree":false
 }

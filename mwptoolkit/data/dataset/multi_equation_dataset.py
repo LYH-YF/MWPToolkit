@@ -1,8 +1,8 @@
 import copy
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
-from mwptoolkit.utils.preprocess_tools import number_transfer_, num_transfer_mawps
-from mwptoolkit.utils.enum_type import MaskSymbol, OPERATORS, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType
+from mwptoolkit.utils.preprocess_tools import number_transfer_, num_transfer_multi
+from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType
 
 class MultiEquationDataset(AbstractDataset):
     def __init__(self, config):
@@ -11,20 +11,18 @@ class MultiEquationDataset(AbstractDataset):
         self._load_dataset()
     
     def _preprocess(self):
-        self.trainset, generate_list, copy_nums = num_transfer_mawps(
-            self.trainset, self.mask_symbol, self.min_generate_keep)
-        self.validset, _g, _c = num_transfer_mawps(self.validset,
+        self.trainset, generate_list, copy_nums = num_transfer_multi(
+            self.trainset, self.mask_symbol, self.min_generate_keep,";")
+        self.validset, _g, _c = num_transfer_multi(self.validset,
                                                     self.mask_symbol,
-                                                    self.min_generate_keep)
-        self.testset, _g, _c = num_transfer_mawps(self.testset, self.mask_symbol,
-                                                    self.min_generate_keep)
+                                                    self.min_generate_keep,";")
+        self.testset, _g, _c = num_transfer_multi(self.testset, self.mask_symbol,
+                                                    self.min_generate_keep,";")
 
         if self.equation_fix == FixType.Prefix:
             fix = from_infix_to_prefix
-            raise NotImplementedError
         elif self.equation_fix == FixType.Postfix:
             fix = from_infix_to_postfix
-            raise NotImplementedError
         elif self.equation_fix == FixType.Nonfix:
             fix = None
         else:
@@ -36,7 +34,7 @@ class MultiEquationDataset(AbstractDataset):
 
         self.generate_list = generate_list
         self.copy_nums = copy_nums
-        self.operator_nums = len(OPERATORS)
+        self.operator_nums = len(Operators.Multi)
 
     def _build_vocab(self):
         words_count = {}
@@ -74,7 +72,7 @@ class MultiEquationDataset(AbstractDataset):
             self.out_symbol2idx[symbol] = idx
 
     def _build_symbol_for_tree(self):
-        self.out_idx2symbol = OPERATORS
+        self.out_idx2symbol = copy.deepcopy(Operators.Multi)
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
 
@@ -117,9 +115,9 @@ class MultiEquationDataset(AbstractDataset):
 
     def _build_symbol(self):
         if self.share_vocab:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + OPERATORS
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
         else:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + OPERATORS
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
         
         self.num_start = len(self.out_idx2symbol)
         

@@ -7,7 +7,10 @@ SOS_TOKEN = "<SOS>"
 EOS_TOKEN = "<EOS>"
 PAD_TOKEN_IDX = 0
 
-
+class Operators:
+    Single = ["+", "-", "*", "/", "^"]
+    Multi = ["+", "-", "*", "/", "^","=","<BRG>"]
+    
 class FixType:
     Prefix = "prefix"
     Postfix = "postfix"
@@ -30,6 +33,7 @@ class SpecialTokens:
     UNK_TOKEN = "<UNK>"
     SOS_TOKEN = "<SOS>"
     EOS_TOKEN = "<EOS>"
+    BRG_TOKEN = "<BRG>"
 
 
 class MaskSymbol:

@@ -2,7 +2,7 @@ import re
 from copy import deepcopy
 from collections import OrderedDict
 
-from mwptoolkit.utils.enum_type import MaskSymbol,NumMask
+from mwptoolkit.utils.enum_type import MaskSymbol,NumMask,SpecialTokens
 
 def split_number(text_list):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
@@ -297,7 +297,6 @@ def number_transfer_(data,mask_type="NUM",min_generate_keep=0):
 
 def seg_and_tag_mawps(st,nums_fraction,nums):  # seg the equation and tag the num
     res = []
-    st=re.sub(r"[a-zA-Z]{2,}","x",st)
     for n in nums_fraction:
         if n in st:
             p_start = st.find(n)
@@ -317,7 +316,7 @@ def seg_and_tag_mawps(st,nums_fraction,nums):  # seg the equation and tag the nu
         p_end = pos_st.end()
         if p_start > 0:
             res += seg_and_tag_mawps(st[:p_start],nums_fraction,nums)
-        st_num = st[p_start:p_end]
+        st_num = str(eval(st[p_start:p_end]))
         try:
             res.append(nums[st_num])
         except:
@@ -332,12 +331,25 @@ def seg_and_tag_mawps(st,nums_fraction,nums):  # seg the equation and tag the nu
         if p_end < len(st):
             res += seg_and_tag_mawps(st[p_end:],nums_fraction,nums)
         return res
+    pos_st = re.search("<BRG>",st)
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_mawps(st[:p_start],nums_fraction,nums)
+        res.append(st[p_start:p_end])
+        if p_end < len(st):
+            res += seg_and_tag_mawps(st[p_end:],nums_fraction,nums)
+        return res
     for ss in st:
         if ss.isalpha():
             res.append(ss.lower())
+        elif ss == " ":
+            continue
         else:
             res.append(ss)
     return res
+
 def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
     '''transfer num process
 
@@ -383,17 +395,20 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
             else:
                 pos = re.search(pattern, s)
                 if pos and pos.start() == 0:
-                    #nums.append(s[pos.start():pos.end()])
+                    number=str(eval(s[pos.start():pos.end()]))
                     try:
                         if mask_type=="NUM":
                             input_seq.append(sent_mask_list[sent_idx])
-                            nums[s[pos.start():pos.end()]]=equ_mask_list[equ_idx]
+                            #number=str(eval(s[pos.start():pos.end()]))
+                            nums[number]=equ_mask_list[equ_idx]
                             sent_idx=(sent_idx+1)%len(sent_mask_list)
                             equ_idx=(equ_idx+1)%len(equ_mask_list)
                         else:
-                            input_seq.append(nums[s[pos.start():pos.end()]])
+                            #number=str(eval(s[pos.start():pos.end()]))
+                            input_seq.append(nums[number])
                     except:
-                        nums[s[pos.start():pos.end()]]=equ_mask_list[equ_idx]
+                        #number=str(eval(s[pos.start():pos.end()]))
+                        nums[number]=equ_mask_list[equ_idx]
                         input_seq.append(sent_mask_list[sent_idx])
                         equ_idx=(equ_idx+1)%len(equ_mask_list)
                         sent_idx=(sent_idx+1)%len(sent_mask_list)
@@ -412,7 +427,8 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
         nums_fraction = sorted(nums_fraction,
                                key=lambda x: len(x),
                                reverse=True)
-        
+        # if d["id"]==76:
+        #     print(1)
         out_seq = seg_and_tag_mawps(equations,nums_fraction,nums)
         num_list=list(nums.keys())
         for s in out_seq:  # tag the num which is generated
@@ -423,7 +439,8 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
         num_pos = []
-        for num in num_list:
+        mask_num_list=list(nums.values())
+        for num in mask_num_list:
             try:
                 num_pos.append(input_seq.index(num))
             except:
@@ -444,12 +461,127 @@ def num_transfer_mawps(data,mask_type="number",min_generate_keep=0):
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums
 
+def num_transfer_multi(data,mask_type="number",min_generate_keep=0,equ_split_symbol=";"):
+    '''transfer num process
+
+    Args:
+        data: list.
+        mask_type: str | default 'NUM', the way to mask num, optinal['NUM', 'alphabet', 'number'].
+        min_generate_keep: int | default 5, the number to control if the numbers of equations will be kept as generating number.
+
+    Return:
+        processed_datas: list type.
+        generate_number: list type, symbols to generate extra.
+        copy_nums: int, the count of copied symbol from question to equation.
+    '''
+    if mask_type==MaskSymbol.NUM:
+        sent_mask_list=NumMask.NUM
+        equ_mask_list=NumMask.number
+    elif mask_type==MaskSymbol.alphabet:
+        sent_mask_list=NumMask.alphabet
+        equ_mask_list=NumMask.alphabet
+    elif mask_type==MaskSymbol.number:
+        sent_mask_list=NumMask.number
+        equ_mask_list=NumMask.number
+
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
+    
+    generate_nums = []
+    generate_nums_dict = {}
+    copy_nums = 0
+    processed_datas = []
+    for d in data:
+        sent_idx=0
+        equ_idx=0
+        #nums = []
+        nums=OrderedDict()
+        #num_list=[]
+        input_seq = []
+        seg = d["original_text"].split(" ")
+        equations = d["equation"]
+        equations = re.sub(r"[a-zA-Z]{2,}","x",equations)
+        equations = re.sub(equ_split_symbol,SpecialTokens.BRG_TOKEN,equations)
+
+        for s in seg:
+            if s == 0:
+                input_seq.append(s)
+            else:
+                pos = re.search(pattern, s)
+                if pos and pos.start() == 0:
+                    try:
+                        number=str(eval(s[pos.start():pos.end()]))
+                    except: # "%" in number 
+                        number=s[pos.start():pos.end()]
+                    try:
+                        if mask_type=="NUM":
+                            input_seq.append(sent_mask_list[sent_idx])
+                            #number=str(eval(s[pos.start():pos.end()]))
+                            nums[number]=equ_mask_list[equ_idx]
+                            sent_idx=(sent_idx+1)%len(sent_mask_list)
+                            equ_idx=(equ_idx+1)%len(equ_mask_list)
+                        else:
+                            #number=str(eval(s[pos.start():pos.end()]))
+                            input_seq.append(nums[number])
+                    except:
+                        #number=str(eval(s[pos.start():pos.end()]))
+                        nums[number]=equ_mask_list[equ_idx]
+                        input_seq.append(sent_mask_list[sent_idx])
+                        equ_idx=(equ_idx+1)%len(equ_mask_list)
+                        sent_idx=(sent_idx+1)%len(sent_mask_list)
+                    if pos.end() < len(s):
+                        input_seq.append(s[pos.end():])
+                else:
+                    input_seq.append(s)
+        nums_count=len(list(nums.keys()))
+        if copy_nums < nums_count:
+            copy_nums = nums_count
+        nums_fraction = []
+
+        for num,mask in nums.items():
+            if re.search("\d*\(\d+/\d+\)\d*", num):
+                nums_fraction.append(num)
+        nums_fraction = sorted(nums_fraction,
+                               key=lambda x: len(x),
+                               reverse=True)
+        # if d["id"]==76:
+        #     print(1)
+        out_seq = seg_and_tag_mawps(equations,nums_fraction,nums)
+        num_list=list(nums.keys())
+        for s in out_seq:  # tag the num which is generated
+            if s[0].isdigit() and s not in generate_nums and s not in num_list:
+                generate_nums.append(s)
+                generate_nums_dict[s] = 0
+            if s in generate_nums and s not in num_list:
+                generate_nums_dict[s] = generate_nums_dict[s] + 1
+
+        num_pos = []
+        mask_num_list=list(nums.values())
+        for num in mask_num_list:
+            try:
+                num_pos.append(input_seq.index(num))
+            except:
+                continue
+        assert len(num_list) == len(num_pos)
+
+        #copy data
+        new_data=d
+        new_data["question"]=input_seq
+        new_data["equation"]=out_seq
+        new_data["number list"]=num_list
+        new_data["number position"]=num_pos
+        processed_datas.append(new_data)
+
+    generate_number = []
+    for g in generate_nums:
+        if generate_nums_dict[g] >= min_generate_keep:
+            generate_number.append(g)
+    return processed_datas, generate_number, copy_nums
 def from_infix_to_postfix(expression):
     r"""postfix for expression
     """
     st = list()
     res = list()
-    priority = {"+": 0, "-": 0, "*": 1, "/": 1, "^": 2}
+    priority = {"<BRG>":0,"=":1,"+": 2, "-": 2, "*": 3, "/": 3, "^": 4}
     for e in expression:
         if e in ["(", "["]:
             st.append(e)
@@ -479,7 +611,7 @@ def from_infix_to_prefix(expression):
     """
     st = list()
     res = list()
-    priority = {"+": 0, "-": 0, "*": 1, "/": 1, "^": 2}
+    priority = {"<BRG>":0,"=":1,"+": 2, "-": 2, "*": 3, "/": 3, "^": 4}
     expression = deepcopy(expression)
     expression.reverse()
     for e in expression:

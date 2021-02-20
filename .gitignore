@@ -4,6 +4,7 @@ __pycache__
 /dataset/ape200k/process.py
 /dataset/mawps/dataprocess.py
 /dataset/mawps/MAWPS_.json
+/dataset/hmwp/process.py
 *.pth
 /pretrain/gpt2
 *.log

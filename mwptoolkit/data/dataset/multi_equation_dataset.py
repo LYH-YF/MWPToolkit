@@ -32,7 +32,7 @@ class MultiEquationDataset(AbstractDataset):
 
         self.fix_process(fix)
 
-        self.generate_list = generate_list
+        self.generate_list = unk_symbol+generate_list
         self.copy_nums = copy_nums
         self.operator_nums = len(Operators.Multi)
         self.unk_symbol=unk_symbol
@@ -75,8 +75,8 @@ class MultiEquationDataset(AbstractDataset):
     def _build_symbol_for_tree(self):
         self.out_idx2symbol = copy.deepcopy(Operators.Multi)
         self.num_start = len(self.out_idx2symbol)
-        self.out_idx2symbol += self.unk_symbol
         self.out_idx2symbol += self.generate_list
+        #self.out_idx2symbol += self.unk_symbol
 
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number

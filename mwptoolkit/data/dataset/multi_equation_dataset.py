@@ -11,12 +11,12 @@ class MultiEquationDataset(AbstractDataset):
         self._load_dataset()
     
     def _preprocess(self):
-        self.trainset, generate_list, copy_nums = num_transfer_multi(
+        self.trainset, generate_list, copy_nums, unk_symbol = num_transfer_multi(
             self.trainset, self.mask_symbol, self.min_generate_keep,";")
-        self.validset, _g, _c = num_transfer_multi(self.validset,
+        self.validset, _g, _c, _u = num_transfer_multi(self.validset,
                                                     self.mask_symbol,
                                                     self.min_generate_keep,";")
-        self.testset, _g, _c = num_transfer_multi(self.testset, self.mask_symbol,
+        self.testset, _g, _c, _u = num_transfer_multi(self.testset, self.mask_symbol,
                                                     self.min_generate_keep,";")
 
         if self.equation_fix == FixType.Prefix:
@@ -35,6 +35,7 @@ class MultiEquationDataset(AbstractDataset):
         self.generate_list = generate_list
         self.copy_nums = copy_nums
         self.operator_nums = len(Operators.Multi)
+        self.unk_symbol=unk_symbol
 
     def _build_vocab(self):
         words_count = {}
@@ -74,6 +75,7 @@ class MultiEquationDataset(AbstractDataset):
     def _build_symbol_for_tree(self):
         self.out_idx2symbol = copy.deepcopy(Operators.Multi)
         self.num_start = len(self.out_idx2symbol)
+        self.out_idx2symbol += self.unk_symbol
         self.out_idx2symbol += self.generate_list
 
         if self.mask_symbol == MaskSymbol.NUM:

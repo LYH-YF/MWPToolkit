@@ -2,7 +2,7 @@ import torch
 import time
 from logging import getLogger
 from mwptoolkit.utils.utils import time_since
-from mwptoolkit.utils.enum_type import PAD_TOKEN, DatasetType
+from mwptoolkit.utils.enum_type import PAD_TOKEN, DatasetType,TaskType
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
 from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.loss.binary_cross_entropy_loss import BinaryCrossEntropyLoss
@@ -137,7 +137,12 @@ class Trainer(AbstractTrainer):
         val_acc = []
         equ_acc = []
         for idx in range(batch_size):
-            val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            if self.config["task_type"]==TaskType.SingleEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            elif self.config["task_type"]==TaskType.MultiEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            else:
+                raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
         return val_acc, equ_acc
@@ -162,7 +167,7 @@ class Trainer(AbstractTrainer):
         epoch_nums = self.config["epoch_nums"]
 
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
-
+        self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
@@ -330,7 +335,8 @@ class SingleEquationTrainer(Trainer):
         epoch_nums = self.config["epoch_nums"]
 
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
-
+        
+        self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
@@ -361,6 +367,7 @@ class SingleEquationTrainer(Trainer):
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
                             %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
+    
     def evaluate(self, eval_set):
         self.model.eval()
         value_ac = 0
@@ -495,7 +502,8 @@ class MultiEquationTrainer(Trainer):
         epoch_nums = self.config["epoch_nums"]
 
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
-
+        
+        self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
@@ -681,8 +689,12 @@ class GTSTrainer(AbstractTrainer):
         generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
         test_out=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
                                 generate_nums,batch["num pos"],num_start)
-
-        val_ac, equ_ac, _, _ = self.evaluator.result(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
+        if self.config["task_type"]==TaskType.SingleEquation:
+            val_ac, equ_ac, _, _ = self.evaluator.result(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
+        elif self.config["task_type"]==TaskType.MultiEquation:
+            val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
+        else:
+            raise NotImplementedError
         return [val_ac], [equ_ac]
 
     def _train_epoch(self):
@@ -706,6 +718,8 @@ class GTSTrainer(AbstractTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        
+        self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
@@ -733,6 +747,12 @@ class GTSTrainer(AbstractTrainer):
                     self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+                            %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+                                self.best_test_equ_accuracy,self.best_test_value_accuracy))
+        
 
     def evaluate(self, eval_set):
         self._model_eval()
@@ -844,7 +864,7 @@ class TransformerTrainer(AbstractTrainer):
         val_acc = []
         equ_acc = []
         for idx in range(batch_size):
-            val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            val_ac, equ_ac, _, _ = self.evaluator.result(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
         return val_acc, equ_acc
@@ -869,7 +889,8 @@ class TransformerTrainer(AbstractTrainer):
         epoch_nums = self.config["epoch_nums"]
 
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
-
+        
+        self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
@@ -896,6 +917,12 @@ class TransformerTrainer(AbstractTrainer):
                     self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+                            %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+                                self.best_test_equ_accuracy,self.best_test_value_accuracy))
+                            
 
     def evaluate(self, eval_set):
         self.model.eval()

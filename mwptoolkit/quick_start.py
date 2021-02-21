@@ -63,8 +63,7 @@ def train_cross_validation(config):
 
 def run_toolkit():
     config = Config()
-    print(config["device"])
-    print(config["gpu_id"])
+    
     init_seed(config['random_seed'], True)
 
     init_logger(config)

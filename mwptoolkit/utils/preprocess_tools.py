@@ -310,13 +310,39 @@ def seg_and_tag_mawps(st,nums_fraction,nums):  # seg the equation and tag the nu
             if p_end < len(st):
                 res += seg_and_tag_mawps(st[p_end:],nums_fraction,nums)
             return res
-    pos_st = re.search("\d+\.\d+%?|\d+%?", st)
+    pos_st = re.search(r"([+]|-|[*]|/|[(])-(\d+\.\d+)",st) #search negative number but filtate minus symbol
+    if pos_st:
+        p_start = pos_st.start()+1
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_mawps(st[:p_start],nums_fraction,nums)
+        try:
+            st_num = str(eval(st[p_start:p_end]))
+        except: # % in number
+            st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number=str(int(eval(st_num)))
+                if abs(eval(number)-eval(st_num))<1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_mawps(st[p_end:],nums_fraction,nums)
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st) #search number including number with % symbol
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
         if p_start > 0:
             res += seg_and_tag_mawps(st[:p_start],nums_fraction,nums)
-        st_num = str(eval(st[p_start:p_end]))
+        try:
+            st_num = str(eval(st[p_start:p_end]))
+        except: # % in number
+            st_num = st[p_start:p_end]
         try:
             res.append(nums[st_num])
         except:
@@ -484,13 +510,17 @@ def num_transfer_multi(data,mask_type="number",min_generate_keep=0,equ_split_sym
         sent_mask_list=NumMask.number
         equ_mask_list=NumMask.number
 
-    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
     
     generate_nums = []
     generate_nums_dict = {}
     copy_nums = 0
     processed_datas = []
+    max_equ__len={}
+    unk_symbol=[]
     for d in data:
+        # if d["id"]==2022:
+        #     print(1)
         sent_idx=0
         equ_idx=0
         #nums = []
@@ -540,12 +570,18 @@ def num_transfer_multi(data,mask_type="number",min_generate_keep=0,equ_split_sym
         for num,mask in nums.items():
             if re.search("\d*\(\d+/\d+\)\d*", num):
                 nums_fraction.append(num)
+            # if re.search("-\d+|(-\d+\.\d+)",num):
+            #     nums_fraction.append(num)
         nums_fraction = sorted(nums_fraction,
                                key=lambda x: len(x),
                                reverse=True)
         # if d["id"]==76:
         #     print(1)
         out_seq = seg_and_tag_mawps(equations,nums_fraction,nums)
+        # try:
+        #     max_equ__len[len(out_seq)]+=1
+        # except:
+        #     max_equ__len[len(out_seq)]=1
         num_list=list(nums.keys())
         for s in out_seq:  # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
@@ -562,6 +598,12 @@ def num_transfer_multi(data,mask_type="number",min_generate_keep=0,equ_split_sym
             except:
                 continue
         assert len(num_list) == len(num_pos)
+        for symbol in out_seq:
+            if len(symbol)==1 and symbol.isalpha():
+                if symbol in unk_symbol:
+                    continue 
+                else:
+                    unk_symbol.append(symbol) 
 
         #copy data
         new_data=d
@@ -571,11 +613,13 @@ def num_transfer_multi(data,mask_type="number",min_generate_keep=0,equ_split_sym
         new_data["number position"]=num_pos
         processed_datas.append(new_data)
 
+
     generate_number = []
     for g in generate_nums:
         if generate_nums_dict[g] >= min_generate_keep:
             generate_number.append(g)
-    return processed_datas, generate_number, copy_nums
+    return processed_datas, generate_number, copy_nums,unk_symbol
+
 def from_infix_to_postfix(expression):
     r"""postfix for expression
     """

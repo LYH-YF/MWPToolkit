@@ -333,6 +333,7 @@ def seg_and_tag_mawps(st,nums_fraction,nums):  # seg the equation and tag the nu
                 res.append(st_num)
         if p_end < len(st):
             res += seg_and_tag_mawps(st[p_end:],nums_fraction,nums)
+        return res
     pos_st = re.search("\d+\.\d+%?|\d+%?", st) #search number including number with % symbol
     if pos_st:
         p_start = pos_st.start()

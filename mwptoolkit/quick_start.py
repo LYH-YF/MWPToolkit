@@ -115,6 +115,7 @@ def run_toolkit():
             config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
 
         trainer = get_trainer(config["task_type"], config["model"])(config, model, dataloader, evaluator)
+        logger.info(model)
         if config["test_only"]:
             trainer.test()
         else:

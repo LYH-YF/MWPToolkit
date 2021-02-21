@@ -265,3 +265,9 @@ class GTS(nn.Module):
             else:
                 r.append(i)
         return r
+    def __str__(self) -> str:
+        info=super().__str__()
+        total=sum(p.numel() for p in self.parameters())
+        trainable=sum(p.numel() for p in self.parameters() if p.requires_grad)
+        parameters="\ntotal parameters : {} \ntrainable parameters : {}".format(total,trainable)
+        return info+parameters

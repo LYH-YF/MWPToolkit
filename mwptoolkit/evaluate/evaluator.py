@@ -122,7 +122,6 @@ class SeqEvaluater(AbstractEvaluater):
                 return False, False, tar_exp, tar_exp
         except:
             return False, False, tar_exp, tar_exp
-        return False, False, tar_exp, tar_exp
 
     def out_expression_list(self, test, num_list, num_stack=None):
         #alphabet="abcdefghijklmnopqrstuvwxyz"
@@ -164,11 +163,11 @@ class SeqEvaluater(AbstractEvaluater):
             elif p == "+" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                st.append(a + b)
+                st.append(b + a)
             elif p == "*" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                st.append(a * b)
+                st.append(b * a)
             elif p == "/" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
@@ -182,9 +181,9 @@ class SeqEvaluater(AbstractEvaluater):
             elif p == "^" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                if float(b) != 2.0 and float(b) != 3.0:
+                if float(a) != 2.0 and float(a) != 3.0:
                     return None
-                st.append(a**b)
+                st.append(b**a)
             else:
                 return None
         if len(st) == 1:
@@ -633,7 +632,7 @@ class PostEvaluater(AbstractEvaluater):
             elif p == "+" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                st.append(a + b)
+                st.append(b + a)
             elif p == "*" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
@@ -651,9 +650,9 @@ class PostEvaluater(AbstractEvaluater):
             elif p == "^" and len(st) > 1:
                 a = st.pop()
                 b = st.pop()
-                if float(b) != 2.0 and float(b) != 3.0:
+                if float(a) != 2.0 and float(a) != 3.0:
                     return None
-                st.append(a**b)
+                st.append(b**a)
             else:
                 return None
         if len(st) == 1:

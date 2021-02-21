@@ -373,6 +373,8 @@ def number_transfer_ape200k(data,mask_type="NUM",min_generate_keep=0):
         seg = d["segmented_text"].split(" ")
         seg = joint_number_(seg)
         equations = d["equation"]
+        if "x=" == equations[:2] or "X=" == equations[:2]:
+            equations=equations[2:]
         if '千' in equations:
             equations = equations[:equations.index('千')]
 

@@ -26,7 +26,8 @@ class Config(object):
 
         self._merge_external_config_dict()
         self._build_final_config_dict()
-
+        
+        self._init_model_path()
         self._init_device()
 
     def _load_config(self):
@@ -116,20 +117,26 @@ class Config(object):
             self.model_config_dict=read_json_data(self.path_config_dict["model_config_path"])
         except:
             self.model_config_dict={}
+        for key,value in self.model_config_dict.items():
+            try:
+                self.model_config_dict[key]=self.cmd_config_dict[key]
+            except:
+                pass
     
     def _load_dataset_config(self):
         try:
             self.dataset_config_dict=read_json_data(self.path_config_dict["dataset_config_path"])
         except:
             self.dataset_config_dict={}
-    
+        for key,value in self.dataset_config_dict.items():
+            try:
+                self.dataset_config_dict[key]=self.cmd_config_dict[key]
+            except:
+                pass
     def _build_path_config(self):
         path_config_dict={}
         model_name=self.cmd_config_dict["model"]
         dataset_name=self.cmd_config_dict["dataset"]
-        path_config_dict["checkpoint_path"]='checkpoint/'+'{}-{}.pth'.format(model_name,dataset_name)
-        path_config_dict["trained_model_path"]='trained_model/'+'{}-{}.pth'.format(model_name,dataset_name)
-        path_config_dict["log_path"]='log/'+'{}-{}.log'.format(model_name,dataset_name)
         path_config_dict["model_config_path"]="mwptoolkit/properties/model/{}.json".format(model_name)
         path_config_dict["dataset_config_path"]="mwptoolkit/properties/dataset/{}.json".format(dataset_name)
         path_config_dict["dataset_path"]="dataset/{}".format(dataset_name)
@@ -137,10 +144,24 @@ class Config(object):
 
         for key,value in path_config_dict.items():
             try:
-                self.path_config_dict=self.cmd_config_dict[key]
+                self.path_config_dict[key]=self.cmd_config_dict[key]
             except:
                 pass
-    
+    def _init_model_path(self):
+        path_config_dict={}
+        model_name=self.final_config_dict["model"]
+        dataset_name=self.final_config_dict["dataset"]
+        fix=self.final_config_dict["equation_fix"]
+        path_config_dict["checkpoint_path"]='checkpoint/'+'{}-{}-{}.pth'.format(model_name,dataset_name,fix)
+        path_config_dict["trained_model_path"]='trained_model/'+'{}-{}-{}.pth'.format(model_name,dataset_name,fix)
+        path_config_dict["log_path"]='log/'+'{}-{}-{}.log'.format(model_name,dataset_name,fix)
+        for key,value in path_config_dict:
+            try:
+                path_config_dict[key]=self.cmd_config_dict[key]
+            except:
+                pass
+        self.path_config_dict.update(path_config_dict)
+        self.final_config_dict.update(path_config_dict)
     def _merge_external_config_dict(self):
         external_config_dict = dict()
         external_config_dict.update(self.file_config_dict)
@@ -165,7 +186,7 @@ class Config(object):
                 self.final_config_dict["gpu_id"]=""
         os.environ["CUDA_VISIBLE_DEVICES"]=str(self.final_config_dict["gpu_id"])
         self.final_config_dict['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.file_config_dict["map_location"]="cuda" if torch.cuda.is_available() else "cpu"
+        self.final_config_dict["map_location"]="cuda" if torch.cuda.is_available() else "cpu"
         
         
     

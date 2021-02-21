@@ -46,202 +46,113 @@ class SeqEvaluater(AbstractEvaluater):
     
     def result(self,test_res,test_tar,num_list,num_stack):
         r'''evaluate single equation'''
-        res_exp=self.out_expression(test_res)
-        tar_exp=self.out_expression(test_tar)
+        res_exp=self.out_expression_list(test_res,num_list,copy.deepcopy(num_stack))
+        tar_exp=self.out_expression_list(test_tar,num_list,copy.deepcopy(num_stack))
+        if res_exp==None:
+            return False,False,res_exp,tar_exp
         if res_exp==tar_exp:
             return True,True,res_exp,tar_exp
-        res_ans=self.compute_expression(res_exp,num_list)
-        tar_ans=self.compute_expression(tar_exp,num_list)
-        if res_ans !=None:
-            try:
-                if abs(res_ans-tar_ans)<1e-4:
-                    return True,False,res_exp,tar_exp
-                else:
-                    return False,False,res_exp,tar_exp
-            except:
-                return False,False,res_exp,tar_exp
-        else:
-            return False,False,res_exp,tar_exp
+        try:
+            if abs(self.compute_expression_by_postfix(res_exp) - self.compute_expression_by_postfix(tar_exp)) < 1e-4:
+                return True, False, tar_exp, tar_exp
+            else:
+                return False, False, tar_exp, tar_exp
+        except:
+            return False, False, tar_exp, tar_exp
     
     def result_multi(self,test_res,test_tar,num_list,num_stack):
         r'''evaluate multiple euqations'''
         res_exp=self.out_expression_list(test_res,num_list,copy.deepcopy(num_stack))
         tar_exp=self.out_expression_list(test_tar,num_list,copy.deepcopy(num_stack))
-
+        if res_exp==None:
+            return False, False, tar_exp, tar_exp
         if res_exp==tar_exp:
             return True,True,res_exp,tar_exp
-        ans_res,unk_symbols_res=self.compute_expression_by_postfix(res_exp)
-        ans_tar,unk_symbols_tar=self.compute_expression_by_postfix(tar_exp)
-        if ans_res == None:
-            return False,False,res_exp,tar_exp
-        else:
-            try:
-                if abs(ans_res[0]-ans_tar[0])<1e-4:
-                    return True,False,res_exp,tar_exp
+        try:
+            test_solves,test_unk=self.compute_expression_by_postfix_multi(res_exp)
+            tar_solves,tar_unk=self.compute_expression_by_pistfix_multi(res_exp)
+            if len(test_unk) != len(tar_unk):
+                return False, False, tar_exp, tar_exp
+            flag=False
+            if len(tar_unk) == 1:
+                if len(tar_solves)==1:
+                    test_ans=test_solves[list(test_unk.values())[0]]
+                    tar_ans=tar_solves[list(tar_unk.values())[0]]
+                    if abs(test_ans-tar_ans) < 1e-4:
+                        flag=True
                 else:
-                    return False,False,res_exp,tar_exp
-            except:
-                return False,False,res_exp,tar_exp
-        
-    def eval_source(self,test_res,test_tar,num_list,num_stack):
-        new_test_res=[]
-        for symbol in test_res:
-            try:
-                number=eval(symbol)
-                flag=True
-            except:
-                flag=False
-            if symbol in OPERATORS:
-                new_test_res.append(symbol)
-            elif symbol in NumMask.alphabet:
-                new_test_res.append(symbol)
-            elif flag == True:
-                new_test_res.append(symbol)
-            elif symbol in ['(',')','[',']']:
-                new_test_res.append(symbol)
+                    flag=True
+                    for test_ans,tar_ans in zip(test_solves,tar_solves):
+                        if abs(test_ans[0]-tar_ans[0]) > 1e-4:
+                            flag=False
+                            break
+                        
             else:
-                break
-        res_ans=self.compute_expression(new_test_res,num_list)
-        tar_ans=self.compute_expression(test_tar,num_list)
-        if res_ans !=None:
-            try:
-                if abs(res_ans-tar_ans)<1e-4:
-                    return True,False,new_test_res,test_tar
+                if len(tar_solves)==len(tar_unk):
+                    flag=True
+                    for test_x,tar_x in zip(test_unk.values(),tar_unk.values()):
+                        test_ans=test_solves[test_x]
+                        tar_ans=tar_solves[tar_x]
+                        if abs(test_ans-tar_ans) > 1e-4:
+                            flag=False
+                            break
                 else:
-                    return False,False,new_test_res,test_tar
-            except:
-                return False,False,new_test_res,test_tar
-        else:
-            return False,False,new_test_res,test_tar
-    
-    def out_expression(self,test, num_list, num_stack=None):
-        expression=[]
-        for idx in test:
-            if idx in [self.pad_idx,self.eos_idx,self.sos_idx]:
-                break
-            if idx == self.unk_idx:
-                try:
-                    pos_list = num_stack.pop()
-                    c = num_list[pos_list[0]]
-                    expression.append(str(c))
-                except:
-                    expression.append(SpecialTokens.UNK_TOKEN)
-            else:
-                symbol=self.idx2symbol[idx]
-                expression.append(symbol)
-        return expression
+                    for test_ans,tar_ans in zip(test_solves,tar_solves):
+                        try:
+                            te_ans=float(test_ans[0])
 
+                        except:
+                            te_ans=float(test_ans[1])
+                        try:
+                            ta_ans=float(tar_ans[0])
+                        except:
+                            ta_ans=float(tar_ans[1])
+                        if abs(te_ans-ta_ans) > 1e-4:
+                            flag=False
+                            break
+            if flag == True:
+                return True, False,tar_exp, tar_exp
+            else:
+                return False, False, tar_exp, tar_exp
+        except:
+            return False, False, tar_exp, tar_exp
+        return False, False, tar_exp, tar_exp
+    
     def out_expression_list(self,test, num_list, num_stack=None):
-        expression=[]
-        for idx in test:
-            if idx in [self.pad_idx,self.eos_idx,self.sos_idx]:
+        #alphabet="abcdefghijklmnopqrstuvwxyz"
+        num_len=len(num_list)
+        max_index = len(self.idx2symbol)
+        res = []
+        for i in test:
+            if i in [self.pad_idx,self.eos_idx,self.sos_idx]:
                 break
-            if idx == self.unk_idx:
+            symbol = self.idx2symbol[i]
+            if "NUM" in symbol:
+                num_idx=self.mask_list.index(symbol)
+                if num_idx >= num_len:
+                    return None
+                res.append(num_list[num_idx])
+            elif symbol==SpecialTokens.UNK_TOKEN:
                 try:
                     pos_list = num_stack.pop()
                     c = num_list[pos_list[0]]
-                    expression.append(str(c))
+                    res.append(c)
                 except:
-                    expression.append(SpecialTokens.UNK_TOKEN)
-            symbol=self.idx2symbol[idx]
-            expression.append(symbol)
-        #mask to num
-        if "=" not in expression:
-            return None
-        list_len=len(num_list)
-        equation=[]
-        for symbol in expression:
-            if symbol == SpecialTokens.UNK_TOKEN:
-                return None
-            if "NUM" in symbol:
-                num_idx=self.mask_list.index(symbol)
-                if num_idx>=list_len:
                     return None
-                else:
-                    num=num_list[num_idx]
-                    if "%" in num:
-                        num=str(eval(num[:-1]+"/100"))
-                        equation.append(num)
-                    else:
-                        equation.append(num_list[num_idx])
             else:
-                equation.append(symbol)
-        return equation
+                res.append(symbol)
+        return res
     
-    def compute_expression(self,expression,num_list):
-        #alphabet="abcdefghijklmnopqrstuvwxyz"
-        list_len=len(num_list)
-        equation=[]
-        for symbol in expression:
-            if "NUM" in symbol:
-                num_idx=self.mask_list.index(symbol)
-                if num_idx>=list_len:
-                    return None
-                else:
-                    num=num_list[num_idx]
-                    if "%" in num:
-                        num=str(eval(num[:-1]+"/100"))
-                        equation.append(num)
-                    else:
-                        equation.append(num_list[num_idx])
-            else:
-                if symbol=="^":
-                    equation.append("**")
-                elif symbol=="[":
-                    equation.append("(")
-                elif symbol=="]":
-                    equation.append(")")
-                else:
-                    equation.append(symbol)
-        equation=''.join(equation)
-        try:
-            ans=eval(equation)
-            return ans
-        except:
-            return None
-
-    def compute_expression_by_postfix(self,expression):
-        try:
-            eq_idx=expression.index("=")
-        except:
-            return None,None
-        left_exp,right_exp=expression[:eq_idx],expression[eq_idx+1:]
-        try:
-            left_exp=from_infix_to_postfix(left_exp)
-            right_exp=from_infix_to_postfix(right_exp)
-        except:
-            return None,None
-        self.unk_symbols={}
-        try:
-            left_s=self.compute_postfix_expression(left_exp)
-            right_s=self.compute_postfix_expression(right_exp)
-        except:
-            return None,None
-        if left_s !=None and right_s != None:
-            unk_list=list(self.unk_symbols.values())
-            f=sym.Eq(left_s,right_s)
-            solves=sym.solve(f,unk_list)
-            return solves,unk_list
-        else:
-            return None,None
-    
-    def compute_postfix_expression(self,post_exp):
+    def compute_postfix_expression(self,post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/"]
-        for p in post_exp:
+        for p in post_fix:
             if p not in operators:
                 pos = re.search("\d+\(", p)
                 if pos:
                     st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
                 elif p[-1] == "%":
                         st.append(float(p[:-1]) / 100)
-                elif p.isalpha():
-                    if p in self.unk_symbols:
-                        st.append(self.unk_symbols[p])
-                    else:
-                        x=sym.symbols(p)
-                        st.append(x)
-                        self.unk_symbols[p]=x
                 else:
                     st.append(eval(p))
             elif p == "+" and len(st) > 1:
@@ -273,7 +184,113 @@ class SeqEvaluater(AbstractEvaluater):
         if len(st) == 1:
             return st.pop()
         return None
-
+    
+    def compute_postfix_expression_multi(self,post_exp):
+        st = list()
+        operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
+        unk_symbols={}
+        for p in post_fix:
+            if p not in operators:
+                pos = re.search("\d+\(", p)
+                if pos:
+                    st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
+                elif p[-1] == "%":
+                        st.append(float(p[:-1]) / 100)
+                elif p.isalpha():
+                    if p in unk_symbols:
+                        st.append(unk_symbols[p])
+                    else:
+                        x=sym.symbols(p)
+                        st.append(x)
+                        unk_symbols[p]=x
+                else:
+                    st.append(eval(p))
+            elif p == "+" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(b + a)
+            elif p == "*" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(b * a)
+            elif p == "/" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if a == 0:
+                    return None,unk_symbols
+                st.append(b / a)
+            elif p == "-" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(b - a)
+            elif p == "^" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if float(a) != 2.0 and float(a) != 3.0:
+                    return None,unk_symbols
+                st.append(b ** a)
+            elif p == "=":
+                a = st.pop()
+                b = st.pop()
+                st.append([sym.Eq(b,a)])
+            elif p == "<BRG>":
+                a = st.pop()
+                b = st.pop()
+                st.append(b+a)
+            else:
+                return None,unk_symbols
+        if len(st) == 1:
+            equations=st.pop()
+            unk_list=list(self.unk_symbols.values())
+            result=sym.solve(equations,unk_list)
+            return result,self.unk_symbols
+        return None,unk_symbols
+    
+    def compute_expression_by_postfix(self,expression):
+        try:
+            post_exp=from_infix_to_postfix(expression)
+        except:
+            return None
+        return self.compute_postfix_expression(post_exp)
+    
+    def compute_expression_by_postfix_multi(self,expression):
+        try:
+            post_exp=from_infix_to_postfix(expression)
+        except:
+            return None,None
+        return self.compute_postfix_expression_multi(post_exp)
+    
+    def eval_source(self,test_res,test_tar,num_list,num_stack):
+        new_test_res=[]
+        for symbol in test_res:
+            try:
+                number=eval(symbol)
+                flag=True
+            except:
+                flag=False
+            if symbol in OPERATORS:
+                new_test_res.append(symbol)
+            elif symbol in NumMask.alphabet:
+                new_test_res.append(symbol)
+            elif flag == True:
+                new_test_res.append(symbol)
+            elif symbol in ['(',')','[',']']:
+                new_test_res.append(symbol)
+            else:
+                break
+        res_ans=self.compute_expression(new_test_res,num_list)
+        tar_ans=self.compute_expression(test_tar,num_list)
+        if res_ans !=None:
+            try:
+                if abs(res_ans-tar_ans)<1e-4:
+                    return True,False,new_test_res,test_tar
+                else:
+                    return False,False,new_test_res,test_tar
+            except:
+                return False,False,new_test_res,test_tar
+        else:
+            return False,False,new_test_res,test_tar
+    
 class PreEvaluater(AbstractEvaluater):
     def __init__(self, symbol2idx, idx2symbol, config):
         super().__init__(symbol2idx, idx2symbol, config)
@@ -293,6 +310,64 @@ class PreEvaluater(AbstractEvaluater):
                 return False, False, test, tar
         except:
             return False, False, test, tar
+    
+    def result_multi(self,test_res,test_tar,num_list,num_stack):
+        test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
+        tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
+        #test = tar
+        #print(test, tar)
+        if test is None:
+            return False, False, None, tar
+        if test == tar:
+            return True, True, None, tar
+        try:
+            test_solves,test_unk=self.compute_prefix_expression_multi(test)
+            tar_solves,tar_unk=self.compute_prefix_expression_multi(tar)
+            if len(test_unk) != len(tar_unk):
+                return False, False, test, tar 
+            flag=False
+            if len(tar_unk) == 1:
+                if len(tar_solves)==1:
+                    test_ans=test_solves[list(test_unk.values())[0]]
+                    tar_ans=tar_solves[list(tar_unk.values())[0]]
+                    if abs(test_ans-tar_ans) < 1e-4:
+                        flag=True
+                else:
+                    flag=True
+                    for test_ans,tar_ans in zip(test_solves,tar_solves):
+                        if abs(test_ans[0]-tar_ans[0]) > 1e-4:
+                            flag=False
+                            break
+                        
+            else:
+                if len(tar_solves)==len(tar_unk):
+                    flag=True
+                    for tar_x in list(tar_unk.values()):
+                        test_ans=test_solves[tar_x]
+                        tar_ans=tar_solves[tar_x]
+                        if abs(test_ans-tar_ans) > 1e-4:
+                            flag=False
+                            break
+                else:
+                    for test_ans,tar_ans in zip(test_solves,tar_solves):
+                        try:
+                            te_ans=float(test_ans[0])
+                        except:
+                            te_ans=float(test_ans[1])
+                        try:
+                            ta_ans=float(tar_ans[0])
+                        except:
+                            ta_ans=float(tar_ans[1])
+                        if abs(te_ans-ta_ans) > 1e-4:
+                            flag=False
+                            break
+            if flag == True:
+                return True, False,test, tar 
+            else:
+                return False, False, test, tar 
+        except:
+            return False, False, test, tar 
+        return False, False, test, tar
     
     def out_expression_list(self,test, num_list, num_stack=None):
         #alphabet="abcdefghijklmnopqrstuvwxyz"
@@ -314,7 +389,7 @@ class PreEvaluater(AbstractEvaluater):
                     c = num_list[pos_list[0]]
                     res.append(c)
                 except:
-                    res.append(SpecialTokens.UNK_TOKEN)
+                    return None
             else:
                 res.append(symbol)
         return res
@@ -361,6 +436,66 @@ class PreEvaluater(AbstractEvaluater):
                 if float(b) != 2.0 and float(b) != 3.0:
                     return None
                 st.append(a ** b)
+            else:
+                return None
+        if len(st) == 1:
+            return st.pop()
+        return None
+    
+    def compute_prefix_expression_multi(self,prefix):
+        st = list()
+        operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
+        unk_symbols={}
+        pre_fix = copy.deepcopy(pre_fix)
+        pre_fix.reverse()
+        for p in pre_fix:
+            if p not in operators:
+                pos = re.search("\d+\(", p)
+                if pos:
+                    st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
+                elif p[-1] == "%":
+                    st.append(float(p[:-1]) / 100)
+                elif p.isalpha():
+                    if p in unk_symbols:
+                        st.append(unk_symbols[p])
+                    else:
+                        x=sym.symbols(p)
+                        st.append(x)
+                        unk_symbols[p]=x
+                else:
+                    st.append(eval(p))
+            elif p == "+" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(a + b)
+            elif p == "*" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(a * b)
+            elif p == "/" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if b == 0:
+                    return None
+                st.append(a / b)
+            elif p == "-" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                st.append(a - b)
+            elif p == "^" and len(st) > 1:
+                a = st.pop()
+                b = st.pop()
+                if float(b) != 2.0 and float(b) != 3.0:
+                    return None
+                st.append(a ** b)
+            elif p == "=":
+                a = st.pop()
+                b = st.pop()
+                st.append([sym.Eq(a,b)])
+            elif p == "<BRG>":
+                a = st.pop()
+                b = st.pop()
+                st.append(a+b)
             else:
                 return None
         if len(st) == 1:
@@ -421,8 +556,8 @@ class PostEvaluater(AbstractEvaluater):
             else:
                 if len(tar_solves)==len(tar_unk):
                     flag=True
-                    for test_x,tar_x in zip(test_unk.values(),tar_unk.values()):
-                        test_ans=test_solves[test_x]
+                    for tar_x in list(tar_unk.values()):
+                        test_ans=test_solves[tar_x]
                         tar_ans=tar_solves[tar_x]
                         if abs(test_ans-tar_ans) > 1e-4:
                             flag=False
@@ -448,6 +583,7 @@ class PostEvaluater(AbstractEvaluater):
         except:
             return False, False, test, tar 
         return False, False, test, tar
+    
     def out_expression_list(self,test, num_list, num_stack=None):
         #alphabet="abcdefghijklmnopqrstuvwxyz"
         num_len=len(num_list)
@@ -468,7 +604,7 @@ class PostEvaluater(AbstractEvaluater):
                     c = num_list[pos_list[0]]
                     res.append(c)
                 except:
-                    res.append(SpecialTokens.UNK_TOKEN)
+                    return None
             else:
                 res.append(symbol)
         return res
@@ -518,7 +654,7 @@ class PostEvaluater(AbstractEvaluater):
     def compute_postfix_expression_multi(self,post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
-        self.unk_symbols={}
+        unk_symbols={}
         for p in post_fix:
             if p not in operators:
                 pos = re.search("\d+\(", p)
@@ -527,12 +663,12 @@ class PostEvaluater(AbstractEvaluater):
                 elif p[-1] == "%":
                         st.append(float(p[:-1]) / 100)
                 elif p.isalpha():
-                    if p in self.unk_symbols:
-                        st.append(self.unk_symbols[p])
+                    if p in unk_symbols:
+                        st.append(unk_symbols[p])
                     else:
                         x=sym.symbols(p)
                         st.append(x)
-                        self.unk_symbols[p]=x
+                        unk_symbols[p]=x
                 else:
                     st.append(eval(p))
             elif p == "+" and len(st) > 1:
@@ -547,7 +683,7 @@ class PostEvaluater(AbstractEvaluater):
                 a = st.pop()
                 b = st.pop()
                 if a == 0:
-                    return None,self.unk_symbols
+                    return None,unk_symbols
                 st.append(b / a)
             elif p == "-" and len(st) > 1:
                 a = st.pop()
@@ -557,24 +693,24 @@ class PostEvaluater(AbstractEvaluater):
                 a = st.pop()
                 b = st.pop()
                 if float(a) != 2.0 and float(a) != 3.0:
-                    return None,self.unk_symbols
+                    return None,unk_symbols
                 st.append(b ** a)
             elif p == "=":
                 a = st.pop()
                 b = st.pop()
-                st.append([sym.Eq(a,b)])
+                st.append([sym.Eq(b,a)])
             elif p == "<BRG>":
                 a = st.pop()
                 b = st.pop()
-                st.append(a+b)
+                st.append(b+a)
             else:
-                return None,self.unk_symbols
+                return None,unk_symbols
         if len(st) == 1:
             equations=st.pop()
             unk_list=list(self.unk_symbols.values())
             result=sym.solve(equations,unk_list)
             return result,self.unk_symbols
-        return None,self.unk_symbols
+        return None,unk_symbols
     
     def eval_source(self):
         raise NotImplementedError

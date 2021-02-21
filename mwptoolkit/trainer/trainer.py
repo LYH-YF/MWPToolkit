@@ -168,17 +168,17 @@ class Trainer(AbstractTrainer):
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
 
-            self.logger.info("epoch [%2d] avr loss [%2.8f] | train time %s"\
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % 2 == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                self.logger.info("----------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
                                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                self.logger.info("----------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
                 if valid_val_ac >= self.best_valid_value_accuracy:
@@ -189,7 +189,12 @@ class Trainer(AbstractTrainer):
                     self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
-
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+                            %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+                                self.best_test_equ_accuracyself.best_test_value_accuracy))
+    
     def evaluate(self, eval_set):
         self.model.eval()
         value_ac = 0
@@ -351,7 +356,11 @@ class SingleEquationTrainer(Trainer):
                     self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
-
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+                            %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+                                self.best_test_equ_accuracyself.best_test_value_accuracy))
     def evaluate(self, eval_set):
         self.model.eval()
         value_ac = 0
@@ -513,7 +522,11 @@ class MultiEquationTrainer(Trainer):
                     self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
-
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+                            %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+                                self.best_test_equ_accuracyself.best_test_value_accuracy))
     def evaluate(self, eval_set):
         self.model.eval()
         value_ac = 0

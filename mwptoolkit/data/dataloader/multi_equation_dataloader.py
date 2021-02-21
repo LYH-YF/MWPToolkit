@@ -77,6 +77,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
         for data in batch_data:
             ques_tensor = []
             equ_tensor = []
+            num_pos=[]
             sentence = data["question"]
             equation = data["equation"]
             ques_source=''.join(sentence)
@@ -88,7 +89,6 @@ class MultiEquationDataLoader(AbstractDataLoader):
             id_batch.append(data["id"])
             #ques_len_batch.append(len(data["question"]))
             ans_batch.append(data["ans"])
-            num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
             num_stack_batch.append(
                 self._build_num_stack(equation, data["number list"]))
             if self.symbol_for_tree:
@@ -103,10 +103,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
                 ques_tensor.append(idx)
             ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
             
-            try:
-                num_pos=self._get_number_position(equ_tensor,data["number list"])
-            except:
-                num_pos=data["number position"]
+            num_pos=[pos+1 for pos in data["number position"]]
             num_pos_batch.append(num_pos)
 
             for word in equation:
@@ -135,9 +132,9 @@ class MultiEquationDataLoader(AbstractDataLoader):
             equ_batch.append(equ_tensor)
         ques_batch=self._pad_input_batch(ques_batch,ques_len_batch)
         equ_batch=self._pad_output_batch(equ_batch,equ_len_batch)
-        
         ques_mask_batch=self._get_mask(ques_len_batch)
         equ_mask_batch=self._get_mask(equ_len_batch)
+        num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
         num_mask_batch = get_num_mask(num_size_batch, self.dataset.generate_list)
 
         # to tensor

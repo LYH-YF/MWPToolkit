@@ -14,6 +14,7 @@ class AbstractDataset(object):
         self.symbol_for_tree = config["symbol_for_tree"]
         self.share_vocab = config["share_vocab"]
         self.k_fold = config["k_fold"]
+        self.dataset = config["dataset"]
 
     def _load_dataset(self):
         '''

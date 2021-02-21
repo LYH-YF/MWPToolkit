@@ -71,14 +71,14 @@ class SeqEvaluater(AbstractEvaluater):
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         if res_exp == None:
-            return False, False, tar_exp, tar_exp
+            return False, False, res_exp, tar_exp
         if res_exp == tar_exp:
             return True, True, res_exp, tar_exp
         try:
             test_solves, test_unk = self.compute_expression_by_postfix_multi(res_exp)
-            tar_solves, tar_unk = self.compute_expression_by_postfix_multi(res_exp)
+            tar_solves, tar_unk = self.compute_expression_by_postfix_multi(tar_exp)
             if len(test_unk) != len(tar_unk):
-                return False, False, tar_exp, tar_exp
+                return False, False, res_exp, tar_exp
             flag = False
             if len(tar_unk) == 1:
                 if len(tar_solves) == 1:
@@ -96,8 +96,8 @@ class SeqEvaluater(AbstractEvaluater):
             else:
                 if len(tar_solves) == len(tar_unk):
                     flag = True
-                    for test_x, tar_x in zip(test_unk.values(), tar_unk.values()):
-                        test_ans = test_solves[test_x]
+                    for tar_x in list(tar_unk.values()):
+                        test_ans = test_solves[tar_x]
                         tar_ans = tar_solves[tar_x]
                         if abs(test_ans - tar_ans) > 1e-4:
                             flag = False

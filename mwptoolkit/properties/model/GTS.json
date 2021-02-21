@@ -12,6 +12,6 @@
     "dropout_ratio":0.5,
     "step_size":20,
     "share_vocab":false,
-    "mask_symbol":"NUM",
+    "mask_symbol":"number",
     "symbol_for_tree":true
 }

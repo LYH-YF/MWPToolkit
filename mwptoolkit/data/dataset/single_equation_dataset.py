@@ -1,7 +1,7 @@
 import copy
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import number_transfer_, from_infix_to_postfix, from_infix_to_prefix
-from mwptoolkit.utils.enum_type import MaskSymbol, OPERATORS, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType
+from mwptoolkit.utils.enum_type import MaskSymbol, OPERATORS, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType,Operators
 
 
 class SingleEquationDataset(AbstractDataset):
@@ -72,7 +72,7 @@ class SingleEquationDataset(AbstractDataset):
             self.out_symbol2idx[symbol] = idx
 
     def _build_symbol_for_tree(self):
-        self.out_idx2symbol = OPERATORS
+        self.out_idx2symbol = copy.deepcopy(Operators.Single)
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
 

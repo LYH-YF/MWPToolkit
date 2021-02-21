@@ -39,6 +39,8 @@ class AbstractEvaluater(object):
             self.unk_idx=None
     def result(self):
         raise NotImplementedError
+    def result_multi(self):
+        raise NotImplementedError
 
 class SeqEvaluater(AbstractEvaluater):
     def __init__(self, symbol2idx, idx2symbol, config):
@@ -185,7 +187,7 @@ class SeqEvaluater(AbstractEvaluater):
             return st.pop()
         return None
     
-    def compute_postfix_expression_multi(self,post_exp):
+    def compute_postfix_expression_multi(self,post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
         unk_symbols={}
@@ -317,9 +319,9 @@ class PreEvaluater(AbstractEvaluater):
         #test = tar
         #print(test, tar)
         if test is None:
-            return False, False, None, tar
+            return False, False, test, tar
         if test == tar:
-            return True, True, None, tar
+            return True, True, test, tar
         try:
             test_solves,test_unk=self.compute_prefix_expression_multi(test)
             tar_solves,tar_unk=self.compute_prefix_expression_multi(tar)
@@ -442,7 +444,7 @@ class PreEvaluater(AbstractEvaluater):
             return st.pop()
         return None
     
-    def compute_prefix_expression_multi(self,prefix):
+    def compute_prefix_expression_multi(self,pre_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
         unk_symbols={}
@@ -531,9 +533,9 @@ class PostEvaluater(AbstractEvaluater):
         #test = tar
         #print(test, tar)
         if test is None:
-            return False, False, None, tar
+            return False, False, test, tar
         if test == tar:
-            return True, True, None, tar
+            return True, True, test, tar
         try:
             test_solves,test_unk=self.compute_postfix_expression_multi(test)
             tar_solves,tar_unk=self.compute_postfix_expression_multi(tar)

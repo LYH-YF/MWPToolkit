@@ -155,7 +155,7 @@ class Config(object):
         path_config_dict["checkpoint_path"]='checkpoint/'+'{}-{}-{}.pth'.format(model_name,dataset_name,fix)
         path_config_dict["trained_model_path"]='trained_model/'+'{}-{}-{}.pth'.format(model_name,dataset_name,fix)
         path_config_dict["log_path"]='log/'+'{}-{}-{}.log'.format(model_name,dataset_name,fix)
-        for key,value in path_config_dict:
+        for key,value in path_config_dict.items():
             try:
                 path_config_dict[key]=self.cmd_config_dict[key]
             except:

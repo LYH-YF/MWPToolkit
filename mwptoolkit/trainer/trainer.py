@@ -193,7 +193,7 @@ class Trainer(AbstractTrainer):
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
                             %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
-                                self.best_test_equ_accuracyself.best_test_value_accuracy))
+                                self.best_test_equ_accuracy,self.best_test_value_accuracy))
     
     def evaluate(self, eval_set):
         self.model.eval()
@@ -360,7 +360,7 @@ class SingleEquationTrainer(Trainer):
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
                             %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
-                                self.best_test_equ_accuracyself.best_test_value_accuracy))
+                                self.best_test_equ_accuracy,self.best_test_value_accuracy))
     def evaluate(self, eval_set):
         self.model.eval()
         value_ac = 0
@@ -526,7 +526,7 @@ class MultiEquationTrainer(Trainer):
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
                             %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
-                                self.best_test_equ_accuracyself.best_test_value_accuracy))
+                                self.best_test_equ_accuracy,self.best_test_value_accuracy))
     def evaluate(self, eval_set):
         self.model.eval()
         value_ac = 0

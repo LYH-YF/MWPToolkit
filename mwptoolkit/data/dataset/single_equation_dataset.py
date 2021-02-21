@@ -1,8 +1,9 @@
 import copy
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
-from mwptoolkit.utils.preprocess_tools import number_transfer_, from_infix_to_postfix, from_infix_to_prefix
-from mwptoolkit.utils.enum_type import MaskSymbol, OPERATORS, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType,Operators
-
+from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
+from mwptoolkit.utils.preprocess_tools import number_transfer_, number_transfer_ape200k
+from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, FixType, Operators, DatesetName
+from mwptoolkit.utils.enum_type import OPERATORS, SPECIAL_TOKENS
 
 class SingleEquationDataset(AbstractDataset):
     def __init__(self, config):
@@ -11,13 +12,15 @@ class SingleEquationDataset(AbstractDataset):
         self._load_dataset()
 
     def _preprocess(self):
-        self.trainset, generate_list, copy_nums = number_transfer_(
-            self.trainset, self.mask_symbol, self.min_generate_keep)
-        self.validset, _g, _c = number_transfer_(self.validset,
-                                                 self.mask_symbol,
-                                                 self.min_generate_keep)
-        self.testset, _g, _c = number_transfer_(self.testset, self.mask_symbol,
-                                                self.min_generate_keep)
+        if self.dataset == DatesetName.math23k:
+            transfer = number_transfer_
+        elif self.dataset == DatesetName.ape200k:
+            transfer = number_transfer_ape200k
+        else:
+            NotImplementedError
+        self.trainset, generate_list, copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
+        self.validset, _g, _c = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
+        self.testset, _g, _c = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
 
         if self.equation_fix == FixType.Prefix:
             fix = from_infix_to_prefix
@@ -26,15 +29,13 @@ class SingleEquationDataset(AbstractDataset):
         elif self.equation_fix == FixType.Nonfix:
             fix = None
         else:
-            raise NotImplementedError(
-                "the type of equation fix ({}) is not implemented.".format(
-                    self.equation_fix))
+            raise NotImplementedError("the type of equation fix ({}) is not implemented.".format(self.equation_fix))
 
         self.fix_process(fix)
 
         self.generate_list = generate_list
         self.copy_nums = copy_nums
-        self.operator_nums = len(OPERATORS)
+        self.operator_nums = len(Operators.Single)
 
     def _build_vocab(self):
         words_count = {}
@@ -79,37 +80,23 @@ class SingleEquationDataset(AbstractDataset):
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
 
@@ -124,37 +111,23 @@ class SingleEquationDataset(AbstractDataset):
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
         for data in self.trainset:
             words_list = data["equation"]
             for word in words_list:
@@ -163,12 +136,12 @@ class SingleEquationDataset(AbstractDataset):
                 elif word[0].isdigit():
                     continue
                 elif (word[0].isalpha() or word[0].isdigit()) is not True:
-                    self.out_idx2symbol.insert(self.num_start,word)
-                    self.num_start+=1
+                    self.out_idx2symbol.insert(self.num_start, word)
+                    self.num_start += 1
                     continue
                 else:
                     self.out_idx2symbol.append(word)
-        self.out_idx2symbol+=[SpecialTokens.UNK_TOKEN]
+        self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
 
     def get_vocab_size(self):
         return len(self.in_idx2word), len(self.out_idx2symbol)

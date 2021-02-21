@@ -32,6 +32,44 @@ def joint_number(text_list):
             new_list.append(text_list[i])
             i += 1
     return new_list
+def joint_number_(text_list): #match longer fraction such as ( 1 / 1000000 )
+    new_list=[]
+    i=0
+    while i < len(text_list):
+        if text_list[i] == '(':
+            try:
+                j=text_list[i:].index(')')
+                if i+1==i+j:
+                    j=None
+                if "(" in text_list[i+1:i+j+1]:
+                    j=None
+            except:
+                j=None
+            if j:
+                stack=[]
+                flag=True
+                idx=0
+                for temp_idx,word in enumerate(text_list[i:i+j+1]):
+                    if word in ["(",")","/"] or word.isdigit():
+                        stack.append(word)
+                        idx=temp_idx
+                    else:
+                        flag=False
+                        break
+                if flag:
+                    number=''.join(stack)
+                    new_list.append(number)
+                else:
+                    for word in stack:
+                        new_list.append(word)
+                i+=idx+1
+            else:
+                new_list.append(text_list[i])
+                i+=1
+        else:
+            new_list.append(text_list[i])
+            i+=1
+    return new_list
 
 def search_number(seq,equ):
     for idx,symbol in enumerate(equ):
@@ -333,7 +371,8 @@ def number_transfer_ape200k(data,mask_type="NUM",min_generate_keep=0):
         num_list=[]
         input_seq = []
         seg = d["segmented_text"].split(" ")
-        equations = d["equation"][2:]
+        seg = joint_number_(seg)
+        equations = d["equation"]
         if '千' in equations:
             equations = equations[:equations.index('千')]
 
@@ -357,8 +396,6 @@ def number_transfer_ape200k(data,mask_type="NUM",min_generate_keep=0):
                         input_seq.append(sent_mask_list[sent_idx])
                         equ_idx=(equ_idx+1)%len(equ_mask_list)
                         sent_idx=(sent_idx+1)%len(sent_mask_list)
-                    finally:
-                        num_list.append(s[pos.start():pos.end()])
                     if pos.end() < len(s):
                         input_seq.append(s[pos.end():])
                 else:
@@ -374,9 +411,9 @@ def number_transfer_ape200k(data,mask_type="NUM",min_generate_keep=0):
         nums_fraction = sorted(nums_fraction,
                                key=lambda x: len(x),
                                reverse=True)
-        if d["id"]==133813:
-            print(1)
+        
         out_seq = seg_and_tag_(equations,nums_fraction,nums)
+        num_list=list(nums.keys())
         for s in out_seq:  # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
@@ -385,9 +422,12 @@ def number_transfer_ape200k(data,mask_type="NUM",min_generate_keep=0):
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
         num_pos = []
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_pos.append(i)
+        mask_num_list=list(nums.values())
+        for num in mask_num_list:
+            try:
+                num_pos.append(input_seq.index(num))
+            except:
+                continue
         assert len(num_list) == len(num_pos)
 
         #copy data

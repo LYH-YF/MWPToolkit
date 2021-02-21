@@ -13,6 +13,7 @@ class AbstractTrainer(object):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__()
         self.config = config
+        self.test_step=config["test_step"]
         self.model = model
         self.dataloader = dataloader
         self.evaluator = evaluator
@@ -176,7 +177,7 @@ class Trainer(AbstractTrainer):
             self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
-            if epo % 2 == 0 or epo > epoch_nums - 5:
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
                 self.logger.info("----------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
@@ -344,7 +345,7 @@ class SingleEquationTrainer(Trainer):
             self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
-            if epo % 2 == 0 or epo > epoch_nums - 5:
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
                 self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
@@ -512,7 +513,7 @@ class MultiEquationTrainer(Trainer):
             self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
-            if epo % 2 == 0 or epo > epoch_nums - 5:
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
                 self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
@@ -729,7 +730,7 @@ class GTSTrainer(AbstractTrainer):
             self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
-            if epo % 10 == 0 or epo > epoch_nums - 5:
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
                 self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
@@ -899,7 +900,7 @@ class TransformerTrainer(AbstractTrainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost)\
                                 +"\n---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
 
-            if epo % 2 == 0 or epo > epoch_nums - 5:
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Train)
 
                 self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
@@ -1144,7 +1145,7 @@ class SeqGANTrainer(AbstractTrainer):
             print("epoch [%2d] avr g_loss [%2.8f] avr d_loss [%2.8f]"%(self.epoch_i,g_loss_total/self.train_batch_nums,\
                                                                         d_loss_total/self.train_batch_nums))
             print("---------- train time {}".format(train_time_cost))
-            if epo % 2 == 0 or epo > epoch_nums - 5:
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 equation_ac, value_ac, eval_total, test_time_cost = self.evaluate()
                 print("---------- test equ acc [%2.3f] | test value acc [%2.3f]" % (equation_ac, value_ac))
                 print("---------- test time {}".format(test_time_cost))

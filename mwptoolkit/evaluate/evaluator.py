@@ -1,5 +1,6 @@
 import copy
 import re
+import eventlet
 import sympy as sym
 from mwptoolkit.utils.enum_type import SpecialTokens, OPERATORS, NumMask, MaskSymbol
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
@@ -54,7 +55,7 @@ class SeqEvaluater(AbstractEvaluater):
 
     def result(self, test_res, test_tar, num_list, num_stack):
         r'''evaluate single equation'''
-        if (self.single and self.linear) != true: # single but non-linear
+        if (self.single and self.linear) != True: # single but non-linear
             return self.result_multi(test_res, test_tar, num_list, num_stack)
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
@@ -251,7 +252,8 @@ class SeqEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            result = sym.solve(equations, unk_list)
+            with eventlet.Timeout(10,True):
+                result = sym.solve(equations, unk_list)
             return result, unk_symbols
         return None, unk_symbols
 
@@ -308,7 +310,7 @@ class PreEvaluater(AbstractEvaluater):
         super().__init__(symbol2idx, idx2symbol, config)
 
     def result(self, test_res, test_tar, num_list, num_stack):
-        if (self.single and self.linear) != true: # single but non-linear
+        if (self.single and self.linear) != True: # single but non-linear
             return self.result_multi(test_res, test_tar, num_list, num_stack)
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
@@ -515,7 +517,8 @@ class PreEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            result = sym.solve(equations, unk_list)
+            with eventlet.Timeout(10,True):
+                result = sym.solve(equations, unk_list)
             return result, unk_symbols
         return None
 
@@ -528,7 +531,7 @@ class PostEvaluater(AbstractEvaluater):
         super().__init__(symbol2idx, idx2symbol, config)
 
     def result(self, test_res, test_tar, num_list, num_stack):
-        if (self.single and self.linear) != true: # single but non-linear
+        if (self.single and self.linear) != True: # single but non-linear
             return self.result_multi(test_res, test_tar, num_list, num_stack)
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
@@ -726,7 +729,8 @@ class PostEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            result = sym.solve(equations, unk_list)
+            with eventlet.Timeout(10,True):
+                result = sym.solve(equations, unk_list)
             return result, unk_symbols
         return None, unk_symbols
 

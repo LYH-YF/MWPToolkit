@@ -13,6 +13,8 @@ class AbstractEvaluater(object):
         self.symbol2idx = symbol2idx
         self.idx2symbol = idx2symbol
         self.task_type = config["task_type"]
+        self.single = config["single"]
+        self.linear = config["linear"]
 
         if self.mask_symbol == MaskSymbol.NUM:
             self.mask_list = NumMask.number
@@ -52,6 +54,8 @@ class SeqEvaluater(AbstractEvaluater):
 
     def result(self, test_res, test_tar, num_list, num_stack):
         r'''evaluate single equation'''
+        if (self.single and self.linear) != true: # single but non-linear
+            return self.result_multi(test_res, test_tar, num_list, num_stack)
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         if res_exp == None:
@@ -259,6 +263,8 @@ class SeqEvaluater(AbstractEvaluater):
         return self.compute_postfix_expression(post_exp)
 
     def compute_expression_by_postfix_multi(self, expression):
+        r"""return solves and unknown number list
+        """
         try:
             post_exp = from_infix_to_postfix(expression)
         except:
@@ -302,6 +308,8 @@ class PreEvaluater(AbstractEvaluater):
         super().__init__(symbol2idx, idx2symbol, config)
 
     def result(self, test_res, test_tar, num_list, num_stack):
+        if (self.single and self.linear) != true: # single but non-linear
+            return self.result_multi(test_res, test_tar, num_list, num_stack)
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         # print(test, tar)
@@ -520,6 +528,8 @@ class PostEvaluater(AbstractEvaluater):
         super().__init__(symbol2idx, idx2symbol, config)
 
     def result(self, test_res, test_tar, num_list, num_stack):
+        if (self.single and self.linear) != true: # single but non-linear
+            return self.result_multi(test_res, test_tar, num_list, num_stack)
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         # print(test, tar)

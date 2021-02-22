@@ -2,5 +2,7 @@
     "equation_fix":"prefix",
     "min_word_keep":5,
     "min_generate_keep":0,
-    "mask_symbol":"number"
+    "mask_symbol":"number",
+    "single":false,
+    "linear":true
 }

@@ -3,5 +3,7 @@
     "min_word_keep":5,
     "min_generate_keep":0,
     "validset_divide":false,
-    "mask_symbol":"NUM"
+    "mask_symbol":"number",
+    "single":true,
+    "linear":true
 }

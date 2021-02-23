@@ -833,13 +833,3 @@ def from_infix_to_prefix(expression):
         res.append(st.pop())
     res.reverse()
     return res
-
-[
-    {
-        "id": "133813",
-        "segmented_text": "一 块 平 行 四 边 形 土 地 ， 底 是 200 米 ， 高 是 48 米 ， 它 的 面 积 是 多 少 公 顷 ．",
-        "original_text": "一块平行四边形土地，底是200米，高是48米，它的面积是多少公顷．",
-        "ans": "0.96",
-        "equation": "(200*48)/10000"
-    }
-]

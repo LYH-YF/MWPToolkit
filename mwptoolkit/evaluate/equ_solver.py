@@ -41,4 +41,13 @@ def joint_number_(text_list): #match longer fraction such as ( 1 / 1000000 )
             new_list.append(text_list[i])
             i+=1
     return new_list
-joint_number_([])
+#joint_number_([])
+x=[1,6,3,8,4,9,2,7]
+y=[]
+for i in x:
+    y.append({
+        "x":i,
+        "abc":i+1
+    })
+z=sorted(y,key=lambda x:x["x"],reverse=True)
+print(z)

@@ -1,0 +1,899 @@
+[
+    {
+        "id": 2157,
+        "original_text": "It takes a boat 4 hours to travel 24 miles down a river and 6 hours to return upstream to its starting point . What is the rate of the current in the river ?",
+        "equation": "4.0*m+4.0*n=24.0 ; 6.0*m-6.0*n=24.0",
+        "ans": [
+            1.0,
+            5.0
+        ]
+    },
+    {
+        "id": 5163,
+        "original_text": "To buy both a new car and a new house , Tina sought two loans totaling 318,338 dollars . The simple interest rate on the first loan was 2.4 % , while the simple interest rate on the second loan was 4.7 % . At the end of the first year , Tina paid a combined interest payment of 14,761.81 dollars . What were the amounts of the two loans ?",
+        "equation": "0.01*2.4*m+0.01*4.7*n=14761.81 ; n+m=318338.0",
+        "ans": [
+            8698.95652,
+            309639.04347
+        ]
+    },
+    {
+        "id": 5580,
+        "original_text": "Mary can purchase roses and daisies from a flower shop . She can buy four roses and five daisies for 7.90 dollars or two roses and six daisies for 5.70 dollars . What is the individual cost for each rose and daisy ?",
+        "equation": "4.0*m+5.0*n=7.9 ; 2.0*m+6.0*n=5.7",
+        "ans": [
+            1.35,
+            0.5
+        ]
+    },
+    {
+        "id": 6376,
+        "original_text": "The larger of two numbers is 23 less than twice the smaller . The sum of the two numbers is 70 . Find the two numbers .",
+        "equation": "2.0*m-n=23.0 ; m+n=70.0",
+        "ans": [
+            31.0,
+            39.0
+        ]
+    },
+    {
+        "id": 5669,
+        "original_text": "The sum of the numbers of boys and girls in a class is 36 . If twice the number of girls exceeds the number of boys by 12 , find the number of girls in the class . Find the number of boys .",
+        "equation": "2.0*m-n=12.0 ; m+n=36.0",
+        "ans": [
+            16.0,
+            20.0
+        ]
+    },
+    {
+        "id": 2423,
+        "original_text": "A garden table and a bench cost 750 combined . The price of the garden table is two times the price of the bench . What is the cost of the bench ?",
+        "equation": "m+n=750.0 ; n-2.0*m=0",
+        "ans": [
+            250.0,
+            500.0
+        ]
+    },
+    {
+        "id": 6355,
+        "original_text": "The difference between two numbers is 9 . Find the numbers , if their sum is 46 .",
+        "equation": "m+n=46.0 ; m-n=9.0",
+        "ans": [
+            27.5,
+            18.5
+        ]
+    },
+    {
+        "id": 6862,
+        "original_text": "A girl saves 1-dollar coins and 2-dollar coins . She takes it to a bank , she has 180 coins in total that equals 260 dollars . How many 1-dollar coins are there ? How many 2-dollar coins are there ?",
+        "equation": "1.0*m+2.0*n=260.0 ; m+n=180.0",
+        "ans": [
+            100.0,
+            80.0
+        ]
+    },
+    {
+        "id": 7938,
+        "original_text": "On a certain hot summer 's day , 754 people used the public swimming pool . The daily prices are 1.50 dollars for children and 2.25 dollars for adults . The receipts for admission totaled 1422.00 dollars . How many children and adults swam at the public pool that day ?",
+        "equation": "1.5*m+2.25*n=1422.0 ; m+n=754.0",
+        "ans": [
+            366.0,
+            388.0
+        ]
+    },
+    {
+        "id": 986,
+        "original_text": "kevin bought 3 muffins and a bottle of juice that cost 1.45 dollars . He paid a total of 3.70 dollars . How much did each muffin cost ?",
+        "equation": "3.0*m=3.7-1.45",
+        "ans": [
+            0.75
+        ]
+    },
+    {
+        "id": 289,
+        "original_text": "Norbert sold 23 books on Thursday for a certain price . On Friday , he sold 35 of the same books , but he charged 0.50 dollars less per book . He made 490.00 dollars in total . How much did the book sell for on Thursday ? How much did the book sell for on Friday ?",
+        "equation": "23.0*m+35.0*n=490.0 ; m-n=0.5",
+        "ans": [
+            8.75,
+            8.25
+        ]
+    },
+    {
+        "id": 658,
+        "original_text": "Manuel opened a savings account with an initial deposit of 177 dollars . If he wants to save 500 dollars during the next 19 weeks , how much must he save each week , in dollars ?",
+        "equation": "19.0*m=500.0-177.0",
+        "ans": [
+            17.0
+        ]
+    },
+    {
+        "id": 438,
+        "original_text": "A dealer has some hard candy worth 2.00 dollars a pound and some worth 3.00 dollars a pound . He wishes to make a mixture of 80 pounds that he can sell for 2.20 dollars a pound . How many pounds of 2-dollar candy does he need ? How many pounds of 3-dollar candy does he need ?",
+        "equation": "2.0*m+3.0*n=80.0*2.2 ; m+n=80.0",
+        "ans": [
+            64.0,
+            16.0
+        ]
+    },
+    {
+        "id": 1739,
+        "original_text": "Jane has a dress shop . She has space for 200 dresses . She sells only red and blue dresses . After reading several fashion magazines she decides to stock her shelves with 34 more blue dresses than red dresses . How many blue dresses and red dresses should she stock ?",
+        "equation": "m+n=200.0 ; m-n=34.0",
+        "ans": [
+            117.0,
+            83.0
+        ]
+    },
+    {
+        "id": 5829,
+        "original_text": "Rowan can row 26 kilometers downstream in 2 hours . Returning upstream it takes 4 hours to complete the trip . Find his rate in still water in kilometers per hour and the rate of the current .",
+        "equation": "2.0*m+2.0*n=26.0 ; 4.0*m-4.0*n=26.0",
+        "ans": [
+            9.75,
+            3.25
+        ]
+    },
+    {
+        "id": 7037,
+        "original_text": "One thousand quarts of milk testing 4 % butterfat are to be reduced to 3 % . How many quarts of cream testing 23 % butterfat must be separated from the milk to produce the required result ?",
+        "equation": "3.0*m+23.0*n=1000.0*4.0 ; m+n=1000.0",
+        "ans": [
+            50.0,
+            950.0
+        ]
+    },
+    {
+        "id": 5464,
+        "original_text": "0.20 of a number decreased by 4 is equal to 6 . Find the number .",
+        "equation": "0.2*m=4.0+6.0",
+        "ans": [
+            50.0
+        ]
+    },
+    {
+        "id": 972,
+        "original_text": "A 12 ounce can of cranberry juice sells for 84 cents . Give the unit cost in cents per ounce .",
+        "equation": "12.0*m=84.0",
+        "ans": [
+            7.0
+        ]
+    },
+    {
+        "id": 1890,
+        "original_text": "The 6th graders from an elementary school are going to celebrate the end of the year by going to the local pizza parlor . There are 120 in the whole group and there are twice as many children as adults in the group . How many children are there ?",
+        "equation": "m+n=120.0 ; n-2.0*m=0",
+        "ans": [
+            80.0,
+            40.0
+        ]
+    },
+    {
+        "id": 3633,
+        "original_text": "A truck and trailer together weigh 7,000 pounds . The trailer weighs 200 pounds less than 0.5 as much as the truck . Find the truck 's weight . Find the trailer 's weight .",
+        "equation": "0.5*m-n=200.0 ; m+n=7000.0",
+        "ans": [
+            4800.0,
+            2200.0
+        ]
+    },
+    {
+        "id": 1702,
+        "original_text": "Freeport McMoran projects that in 2010 the world grain supply will be 1800000 metric tons and the supply will be only 0.75 of the world grain demand . What will the world grain demand be in 2010 ?",
+        "equation": "0.75*m=1800000.0",
+        "ans": [
+            2400000.0
+        ]
+    },
+    {
+        "id": 2737,
+        "original_text": "A farmhouse has 15 animals . Some are goats and some are ducks . Altogether there are 48 legs . How many of each animal are there ?",
+        "equation": "m+n=15.0 ; 2*m+4*n=48.0",
+        "ans": [
+            9.0,
+            6.0
+        ]
+    },
+    {
+        "id": 2681,
+        "original_text": "A special tea blend is made from two varieties of herbal tea , one that costs 4.00 dollars per kilogram and another that costs 2.00 dollars per kilogram . How many kilograms of each type are needed to make 20 kilograms of a blend worth 2.50 dollars per kilogram ?",
+        "equation": "2.0*m+4.0*n=20.0*2.5 ; m+n=20.0",
+        "ans": [
+            5.0,
+            15.0
+        ]
+    },
+    {
+        "id": 760,
+        "original_text": "Pencils cost 25 cents a piece . Pens cost 80 cents a piece . Susan spent 20 dollars for a total of 36 pens and pencils . How many pencils did she buy ?",
+        "equation": "0.01*25.0*m+0.01*80.0*n=20.0 ; n+m=36.0",
+        "ans": [
+            16.0,
+            20.0
+        ]
+    },
+    {
+        "id": 2172,
+        "original_text": "Jerome bought 12 CDs . Some cost 7.50 ea . and the rest cost 6.50 each . How many CDs were bought at each price if he spent 82 dollars ?",
+        "equation": "7.5*m+6.5*n=82.0 ; m+n=12.0",
+        "ans": [
+            4.0,
+            8.0
+        ]
+    },
+    {
+        "id": 6208,
+        "original_text": "The carpenter saws a board that is 22 feet long into two pieces . One piece is to be 1 foot longer than twice the length of the shorter piece . Find the Length of each piece .",
+        "equation": "m-2.0*n=1.0 ; m+n=22.0",
+        "ans": [
+            7.0,
+            15.0
+        ]
+    },
+    {
+        "id": 1997,
+        "original_text": "If 4 apples and 2 oranges equals 1 dollars and 2 apples and 3 orange equals 0.70 dollars , how much does each apple and each orange cost ?",
+        "equation": "4.0*m+2.0*n=1.0 ; 2.0*m+3.0*n=0.7",
+        "ans": [
+            0.2,
+            0.1
+        ]
+    },
+    {
+        "id": 6765,
+        "original_text": "2 similar tables and 6 similar chairs cost 6600 dollars . If the table cost 500 dollars more than a chair , what is the cost , in dollars , of the table ? What is the cost of the chair ?",
+        "equation": "2.0*m+6.0*n=6600.0 ; m-n=500.0",
+        "ans": [
+            1200.0,
+            700.0
+        ]
+    },
+    {
+        "id": 3627,
+        "original_text": "586 people attend a banquet at Disney . Residents paid 12.95 dollars and non-residents paid 17.95 dollars . If Disney made 9423.70 dollars from ticket sales for the event , how many residents and non-residents attended ?",
+        "equation": "12.95*m+17.95*n=9423.7 ; m+n=586.0",
+        "ans": [
+            219.0,
+            367.0
+        ]
+    },
+    {
+        "id": 922,
+        "original_text": "Jackie has coffee that sells for 9 dollars per pound and coffee that sells for 4 dollars per pound . How many pounds of 9 dollars coffee and how many pounds of 4 dollars coffee must be mixed to get 20 pounds of coffee that sells for 8.25 dollars per pound ?",
+        "equation": "9.0*m+4.0*n=20.0*8.25 ; m+n=20.0",
+        "ans": [
+            17.0,
+            3.0
+        ]
+    },
+    {
+        "id": 5298,
+        "original_text": "The first agency charges 20.25 dollars per day and 0.14 dollars per mile . The second agency charges 18.25 dollars per day and 0.22 dollars per mile . How many miles would you have to drive before the first agency is less expensive than the second ?",
+        "equation": "0.14*m-0.22*m=18.25-20.25",
+        "ans": [
+            25.0
+        ]
+    },
+    {
+        "id": 3583,
+        "original_text": "The sum of 5 and a number is 20 . Find the number .",
+        "equation": "m=20.0-5.0",
+        "ans": [
+            15.0
+        ]
+    },
+    {
+        "id": 2722,
+        "original_text": "A jazz concert brought in 191,000 dollars with the sale of 7400 tickets . If tickets were sold for 20 dollars and 30 dollars each , how many 20-dollar tickets were sold ? How many 30-dollar tickets ?",
+        "equation": "20.0*m+30.0*n=191000.0 ; m+n=7400.0",
+        "ans": [
+            3100.0,
+            4300.0
+        ]
+    },
+    {
+        "id": 3379,
+        "original_text": "You buy 25 boxes of candy and spend 28.00 dollars . A box of peppermint cost 1.00 dollars a box and candy canes cost 1.30 dollars a box . How many boxes of peppermint did you buy ? How many boxes of candy canes ?",
+        "equation": "1.0*m+1.3*n=28.0 ; m+n=25.0",
+        "ans": [
+            15.0,
+            10.0
+        ]
+    },
+    {
+        "id": 5706,
+        "original_text": "A mechanic charged 45 dollars an hour , plus 225 dollars for the parts . If the total bill was 450 dollars , how man hours did the job take ?",
+        "equation": "45.0*m=450.0-225.0",
+        "ans": [
+            5.0
+        ]
+    },
+    {
+        "id": 7606,
+        "original_text": "The school is selling tickets to a performance . They have adult and child tickets . Each adult ticket is 5 dollars and each child ticket is 3 dollars . By the end of the week , there was 178 dollars in sales from 42 tickets sold . How many adult tickets were sold ? How many child tickets ?",
+        "equation": "5.0*m+3.0*n=178.0 ; m+n=42.0",
+        "ans": [
+            26.0,
+            16.0
+        ]
+    },
+    {
+        "id": 443,
+        "original_text": "A grocer bought 12 bushels of Baldwin and McInotosh apples . Baldwins costs 95 cents a bushel , but McIntosh cost only 90 cents a bushel . If he paid 11.00 dollars for the lot , how many bushels of Baldwins did he get ? How many bushels of McIntosh ?",
+        "equation": "0.01*95.0*m+0.01*90.0*n=11.0 ; n+m=12.0",
+        "ans": [
+            4.0,
+            8.0
+        ]
+    },
+    {
+        "id": 1658,
+        "original_text": "A motorist drove 2 hours at one speed and then for 3 hours at another speed . He covered a distance of 252 kilometers . If he had travelled 4 hours at the first speed and 1 hour at the second speed , he would have covered 244 kilometers . Find two speeds ?",
+        "equation": "1.0*m+4.0*n=244.0 ; 3.0*m+2.0*n=252.0",
+        "ans": [
+            48.0,
+            52.0
+        ]
+    },
+    {
+        "id": 6176,
+        "original_text": "A dealer has some hard candy worth 2 dollars a pound and some worth 3 dollars a pound . He wishes to make a mixture of 80 pounds that he can sell for 2.20 dollars per pound . How many pounds of each kind should he use ?",
+        "equation": "2.0*m+3.0*n=80.0*2.2 ; m+n=80.0",
+        "ans": [
+            64.0,
+            16.0
+        ]
+    },
+    {
+        "id": 6341,
+        "original_text": "A carpenter gave an estimate of 980 dollars to build a cover over a patio . His hourly rate is 28 dollars and he expects to need 560 dollars in materials . How many hours will the job take ?",
+        "equation": "28.0*m=980.0-560.0",
+        "ans": [
+            15.0
+        ]
+    },
+    {
+        "id": 5014,
+        "original_text": "The Lakers scored a total of 80 points in a basketball game against the Bulls . The Lakers made a total of 37 baskets , consisting of 2 point baskets and 3 point baskets . How many 2 point baskets did the Lakers make ? How many 3 point baskets did the Lakers make ?",
+        "equation": "2.0*m+3.0*n=80.0 ; m+n=37.0",
+        "ans": [
+            31.0,
+            6.0
+        ]
+    },
+    {
+        "id": 298,
+        "original_text": "A chemistry lab can be used by 38 students at one time . The lab has 16 work-stations . Some set up for 2 students and the others set up for 3 students . How many work-stations accommodate 2 students ?",
+        "equation": "2.0*m+3.0*n=38.0 ; m+n=16.0",
+        "ans": [
+            10.0,
+            6.0
+        ]
+    },
+    {
+        "id": 667,
+        "original_text": "On a college entrance exam , each correct answer adds 1 point to your raw score , each unanswered question adds nothing and each incorrect answer subtracts 0.25 point . You answer 82 out of 85 questions for a raw score of 67 . How many questions did you answer correctly ?",
+        "equation": "1.0*m-0.25*n=67.0 ; n+m=82.0",
+        "ans": [
+            70.0,
+            12.0
+        ]
+    },
+    {
+        "id": 266,
+        "original_text": "The total attendance at a rally was 750 people . Tickets bought before the rally were 2 dollars each , and tickets bought at the door were 2.75 dollars each . How many tickets were bought at the door if the total receipts were 1706.25 dollars ? How many tickets were bought before the rally ?",
+        "equation": "2.0*m+2.75*n=1706.25 ; m+n=750.0",
+        "ans": [
+            275.0,
+            475.0
+        ]
+    },
+    {
+        "id": 3151,
+        "original_text": "An airplane has a total of 387 seats . The number of coach class seats is 2 more than 4 times the number of first-class seats . How many first class and coach class seats are there on the plane ?",
+        "equation": "m-4.0*n=2.0 ; m+n=387.0",
+        "ans": [
+            77.0,
+            310.0
+        ]
+    },
+    {
+        "id": 6351,
+        "original_text": "Your science test is worth 100 points and contains 38 questions . There are two-point and five-point questions on the test . How many two-point questions and five-point questions are on the test ?",
+        "equation": "2.0*m+5.0*n=100.0 ; m+n=38.0",
+        "ans": [
+            30.0,
+            8.0
+        ]
+    },
+    {
+        "id": 2354,
+        "original_text": "Two rainstorms occurred in one week in a certain area . In the first storm 30 milliliters of rain fell per hour , and in the second storm 15 milliliters of rain fell per hour . Rain fell that week for a total of 45 hours , for a total rainfall of 975 milliliters . How many hours was the first storm and the second storm .",
+        "equation": "30.0*m+15.0*n=975.0 ; m+n=45.0",
+        "ans": [
+            20.0,
+            25.0
+        ]
+    },
+    {
+        "id": 5054,
+        "original_text": "A swim team has 5 times as many girls as boys . There are a total of 96 people on the swim team . How many girls and boys are their on the team ?",
+        "equation": "m+n=96.0 ; n-5.0*m=0",
+        "ans": [
+            80.0,
+            16.0
+        ]
+    },
+    {
+        "id": 2130,
+        "original_text": "The difference of 3 times a number and 5 is 40 . Find the number .",
+        "equation": "3.0*m=5.0+40.0",
+        "ans": [
+            15.0
+        ]
+    },
+    {
+        "id": 3683,
+        "original_text": "In a basketball game , Will scored 26 points , consisting only of 3-point shots and 2-point shots . He made a total of 11 shots . How many 3-point shots did he make ? How many 2-point shots did he make ?",
+        "equation": "3.0*m+2.0*n=26.0 ; m+n=11.0",
+        "ans": [
+            4.0,
+            7.0
+        ]
+    },
+    {
+        "id": 5171,
+        "original_text": "A 200 seat theater charges 3.00 dollars for adults and 1.50 dollars for children . If all seats were filled and the total ticket income was 510 dollars how many adults and children were in the audience ?",
+        "equation": "3.0*m+1.5*n=510.0 ; m+n=200.0",
+        "ans": [
+            140.0,
+            60.0
+        ]
+    },
+    {
+        "id": 432,
+        "original_text": "Safety Rent-a-Car rents an intermediate-size car at a daily rate of 21.95 dollars plus 0.19 per mile . City Rentals rent an intermediate-size car for 18.95 dollars plus 0.21 per mile . For what milage is the cost the same ?",
+        "equation": "0.19*m-0.21*m=18.95-21.95",
+        "ans": [
+            150.0
+        ]
+    },
+    {
+        "id": 3810,
+        "original_text": "Two airplanes left the same airport traveling in opposite directions . If one airplane averages 400 miles per hour and the other 250 miles per hour , how many hours will it take for the distance between them be 1625 miles ?",
+        "equation": "400.0*m+250.0*m=1625.0",
+        "ans": [
+            2.5
+        ]
+    },
+    {
+        "id": 1375,
+        "original_text": "A washer-dryer combination costs 1,200 dollars . If the washer costs 220 dollars more than the dryer , what does the washer cost ? How much does the dryer cost ?",
+        "equation": "m+n=1200.0 ; m-n=220.0",
+        "ans": [
+            710.0,
+            490.0
+        ]
+    },
+    {
+        "id": 1341,
+        "original_text": "The probability that San Francisco plays in the next super bowl is nine times the probability that they do not play in the next super bowl . The probability that San Francisco plays in the next super bowl plus the probability that they do not play is 1 . What is the probability that San Francisco plays in the next super bowl ?",
+        "equation": "m+n=1.0 ; n-9.0*m=0",
+        "ans": [
+            0.9,
+            0.1
+        ]
+    },
+    {
+        "id": 542,
+        "original_text": "Angus invested 18,000 dollars , part at 3 % and part at 5 % . If the total interest at the end of the year is 660 dollars , how much did he invest at 3 % ? At 5 % ?",
+        "equation": "0.01*3.0*m+0.01*5.0*n=660.0 ; n+m=18000.0",
+        "ans": [
+            12000.0,
+            6000.0
+        ]
+    },
+    {
+        "id": 5020,
+        "original_text": "Juliet has a choice between receiving an 1800 dollars monthly salary from Furniture by Design or a base salary of 1600 dollars and a 4 % commission on the amount of furniture she sells during the month . For what amount of sales will the 2 choices be equal ?",
+        "equation": "0.01*4.0*m=1800.0-1600.0",
+        "ans": [
+            5000.0
+        ]
+    },
+    {
+        "id": 434,
+        "original_text": "Sunshine Car Rentals rents a basic car at a daily rate of 17.99 dollars plus 0.18 per mile . City Rentals rents a basic car at 18.95 dollars plus 0.16 per mile . For what mileage is the cost the same ?",
+        "equation": "0.18*m-0.16*m=18.95-17.99",
+        "ans": [
+            48.0
+        ]
+    },
+    {
+        "id": 2666,
+        "original_text": "On a test containing 120 questions , the final score is based on 1 point for each correct answer and 0.25 of a point subtracted for each incorrect answer . Allan answered all of the questions and received a final score of 100 points . How many questions did Allan answer correctly ?",
+        "equation": "1.0*m-0.25*n=100.0 ; n+m=120.0",
+        "ans": [
+            104.0,
+            16.0
+        ]
+    },
+    {
+        "id": 2952,
+        "original_text": "A cashier has a total of 126 bills , made up of 5-dollar bills and 10-dollar bills . The total value of the money is 840 dollars . How many 5-dollar bills does he have ? How many 10-dollar bills ?",
+        "equation": "5.0*m+10.0*n=840.0 ; m+n=126.0",
+        "ans": [
+            84.0,
+            42.0
+        ]
+    },
+    {
+        "id": 5981,
+        "original_text": "1 blend of coffee sells for 9.00 dollars per pound and another blend sells for 8.00 dollars per pound . You want to make a 20 pound blend that sells for 8.40 dollars per pound . How many pounds of the 8 dollars per pound coffee do you need ? How many pounds of the 9 dollars per pound coffee do you need ?",
+        "equation": "9.0*m+8.0*n=20.0*8.4 ; m+n=20.0",
+        "ans": [
+            12.0,
+            8.0
+        ]
+    },
+    {
+        "id": 2184,
+        "original_text": "One canned juice drink is 30 % orange juice ; another is 5 % orange juice . How many liters of each should be mixed together in order to get 25 liters that is 10 % orange juice ?",
+        "equation": "30.0*m+5.0*n=25.0*10.0 ; m+n=25.0",
+        "ans": [
+            5.0,
+            20.0
+        ]
+    },
+    {
+        "id": 3499,
+        "original_text": "You have 30 total items that consist of hats and boots . The total cost is 190.00 dollars . Boots cost 9.00 dollars and hats cost 5.00 dollars . How many boots are there ? How many hats ?",
+        "equation": "9.0*m+5.0*n=190.0 ; m+n=30.0",
+        "ans": [
+            10.0,
+            20.0
+        ]
+    },
+    {
+        "id": 5806,
+        "original_text": "Goran will rent a car for the weekend . He can choose 1 of 2 plans . The first plan has an initial fee of 65 dollars and costs an additional 0.40 dollars per mile driven . The second plan has no initial fee but costs 0.60 dollars per mile driven . How many miles would Goran need to drive for the 2 plans to cost the same ?",
+        "equation": "0.6*m-0.4*m=65.0",
+        "ans": [
+            325.0
+        ]
+    },
+    {
+        "id": 6212,
+        "original_text": "In 1 week , a music store sold 7 violins for a total of 1600 dollars . 2 different types were sold . One cost 200 dollars and the other cost 300 dollars . How many 200-dollar violins were sold ? How many 300-dollar violins were sold ?",
+        "equation": "200.0*m+300.0*n=1600.0 ; m+n=7.0",
+        "ans": [
+            5.0,
+            2.0
+        ]
+    },
+    {
+        "id": 5094,
+        "original_text": "There are 27 students in an Algebra 1 class . There are 5 fewer girls than boys . How many girls are in the class ?",
+        "equation": "m+n=27.0 ; m-n=5.0",
+        "ans": [
+            11.0,
+            16.0
+        ]
+    },
+    {
+        "id": 6600,
+        "original_text": "An employment agency specializing in temporary help pays heavy operators 129 dollars per day and general laborers 82 dollars per day . If 31 people were hired and the payroll was 3952 dollars , how many heavy operators were employed ? How many laborers ?",
+        "equation": "129.0*m+82.0*n=3952.0 ; m+n=31.0",
+        "ans": [
+            30.0,
+            1.0
+        ]
+    },
+    {
+        "id": 6920,
+        "original_text": "During the 1998-1999 Little League season , the Tigers played 57 games . They lost 21 more games than they won . They did n't tie any . How many games did they win that season ?",
+        "equation": "m+n=57.0 ; m-n=21.0",
+        "ans": [
+            18.0,
+            39.0
+        ]
+    },
+    {
+        "id": 3585,
+        "original_text": "Pat invested a total of 3,000 dollars . Part of the money yields 10 percent interest per year and the rest yields 8 percent interest per year . If the total yearly interest from this investment is 256 dollars , how much did Pat invest at 10 percent and how much at 8 percent ?",
+        "equation": "0.01*8.0*m+0.01*10.0*n=256.0 ; n+m=3000.0",
+        "ans": [
+            800.0,
+            2200.0
+        ]
+    },
+    {
+        "id": 5281,
+        "original_text": "There are 11 animals in a barnyard . Some are chickens and some are cows . There are 38 legs in all . How many chickens and cows are in the barnyard ?",
+        "equation": "m+n=11.0 ; 2*m+4*n=38.0",
+        "ans": [
+            3.0,
+            8.0
+        ]
+    },
+    {
+        "id": 5595,
+        "original_text": "Find the number whose double is 45 greater than its half ?",
+        "equation": "2.0*m-0.5*m=45.0",
+        "ans": [
+            30.0
+        ]
+    },
+    {
+        "id": 3009,
+        "original_text": "One number is 3 more than twice a second number . Their sum is 27 . Find the smaller number . Find the larger number .",
+        "equation": "m-2.0*n=3.0 ; m+n=27.0",
+        "ans": [
+            8.0,
+            19.0
+        ]
+    },
+    {
+        "id": 3085,
+        "original_text": "One number exceeds another by 10 and their sum is 34 . Find the larger number .",
+        "equation": "m+n=34.0 ; m-n=10.0",
+        "ans": [
+            22.0,
+            12.0
+        ]
+    },
+    {
+        "id": 485,
+        "original_text": "A weight of 80 pounds stretches a spring 4.5 inches . How far will a weight of 125 pounds stretch the spring ?",
+        "equation": "80.0*m=4.5 ; 125.0*m-n=0",
+        "ans": [
+            7.03125,
+            0.05625
+        ]
+    },
+    {
+        "id": 5939,
+        "original_text": "Together , Jane and Jill have 32 dolls . Jill has 6 more dolls than Jane does . How many dolls does Jane have ? How many does Jill have ?",
+        "equation": "m+n=32.0 ; m-n=6.0",
+        "ans": [
+            13.0,
+            19.0
+        ]
+    },
+    {
+        "id": 6095,
+        "original_text": "Soybean meal is 18 % protein , cornmeal is 9 % protein . How many pounds of each Soybean meal and how many pounds of cornmeal should be mixed together in order to get 360-pound mixture that is 17 % protein ?",
+        "equation": "18.0*m+9.0*n=360.0*17.0 ; m+n=360.0",
+        "ans": [
+            320.0,
+            40.0
+        ]
+    },
+    {
+        "id": 2925,
+        "original_text": "Riza was 25 when her first son was born . Today the sum of their ages is 105 . How old is Riza and her son now ?",
+        "equation": "m+n=105.0 ; m-n=25.0",
+        "ans": [
+            65.0,
+            40.0
+        ]
+    },
+    {
+        "id": 3600,
+        "original_text": "Tickets for a concert were priced at 7 dollars for students and 10 dollars for non-students . There were 2000 tickets sold for a total of 17,339 dollars . How many student tickets were sold ? How many non-student tickets ?",
+        "equation": "7.0*m+10.0*n=17339.0 ; m+n=2000.0",
+        "ans": [
+            887.0,
+            1113.0
+        ]
+    },
+    {
+        "id": 1564,
+        "original_text": "The sum of two numbers is 40 , one number is 8 more than the other . Find the numbers .",
+        "equation": "m+n=40.0 ; m-n=8.0",
+        "ans": [
+            16.0,
+            24.0
+        ]
+    },
+    {
+        "id": 397,
+        "original_text": "A company 's profit for the first half of the year is 2,750,000 dollars greater than the profit for the second half . If the total annual profit is 3,635,000 dollars , find the profit for the first half-year and the second half-year .",
+        "equation": "m+n=3635000.0 ; m-n=2750000.0",
+        "ans": [
+            3192500.0,
+            442500.0
+        ]
+    },
+    {
+        "id": 5581,
+        "original_text": "Soybean meal is 16 % protein and cornmeal is 8 % . How many pounds of each should be mixed together in order to get a 320 pound mixture that is 15 % protein ?",
+        "equation": "16.0*m+8.0*n=320.0*15.0 ; m+n=320.0",
+        "ans": [
+            280.0,
+            40.0
+        ]
+    },
+    {
+        "id": 6114,
+        "original_text": "A plane is using fuel at the rate of 9.5 gallons per hour and it has 6.3333 gallons left in its tank . How long can the plane continue to fly ?",
+        "equation": "9.5*m=6.3333",
+        "ans": [
+            0.6667
+        ]
+    },
+    {
+        "id": 6950,
+        "original_text": "Jerry Weller received 20,196 more votes than opponent John Pavich . If the total number of votes was 196,554 , find the number of votes for Jerry . Find the number of votes for John .",
+        "equation": "m+n=196554.0 ; m-n=20196.0",
+        "ans": [
+            108375.0,
+            88179.0
+        ]
+    },
+    {
+        "id": 1164,
+        "original_text": "Adult tickets for a play cost 8 dollars and child tickets cost 1 dollars . If there were 22 people at a performance and the theater collected 50 dollars from ticket sales , how many children attended the play ?",
+        "equation": "1.0*m+8.0*n=50.0 ; m+n=22.0",
+        "ans": [
+            18.0,
+            4.0
+        ]
+    },
+    {
+        "id": 2500,
+        "original_text": "A plane flies 900 miles with a tail wind in 3 hours . The same plane takes 4 hours to make the return trip against the wind . What is the speed of the plane in still air ?",
+        "equation": "3.0*m+3.0*n=900.0 ; 4.0*m-4.0*n=900.0",
+        "ans": [
+            262.5,
+            37.5
+        ]
+    },
+    {
+        "id": 2626,
+        "original_text": "A math test is worth 100 points and has 30 problems . Each problem is worth either 3 points or 4 points . How many 4 point problems are there ?",
+        "equation": "3.0*m+4.0*n=100.0 ; m+n=30.0",
+        "ans": [
+            10.0,
+            20.0
+        ]
+    },
+    {
+        "id": 5933,
+        "original_text": "17 is 4 less than 8 times a number . Find the number .",
+        "equation": "8.0*m=17.0+4.0",
+        "ans": [
+            2.625
+        ]
+    },
+    {
+        "id": 3168,
+        "original_text": "The sum of 38 and twice a number is 124 . Find the number .",
+        "equation": "2.0*m=124.0-38.0",
+        "ans": [
+            43.0
+        ]
+    },
+    {
+        "id": 107,
+        "original_text": "Two investments earn an annual income of 575 dollars . One investment earns an annual simple interest rate of 8.5 % , and the other investment earns an annual simple interest rate of 6.4 % . The amount invested is 8000 dollars . How much money is invested in the first investment and second investment respectively ?",
+        "equation": "0.01*6.4*m+0.01*8.5*n=575.0 ; n+m=8000.0",
+        "ans": [
+            3000.0,
+            5000.0
+        ]
+    },
+    {
+        "id": 2922,
+        "original_text": "Peter sold pumpkins from his farm . He sold jumbo pumpkins for 9.00 dollars each , and he sold regular pumpkins for 4.00 dollars each . Peter sold 80 pumpkins and collected 395.00 dollars . How many jumbo pumpkins and regular pumpkins did he sell ?",
+        "equation": "9.0*m+4.0*n=395.0 ; m+n=80.0",
+        "ans": [
+            15.0,
+            65.0
+        ]
+    },
+    {
+        "id": 5425,
+        "original_text": "Matthew has two different stocks . One of the stocks is worth twice as much per share as the other . He has 14 shares of the more valuable stock and 26 shares of the other stock . His total assets in stocks is 2106 dollars . How much is the more expensive stock per share ?",
+        "equation": "26.0*m+14.0*n=2106.0 ; 2.0*m-n=0",
+        "ans": [
+            78.0,
+            39.0
+        ]
+    },
+    {
+        "id": 2894,
+        "original_text": "Lakota bought 6 new compact disks and 2 used compact disks for 127.92 dollars . At the same prices , Mackenzie bought 3 new compact disks and 8 used compact disks for 133.89 dollars . Find the cost of buying a single used compact disk .",
+        "equation": "6.0*m+2.0*n=127.92 ; 3.0*m+8.0*n=133.89",
+        "ans": [
+            9.99,
+            17.99
+        ]
+    },
+    {
+        "id": 2562,
+        "original_text": "A chemist has one solution that is 15 % acid and a second that is 25 % acid . How many liters of each should be mixed together to get 100 liters that is 18 % acid ?",
+        "equation": "15.0*m+25.0*n=100.0*18.0 ; m+n=100.0",
+        "ans": [
+            70.0,
+            30.0
+        ]
+    },
+    {
+        "id": 5367,
+        "original_text": "Each unit of grain A contains 2 grams of fat and 80 calories , and unit B has 3 grams of fat and 60 calories . If the final product is to provide 18 grams of fat and 480 calories , how much of grain A and how much of grain B should be used .",
+        "equation": "2.0*m+3.0*n=18.0 ; 80.0*m+60.0*n=480.0",
+        "ans": [
+            3.0,
+            4.0
+        ]
+    },
+    {
+        "id": 396,
+        "original_text": "A cashier at Apex Parts received a check for 2380 dollars for 59 parts . Some parts cost 20 dollars per part and other parts cost 50 dollars per part . How many 20-dollar parts are in the order ? How many 50-dollar parts are in the order ?",
+        "equation": "20.0*m+50.0*n=2380.0 ; m+n=59.0",
+        "ans": [
+            19.0,
+            40.0
+        ]
+    },
+    {
+        "id": 2174,
+        "original_text": "A garden table and a bench cost 450 dollars combined . The price of the garden table is 2 times the price of the bench . What is the cost of the bench , in dollars ?",
+        "equation": "m+n=450.0 ; n-2.0*m=0",
+        "ans": [
+            150.0,
+            300.0
+        ]
+    },
+    {
+        "id": 2982,
+        "original_text": "There are 7066 known nesting pairs of bald eagles in the lower 48 states today . This is 6649 more pairs than in 1963 . How many nesting pairs of bald eagles were there in the lower 48 states in 1963 ?",
+        "equation": "m=7066.0-6649.0",
+        "ans": [
+            417.0
+        ]
+    },
+    {
+        "id": 7056,
+        "original_text": "Two planes start from Chicago at the same time and fly in opposite directions , one averaging a speed of 40 miles per hour greater than the other . If they are 2000 miles apart after 5 hours , find their average speeds .",
+        "equation": "5.0*m+5.0*n=2000.0 ; n-m=40.0",
+        "ans": [
+            180.0,
+            220.0
+        ]
+    },
+    {
+        "id": 5503,
+        "original_text": "Best Rentals charges a daily fee plus a mileage fee for renting its cars . Barney was charged 69 dollars for 3 days and 300 miles , while Mary was charged 123 dollars for 5 days and 600 miles . Find the daily fee and find the mileage charge ?",
+        "equation": "3.0*m+300.0*n=69.0 ; 5.0*m+600.0*n=123.0",
+        "ans": [
+            15.0,
+            0.08
+        ]
+    },
+    {
+        "id": 1848,
+        "original_text": "A bricklayer and an electrician together spend 90 hours working on a new house . If the bricklayer earns 12 dollars per hour , the electrician earns 16 dollars an hour , and the owner pays them a total of 1350 dollars for their work , how many hours does the bricklayer work ? How many hours does the electrician work ?",
+        "equation": "12.0*m+16.0*n=1350.0 ; m+n=90.0",
+        "ans": [
+            22.5,
+            67.5
+        ]
+    },
+    {
+        "id": 724,
+        "original_text": "The state market has 27 more apples than oranges . There are 301 apples and oranges all together . How many apples are in the market ?",
+        "equation": "m+n=301.0 ; m-n=27.0",
+        "ans": [
+            164.0,
+            137.0
+        ]
+    },
+    {
+        "id": 1562,
+        "original_text": "The tallest player on the basketball team is 77.75 inches tall . This is 9.5 inches taller than the shortest player . How tall is the shortest player , in inches ?",
+        "equation": "m=77.75-9.5",
+        "ans": [
+            68.25
+        ]
+    }
+]

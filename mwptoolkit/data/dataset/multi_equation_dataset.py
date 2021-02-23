@@ -8,7 +8,6 @@ class MultiEquationDataset(AbstractDataset):
     def __init__(self, config):
         super().__init__(config)
         self.equation_fix = config["equation_fix"]
-        self._load_dataset()
     
     def _preprocess(self):
         self.trainset, generate_list, copy_nums, unk_symbol = num_transfer_multi(

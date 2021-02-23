@@ -9,7 +9,6 @@ class SingleEquationDataset(AbstractDataset):
     def __init__(self, config):
         self.equation_fix = config["equation_fix"]
         super().__init__(config)
-        self._load_dataset()
 
     def _preprocess(self):
         if self.dataset == DatesetName.math23k:

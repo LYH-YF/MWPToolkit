@@ -13,11 +13,12 @@ class AbstractTrainer(object):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__()
         self.config = config
-        self.test_step=config["test_step"]
         self.model = model
         self.dataloader = dataloader
         self.evaluator = evaluator
         self.logger = getLogger()
+        self.best_folds_accuracy=config["best_folds_accuracy"]
+        self.test_step=config["test_step"]
 
         self.best_valid_equ_accuracy = 0.
         self.best_valid_value_accuracy = 0.
@@ -34,7 +35,10 @@ class AbstractTrainer(object):
 
     def _save_model(self):
         state_dict = {"model": self.model.state_dict()}
-        torch.save(state_dict, self.config["trained_model_path"])
+        if self.config["k_fold"]:
+            self.config["trained_model_path"][:-4]+"-{}.pth".format(self.config["fold_t"])
+        else:
+            torch.save(state_dict, self.config["trained_model_path"])
 
     def _load_model(self):
         state_dict = torch.load(self.config["trained_model_path"], map_location=self.config["map_location"])
@@ -81,7 +85,9 @@ class Trainer(AbstractTrainer):
             "best_valid_value_accuracy": self.best_valid_value_accuracy,
             "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
             "best_test_value_accuracy": self.best_test_value_accuracy,
-            "best_test_equ_accuracy": self.best_test_equ_accuracy
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t":self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
 
@@ -98,6 +104,7 @@ class Trainer(AbstractTrainer):
         self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
         self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
         self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _build_loss(self, symbol_size, out_pad_token):
         weight = torch.ones(symbol_size).to(self.config["device"])
@@ -254,7 +261,9 @@ class SingleEquationTrainer(Trainer):
             "best_valid_value_accuracy": self.best_valid_value_accuracy,
             "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
             "best_test_value_accuracy": self.best_test_value_accuracy,
-            "best_test_equ_accuracy": self.best_test_equ_accuracy
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t":self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
 
@@ -271,6 +280,7 @@ class SingleEquationTrainer(Trainer):
         self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
         self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
         self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _build_loss(self, symbol_size, out_pad_token):
         weight = torch.ones(symbol_size).to(self.config["device"])
@@ -346,21 +356,32 @@ class SingleEquationTrainer(Trainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
-                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
-                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
-                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                if valid_val_ac >= self.best_valid_value_accuracy:
-                    self.best_valid_value_accuracy = valid_val_ac
-                    self.best_valid_equ_accuracy = valid_equ_ac
-                    self.best_test_value_accuracy = test_val_ac
-                    self.best_test_equ_accuracy = test_equ_ac
-                    self._save_model()
+                    self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                    %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
@@ -421,7 +442,9 @@ class MultiEquationTrainer(Trainer):
             "best_valid_value_accuracy": self.best_valid_value_accuracy,
             "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
             "best_test_value_accuracy": self.best_test_value_accuracy,
-            "best_test_equ_accuracy": self.best_test_equ_accuracy
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t":self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
 
@@ -438,6 +461,7 @@ class MultiEquationTrainer(Trainer):
         self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
         self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
         self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _build_loss(self, symbol_size, out_pad_token):
         weight = torch.ones(symbol_size).to(self.config["device"])
@@ -514,21 +538,32 @@ class MultiEquationTrainer(Trainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
-                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
-                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
-                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                if valid_val_ac >= self.best_valid_value_accuracy:
-                    self.best_valid_value_accuracy = valid_val_ac
-                    self.best_valid_equ_accuracy = valid_equ_ac
-                    self.best_test_value_accuracy = test_val_ac
-                    self.best_test_equ_accuracy = test_equ_ac
-                    self._save_model()
+                    self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                    %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
@@ -608,7 +643,9 @@ class GTSTrainer(AbstractTrainer):
             "best_valid_value_accuracy": self.best_valid_value_accuracy,
             "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
             "best_test_value_accuracy": self.best_test_value_accuracy,
-            "best_test_equ_accuracy": self.best_test_equ_accuracy
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t":self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
 
@@ -634,6 +671,7 @@ class GTSTrainer(AbstractTrainer):
         self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
         self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
         self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _scheduler_step(self):
         self.embedder_scheduler.step()
@@ -731,21 +769,32 @@ class GTSTrainer(AbstractTrainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
-                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
-                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
-                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
-                if valid_val_ac >= self.best_valid_value_accuracy:
-                    self.best_valid_value_accuracy = valid_val_ac
-                    self.best_valid_equ_accuracy = valid_equ_ac
-                    self.best_test_value_accuracy = test_val_ac
-                    self.best_test_equ_accuracy = test_equ_ac
-                    self._save_model()
+                    self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                    %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
@@ -808,7 +857,9 @@ class TransformerTrainer(AbstractTrainer):
             "best_valid_value_accuracy": self.best_valid_value_accuracy,
             "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
             "best_test_value_accuracy": self.best_test_value_accuracy,
-            "best_test_equ_accuracy": self.best_test_equ_accuracy
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t":self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
 
@@ -825,6 +876,7 @@ class TransformerTrainer(AbstractTrainer):
         self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
         self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
         self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _build_loss(self, symbol_size, out_pad_token):
         weight = torch.ones(symbol_size).to(self.config["device"])
@@ -901,21 +953,32 @@ class TransformerTrainer(AbstractTrainer):
                                 +"\n---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Train)
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                                %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
-                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
-                self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
-                                %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Train)
 
-                if valid_val_ac >= self.best_valid_value_accuracy:
-                    self.best_valid_value_accuracy = valid_val_ac
-                    self.best_valid_equ_accuracy = valid_equ_ac
-                    self.best_test_value_accuracy = test_val_ac
-                    self.best_test_equ_accuracy = test_equ_ac
-                    self._save_model()
+                    self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                    %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.

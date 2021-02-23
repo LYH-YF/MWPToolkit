@@ -15,6 +15,7 @@ class AbstractDataset(object):
         self.share_vocab = config["share_vocab"]
         self.k_fold = config["k_fold"]
         self.dataset = config["dataset"]
+        self.read_local_folds = config["read_local_folds"]
 
     def _load_dataset(self):
         '''
@@ -26,7 +27,14 @@ class AbstractDataset(object):
         self.trainset = read_json_data(trainset_file)
         self.validset = read_json_data(validset_file)
         self.testset = read_json_data(testset_file)
-
+    def _load_fold_dataset(self):
+        trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
+        #validset_file = self.dataset_path + "/validset_fold{}.json"
+        testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
+        self.trainset = read_json_data(trainset_file)
+        #self.validset = read_json_data(validset_file)
+        self.validset = []
+        self.testset = read_json_data(testset_file)
     def fix_process(self, fix):
         r"""equation process
 
@@ -54,34 +62,39 @@ class AbstractDataset(object):
         """
         if k_fold == 0 or k_fold == 1:
             raise ValueError("the cross validation parameter k shouldn't be zero or one, it should be greater than one")
-
-        self.dataset = self.trainset + self.validset + self.testset
-        random.shuffle(self.dataset)
-        step_size = int(len(self.dataset) / k_fold)
-        folds = []
-        for split_fold in range(k_fold - 1):
-            fold_start = step_size * split_fold
-            fold_end = step_size * (split_fold + 1)
-            folds.append(self.dataset[fold_start:fold_end])
-        folds.append(self.dataset[(step_size * (k_fold - 1)):])
+        if self.read_local_folds !=True:
+            self._load_dataset()
+            self.dataset = self.trainset + self.validset + self.testset
+            random.shuffle(self.dataset)
+            step_size = int(len(self.dataset) / k_fold)
+            folds = []
+            for split_fold in range(k_fold - 1):
+                fold_start = step_size * split_fold
+                fold_end = step_size * (split_fold + 1)
+                folds.append(self.dataset[fold_start:fold_end])
+            folds.append(self.dataset[(step_size * (k_fold - 1)):])
         self.start_fold_t = start_fold_t
         for k in range(self.start_fold_t, k_fold):
+            self.fold_t=k
             self.trainset = []
             self.validset = []
             self.testset = []
-            for fold_t in range(k_fold):
-                if fold_t == k:
-                    divice_line = int(len(folds[fold_t]) / 2)
-                    self.validset += folds[fold_t][:divice_line]
-                    self.testset += folds[fold_t][divice_line:]
-                else:
-                    self.trainset += folds[fold_t]
-            self.dataset_load()
+            if self.read_local_folds:
+                self._load_fold_dataset()
+            else:
+                for fold_t in range(k_fold):
+                    if fold_t == k:
+                        self.testset += folds[fold_t]
+                    else:
+                        self.trainset += folds[fold_t]
+            self._preprocess()
+            self._build_vocab()
             yield k
 
     def dataset_load(self):
         r"""dataset process and build vocab
         """
+        self._load_dataset()
         self._preprocess()
         self._build_vocab()
 

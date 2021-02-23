@@ -5,12 +5,16 @@ import sympy as sym
 from mwptoolkit.utils.enum_type import SpecialTokens, OPERATORS, NumMask, MaskSymbol
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
 class Solver(threading.Thread):
-    def __init__(self, func, args=()):
+    def __init__(self, func, equations,unk_symbol):
         super(Solver,self).__init__()
         self.func = func
-        self.args = args
+        self.equations=equations
+        self.unk_symbol=unk_symbol
     def run(self):
-        self.result=self.func(*self.args)
+        try:
+            self.result=self.func(self.equations,self.unk_symbol)
+        except:
+            self.result = None
     def get_result(self):
         try:
             return self.result
@@ -263,7 +267,7 @@ class SeqEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            t = Solver(sym.solve,args=(equations,unk_list))
+            t = Solver(sym.solve,equations,unk_list)
             t.setDaemon(True)
             t.start()
             t.join(10)
@@ -531,7 +535,7 @@ class PreEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            t = Solver(sym.solve,args=(equations,unk_list))
+            t = Solver(sym.solve,equations,unk_list)
             t.setDaemon(True)
             t.start()
             t.join(10)
@@ -746,7 +750,7 @@ class PostEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            t = Solver(sym.solve,args=(equations,unk_list))
+            t = Solver(sym.solve,equations,unk_list)
             t.setDaemon(True)
             t.start()
             t.join(10)

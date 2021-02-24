@@ -1,4 +1,5 @@
 import random
+import copy
 from mwptoolkit.utils.utils import read_json_data
 
 
@@ -84,9 +85,9 @@ class AbstractDataset(object):
             else:
                 for fold_t in range(k_fold):
                     if fold_t == k:
-                        self.testset += folds[fold_t]
+                        self.testset += copy.deepcopy(folds[fold_t])
                     else:
-                        self.trainset += folds[fold_t]
+                        self.trainset += copy.deepcopy(folds[fold_t])
             self._preprocess()
             self._build_vocab()
             yield k

@@ -1,0 +1,1749 @@
+[
+    {
+        "id": 493569,
+        "original_text": "A theater sells adult tickets for $ 8 and children 's tickets for $ 5 . If a total of $ 236 was taken in on sales of 34 total tickets , then how many adult tickets were sold ?",
+        "equation": "8.0*m+5.0*n=236.0 ; m+n=34.0",
+        "ans": [
+            12.0,
+            22.0
+        ]
+    },
+    {
+        "id": 353830,
+        "original_text": "Two cars start from the same place and travel in opposite directions . One runs at an average rate which is 24 kilometers per hour faster than the other . Find their rates if after 6 hours , they are 702 km apart .",
+        "equation": "6.0*m+6.0*m=702.0-6.0*24.0",
+        "ans": [
+            46.5
+        ]
+    },
+    {
+        "id": 769390,
+        "original_text": "Eight years ago , Hold was 7 times older than her son . Today , she is exactly 3 times as old as her son . How old are both Mrs. Hold and her son today ?",
+        "equation": "m-7.0*n=-1*7.0*8.0+8.0 ; m-3.0*n=0",
+        "ans": [
+            36.0,
+            12.0
+        ]
+    },
+    {
+        "id": 757472,
+        "original_text": "A real estate salesperson bought promotional calendars and date books to give to her customers at the end of the year . The calendars cost $ 0.75 each , and the date books cost $ 0.50 each . She ordered a total of 500 promotional items and spent $ 300 . How many of each item did she order ?",
+        "equation": "0.75*m+0.5*n=300.0 ; m+n=500.0",
+        "ans": [
+            300.0,
+            200.0
+        ]
+    },
+    {
+        "id": 316559,
+        "original_text": "You invested a total of $ 5000.00 in 2 different banks . One bank pays 4 % interest , and the other bank pays 6.5 % interest . If you earn a total of $ 282.50 in interest the first year , how much did you invest in each bank ?",
+        "equation": "0.01*4.0*m+0.01*6.5*n=282.5 ; n+m=5000.0",
+        "ans": [
+            1700.0,
+            3300.0
+        ]
+    },
+    {
+        "id": 37441,
+        "original_text": "Adult tickets for a play cost $ 16 and child tickets cost $ 9 . If there were 24 people at a performance and the theater collected $ 258 from ticket sales , how many children attended the play ?",
+        "equation": "16.0*m+9.0*n=258.0 ; m+n=24.0",
+        "ans": [
+            18.0,
+            6.0
+        ]
+    },
+    {
+        "id": 465528,
+        "original_text": "How much 20 % anti-freeze should be mixed with 60 % anti-freeze to get 10 liters of 28 % anti-freeze ?",
+        "equation": "20.0*m+60.0*n=10.0*28.0 ; m+n=10.0",
+        "ans": [
+            2.0,
+            8.0
+        ]
+    },
+    {
+        "id": 63962,
+        "original_text": "A woman invests 4 times as much at 5 % as she did at 6 % . The total amount of interest she earns in 1 year from both accounts is $ 520 . How much did she invest at each rate ?",
+        "equation": "0.01*5.0*m+0.01*6.0*n=520.0 ; m-4.0*n=0",
+        "ans": [
+            2000.0,
+            8000.0
+        ]
+    },
+    {
+        "id": 1441,
+        "original_text": "If Sally can paint a house in 4 hours , and John can paint the same house in 6 hour , how long will it take for both of them to paint the house together ?",
+        "equation": "1/4.0*m+1/6.0*m=1",
+        "ans": [
+            2.4
+        ]
+    },
+    {
+        "id": 88943,
+        "original_text": "Ruffy is three-fourths as old as Orlie . Four years ago , Ruffy was 1 year more than half old as Orlie . How old is each ?",
+        "equation": "m-0.5*n=-1*0.5*4.0+1.0+4.0 ; m-0.75*n=0",
+        "ans": [
+            9.0,
+            12.0
+        ]
+    },
+    {
+        "id": 503824,
+        "original_text": "Two-thirds of a number increased by three-fourth is five-third , what is the number ?",
+        "equation": "0.666*m=1.666-0.75",
+        "ans": [
+            1.375
+        ]
+    },
+    {
+        "id": 266828,
+        "original_text": "how many quarts of pure antifreeze must be added to 4 quarts of a 10 % antifreeze solution to obtain a 20 % antifreeze solution ?",
+        "equation": "m-0.01*20.0*m=0.01*20.0*4.0-0.01*10.0*4.0",
+        "ans": [
+            0.5
+        ]
+    },
+    {
+        "id": 505087,
+        "original_text": "an auto mechanic needs 24 gallons of anti-freeze with a 30 percent glycol concentration . he has on hand only anti-freeze with a 40 percent glycol concentration and one with a 10 percent glycol concentration . How much of the 40 percent should he mix with the 10 percent to get the 24 gallons of 30 percent solution he needs ?",
+        "equation": "40.0*m+10.0*n=24.0*30.0 ; m+n=24.0",
+        "ans": [
+            16.0,
+            8.0
+        ]
+    },
+    {
+        "id": 242393,
+        "original_text": "You invest $ 7,200 in two accounts paying 8 % and 10 % annual interest , repectively . At the end of the year , the accounts earn the same interest . How much was invested at each investment ?",
+        "equation": "8.0*m-10.0*n=0 ; m+n=7200.0",
+        "ans": [
+            4000.0,
+            3200.0
+        ]
+    },
+    {
+        "id": 87984,
+        "original_text": "There are 850 Douglas fir and ponderosa pine trees in a section of forest bought by Sawz Logging Co. . The company paid an average of $ 300 for each Douglas fir and $ 225 for each ponderosa pine . If the company paid $ 217,500 for the trees , how many of each kind did the company buy ?",
+        "equation": "300.0*m+225.0*n=217500.0 ; m+n=850.0",
+        "ans": [
+            350.0,
+            500.0
+        ]
+    },
+    {
+        "id": 136036,
+        "original_text": "a number is 8 times the sum of its digits . the tens digits is 5 greater than the units digit . find the number .",
+        "equation": "10*m+n-8.0*m-8.0*n=0 ; m-n=5.0",
+        "ans": [
+            7.0,
+            2.0
+        ]
+    },
+    {
+        "id": 353419,
+        "original_text": "The sum of three times a first number and twice a second number is 8 . If the second number is subtracted from twice the first number , the result if 3 . Find the numbers .",
+        "equation": "3.0*m+2.0*n=8.0 ; 2.0*m-n=3.0",
+        "ans": [
+            2.0,
+            1.0
+        ]
+    },
+    {
+        "id": 332850,
+        "original_text": "Tom 's home is 1800 m from his school . One morning he walked part of the way and then ran the rest . If it took him 20 min or less to get to school and he walks 70 m/min and runs 210 m/min how far did he run ?",
+        "equation": "1/210.0*m+1/70.0*n=20.0 ; n+m=1800.0",
+        "ans": [
+            600.0,
+            1200.0
+        ]
+    },
+    {
+        "id": 547664,
+        "original_text": "nineteen more than four times a number is equal to the difference between 166 and three times the number . find the number ?",
+        "equation": "4.0*m+3.0*m=166.0-19.0",
+        "ans": [
+            21.0
+        ]
+    },
+    {
+        "id": 465620,
+        "original_text": "A cyclist can travel 29.6 miles in 2 hours . At this rate , how far can the same cyclist travel in 0.75 hour ?",
+        "equation": "2.0*m=29.6*0.75",
+        "ans": [
+            11.1
+        ]
+    },
+    {
+        "id": 900689,
+        "original_text": "Angela is four times as old as Beth . Five years ago the sum of their ages was 45 years how old will angela be in five years ?",
+        "equation": "m+n=45.0+5.0+5.0 ; m-4.0*n=0",
+        "ans": [
+            44.0,
+            11.0
+        ]
+    },
+    {
+        "id": 526733,
+        "original_text": "A silversmith has two alloys , one containing 70 % silver and the other 40 % silver . How much of each should be melted and combined to obtain 400 grams of an alloy containing 61 % silver ?",
+        "equation": "70.0*m+40.0*n=400.0*61.0 ; m+n=400.0",
+        "ans": [
+            280.0,
+            120.0
+        ]
+    },
+    {
+        "id": 857277,
+        "original_text": "The sum of two numbers is 18 . The sum of 3 times the smaller number and 4 times the larger number is 56 . What are the numbers ?",
+        "equation": "3.0*m+4.0*n=56.0 ; m+n=18.0",
+        "ans": [
+            2.0,
+            16.0
+        ]
+    },
+    {
+        "id": 46941,
+        "original_text": "When 80 % of a number is added to the number , the result is 252 . What is the number ?",
+        "equation": "m+0.01*80.0*m=252.0",
+        "ans": [
+            140.0
+        ]
+    },
+    {
+        "id": 499001,
+        "original_text": "Two tanks hold a total of 54 gallons of a toxic solvent . One tank holds 9 gallons more than twice the amount in the other . How many gallons does each tank hold ?",
+        "equation": "m-2.0*n=9.0 ; m+n=54.0",
+        "ans": [
+            39.0,
+            15.0
+        ]
+    },
+    {
+        "id": 279590,
+        "original_text": "Clarence and Stephan went to the amusement park . Clarence rode the water slide 3 times and the roller coaster 3 times for a total $ 17.70 . Stephan rode the water slide 2 times and the roller coaster 3 times for a total of $ 15.54 . How much did each ride cost ?",
+        "equation": "3.0*m+3.0*n=17.7 ; 2.0*m+3.0*n=15.54",
+        "ans": [
+            2.16,
+            3.74
+        ]
+    },
+    {
+        "id": 251790,
+        "original_text": "The sum of two numbers is 43 . The difference of the same two numbers is 12 . What are the two numbers ?",
+        "equation": "m+n=43.0 ; m-n=12.0",
+        "ans": [
+            15.5,
+            27.5
+        ]
+    },
+    {
+        "id": 604575,
+        "original_text": "Two cars leave town at the sime time traveling in opposite dirrections . One travels 70 mi/h and the other 55 mi/h . In how many hours will they be 250 miles apart ?",
+        "equation": "70.0*m+55.0*m=250.0",
+        "ans": [
+            2.0
+        ]
+    },
+    {
+        "id": 804723,
+        "original_text": "The larger of two numbers is 2 more than 4 times the smaller . Their sum is 67 . FIND THE numbers",
+        "equation": "m-4.0*n=2.0 ; m+n=67.0",
+        "ans": [
+            13.0,
+            54.0
+        ]
+    },
+    {
+        "id": 179787,
+        "original_text": "A total of $ 50,000 is invested in two funds paying 8 % and 8.5 % simple interest . The annual interest is $ 4120 . How much is invested in each fund ?",
+        "equation": "0.01*8.0*m+0.01*8.5*n=4120.0 ; n+m=50000.0",
+        "ans": [
+            26000.0,
+            24000.0
+        ]
+    },
+    {
+        "id": 352130,
+        "original_text": "How many ounces of pure chocolate must be added to 220 ounces of chocolate topping that is 50 % chocolate to make a topping that is 75 % chocolate ?",
+        "equation": "m-0.01*75.0*m=0.01*75.0*220.0-0.01*50.0*220.0",
+        "ans": [
+            220.0
+        ]
+    },
+    {
+        "id": 216262,
+        "original_text": "How much pure iodine must be added to 250 mL of 8 % iodine solution to get a 20 % iodine solution ?",
+        "equation": "m-0.01*20.0*m=0.01*20.0*250.0-0.01*8.0*250.0",
+        "ans": [
+            37.5
+        ]
+    },
+    {
+        "id": 238128,
+        "original_text": "If one number exceeds another number by 13 and the larger number is 1.5 times the smaller number , what is the smaller number ?",
+        "equation": "m-n=13.0 ; m-1.5*n=0",
+        "ans": [
+            26.0,
+            39.0
+        ]
+    },
+    {
+        "id": 656993,
+        "original_text": "Serena is nine years old . Her mother is 39 years old . In how many years will her mother be three times as old as Serena ?",
+        "equation": "m-3.0*m=3.0*9.0-39.0",
+        "ans": [
+            6.0
+        ]
+    },
+    {
+        "id": 325599,
+        "original_text": "A and B starts running towards each other with speed of 30 m/hr and 20 miles/hr initially they are 500 miles apart when they start . After how many hr will they meet .",
+        "equation": "30.0*m+20.0*m=500.0",
+        "ans": [
+            10.0
+        ]
+    },
+    {
+        "id": 358957,
+        "original_text": "A pilot flew an average of 300 mph on a flight out . On the return flight to the same airport , he flew at an average speed of 500 mph . The total flight time was 8 hours . How far did he fly each way ?",
+        "equation": "1/300.0*m+1/500.0*m=8.0",
+        "ans": [
+            1500.0
+        ]
+    },
+    {
+        "id": 168965,
+        "original_text": "A man 38 years old has a son who is 14 years old . How many years ago was the father seven times as old as his son ?",
+        "equation": "-1*7.0*m+m=38.0-7.0*14.0",
+        "ans": [
+            10.0
+        ]
+    },
+    {
+        "id": 517110,
+        "original_text": "if the ratio of two brothers ' ages is 3 to 2 and their total age is 60 years old , what is the difference in their ages ?",
+        "equation": "2.0*m-3.0*n=0 ; m+n=60.0",
+        "ans": [
+            24.0,
+            36.0
+        ]
+    },
+    {
+        "id": 445611,
+        "original_text": "the cooling system in ann 's car contains 19 liters of 30 % antifreeze . how much coolant must be drained out and replaced with 80 % antifreeze so that the system will contain 50 % antifreeze . how much of the original coolant will be left in the car ?",
+        "equation": "30.0*m+80.0*n=19.0*50.0 ; m+n=19.0",
+        "ans": [
+            7.6,
+            11.4
+        ]
+    },
+    {
+        "id": 320604,
+        "original_text": "You invest $ 8000 in two accounts paying 8 % and 5 % respectively . If the interest at year 's end is 490 , how much of that amount did you invest at each rate ?",
+        "equation": "0.01*8.0*m+0.01*5.0*n=490.0 ; n+m=8000.0",
+        "ans": [
+            3000.0,
+            5000.0
+        ]
+    },
+    {
+        "id": 202132,
+        "original_text": "Ben is 3 years younger than Dan . The sum of their ages is 53 . How old is each ?",
+        "equation": "m+n=53.0 ; m-n=3.0",
+        "ans": [
+            25.0,
+            28.0
+        ]
+    },
+    {
+        "id": 82992,
+        "original_text": "a coumputer online service charges one hourly price for regular use but a higher hourly rate for designated '' permium '' areas . One customer was charged $ 28 after spending 2 h in permium areas and 9 regular hours . Another spent 3 h in the permium areas and 6 regular hours and was charged $ 27 . What does the online service charge per hour for regular and premium service ?",
+        "equation": "2.0*m+9.0*n=28.0 ; 3.0*m+6.0*n=27.0",
+        "ans": [
+            5.0,
+            2.0
+        ]
+    },
+    {
+        "id": 550023,
+        "original_text": "the difference between two numbers is 10 . When eight times the smaller number is added to 40 , the result is ten less than three times the larger number . find the numbers .",
+        "equation": "8.0*m-3.0*n=-1*10.0-40.0 ; m-n=10.0",
+        "ans": [
+            -16.0,
+            -26.0
+        ]
+    },
+    {
+        "id": 940790,
+        "original_text": "piggy bank consists of nickels and dimes . there are 30 coins worth $ 1.90 , how many nickels and dimes are in the piggy bank",
+        "equation": "0.05*m+0.1*n=1.9 ; m+n=30.0",
+        "ans": [
+            22.0,
+            8.0
+        ]
+    },
+    {
+        "id": 754345,
+        "original_text": "the age of the father is twice the sum of the ages of his two children . after 20 years , his age will be equal to the sum of the ages of his children .",
+        "equation": "m-n=20.0 ; m-2.0*n=0",
+        "ans": [
+            40.0,
+            20.0
+        ]
+    },
+    {
+        "id": 82514,
+        "original_text": "A two-digit counting number has a value that is 7 times the sum of its digits . If 5 times the units ' digit is 9 more than the tens ' digit , what is the number .",
+        "equation": "10*m+n-7.0*m-7.0*n=0 ; 5.0*n-m=9.0",
+        "ans": [
+            6.0,
+            3.0
+        ]
+    },
+    {
+        "id": 489560,
+        "original_text": "The sum of two numbers is 15 . Three times one of the numbers is 11 less than five times the other.Find the numbers",
+        "equation": "5.0*m-3.0*n=11.0 ; n+m=15.0",
+        "ans": [
+            8.0,
+            7.0
+        ]
+    },
+    {
+        "id": 500877,
+        "original_text": "On an algebra test , theh highest grade was 44 points more than the lowest grade . The sum of the two grades was 140 . Find the highest grade .",
+        "equation": "m+n=140.0 ; m-n=44.0",
+        "ans": [
+            48.0,
+            92.0
+        ]
+    },
+    {
+        "id": 185117,
+        "original_text": "A cashier has 30 bills , all of which are $ 10 or $ 20 bills . The total value of the money is $ 330 . How many of each type does the cashier have ?",
+        "equation": "10.0*m+20.0*n=330.0 ; m+n=30.0",
+        "ans": [
+            27.0,
+            3.0
+        ]
+    },
+    {
+        "id": 380450,
+        "original_text": "How many liters of a 20 % alcohol solution must be mixed with 60 liters of a 70 % solution to get a 50 % solution ?",
+        "equation": "20.0*m-50.0*m=50.0*60.0-60.0*70.0",
+        "ans": [
+            40.0
+        ]
+    },
+    {
+        "id": 577716,
+        "original_text": "Five gallons of a light green latex paint that is 20 % yellow paint are combined with a darker green latex paint that is 40 % yellow paint . How many gallons of the darker green paint must be used to create a green paint that is 25 % yellow paint ?",
+        "equation": "40.0*m-25.0*m=25.0*5.0-5.0*20.0",
+        "ans": [
+            1.66666666667
+        ]
+    },
+    {
+        "id": 313481,
+        "original_text": "Sam does the job in 4 days that Lisa can do in 6 days that Tom can do in 2 days . How long would it take to do the job if they all worked together ?",
+        "equation": "1/4.0*m+1/6.0*m+1/2.0*m=1",
+        "ans": [
+            1.09090909091
+        ]
+    },
+    {
+        "id": 29278,
+        "original_text": "Gina has a pile of 50 dimes and nickels worth $ 4.30 . How much of each type does she have ?",
+        "equation": "0.1*m+0.05*n=4.3 ; m+n=50.0",
+        "ans": [
+            14.0,
+            36.0
+        ]
+    },
+    {
+        "id": 55871,
+        "original_text": "A liter of cream contains 9.5 percent butterfat . How much skim milk containing 5.5 percent butterfat must be added to the mixture to obtain one liter of mixture with 6.5 percent butterfat ?",
+        "equation": "1.0*m-6.5*m=6.5*5.5-5.5*9.5",
+        "ans": [
+            3.0
+        ]
+    },
+    {
+        "id": 164192,
+        "original_text": "Please help me with this problem . I do not know how to set it up . How can $ 5,400 be invested , part of it at 8 % and the rest of it invested at 10 % , so that the two investments will produce the same amount of interest ?",
+        "equation": "8.0*m-10.0*n=0 ; m+n=5400.0",
+        "ans": [
+            3000.0,
+            2400.0
+        ]
+    },
+    {
+        "id": 894135,
+        "original_text": "A woman is 42 years of age and her daughter is 8 years old . in how many years will the mother be three times as old as her daughter ?",
+        "equation": "m-3.0*m=3.0*8.0-42.0",
+        "ans": [
+            9.0
+        ]
+    },
+    {
+        "id": 347438,
+        "original_text": "the sum of two numbers is 80 their difference is 12 . what are the numbers",
+        "equation": "m+n=80.0 ; m-n=12.0",
+        "ans": [
+            46.0,
+            34.0
+        ]
+    },
+    {
+        "id": 209845,
+        "original_text": "the difference of twice a number and five is 89 . find the number .",
+        "equation": "2.0*m=5.0+89.0",
+        "ans": [
+            47.0
+        ]
+    },
+    {
+        "id": 449482,
+        "original_text": "An airplane takes five hours to travel a distance of 3600 km against the wind . The return trip takes four hours with the wind . What is the rate of the plane in still air , and what is the rate of the wind ?",
+        "equation": "4.0*m+4.0*n=3600.0 ; 5.0*m-5.0*n=3600.0",
+        "ans": [
+            810.0,
+            90.0
+        ]
+    },
+    {
+        "id": 644732,
+        "original_text": "An investor invested a total of 1,900.00 in two mutual funds . One fund earned a 9 % profit while the other earned a 2 % profit . If the investor 's total profit was 52.00 , how much was invested in each mutual fund ?",
+        "equation": "0.01*2.0*m+0.01*9.0*n=52.0 ; n+m=1900.0",
+        "ans": [
+            1700.0,
+            200.0
+        ]
+    },
+    {
+        "id": 171780,
+        "original_text": "An old conveyor belt can move one day 's coal output in 21 hrs . A new belt can move one day 's output in 15 hrs . How long would it take them together to move one day 's coal output ?",
+        "equation": "1/21.0*m+1/15.0*m=1",
+        "ans": [
+            8.75
+        ]
+    },
+    {
+        "id": 654911,
+        "original_text": "Cody is twice as old as Evan and nine years ago the sum of their age was 6 . Find the age of each boy now .",
+        "equation": "m+n=6.0+9.0+9.0 ; m-2.0*n=0",
+        "ans": [
+            8.0,
+            16.0
+        ]
+    },
+    {
+        "id": 1431,
+        "original_text": "Red Beads cost $ 1.30 per box , they are mixed with yellow beads that cost $ 2.00 a box . How many boxes of each color must be used to make 10 boxes of beads costing $ 1.72 per box ?",
+        "equation": "1.3*m+2.0*n=10.0*1.72 ; m+n=10.0",
+        "ans": [
+            4.0,
+            6.0
+        ]
+    },
+    {
+        "id": 442164,
+        "original_text": "My mothers age is three times my age . The sum of our ages is 40 . How old am I ? How old is my mother ?",
+        "equation": "m+n=40.0 ; n-3.0*m=0",
+        "ans": [
+            10.0,
+            30.0
+        ]
+    },
+    {
+        "id": 931639,
+        "original_text": "A women 's age is three years more than twice her sons age . The sum of their ages is 84 . How old is the son ?",
+        "equation": "m-2.0*n=3.0 ; m+n=84.0",
+        "ans": [
+            27.0,
+            57.0
+        ]
+    },
+    {
+        "id": 296468,
+        "original_text": "THE DIFFERENCE OF TWO NUMBERS IS 88 . THE SECOND NUMBER IS 20 % OF THE FIRST NUMBER . WHAT ARE THE NUMBERS ?",
+        "equation": "m-0.01*20.0*n=0 ; n-m=88.0",
+        "ans": [
+            110.0,
+            22.0
+        ]
+    },
+    {
+        "id": 655012,
+        "original_text": "Tyler is one year older than 3 times Clay 's age . The sum of their ages is 21 . How old is Tyler ?",
+        "equation": "m-3.0*n=1.0 ; m+n=21.0",
+        "ans": [
+            5.0,
+            16.0
+        ]
+    },
+    {
+        "id": 146922,
+        "original_text": "The sum of the digits of a two-digit numeral is 8 . If the digits are reversed , the new number is 18 greater than the original number . Find the original number .",
+        "equation": "10*m+n-10*n-m=-1*18.0 ; n+m=8.0",
+        "ans": [
+            5.0,
+            3.0
+        ]
+    },
+    {
+        "id": 663080,
+        "original_text": "The denominator of a fraction exceeds the numerator by 7 . If the numerator is increased by three and the denominator increased by 5 , the resulting fraction is equal to half . Find the original fraction .",
+        "equation": "m-0.5*n=0.5*5.0-3.0 ; m-n=7.0",
+        "ans": [
+            -8.0,
+            -15.0
+        ]
+    },
+    {
+        "id": 847420,
+        "original_text": "A change machine at an arcade gives change for $ 1 bills and $ 5 bills . If during a particular day , 200 bills were inserted into the machine and the total value was $ 300 , how many $ 1 bills were inserted into the machine ?",
+        "equation": "1.0*m+5.0*n=300.0 ; m+n=200.0",
+        "ans": [
+            175.0,
+            25.0
+        ]
+    },
+    {
+        "id": 315071,
+        "original_text": "Jesse collects stamps . He now has 444 stamps . He has three times as many stamps form European countries as he does from Asian countries . How many of his stamps are from European countries ?",
+        "equation": "m+n=444.0 ; n-3.0*m=0",
+        "ans": [
+            333.0,
+            111.0
+        ]
+    },
+    {
+        "id": 348571,
+        "original_text": "Twice one number minus three times a second is equal to 2 and the sum of these numbers is 11 . Find the numbers .",
+        "equation": "2.0*m-3.0*n=2.0 ; n+m=11.0",
+        "ans": [
+            4,
+            7
+        ]
+    },
+    {
+        "id": 244989,
+        "original_text": "One antifreeze solution is 10 % alcohol . Another antifreeze solution is 18 % alcohol . How many liters of each antifreeze solution should be combined to create 20 liters of antifreeze solution that is 15 % alcohol ?",
+        "equation": "10.0*m+18.0*n=20.0*15.0 ; m+n=20.0",
+        "ans": [
+            7.5,
+            12.5
+        ]
+    },
+    {
+        "id": 464290,
+        "original_text": "the sum of two numbers is 45 . 4 times the first number is 9 less than 5 times the second . what are the two numbers ?",
+        "equation": "5.0*m-4.0*n=9.0 ; n+m=45.0",
+        "ans": [
+            24.0,
+            21.0
+        ]
+    },
+    {
+        "id": 620188,
+        "original_text": "If I have a 80 ml solution that is 20 % acid by volume , how many mL should I remove and replace with pure 100 % acid to obtain a final solution of 80 ml that is 40 % acid by volume ?",
+        "equation": "20.0*m+100.0*n=80.0*80.0 ; m+n=80.0",
+        "ans": [
+            20.0,
+            60.0
+        ]
+    },
+    {
+        "id": 271742,
+        "original_text": "If $ 10,000 and $ 4,000 are invested such that $ 1250 is earned in one year and if the rate of interest on the larger investment is 2 % more than that of the smaller investment , find the rates of interest",
+        "equation": "10000.0*m+4000.0*n=1250.0 ; m-n=0.01*2.0",
+        "ans": [
+            0.095,
+            0.075
+        ]
+    },
+    {
+        "id": 397250,
+        "original_text": "the sum of the digits of a two-digit number is 17 . When the digits are reversed , the new number is 9 more than the original number . What is the original number ?",
+        "equation": "10*m+n-10*n-m=-1*9.0 ; n+m=17.0",
+        "ans": [
+            8.0,
+            9.0
+        ]
+    },
+    {
+        "id": 785151,
+        "original_text": "A certain number is 3 more than another number . If their sum is 21 , find their numbers",
+        "equation": "m+n=21.0 ; m-n=3.0",
+        "ans": [
+            9.0,
+            12.0
+        ]
+    },
+    {
+        "id": 626277,
+        "original_text": "One integer is 2 more than another integer . The sum of the two integers is 48 . Find the smaller integer .",
+        "equation": "m+n=48.0 ; m-n=2.0",
+        "ans": [
+            23.0,
+            25.0
+        ]
+    },
+    {
+        "id": 771655,
+        "original_text": "a baseball team has home games on wednesday and sunday . The two games together earned $ 4994.50 . Wednesdays game generated $ 1330.50 less than Sunday game . How much was taken at each game ?",
+        "equation": "m+n=4994.5 ; m-n=1330.5",
+        "ans": [
+            1832.0,
+            3162.5
+        ]
+    },
+    {
+        "id": 775416,
+        "original_text": "The sum of 4 times the first number and three times the second number is 15 . The difference of three times the first number and twice the second number is 7 . Find the numbers .",
+        "equation": "4.0*m+3.0*n=15.0 ; 3.0*m-2.0*n=7.0",
+        "ans": [
+            1.0,
+            3.0
+        ]
+    },
+    {
+        "id": 174820,
+        "original_text": "adam is 5 year younger than eve . in one year eve will be three times the age of adam was four years ago . how old is adam ? how old is eve ?",
+        "equation": "m-3.0*n=-1*3.0*4.0-1.0 ; m-n=5.0",
+        "ans": [
+            9.0,
+            14.0
+        ]
+    },
+    {
+        "id": 847655,
+        "original_text": "A basket ball player scored 82 points . she made 33 more 2 pointers than 3 pointers and only one free throw . How many 2 poniters and how many 1 pointers did she make ?",
+        "equation": "3.0*m+2.0*n=82.0-1.0 ; n-m=33.0",
+        "ans": [
+            3.0,
+            36.0
+        ]
+    },
+    {
+        "id": 614351,
+        "original_text": "Joe is 10 years older than James . In 8 years , twice Joe 's age will equal three times James 's age . How old is each now ?",
+        "equation": "2.0*m-3.0*n=3.0*8.0-2.0*8.0 ; m-n=10.0",
+        "ans": [
+            22.0,
+            12.0
+        ]
+    },
+    {
+        "id": 153283,
+        "original_text": "Tickets for the homecoming dance cost $ 20 for a single ticket or $ 35 for a couple . Ticket sales totaled $ 2280 , and 128 people attended . How many tickets of each type were sold ?",
+        "equation": "20.0*m+35.0*n=2280.0 ; m+2.0*n=128.0",
+        "ans": [
+            16.0,
+            56.0
+        ]
+    },
+    {
+        "id": 766267,
+        "original_text": "A car leaves a station , traveling west at 55 mph . A truck leaves the same station one hour later , traveling west on the same road at 65 mph . How long does it take for the truck to pass the car ?",
+        "equation": "65.0*m-55.0*m=65.0*1.0",
+        "ans": [
+            6.5
+        ]
+    },
+    {
+        "id": 2314,
+        "original_text": "One number is 16 more than another . If the smaller number is subtracted from 0.66666 of the larger , the result is 0.25 of the sum of the two numbers . find the numbers",
+        "equation": "0.66666*m-n-0.25*m-0.25*n=0 ; m-n=16.0",
+        "ans": [
+            23.9998080015,
+            7.99980800154
+        ]
+    },
+    {
+        "id": 202248,
+        "original_text": "a pharmacist wishes to mix solution that is 3 % Minoxidil . She has on hand 70 ml of 2 % solution and wishes to add some 5 % solution to obtain the desired 3 % solution . How much 5 % solution should she add ?",
+        "equation": "5.0*m-3.0*m=3.0*70.0-70.0*2.0",
+        "ans": [
+            35.0
+        ]
+    },
+    {
+        "id": 17610,
+        "original_text": "A plane travels with a tail wind 100 miles to the nearest town in 60 minutes . The plane then travels back 100 miles with a head wind . The travel time is 40 min more than the first trip . What is the speed of the wind , and the speed of the plane ?",
+        "equation": "m+n=60.0+40.0 ; m-n=60.0",
+        "ans": [
+            80.0,
+            20.0
+        ]
+    },
+    {
+        "id": 307866,
+        "original_text": "5 years ago Mary was 5 times as old as her Son . 3 years hence her age will be 8 less than three times the corresponding age of her Son .",
+        "equation": "m-5.0*n=-1*5.0*5.0+5.0 ; m-3.0*n=3.0*3.0-8.0-3.0",
+        "ans": [
+            9.0,
+            25.0
+        ]
+    },
+    {
+        "id": 200033,
+        "original_text": "Soybean meal is 14 % protien . Cornmeal is 7 % protien . How many pound of each should be mixed together in order to get a 280 lb mixture that is 13 % protien ?",
+        "equation": "14.0*m+7.0*n=280.0*13.0 ; m+n=280.0",
+        "ans": [
+            240.0,
+            40.0
+        ]
+    },
+    {
+        "id": 278390,
+        "original_text": "Mr.Klinker is 35 and his daughter is 10 . In how many years will Mr. Klinker be twice as old as his daughter ?",
+        "equation": "m-2.0*m=2.0*10.0-35.0",
+        "ans": [
+            15.0
+        ]
+    },
+    {
+        "id": 760914,
+        "original_text": "X represents a certain number , when the number is multiplied by 3 the result is as adding 34 to the number . What is the number ?",
+        "equation": "3.0*m-m=34.0",
+        "ans": [
+            17.0
+        ]
+    },
+    {
+        "id": 336970,
+        "original_text": "for her workout , Sarah walks north at the rate of 3 mph and returns at the rate of 4 mph . how many miles did she walk if the round trip took 3.5 hours ?",
+        "equation": "1/3.0*m+1/4.0*m=3.5",
+        "ans": [
+            6.0
+        ]
+    },
+    {
+        "id": 340824,
+        "original_text": "The digits of a certain two-digit number add up to 6 . Form a second number by reversing these digits . When the second number is subtracted from the first , the result is three times the sum of the digits . Find the first number",
+        "equation": "10*m+n-10*n-m-3.0*n-3.0*m=0 ; n+m=6.0",
+        "ans": [
+            2.0,
+            4.0
+        ]
+    },
+    {
+        "id": 219569,
+        "original_text": "The sum of two numbers is 55 . The greater number is seventeen times the smaller number plus one . Find the numbers .",
+        "equation": "m-17.0*n=1.0 ; m+n=55.0",
+        "ans": [
+            52.0,
+            3.0
+        ]
+    },
+    {
+        "id": 256371,
+        "original_text": "Paul 's Plumbing charges $ 55 to visit a job site plus $ 35 per hour for labor . Reliable Plumbing charges $ 75 to visit a job site plus $ 30 per hour for labor . For how many hours of labor would the total charge be the same for the two companies ?",
+        "equation": "35.0*m-30.0*m=75.0-55.0",
+        "ans": [
+            4.0
+        ]
+    },
+    {
+        "id": 311656,
+        "original_text": "The sum of two numbers is 103 . The larger number is one more than five times the smaller number . Find the numbers",
+        "equation": "m-5.0*n=1.0 ; m+n=103.0",
+        "ans": [
+            17.0,
+            86.0
+        ]
+    },
+    {
+        "id": 765427,
+        "original_text": "Three less than 4 times a number is 325 . What is the number ?",
+        "equation": "4.0*m=3.0+325.0",
+        "ans": [
+            82.0
+        ]
+    },
+    {
+        "id": 394149,
+        "original_text": "In the year 2000 Donald was 12 and his father was 40 . In which year was Donald 's father 8 times as old as Donald ?",
+        "equation": "-1*8.0*m+m=40.0-8.0*12.0",
+        "ans": [
+            8.0
+        ]
+    },
+    {
+        "id": 896492,
+        "original_text": "If you multiply an unknown number by 6 and then add 5 , the result is 7 less than the unknown number plus 1 multiplied by 3 . Find the unknown number .",
+        "equation": "6.0*m-3.0*m=3.0*1.0-5.0-7.0",
+        "ans": [
+            -3.0
+        ]
+    },
+    {
+        "id": 673170,
+        "original_text": "A larger number is 2 less than 5 times the smaller number . If the sum of these numbers is 94 , find the larger number .",
+        "equation": "5.0*m-n=2.0 ; m+n=94.0",
+        "ans": [
+            16.0,
+            78.0
+        ]
+    },
+    {
+        "id": 394552,
+        "original_text": "the sum of two numbers is 36 . one number is two more than the other find the numbers",
+        "equation": "m+n=36.0 ; n-2.0*m=0",
+        "ans": [
+            12.0,
+            24.0
+        ]
+    },
+    {
+        "id": 14971,
+        "original_text": "A truck traveling 45 mph and a train traveling 60 mph cover the same distance . The trucks travels 2 hours longer than the train . How many does each travel ?",
+        "equation": "60.0*m-45.0*m=45.0*2.0 ; n-60.0*m=0",
+        "ans": [
+            360.0,
+            6.0
+        ]
+    },
+    {
+        "id": 356152,
+        "original_text": "two baseball players hit 79 home runs combined last season . the first player hit 7 more home runs than twice the number of home runs hit by the second player . how many home runs did each player hit ?",
+        "equation": "m-2.0*n=7.0 ; m+n=79.0",
+        "ans": [
+            24.0,
+            55.0
+        ]
+    },
+    {
+        "id": 558275,
+        "original_text": "The sum of the digits of a two-digit number is 14 . If 36 is subtracted from the number , the resulting number is the original number with its digits interchanged . Find the original number .",
+        "equation": "10*m+n-10*n-m=-1*36.0 ; n+m=14.0",
+        "ans": [
+            9.0,
+            5.0
+        ]
+    },
+    {
+        "id": 125689,
+        "original_text": "Sally bought three choclate bars and a pack of gum and paid $ 1.75 . Jake bought two choclate bars and four packs of gum and paid $ 2.00 Find the cost of a choclate bar and the cost of the gum .",
+        "equation": "3.0*m+1.0*n=1.75 ; 2.0*m+4.0*n=2.0",
+        "ans": [
+            0.5,
+            0.25
+        ]
+    },
+    {
+        "id": 379388,
+        "original_text": "one number is eight more than twice another and their sum is 20 . what are their number ?",
+        "equation": "m-2.0*n=8.0 ; m+n=20.0",
+        "ans": [
+            16.0,
+            4.0
+        ]
+    },
+    {
+        "id": 108337,
+        "original_text": "Two numbers have a sum of 22 . Their difference is 4 . what are the two numbers ?",
+        "equation": "m+n=22.0 ; m-n=4.0",
+        "ans": [
+            9.0,
+            13.0
+        ]
+    },
+    {
+        "id": 631993,
+        "original_text": "the sum of two numbers is 90 . three times the smaller is 10 more than the larger . find the larger number .",
+        "equation": "3.0*m-n=10.0 ; m+n=90.0",
+        "ans": [
+            65.0,
+            25.0
+        ]
+    },
+    {
+        "id": 127730,
+        "original_text": "The sum of two numbers is 6 less than twice the first number . Their difference is 10 less than four times the second number .",
+        "equation": "m+n-2.0*m=-1*6.0 ; m-n-4.0*n=-1*10.0",
+        "ans": [
+            10.0,
+            4.0
+        ]
+    },
+    {
+        "id": 370467,
+        "original_text": "The larger of two numbers is 8 more than twice the smaller . The sum of the numbers is 10 less than three times the larger . Find the numbers .",
+        "equation": "m+n-3.0*m=-1*10.0 ; m-2.0*n=8.0",
+        "ans": [
+            4.0,
+            -2.0
+        ]
+    },
+    {
+        "id": 3936,
+        "original_text": "Dorothy is 3 times as old as her sister . In 5 years she will be twice as old as her sister . How old are Dorothy and her sister now ?",
+        "equation": "m-2.0*n=2.0*5.0-5.0 ; m-3.0*n=0",
+        "ans": [
+            5.0,
+            15.0
+        ]
+    },
+    {
+        "id": 208614,
+        "original_text": "Two planes left an airport at noon . One flew east at a certain speed and the other flew west at twice the speed . The planes were 2700 mi apart in 3 h. How fast was each plane flying ?",
+        "equation": "3.0*m+3.0*n=2700.0 ; m-2.0*n=0",
+        "ans": [
+            300.0,
+            600.0
+        ]
+    },
+    {
+        "id": 557820,
+        "original_text": "One number is twice as large as a second number . If the sum of the two numbers is 114 , what are the two numbers ?",
+        "equation": "m+n=114.0 ; n-2.0*m=0",
+        "ans": [
+            76.0,
+            38.0
+        ]
+    },
+    {
+        "id": 381528,
+        "original_text": "A train traveling 48 km/h takes 2 hours longer than the ship traveling 60 km/h to reach a given distance . What is the distance ?",
+        "equation": "1/48.0*m-1/60.0*m=2.0",
+        "ans": [
+            480.0
+        ]
+    },
+    {
+        "id": 911331,
+        "original_text": "juans age is 5 years more than twice Margos age . The sum of their ages is 29 years . Find their ages .",
+        "equation": "m-2.0*n=5.0 ; m+n=29.0",
+        "ans": [
+            8.0,
+            21.0
+        ]
+    },
+    {
+        "id": 929086,
+        "original_text": "mary is 2 times as old as her sister jessie . if the sum of their ages is 18 how old are both sisters",
+        "equation": "m+n=18.0 ; n-2.0*m=0",
+        "ans": [
+            6.0,
+            12.0
+        ]
+    },
+    {
+        "id": 418676,
+        "original_text": "one pipe fills a tank in 8 minutes , another pipe can fill it in 12 minutes . find the time taken to fill the tank when both pipes are running together ?",
+        "equation": "1/8.0*m+1/12.0*m=1",
+        "ans": [
+            4.8
+        ]
+    },
+    {
+        "id": 587206,
+        "original_text": "Tom is thrice as the age of Antonette . if the sum of there age is 54 . what are their ages ?",
+        "equation": "m+n=54.0 ; n-3.0*m=0",
+        "ans": [
+            40.5,
+            13.5
+        ]
+    },
+    {
+        "id": 413708,
+        "original_text": "The sum of 2 numbers is 61 . The numbers are 5 apart . What are they ?",
+        "equation": "m+n=61.0 ; m-n=5.0",
+        "ans": [
+            33.0,
+            28.0
+        ]
+    },
+    {
+        "id": 609155,
+        "original_text": "find how many quarts of 6 % butterfat milk and 3 % butterfat milk should be mixed to yield 75 quarts of 5 % butter milk ?",
+        "equation": "6.0*m+3.0*n=75.0*5.0 ; m+n=75.0",
+        "ans": [
+            50.0,
+            25.0
+        ]
+    },
+    {
+        "id": 774524,
+        "original_text": "The ages of A and B are in the ratio 5 to 3 . After 6 years , their will be in the ratio 7 to 5 . Then the present age of A is ?",
+        "equation": "5.0*m-7.0*n=7.0*6.0-5.0*6.0 ; 3.0*m-5.0*n=0",
+        "ans": [
+            15.0,
+            9.0
+        ]
+    },
+    {
+        "id": 223660,
+        "original_text": "The sum of two numbers is twelve . The total of three times the smaller number and six amounts to seven less than the product of four and the larger number . Find the two numbers .",
+        "equation": "4.0*m-3.0*n=7.0+6.0 ; n+m=12.0",
+        "ans": [
+            5.0,
+            7.0
+        ]
+    },
+    {
+        "id": 482896,
+        "original_text": "The larger of two numbers is one less than three times the smaller . if their sum is 63 .",
+        "equation": "3.0*m-n=1.0 ; m+n=63.0",
+        "ans": [
+            47.0,
+            16.0
+        ]
+    },
+    {
+        "id": 912650,
+        "original_text": "A water tank is currently 33.3 % full . If 3 more gallons are added the tank will be 50 % full . Find the capacity of the tank .",
+        "equation": "0.01*50.0*m-0.01*33.3*m=3.0",
+        "ans": [
+            17.9640718563
+        ]
+    },
+    {
+        "id": 158849,
+        "original_text": "2 planes travel 880 miles towards each other they pass each other half way after 2 hours . One plane is going 126 mile faster than the other . How fast are both of them going ??",
+        "equation": "2.0*m+2.0*n=880.0 ; m-n=126.0",
+        "ans": [
+            283.0,
+            157.0
+        ]
+    },
+    {
+        "id": 631657,
+        "original_text": "A cylinder contains 50 liters of a 60 % chemical solution . How much of this solution should be drained off and replaced with a 40 % solution to obtain a final strength of 46 % ?",
+        "equation": "0.01*60.0*m-0.01*40.0*m=0.01*60.0*50.0-0.01*46.0*50.0",
+        "ans": [
+            35.0
+        ]
+    },
+    {
+        "id": 355014,
+        "original_text": "Train A is leaving Austin to Houston at 82.1 miles per hour . Train B leaves to Austin at 109.071 miles per hour . How long before they pass each other on the 240 mile trip ?",
+        "equation": "82.1*m+109.071*m=240.0",
+        "ans": [
+            1.25542053973
+        ]
+    },
+    {
+        "id": 154757,
+        "original_text": "Two cars leave a gas station travling in opposite directions . One car travels at 60 mph and the other at 64 mph . In how many hours will they be 310 miles apart ?",
+        "equation": "60.0*m+64.0*m=310.0",
+        "ans": [
+            2.5
+        ]
+    },
+    {
+        "id": 917171,
+        "original_text": "Ann is 5 years older than her sister Susan . The sum of their ages is 27 . How old is each girl ?",
+        "equation": "m+n=27.0 ; m-n=5.0",
+        "ans": [
+            11.0,
+            16.0
+        ]
+    },
+    {
+        "id": 127673,
+        "original_text": "A truck traveling at a constant rate of 45 mph leaves Tampa . One hour later a car traveling at a constant rate of 60 mph also leaves Tampa traveling in the same direction on the same highway . How long will it take for the car to catch up to the truck if both vehicles continue in the same direction on the highway ?",
+        "equation": "60.0*m-45.0*m=60.0",
+        "ans": [
+            4.0
+        ]
+    },
+    {
+        "id": 125684,
+        "original_text": "Bill and Chris left the student union at the same time on bicycles . Bill traveled east , and Chris traveled west . After 0.5 hour , they were 14 miles apart . If Bill was going 2 miles per hour faster than Chris , how fast was each of the bicycles going ?",
+        "equation": "0.5*m+0.5*n=14.0 ; n-m=2.0",
+        "ans": [
+            13.0,
+            15.0
+        ]
+    },
+    {
+        "id": 369466,
+        "original_text": "ONE-SIXTH OF A DENTIST 'S AGE 8 YEARS AGO EQUALS ONE-TENTH OF HIS AGE 8 YEARS HENCE . WHAT IS HIS AGE NOW ?",
+        "equation": "0.166*m-0.1*m=0.1*8.0+0.166*8.0",
+        "ans": [
+            32.0
+        ]
+    },
+    {
+        "id": 58087,
+        "original_text": "Two trains leave Kansas City at the same time . One train travels east and the other one travels west . The speed of the westbound tain is 5 mph greater then the speed of the eastbound train . After 6 hours , they are 510 miles apart . Find the rate of each train . Assume the trains travel in a straight line in opposite directions .",
+        "equation": "6.0*m+6.0*n=510.0 ; n-m=5.0",
+        "ans": [
+            45.0,
+            40.0
+        ]
+    },
+    {
+        "id": 420981,
+        "original_text": "Two steamers leave a port on a river at the same time , traveling opposite directions . Each is traveling 22 mph . How long will it take for them to be 110 mi apart ?",
+        "equation": "22.0*m+22.0*m=110.0",
+        "ans": [
+            2.5
+        ]
+    },
+    {
+        "id": 359198,
+        "original_text": "in a bag of nickels and dimes , there are three times as many nickels as dimes . the total value of coins is $ 1.50 , find the number of dimes in the bag ?",
+        "equation": "0.1*m+0.05*n=1.5 ; 3.0*m-n=0",
+        "ans": [
+            6.0,
+            18.0
+        ]
+    },
+    {
+        "id": 21609,
+        "original_text": "ted runs two-thirds as fast as frank . in two hours frank runs eight miles farther then ted . how fast does each run ?",
+        "equation": "2.0*m-2.0*n=8.0 ; n-0.666*m=0",
+        "ans": [
+            11.9999976,
+            7.9999976
+        ]
+    },
+    {
+        "id": 267695,
+        "original_text": "one number is 3 more than another . the smaller number decreased by four times the larger number is the same as 12 less than six times the larger number . What is the larger number",
+        "equation": "m-4.0*n-6.0*n=-1*12.0 ; n-m=3.0",
+        "ans": [
+            1.0,
+            -2.0
+        ]
+    },
+    {
+        "id": 201720,
+        "original_text": "sue is now seven times old as louise . in six years sue will be five time as old as louise . find the present age of each one .",
+        "equation": "m-5.0*n=5.0*6.0-6.0 ; m-7.0*n=0",
+        "ans": [
+            12.0,
+            84.0
+        ]
+    },
+    {
+        "id": 241901,
+        "original_text": "The tens digit of a given two-digit positive number is two more than three times the units digit . If the digits are reversed , the new number is 13 less than half the given number . Find the given integer .",
+        "equation": "10*m+n-10*n-m=13.0 ; m-3.0*n=2.0",
+        "ans": [
+            1.16666666667,
+            -0.277777777778
+        ]
+    },
+    {
+        "id": 403257,
+        "original_text": "one number is 5 more than 3 times another number , the sum of two numbers is 157 . find the bigger number",
+        "equation": "m-3.0*n=5.0 ; m+n=157.0",
+        "ans": [
+            119.0,
+            38.0
+        ]
+    },
+    {
+        "id": 415249,
+        "original_text": "One number is two less than a second number . Twice the first is 4 more than 3 times the second . what are the numbers ?",
+        "equation": "2.0*m-3.0*n=4.0 ; n-m=2.0",
+        "ans": [
+            -10.0,
+            -8.0
+        ]
+    },
+    {
+        "id": 547216,
+        "original_text": "Ben can paint a fence in 3 hours and Billy takes 4 hours . How long will it take them to painting together",
+        "equation": "1/3.0*m+1/4.0*m=1",
+        "ans": [
+            1.71428571429
+        ]
+    },
+    {
+        "id": 262723,
+        "original_text": "The Nutty Professor sells cashews for $ 6.75 per pound and Brazil nuts for $ 5.00 per pound . How much of each type should be used to make a 50-lb mixture that sells for $ 5.70 per pound ?",
+        "equation": "6.75*m+5.0*n=50.0*5.7 ; m+n=50.0",
+        "ans": [
+            20.0,
+            30.0
+        ]
+    },
+    {
+        "id": 541835,
+        "original_text": "The sum of three times first number and the second number is 86 . Two times the first number is 1 less than the second number . What are the numbers ?",
+        "equation": "m-2.0*n=1.0 ; 3.0*n+m=86.0",
+        "ans": [
+            17.0,
+            35.0
+        ]
+    },
+    {
+        "id": 604450,
+        "original_text": "Lisa will make punch that is 25 % fruit juice by adding pure fruit juice to a 2-liter mixture that is 10 % pure fruit juice . How many liters of pure fruit juice does she need to add ?",
+        "equation": "m-0.01*25.0*m=0.01*25.0*2.0-0.01*10.0*2.0",
+        "ans": [
+            0.4
+        ]
+    },
+    {
+        "id": 899013,
+        "original_text": "Marco is 1 year older than twice as old as Marie . How old is Marie if the sum of their ages is 37 ?",
+        "equation": "m-2.0*n=1.0 ; m+n=37.0",
+        "ans": [
+            12.0,
+            25.0
+        ]
+    },
+    {
+        "id": 343286,
+        "original_text": "One number is 5 more than another number . If the smaller number is doubled and added to 3 times the larger number , the sum is 80 . Find the two numbers .",
+        "equation": "3.0*m+2.0*n=80.0 ; m-n=5.0",
+        "ans": [
+            18.0,
+            13.0
+        ]
+    },
+    {
+        "id": 847195,
+        "original_text": "Raj is 11 years old and his uncle is 59 years . How many years ago was raj 's uncle 7 times as old as raj .",
+        "equation": "-1*7.0*m+m=59.0-7.0*11.0",
+        "ans": [
+            3.0
+        ]
+    },
+    {
+        "id": 167906,
+        "original_text": "Six years ago , Sam was three times as old as Sue . Four years from now Sam will be twice as old as Sue will be . Find the present age of each .",
+        "equation": "m-3.0*n=-1*3.0*6.0+6.0 ; m-2.0*n=2.0*4.0-4.0",
+        "ans": [
+            36.0,
+            16.0
+        ]
+    },
+    {
+        "id": 86849,
+        "original_text": "One number is 6 more than another . If the sum of the smaller number and 3 times the larger number is 34 , find the two numbers",
+        "equation": "m+3.0*n=34.0 ; n-m=6.0",
+        "ans": [
+            4.0,
+            10.0
+        ]
+    },
+    {
+        "id": 161314,
+        "original_text": "hi please help me with this problem : The sum of two numers is -17 . If one number is one less than three times the other , find the numbers .",
+        "equation": "3.0*m-n=1.0 ; m+n=-17.0",
+        "ans": [
+            -4.0,
+            -13.0
+        ]
+    },
+    {
+        "id": 922336,
+        "original_text": "The sum of the ages of dorothy and dorilyn is 41 . In 5 years , dorothy will be twice as old as dorilyn . Find thier ages 3 years ago .",
+        "equation": "m-2.0*n=2.0*5.0-5.0 ; n+m=41.0",
+        "ans": [
+            29.0,
+            12.0
+        ]
+    },
+    {
+        "id": 829751,
+        "original_text": "Sally bought a bike at 25 % less than the original price . Original price was $ 40 more than the price . What is the original price ?",
+        "equation": "0.01*25.0*m=40.0",
+        "ans": [
+            160.0
+        ]
+    },
+    {
+        "id": 477799,
+        "original_text": "a number is 3 less than 4 times another number . if their sum is equal to 117 , then the greater number is ?",
+        "equation": "4.0*m-n=3.0 ; m+n=117.0",
+        "ans": [
+            93.0,
+            24.0
+        ]
+    },
+    {
+        "id": 747692,
+        "original_text": "Michael sold a total of 320 tickets at a fair . The money recived was $ 1255 . Each adult ticket was $ 5 and each child ticket was $ 2 . How many adult tickets did he sell .",
+        "equation": "5.0*m+2.0*n=1255.0 ; m+n=320.0",
+        "ans": [
+            115.0,
+            205.0
+        ]
+    },
+    {
+        "id": 39411,
+        "original_text": "Mr. Granger is 10 years more than twice as old as his son . However , last year he was 4 years less than 3 times as old as his son . How old are Mr. Granger and his son ?",
+        "equation": "m-3.0*n=-1*1.0*3.0+1.0-4.0 ; m-2.0*n=10.0",
+        "ans": [
+            42.0,
+            16.0
+        ]
+    },
+    {
+        "id": 378386,
+        "original_text": "The first of two numbers is 9 more than the second . Three times the first number is equal to 7 more than 5 times the second . What are the missing numbers ?",
+        "equation": "3.0*m-5.0*n=7.0 ; m-n=9.0",
+        "ans": [
+            19.0,
+            10.0
+        ]
+    },
+    {
+        "id": 391073,
+        "original_text": "The denominator of a fraction exceeds twice the numerator by 10 . The value of the fraction is 5 to 12 . Find the fraction .",
+        "equation": "5*m-12*n=0 ; m-2.0*n=10.0",
+        "ans": [
+            25.0,
+            60.0
+        ]
+    },
+    {
+        "id": 310397,
+        "original_text": "The larger of two numbers is four less than twice the smaller . Their sum is twenty-three . Find the larger number .",
+        "equation": "2.0*m-n=4.0 ; m+n=23.0",
+        "ans": [
+            14.0,
+            9.0
+        ]
+    },
+    {
+        "id": 839243,
+        "original_text": "An investment at 8 % and some at 9 % annual simple interest . The interest for 1 year on the combined investment of $ 10,000 was $ 840 . How much was invested at each rate ?",
+        "equation": "0.01*8.0*m+0.01*9.0*n=840.0 ; n+m=10000.0",
+        "ans": [
+            6000.0,
+            4000.0
+        ]
+    },
+    {
+        "id": 389616,
+        "original_text": "The sum of bob 's age and carol 's age is 66 . Carol 's age is 2 more than 3 times bob 's age . How old are Carol and bob ?",
+        "equation": "m-3.0*n=2.0 ; m+n=66.0",
+        "ans": [
+            50.0,
+            16.0
+        ]
+    },
+    {
+        "id": 51889,
+        "original_text": "In 3 years , alex will be 3 times as old as his sister Precy . A year ago , Alex was 7 times as old as Precy . How old are they now ?",
+        "equation": "m-7.0*n=-1*7.0*1.0+1.0 ; m-3.0*n=3.0*3.0-3.0",
+        "ans": [
+            15.0,
+            3.0
+        ]
+    },
+    {
+        "id": 316179,
+        "original_text": "two investments in companies total $ 2000 . If one investment earns 3 % annually and the other earns 2 % annually . Find the amount invested in each , if the total interest earned in $ 54 .",
+        "equation": "0.01*3.0*m+0.01*2.0*n=54.0 ; n+m=2000.0",
+        "ans": [
+            1400.0,
+            600.0
+        ]
+    },
+    {
+        "id": 948538,
+        "original_text": "Lorna is twice as older as peter . if their ages add up to 9 years old , how old is peter",
+        "equation": "m+n=9.0 ; n-2.0*m=0",
+        "ans": [
+            3.0,
+            6.0
+        ]
+    },
+    {
+        "id": 242296,
+        "original_text": "A chef is using a mixture of two brands of Italian dressing . The first brand contains 8 % vinegar , and the second brand contains 13 % vinegar . The chef wants to make 320 milliliters of a dressing that is 11 % vinegar . How much of each brand should she use ?",
+        "equation": "8.0*m+13.0*n=320.0*11.0 ; m+n=320.0",
+        "ans": [
+            128.0,
+            192.0
+        ]
+    },
+    {
+        "id": 1299,
+        "original_text": "My horse and saddle are worth $ 100.00 , and my horse is worth 7 times as much as my saddle . What is the value of each ?",
+        "equation": "m+n=100.0 ; n-7.0*m=0",
+        "ans": [
+            12.5,
+            87.5
+        ]
+    },
+    {
+        "id": 154972,
+        "original_text": "Julie is 4 times older than Aaron . In 10 years Julie will be twice as old as Aaron . How old are Julie and Aaron ?",
+        "equation": "m-2.0*n=2.0*10.0-10.0 ; m-4.0*n=0",
+        "ans": [
+            5.0,
+            20.0
+        ]
+    },
+    {
+        "id": 276559,
+        "original_text": "find two numbers whose difference is 200 , such that the larger number is 5 times the smaller .",
+        "equation": "m-n=200.0 ; m-5.0*n=0",
+        "ans": [
+            250.0,
+            50.0
+        ]
+    },
+    {
+        "id": 354154,
+        "original_text": "when fritz drives to work his trip takes 48 minutes , but when he takes the train it takes 40 minutes . find the distance fritz travels to work if the train travels an average of 6 mph faster than his driving .",
+        "equation": "1/40.0*m-1/48.0*m=6.0*1/60",
+        "ans": [
+            24.0
+        ]
+    },
+    {
+        "id": 260563,
+        "original_text": "Ashley won $ 5000 in a contest . She invested some of the money at 5 % simple interest and $ 400 less than twice that amount at 6.5 % . In one year , she earned $ 298 in interest . How much did she invest at each rate ?",
+        "equation": "0.01*5.0*m+0.01*6.5*n=298.0 ; 2.0*m-n=400.0",
+        "ans": [
+            1800.0,
+            3200.0
+        ]
+    },
+    {
+        "id": 515334,
+        "original_text": "One number is eight less than five times another . If the sum of the two numbers is 28 , find the numbers .",
+        "equation": "5.0*m-n=8.0 ; m+n=28.0",
+        "ans": [
+            22.0,
+            6.0
+        ]
+    },
+    {
+        "id": 148918,
+        "original_text": "For Monday mornings staff meeting , Jim bought 2 bags of bagels and 3 packages of cream cheese and paid $ 9.75 -LRB- excluding sales tax -RRB- . For Fridays meeting , he bought 4 bags of bagels and 2 packages of cream cheese and paid $ 12.50 -LRB- again , excluding sales tax -RRB- . How much do bags of bagels and packages of cream cheese cost ?",
+        "equation": "2.0*m+3.0*n=9.75 ; 4.0*m+2.0*n=12.5",
+        "ans": [
+            2.25,
+            1.75
+        ]
+    },
+    {
+        "id": 374768,
+        "original_text": "A motor boat takes 5 hrs to travel 300 mi going upstream . The return trip takes 2 hrs . going downstream . What is the rate of the boat in still water and what is the rate of the current ?",
+        "equation": "2.0*m+2.0*n=300.0 ; 5.0*m-5.0*n=300.0",
+        "ans": [
+            105.0,
+            45.0
+        ]
+    },
+    {
+        "id": 468522,
+        "original_text": "Two number differ by 10 . The larger number is 6 less than twice the smaller number . Find the numbers .",
+        "equation": "2.0*m-n=6.0 ; n-m=10.0",
+        "ans": [
+            16.0,
+            26.0
+        ]
+    },
+    {
+        "id": 405732,
+        "original_text": "If one integer is added to another and it equals -9 , and if the smallest is subtracted from the largest and it equals 1 than what would be the integers ?",
+        "equation": "m+n=-9.0 ; m-n=1.0",
+        "ans": [
+            -5.0,
+            -4.0
+        ]
+    },
+    {
+        "id": 430183,
+        "original_text": "Adam can paint a house in 5 hours . Audrey can paint the same house in 6 hours . If they work together how long will it take to paint the house ?",
+        "equation": "1/5.0*m+1/6.0*m=1",
+        "ans": [
+            2.72727272727
+        ]
+    },
+    {
+        "id": 505066,
+        "original_text": "one number is five more than four times another . Their sum is 35 . Find the two numbers .",
+        "equation": "m-4.0*n=5.0 ; m+n=35.0",
+        "ans": [
+            29.0,
+            6.0
+        ]
+    },
+    {
+        "id": 268774,
+        "original_text": "a minor league baseball team plays 130 games in a season . if the team won 14 more than three times as many games as they lost , how many wins and losses did the team have ?",
+        "equation": "m-3.0*n=14.0 ; m+n=130.0",
+        "ans": [
+            101.0,
+            29.0
+        ]
+    },
+    {
+        "id": 145147,
+        "original_text": "24 is divided into two parts such that 7 times the first part added to 5 times the second part makes 146 .",
+        "equation": "7.0*m+5.0*n=146.0 ; m+n=24.0",
+        "ans": [
+            13.0,
+            11.0
+        ]
+    },
+    {
+        "id": 147255,
+        "original_text": "A Distillate flows into an empty 64-Gallon drum at spout A and out of the drum at spout B . If the rate of flow through A is 2 gallons per hour , how many gallons per hour must flow out at spout B so that the drum is full in exactly 96 hours ?",
+        "equation": "96.0*m=64.0+96.0*2.0",
+        "ans": [
+            2.66666666667
+        ]
+    },
+    {
+        "id": 153771,
+        "original_text": "erin and susan both took their dogs for a walk . together they walked 15 miles . if erin walked 3 miles less than susan , how far did susan walk with her dog ?",
+        "equation": "m+n=15.0 ; m-n=3.0",
+        "ans": [
+            9.0,
+            6.0
+        ]
+    },
+    {
+        "id": 153934,
+        "original_text": "a machine company has an incentive plan for its salesperson . For each machine that a salesperson sell , the commission is $ 40 . The commission for every machine sold will increase by $ 0.04 for each machine sold over 600 . How many machines must salesperson sell in order to earn $ 30,800",
+        "equation": "40.0*m+0.04*m=30800.0+0.04*600.0",
+        "ans": [
+            769.83016983
+        ]
+    },
+    {
+        "id": 153934,
+        "original_text": "a machine company has an incentive plan for its salesperson . For each machine that a salesperson sell , the commission is $ 40 . The commission for every machine sold will increase by $ 0.04 for each machine sold over 600 . How many machines must salesperson sell in order to earn $ 30,800",
+        "equation": "40.0*m+0.04*m=30800.0+0.04*600.0",
+        "ans": [
+            769.83016983
+        ]
+    },
+    {
+        "id": 181887,
+        "original_text": "Jolene bought three blouses at one price and 2 blouses priced $ 3 below the others . The total cost was $ 91.50 . Find the prices of the blouses .",
+        "equation": "3.0*m+2.0*n=91.5 ; m-n=3.0",
+        "ans": [
+            19.5,
+            16.5
+        ]
+    },
+    {
+        "id": 260211,
+        "original_text": "The sum of the digits of a two-digit number is 14 . If the digits are reversed , the number is 18 less than the original number . Find the original number .",
+        "equation": "10*m+n-10*n-m=-1*18.0 ; n+m=14.0",
+        "ans": [
+            8.0,
+            6.0
+        ]
+    },
+    {
+        "id": 307088,
+        "original_text": "twice the sum of 4 and 3 times some number is 34 . what is the number ?",
+        "equation": "2.0*3.0*m=34.0-2.0*4.0",
+        "ans": [
+            4.33333333333
+        ]
+    },
+    {
+        "id": 370249,
+        "original_text": "Grant is thinking of two numbers . He says that one of the numbers is six times the other number decreased by 2 and the sum of the numbers is 25 . What are the numbers ?",
+        "equation": "6.0*m-n=2.0 ; m+n=25.0",
+        "ans": [
+            3.85714285714,
+            21.1428571429
+        ]
+    },
+    {
+        "id": 386580,
+        "original_text": "Nutrition : One eight-ounce glass of apple juice and one eight-ounce glass of orange juice contain a total of 185 milligrams of vitamin C. Two eight-ounce glasses of apple juice and three eight-ounce glasses of orange juice contain a total of 452 milligrams of vitamin C. How much vitamin C is in an eight-ounce glass of each type of juice ?",
+        "equation": "2.0*m+3.0*n=452.0 ; m+n=185.0",
+        "ans": [
+            103.0,
+            82.0
+        ]
+    },
+    {
+        "id": 392905,
+        "original_text": "Tom has 12 coins in quarters and nickels . Their value is $ 2.20 . How many coins of each type does he have ?",
+        "equation": "0.25*m+0.05*n=2.2 ; m+n=12.0",
+        "ans": [
+            4.0,
+            8.0
+        ]
+    },
+    {
+        "id": 406012,
+        "original_text": "A father is now twice as old as his daughter . 10 years ago he was 3 times as old as her . How old are they both now ?",
+        "equation": "m-3.0*n=-1*3.0*10.0+10.0 ; m-2.0*n=0",
+        "ans": [
+            40.0,
+            20.0
+        ]
+    },
+    {
+        "id": 444908,
+        "original_text": "A person is chosing between 2 cellular phone plans . One has a monthly fee of $ 50 for 500 minutes plus $ 0.35 for each minute over the 500 . The second plan has a monthly fee of $ 75 for 1000 minutes plus $ 0.45 for each minute over the 1000 . After how many minutes used are the monthly costs of the plans equal ?",
+        "equation": "0.35*m-0.45*m=75.0-0.45*1000.0-50.0+0.35*500.0",
+        "ans": [
+            2500.0
+        ]
+    },
+    {
+        "id": 525358,
+        "original_text": "The length of a rectangle is 3m longer than its width . If the perimeter of the rectangle is 34m , find its width and length .",
+        "equation": "m-n=3.0 ; 2*n+2*m=34.0",
+        "ans": [
+            7.0,
+            10.0
+        ]
+    },
+    {
+        "id": 572852,
+        "original_text": "The sum of 3 times a number and 4 times another number is 43 . Five times the first number is 3 less than four times the opposite of the second number . Find the numbers .",
+        "equation": "4.0*m+5.0*n=-1*3.0 ; 4.0*m+3.0*n=43.0",
+        "ans": [
+            -23.0,
+            28.0
+        ]
+    },
+    {
+        "id": 696167,
+        "original_text": "it takes 6 quarts of feul for a pilot to fly 1000 miles . How many quarts are needed for 2500 miles .",
+        "equation": "1000.0*m=6.0*2500.0",
+        "ans": [
+            15.0
+        ]
+    },
+    {
+        "id": 755492,
+        "original_text": "If the sum of two numbers is 120 , and thier difference is 42 , find the smaller number .",
+        "equation": "m+n=120.0 ; m-n=42.0",
+        "ans": [
+            81.0,
+            39.0
+        ]
+    },
+    {
+        "id": 757959,
+        "original_text": "The sum of two consecutive whole numbers is 27 . Find the numbers .",
+        "equation": "m+m=27.0-1",
+        "ans": [
+            13.0
+        ]
+    },
+    {
+        "id": 843544,
+        "original_text": "I subtract 13 from a certain number and then divided the result by 3 . The result is the same as adding 3 to the number and then dividing by 5 . Find the number",
+        "equation": "5.0*m-3.0*m=3.0*3.0+5.0*13.0",
+        "ans": [
+            37.0
+        ]
+    },
+    {
+        "id": 943749,
+        "original_text": "A group of farmers planned to clean 80 acres of wheat per day to finish the work on schedule . Right before the work started , they received a new piece of machinery that helped them clean 10 more acres per day than originally planned . As a result of increased productivity in the last day before the deadline they only had to clean 30 acres . How many acres of wheat did the group of farmers have to clean ?",
+        "equation": "80.0*m+10.0*m-n=80.0+10.0-30.0 ; 80.0*m-n=0",
+        "ans": [
+            6.0,
+            480.0
+        ]
+    }
+]

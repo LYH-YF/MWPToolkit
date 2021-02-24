@@ -24,7 +24,7 @@ class GTS(nn.Module):
         self.merge=SubTreeMerger(config["hidden_size"],config["embedding_size"],config["dropout_ratio"])
     
     def forward(self,seq, seq_length, nums_stack, num_size, generate_nums, num_pos,\
-                num_start,target=None, target_length=None,max_length=30,beam_size=5,UNK_TOKEN=None):
+                num_start,target=None, target_length=None,max_length=30,beam_size=1,UNK_TOKEN=None):
         # sequence mask for attention
         seq_mask = []
         max_len = max(seq_length)

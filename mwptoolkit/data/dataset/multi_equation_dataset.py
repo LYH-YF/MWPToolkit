@@ -1,8 +1,8 @@
 import copy
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
-from mwptoolkit.utils.preprocess_tools import number_transfer_, num_transfer_multi
-from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType
+from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514
+from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName
 
 class MultiEquationDataset(AbstractDataset):
     def __init__(self, config):
@@ -10,12 +10,18 @@ class MultiEquationDataset(AbstractDataset):
         self.equation_fix = config["equation_fix"]
     
     def _preprocess(self):
-        self.trainset, generate_list, copy_nums, unk_symbol = num_transfer_multi(
+        if self.dataset==DatasetName.alg514:
+            transfer=num_transfer_alg514
+        elif self.dataset==DatasetName.draw:
+            transfer=num_transfer_draw
+        else:
+            transfer=num_transfer_multi
+        self.trainset, generate_list, copy_nums, unk_symbol = transfer(
             self.trainset, self.mask_symbol, self.min_generate_keep,";")
-        self.validset, _g, _c, _u = num_transfer_multi(self.validset,
+        self.validset, _g, _c, _u = transfer(self.validset,
                                                     self.mask_symbol,
                                                     self.min_generate_keep,";")
-        self.testset, _g, _c, _u = num_transfer_multi(self.testset, self.mask_symbol,
+        self.testset, _g, _c, _u = transfer(self.testset, self.mask_symbol,
                                                     self.min_generate_keep,";")
 
         if self.equation_fix == FixType.Prefix:

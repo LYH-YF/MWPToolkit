@@ -19,11 +19,13 @@ class FixType:
     Nonfix = None
 
 
-class DatesetName:
+class DatasetName:
     math23k = "math23k"
     hmwp = "hmwp"
     mawps = "mawps"
     ape200k = "ape200k"
+    alg514 = "alg514"
+    draw = "draw"
 
 
 class DatasetType:

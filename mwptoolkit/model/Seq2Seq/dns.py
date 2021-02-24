@@ -28,6 +28,8 @@ class DNS(nn.Module):
             self.in_idx2word=config["in_idx2word"]
             self.out_sos_token=config["out_sos_token"]
         else:
+            self.out_symbol2idx=config["out_symbol2idx"]
+            self.out_idx2symbol=config["out_idx2symbol"]
             self.out_sos_token=config["out_sos_token"]
 
         self.in_embedder=BaiscEmbedder(config["vocab_size"],config["embedding_size"],config["dropout_ratio"])
@@ -82,52 +84,47 @@ class DNS(nn.Module):
 
     def generate_t(self,encoder_outputs,encoder_hidden,decoder_inputs):
         with_t=random.random()
-        if with_t<self.teacher_force_ratio:
-            decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
-            token_logits = self.generate_linear(decoder_outputs)
-            token_logits=token_logits.view(-1, token_logits.size(-1))
-            token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
-            #token_logits=torch.log_softmax(token_logits,dim=1)
-        else:
-            seq_len=decoder_inputs.size(1)
-            decoder_hidden = encoder_hidden
-            decoder_input = decoder_inputs[:,0,:].unsqueeze(1)
-            token_logits=[]
-            for idx in range(seq_len):
-                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
-                #attn_list.append(attn)
-                step_output = decoder_output.squeeze(1)
-                token_logit = self.generate_linear(step_output)
-                predict=torch.nn.functional.log_softmax(token_logit,dim=1)
-                #predict=torch.log_softmax(token_logit,dim=1)
-                output=predict.topk(1,dim=1)[1]
-                token_logits.append(predict)
+        seq_len=decoder_inputs.size(1)
+        decoder_hidden = encoder_hidden
+        decoder_input = decoder_inputs[:,0,:].unsqueeze(1)
+        token_logits=[]
+        output=[]
+        for idx in range(seq_len):
+            if with_t<self.teacher_force_ratio:
+                decoder_input = decoder_inputs[:,idx,:].unsqueeze(1)
+            decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+            #attn_list.append(attn)
+            step_output = decoder_output.squeeze(1)
+            token_logit = self.generate_linear(step_output)
+            predict=torch.nn.functional.log_softmax(token_logit,dim=1)
+            output=self.rule_filter_(output,token_logit)
+            token_logits.append(predict)
 
-                if self.share_vocab:
-                    output=self.decode(output)
-                    decoder_input=self.out_embedder(output)
-                else:
-                    decoder_input=self.out_embedder(output)
-            token_logits=torch.stack(token_logits,dim=1)
-            token_logits=token_logits.view(-1,token_logits.size(-1))
+            if self.share_vocab:
+                output_=self.decode(output)
+                decoder_input=self.out_embedder(output_)
+            else:
+                decoder_input=self.out_embedder(output)
+        token_logits=torch.stack(token_logits,dim=1)
+        token_logits=token_logits.view(-1,token_logits.size(-1))
         return token_logits
     
     def generate_without_t(self,encoder_outputs,encoder_hidden,decoder_input):
         all_outputs=[]
         decoder_hidden = encoder_hidden
+        output=[]
         for idx in range(self.max_gen_len):
             decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
             #attn_list.append(attn)
             step_output = decoder_output.squeeze(1)
             token_logits = self.generate_linear(step_output)
-            predict=torch.nn.functional.log_softmax(token_logits,dim=1)
-            output=predict.topk(1,dim=1)[1]
+            output = self.rule_filter_(output,token_logits)
             
             
             all_outputs.append(output)
             if self.share_vocab:
-                output=self.decode(output)
-                decoder_input=self.out_embedder(output)
+                output_=self.decode(output)
+                decoder_input=self.out_embedder(output_)
             else:
                 decoder_input=self.out_embedder(output)
         all_outputs=torch.cat(all_outputs,dim=1)
@@ -162,7 +159,10 @@ class DNS(nn.Module):
         filters.append(self.out_symbol2idx['/'])
         filters.append(self.out_symbol2idx['^'])
         filters.append(self.out_symbol2idx[')'])
-        filters.append(self.out_symbol2idx['='])
+        try:
+            filters.append(self.out_symbol2idx['='])
+        except:
+            pass
         filters.append(self.out_symbol2idx['<EOS>'])
         return torch.tensor(filters).long()
     def rule2_filter(self):
@@ -170,7 +170,10 @@ class DNS(nn.Module):
         """
         filters = []
         filters.append(self.out_symbol2idx['('])
-        filters.append(self.out_symbol2idx['='])
+        try:
+            filters.append(self.out_symbol2idx['='])
+        except:
+            pass
         for idx in range(self.num_start,len(self.out_idx2symbol)):
             filters.append(idx)
         return torch.tensor(filters).long()
@@ -183,7 +186,10 @@ class DNS(nn.Module):
         filters.append(self.out_symbol2idx['*'])
         filters.append(self.out_symbol2idx['/'])
         filters.append(self.out_symbol2idx['^'])
-        filters.append(self.out_symbol2idx['='])
+        try:
+            filters.append(self.out_symbol2idx['='])
+        except:
+            pass
         filters.append(self.out_symbol2idx[')'])
         return torch.tensor(filters).long()
     def rule4_filter(self):
@@ -208,6 +214,19 @@ class DNS(nn.Module):
         for idx in range(self.num_start,len(self.out_idx2symbol)):
             filters.append(idx)
         return torch.tensor(filters).long()
+    def filter_op(self):
+        filters = []
+        filters.append(self.out_symbol2idx['+']) 
+        filters.append(self.out_symbol2idx['-']) 
+        filters.append(self.out_symbol2idx['*']) 
+        filters.append(self.out_symbol2idx['/']) 
+        filters.append(self.out_symbol2idx['^']) 
+        return torch.tensor(filters).long()
+    def filter_END(self):
+        filters = []
+        filters.append(self.out_symbol2idx['<EOS>']) 
+        return torch.tensor(filters).long()
+    
     def rule_filter_(self,symbols,token_logit):
         r"""
         Args:
@@ -220,10 +239,28 @@ class DNS(nn.Module):
         next_symbols=[]
         current_logit=token_logit.data
         if symbols==[]:
-            pass
-
-        for b,symbol in enumerate(symbols):
-            pass
+            filters=torch.cat([self.filter_op(),self.filter_END()])
+            for b in range(current_logit.size(0)):
+                current_logit[b][filters]=-float('inf')
+        else:
+            for b,symbol in enumerate(symbols.split(1)):
+                if self.out_idx2symbol[symbol] in ['+','-','*','/','^']:
+                    filters = self.rule1_filter()
+                    current_logit[b][filters] = -float('inf')
+                elif symbol >= self.num_start:
+                    filters = self.rule2_filter()
+                    current_logit[b][filters] = -float('inf')
+                elif self.out_idx2symbol[symbol] in ['=']:
+                    filters = self.rule3_filter()
+                    current_logit[b][filters] = -float('inf')
+                elif self.out_idx2symbol[symbol] in ['(']:
+                    filters = self.rule4_filter()
+                    current_logit[b][filters] = -float('inf')
+                elif self.out_idx2symbol[symbol] in [')']:
+                    filters = self.rule5_filter()
+                    current_logit[b][filters] = -float('inf')
+        next_symbols = current_logit.topk(1,dim=1)[1]
+        return next_symbols
 
 
 

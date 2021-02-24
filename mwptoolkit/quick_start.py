@@ -104,6 +104,8 @@ def run_toolkit():
             if config["symbol_for_tree"]:
                 pass
             else:
+                config["out_symbol2idx"] = dataset.out_symbol2idx
+                config["out_idx2symbol"] = dataset.out_idx2symbol
                 config["out_sos_token"] = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
                 config["out_eos_token"] = dataset.out_symbol2idx[SpecialTokens.EOS_TOKEN]
                 config["out_pad_token"] = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
@@ -113,6 +115,7 @@ def run_toolkit():
         config["operator_nums"] = dataset.operator_nums
         config["copy_nums"] = dataset.copy_nums
         config["generate_size"] = len(dataset.generate_list)
+        config["num_start"] = dataset.num_start
 
         dataloader = create_dataloader(config)(config, dataset)
         if config["equation_fix"] == FixType.Prefix:

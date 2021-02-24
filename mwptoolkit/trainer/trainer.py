@@ -660,7 +660,7 @@ class GTSTrainer(AbstractTrainer):
         self.node_generater_optimizer.load_state_dict(check_pnt["generate_optimizer"])
         self.merge_optimizer.load_state_dict(check_pnt["merge_optimizer"])
         #load parameter of scheduler
-        self.embedder_scheduler.load_state_dict(check_pnt["embedding_scheduler"])
+        self.embedder_scheduler.load_state_dict(check_pnt["embedder_scheduler"])
         self.encoder_scheduler.load_state_dict(check_pnt["encoder_scheduler"])
         self.decoder_scheduler.load_state_dict(check_pnt["decoder_scheduler"])
         self.node_generater_scheduler.load_state_dict(check_pnt["generate_scheduler"])

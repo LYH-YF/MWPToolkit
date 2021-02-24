@@ -64,15 +64,15 @@ class AbstractDataset(object):
             raise ValueError("the cross validation parameter k shouldn't be zero or one, it should be greater than one")
         if self.read_local_folds !=True:
             self._load_dataset()
-            self.dataset = self.trainset + self.validset + self.testset
-            random.shuffle(self.dataset)
-            step_size = int(len(self.dataset) / k_fold)
+            self.datas = self.trainset + self.validset + self.testset
+            random.shuffle(self.datas)
+            step_size = int(len(self.datas) / k_fold)
             folds = []
             for split_fold in range(k_fold - 1):
                 fold_start = step_size * split_fold
                 fold_end = step_size * (split_fold + 1)
-                folds.append(self.dataset[fold_start:fold_end])
-            folds.append(self.dataset[(step_size * (k_fold - 1)):])
+                folds.append(self.datas[fold_start:fold_end])
+            folds.append(self.datas[(step_size * (k_fold - 1)):])
         self.start_fold_t = start_fold_t
         for k in range(self.start_fold_t, k_fold):
             self.fold_t=k

@@ -4,24 +4,31 @@ import threading
 import sympy as sym
 from mwptoolkit.utils.enum_type import SpecialTokens, OPERATORS, NumMask, MaskSymbol
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
+
+
 class Solver(threading.Thread):
-    def __init__(self, func, equations,unk_symbol):
-        super(Solver,self).__init__()
+    r"""time-limited solving equation machanism based threading.
+    """
+    def __init__(self, func, equations, unk_symbol):
+        super(Solver, self).__init__()
         self.func = func
-        self.equations=equations
-        self.unk_symbol=unk_symbol
+        self.equations = equations
+        self.unk_symbol = unk_symbol
+
     def run(self):
         try:
-            self.result=self.func(self.equations,self.unk_symbol)
+            self.result = self.func(self.equations, self.unk_symbol)
         except:
             self.result = None
+
     def get_result(self):
         try:
             return self.result
         except:
             return None
 
-class AbstractEvaluater(object):
+
+class AbstractEvaluator(object):
     def __init__(self, symbol2idx, idx2symbol, config):
         super().__init__()
         self.share_vocab = config["share_vocab"]
@@ -64,13 +71,16 @@ class AbstractEvaluater(object):
         raise NotImplementedError
 
 
-class SeqEvaluater(AbstractEvaluater):
+class SeqEvaluator(AbstractEvaluator):
+    r"""evaluator for normal equation sequnence.
+    """
     def __init__(self, symbol2idx, idx2symbol, config):
         super().__init__(symbol2idx, idx2symbol, config)
 
     def result(self, test_res, test_tar, num_list, num_stack):
-        r'''evaluate single equation'''
-        if (self.single and self.linear) != True: # single but non-linear
+        r"""evaluate single equation.
+        """
+        if (self.single and self.linear) != True:  # single but non-linear
             return self.result_multi(test_res, test_tar, num_list, num_stack)
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
@@ -87,7 +97,8 @@ class SeqEvaluater(AbstractEvaluater):
             return False, False, tar_exp, tar_exp
 
     def result_multi(self, test_res, test_tar, num_list, num_stack):
-        r'''evaluate multiple euqations'''
+        r"""evaluate multiple euqations.
+        """
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         if res_exp == None:
@@ -267,11 +278,11 @@ class SeqEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            t = Solver(sym.solve,equations,unk_list)
+            t = Solver(sym.solve, equations, unk_list)
             t.setDaemon(True)
             t.start()
             t.join(10)
-            result=t.get_result()
+            result = t.get_result()
             return result, unk_symbols
         return None, unk_symbols
 
@@ -323,12 +334,16 @@ class SeqEvaluater(AbstractEvaluater):
             return False, False, new_test_res, test_tar
 
 
-class PreEvaluater(AbstractEvaluater):
+class PreEvaluator(AbstractEvaluator):
+    r"""evaluator for prefix equation.
+    """
     def __init__(self, symbol2idx, idx2symbol, config):
         super().__init__(symbol2idx, idx2symbol, config)
 
     def result(self, test_res, test_tar, num_list, num_stack):
-        if (self.single and self.linear) != True: # single but non-linear
+        r"""evaluate single equation.
+        """
+        if (self.single and self.linear) != True:  # single but non-linear
             return self.result_multi(test_res, test_tar, num_list, num_stack)
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
@@ -346,6 +361,8 @@ class PreEvaluater(AbstractEvaluater):
             return False, False, test, tar
 
     def result_multi(self, test_res, test_tar, num_list, num_stack):
+        r"""evaluate multiple euqations.
+        """
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         #test = tar
@@ -535,11 +552,11 @@ class PreEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            t = Solver(sym.solve,equations,unk_list)
+            t = Solver(sym.solve, equations, unk_list)
             t.setDaemon(True)
             t.start()
             t.join(10)
-            result=t.get_result()
+            result = t.get_result()
             return result, unk_symbols
         return None
 
@@ -547,12 +564,16 @@ class PreEvaluater(AbstractEvaluater):
         raise NotImplementedError
 
 
-class PostEvaluater(AbstractEvaluater):
+class PostEvaluator(AbstractEvaluator):
+    r"""evaluator for postfix equation.
+    """
     def __init__(self, symbol2idx, idx2symbol, config):
         super().__init__(symbol2idx, idx2symbol, config)
 
     def result(self, test_res, test_tar, num_list, num_stack):
-        if (self.single and self.linear) != True: # single but non-linear
+        r"""evaluate single equation.
+        """
+        if (self.single and self.linear) != True:  # single but non-linear
             return self.result_multi(test_res, test_tar, num_list, num_stack)
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
@@ -570,6 +591,8 @@ class PostEvaluater(AbstractEvaluater):
             return False, False, test, tar
 
     def result_multi(self, test_res, test_tar, num_list, num_stack):
+        r"""evaluate multiple euqations.
+        """
         test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
         if test is None:
@@ -750,350 +773,13 @@ class PostEvaluater(AbstractEvaluater):
         if len(st) == 1:
             equations = st.pop()
             unk_list = list(unk_symbols.values())
-            t = Solver(sym.solve,equations,unk_list)
+            t = Solver(sym.solve, equations, unk_list)
             t.setDaemon(True)
             t.start()
             t.join(10)
-            result=t.get_result()
+            result = t.get_result()
             return result, unk_symbols
         return None, unk_symbols
 
     def eval_source(self):
         raise NotImplementedError
-
-
-# class SeqEvaluater(object):
-#     def __init__(self,symbol2idx,idx2symbol,config):
-#         super().__init__()
-#         self.share_vocab=config["share_vocab"]
-#         self.mask_symbol=config["mask_symbol"]
-#         self.symbol2idx=symbol2idx
-#         self.idx2symbol=idx2symbol
-#         self.eos_idx=symbol2idx[SpecialTokens.EOS_TOKEN]
-#         self.pad_idx=symbol2idx[SpecialTokens.PAD_TOKEN]
-#         if self.share_vocab:
-#             self.sos_idx=None
-#         else:
-#             self.sos_idx=symbol2idx[SpecialTokens.SOS_TOKEN]
-
-#     def result(self,test_res,test_tar,num_list,num_stack=None):
-#         res_exp=self.out_expression(test_res)
-#         tar_exp=self.out_expression(test_tar)
-#         if res_exp==tar_exp:
-#             return True,True,res_exp,tar_exp
-#         res_ans=self.compute_expression(res_exp,num_list)
-#         tar_ans=self.compute_expression(tar_exp,num_list)
-#         if res_ans !=None:
-#             try:
-#                 if abs(res_ans-tar_ans)<1e-4:
-#                     return True,False,res_exp,tar_exp
-#                 else:
-#                     return False,False,res_exp,tar_exp
-#             except:
-#                 return False,False,res_exp,tar_exp
-#         else:
-#             return False,False,res_exp,tar_exp
-#     def eval_source(self,test_res,test_tar,num_list,num_stack=None):
-#         new_test_res=[]
-#         for symbol in test_res:
-#             try:
-#                 number=eval(symbol)
-#                 flag=True
-#             except:
-#                 flag=False
-#             if symbol in OPERATORS:
-#                 new_test_res.append(symbol)
-#             elif symbol in NumMask.alphabet:
-#                 new_test_res.append(symbol)
-#             elif flag == True:
-#                 new_test_res.append(symbol)
-#             elif symbol in ['(',')','[',']']:
-#                 new_test_res.append(symbol)
-#             else:
-#                 break
-#         res_ans=self.compute_expression(new_test_res,num_list)
-#         tar_ans=self.compute_expression(test_tar,num_list)
-#         if res_ans !=None:
-#             try:
-#                 if abs(res_ans-tar_ans)<1e-4:
-#                     return True,False,new_test_res,test_tar
-#                 else:
-#                     return False,False,new_test_res,test_tar
-#             except:
-#                 return False,False,new_test_res,test_tar
-#         else:
-#             return False,False,new_test_res,test_tar
-#     def out_expression(self,test):
-#         expression=[]
-#         for idx in test:
-#             if idx in [self.pad_idx,self.eos_idx,self.sos_idx]:
-#                 break
-#             symbol=self.idx2symbol[idx]
-#             expression.append(symbol)
-#         return expression
-
-#     def compute_expression(self,expression,num_list):
-#         alphabet="abcdefghijklmnopqrstuvwxyz"
-#         list_len=len(num_list)
-#         equation=[]
-#         for symbol in expression:
-#             if "NUM" in symbol:
-#                 idx=symbol[4]
-#                 num_idx=alphabet.index(idx)
-#                 if num_idx>=list_len:
-#                     return None
-#                 else:
-#                     num=num_list[num_idx]
-#                     if "%" in num:
-#                         num="("+num[:-1]+"/100"+")"
-#                         equation.append(num)
-#                     else:
-#                         equation.append(num_list[num_idx])
-#             else:
-#                 if symbol=="^":
-#                     equation.append("**")
-#                 elif symbol=="[":
-#                     equation.append("(")
-#                 elif symbol=="]":
-#                     equation.append(")")
-#                 else:
-#                     equation.append(symbol)
-#         equation=''.join(equation)
-#         try:
-#             ans=eval(equation)
-#             return ans
-#         except:
-#             return None
-
-# class Evaluater(object):
-#     def __init__(self,symbol2idx,idx2symbol,config):
-#         super().__init__()
-#         self.symbol2idx=symbol2idx
-#         self.idx2symbol=idx2symbol
-#         try:
-#             self.eos_idx=symbol2idx[EOS_TOKEN]
-#         except:
-#             self.eos_idx=None
-#         try:
-#             self.pad_idx=symbol2idx[PAD_TOKEN]
-#         except:
-#             self.pad_idx=None
-#         try:
-#             self.sos_idx=symbol2idx[SOS_TOKEN]
-#         except:
-#             self.sos_idx=None
-
-#     def result(self,test_res,test_tar,num_list,num_stack):
-#         test = self.out_expression_list(test_res, num_list)
-#         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
-#         # print(test, tar)
-#         if test is None:
-#             return False, False, test, tar
-#         if test == tar:
-#             return True, True, test, tar
-#         try:
-#             if abs(self.compute_prefix_expression(test) - self.compute_prefix_expression(tar)) < 1e-4:
-#                 return True, False, test, tar
-#             else:
-#                 return False, False, test, tar
-#         except:
-#             return False, False, test, tar
-
-#     def out_expression_list(self,test, num_list, num_stack=None):
-#         alphabet="abcdefghijklmnopqrstuvwxyz"
-#         num_len=len(num_list)
-#         max_index = len(self.idx2symbol)
-#         res = []
-#         for i in test:
-#             if i in [self.pad_idx,self.eos_idx,self.sos_idx]:
-#                 break
-#             symbol = self.idx2symbol[i]
-#             if "NUM" in symbol:
-#                 idx=symbol[4]
-#                 num_idx=alphabet.index(idx)
-#                 if num_idx >= num_len:
-#                     return None
-#                 res.append(num_list[num_idx])
-#             elif symbol==UNK_TOKEN:
-#                 pos_list = num_stack.pop()
-#                 c = num_list[pos_list[0]]
-#                 res.append(c)
-#             else:
-#                 res.append(symbol)
-#         return res
-
-#     def compute_prefix_expression(self,pre_fix):
-#         st = list()
-#         operators = ["+", "-", "^", "*", "/"]
-#         pre_fix = copy.deepcopy(pre_fix)
-#         pre_fix.reverse()
-#         for p in pre_fix:
-#             if p not in operators:
-#                 pos = re.search("\d+\(", p)
-#                 if pos:
-#                     st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
-#                 elif p[-1] == "%":
-#                     st.append(float(p[:-1]) / 100)
-#                 else:
-#                     st.append(eval(p))
-#             elif p == "+" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 st.append(a + b)
-#             elif p == "*" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 st.append(a * b)
-#             elif p == "*" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 st.append(a * b)
-#             elif p == "/" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 if b == 0:
-#                     return None
-#                 st.append(a / b)
-#             elif p == "-" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 st.append(a - b)
-#             elif p == "^" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 if float(b) != 2.0 and float(b) != 3.0:
-#                     return None
-#                 st.append(a ** b)
-#             else:
-#                 return None
-#         if len(st) == 1:
-#             return st.pop()
-#         return None
-#     def eval_source(self,test_res,test_tar,num_list,num_stack=None):
-#         raise NotImplementedError
-#         new_test_res=[]
-#         for symbol in test_res:
-#             try:
-#                 number=eval(symbol)
-#                 flag=True
-#             except:
-#                 flag=False
-#             if symbol in OPERATORS:
-#                 new_test_res.append(symbol)
-#             elif symbol in NumMask.alphabet:
-#                 new_test_res.append(symbol)
-#             elif flag == True:
-#                 new_test_res.append(symbol)
-#             elif symbol in ['(',')','[',']']:
-#                 new_test_res.append(symbol)
-#             else:
-#                 break
-#         if new_test_res == test_tar:
-#             return True, True, new_test_res, test_tar
-#         try:
-#             if abs(self.compute_prefix_expression(new_test_res) - self.compute_prefix_expression(test_tar)) < 1e-4:
-#                 return True, False, new_test_res,test_tar
-#             else:
-#                 return False, False, new_test_res, test_tar
-#         except:
-#             return False, False, new_test_res, test_tar
-# class PostEvaluater(object):
-#     def __init__(self,symbol2idx,idx2symbol,config):
-#         super().__init__()
-#         self.symbol2idx=symbol2idx
-#         self.idx2symbol=idx2symbol
-#         try:
-#             self.eos_idx=symbol2idx[EOS_TOKEN]
-#         except:
-#             self.eos_idx=None
-#         try:
-#             self.pad_idx=symbol2idx[PAD_TOKEN]
-#         except:
-#             self.pad_idx=None
-#         try:
-#             self.sos_idx=symbol2idx[SOS_TOKEN]
-#         except:
-#             self.sos_idx=None
-
-#     def result(self,test_res,test_tar,num_list,num_stack):
-#         test = self.out_expression_list(test_res, num_list)
-#         tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
-#         # print(test, tar)
-#         if test is None:
-#             return False, False, test, tar
-#         if test == tar:
-#             return True, True, test, tar
-#         try:
-#             if abs(self.compute_postfix_expression(test) - self.compute_postfix_expression(tar)) < 1e-4:
-#                 return True, False, test, tar
-#             else:
-#                 return False, False, test, tar
-#         except:
-#             return False, False, test, tar
-
-#     def out_expression_list(self,test, num_list, num_stack=None):
-#         alphabet="abcdefghijklmnopqrstuvwxyz"
-#         num_len=len(num_list)
-#         max_index = len(self.idx2symbol)
-#         res = []
-#         for i in test:
-#             if i in [self.pad_idx,self.eos_idx,self.sos_idx]:
-#                 break
-#             symbol = self.idx2symbol[i]
-#             if "NUM" in symbol:
-#                 idx=symbol[4]
-#                 num_idx=alphabet.index(idx)
-#                 if num_idx >= num_len:
-#                     return None
-#                 res.append(num_list[num_idx])
-#             elif symbol==UNK_TOKEN:
-#                 pos_list = num_stack.pop()
-#                 c = num_list[pos_list[0]]
-#                 res.append(c)
-#             else:
-#                 res.append(symbol)
-#         return res
-
-#     def compute_postfix_expression(self,post_fix):
-#         st = list()
-#         operators = ["+", "-", "^", "*", "/"]
-#         for p in post_fix:
-#             if p not in operators:
-#                 pos = re.search("\d+\(", p)
-#                 if pos:
-#                     st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
-#                 elif p[-1] == "%":
-#                         st.append(float(p[:-1]) / 100)
-#                 else:
-#                     st.append(eval(p))
-#             elif p == "+" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 st.append(a + b)
-#             elif p == "*" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 st.append(a * b)
-#             elif p == "/" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 if a == 0:
-#                     return None
-#                 st.append(b / a)
-#             elif p == "-" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 st.append(b - a)
-#             elif p == "^" and len(st) > 1:
-#                 a = st.pop()
-#                 b = st.pop()
-#                 if float(b) != 2.0 and float(b) != 3.0:
-#                     return None
-#                 st.append(a ** b)
-#             else:
-#                 return None
-#         if len(st) == 1:
-#             return st.pop()
-#         return None
-#     def eval_source(self):
-#         raise NotImplementedError

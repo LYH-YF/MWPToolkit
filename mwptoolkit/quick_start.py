@@ -2,7 +2,7 @@ from logging import getLogger
 import torch
 
 from mwptoolkit.config.configuration import Config
-from mwptoolkit.evaluate.evaluator import SeqEvaluater, PostEvaluater, PreEvaluater
+from mwptoolkit.evaluate.evaluator import SeqEvaluator, PostEvaluator, PreEvaluator
 from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
@@ -45,11 +45,11 @@ def train_cross_validation(config):
 
         dataloader = create_dataloader(config)(config, dataset)
         if config["equation_fix"] == FixType.Prefix:
-            evaluator = PreEvaluater(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
+            evaluator = PreEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
         elif config["equation_fix"] == FixType.Nonfix:
-            evaluator = SeqEvaluater(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
+            evaluator = SeqEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
         elif config["equation_fix"] == FixType.Postfix:
-            evaluator = PostEvaluater(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
+            evaluator = PostEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
         else:
             raise NotImplementedError
 
@@ -116,11 +116,11 @@ def run_toolkit():
 
         dataloader = create_dataloader(config)(config, dataset)
         if config["equation_fix"] == FixType.Prefix:
-            evaluator = PreEvaluater(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
+            evaluator = PreEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
         elif config["equation_fix"] == FixType.Nonfix:
-            evaluator = SeqEvaluater(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
+            evaluator = SeqEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
         elif config["equation_fix"] == FixType.Postfix:
-            evaluator = PostEvaluater(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
+            evaluator = PostEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
         else:
             raise NotImplementedError
 

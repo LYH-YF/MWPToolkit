@@ -636,7 +636,7 @@ class GTSTrainer(AbstractTrainer):
             "merge_optimizer": self.merge_optimizer.state_dict(),
             "embedder_scheduler": self.embedder_scheduler.state_dict(),
             "encoder_scheduler": self.encoder_scheduler.state_dict(),
-            "decoder_optimizer": self.decoder_optimizer.state_dict(),
+            "decoder_scheduler": self.decoder_scheduler.state_dict(),
             "generate_scheduler": self.node_generater_scheduler.state_dict(),
             "merge_scheduler": self.merge_scheduler.state_dict(),
             "start_epoch": self.epoch_i,

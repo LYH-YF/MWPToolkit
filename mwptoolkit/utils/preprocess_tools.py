@@ -908,7 +908,121 @@ def num_transfer_alg514(data,mask_type="number",min_generate_keep=0,equ_split_sy
         if generate_nums_dict[g] >= min_generate_keep:
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums,unk_symbol
+def num_transfer_alg514_(data,mask_type="number",min_generate_keep=0,equ_split_symbol=";"):
+    '''transfer num process
 
+    Args:
+        data: list.
+        mask_type: str | default 'NUM', the way to mask num, optinal['NUM', 'alphabet', 'number'].
+        min_generate_keep: int | default 5, the number to control if the numbers of equations will be kept as generating number.
+
+    Return:
+        processed_datas: list type.
+        generate_number: list type, symbols to generate extra.
+        copy_nums: int, the count of copied symbol from question to equation.
+    '''
+    if mask_type==MaskSymbol.NUM:
+        sent_mask_list=NumMask.NUM
+        equ_mask_list=NumMask.number
+    elif mask_type==MaskSymbol.alphabet:
+        sent_mask_list=NumMask.alphabet
+        equ_mask_list=NumMask.alphabet
+    elif mask_type==MaskSymbol.number:
+        sent_mask_list=NumMask.number
+        equ_mask_list=NumMask.number
+
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+    
+    generate_nums = []
+    generate_nums_dict = {}
+    copy_nums = 0
+    processed_datas = []
+    max_equ__len={}
+    unk_symbol=[]
+    for d in data:
+        sent_idx=0
+        equ_idx=0
+        #nums = []
+        nums=OrderedDict()
+        #num_list=[]
+        input_seq = []
+        seg = d["original_text"].split(" ")
+        for idx,word in enumerate(seg):
+            if re.match(r"(\d+\,\d+)+",word):
+                new_word="".join(word.split(","))
+                seg[idx]=new_word
+        equations = d["equation"]
+        equations = re.sub(r"[a-zA-Z]{2,}","x",equations)
+        equations = re.sub(equ_split_symbol,SpecialTokens.BRG_TOKEN,equations)
+        num_list=d["number list"]
+        num_pos=d["number_position"]
+        idx=0
+        for num in num_list:
+            if num in nums:
+                continue
+            nums[num]=equ_mask_list[idx]
+            idx=(idx+1)%len(equ_mask_list)
+
+        for idx,s in enumerate(seg):
+            if idx in num_pos:
+                num_idx=num_pos.index(idx)
+                try:
+                    if abs(seg[idx]-num_list[num_idx])<1e-5:
+                        #seg[idx]=nums[num_list[num_idx]]
+                        input_seq.append(nums[num_list[num_idx]])
+                    else:
+                        input_seq.append(s)
+                except:
+                    input_seq.append(s)
+            else:
+                input_seq.append(s)
+
+        nums_count=len(list(nums.keys()))
+        if copy_nums < nums_count:
+            copy_nums = nums_count
+        nums_fraction = []
+
+        for num,mask in nums.items():
+            if re.search("\d*\(\d+/\d+\)\d*", num):
+                nums_fraction.append(num)
+            # if re.search("-\d+|(-\d+\.\d+)",num):
+            #     nums_fraction.append(num)
+        nums_fraction = sorted(nums_fraction,
+                               key=lambda x: len(x),
+                               reverse=True)
+        # if d["id"]==6666:
+        #     print(1)
+        out_seq = seg_and_tag_mawps(equations,nums_fraction,nums)
+        # try:
+        #     max_equ__len[len(out_seq)]+=1
+        # except:
+        #     max_equ__len[len(out_seq)]=1
+        for s in out_seq:  # tag the num which is generated
+            if s[0].isdigit() and s not in generate_nums and s not in num_list:
+                generate_nums.append(s)
+                generate_nums_dict[s] = 0
+            if s in generate_nums and s not in num_list:
+                generate_nums_dict[s] = generate_nums_dict[s] + 1
+        for symbol in out_seq:
+            if len(symbol)==1 and symbol.isalpha():
+                if symbol in unk_symbol:
+                    continue 
+                else:
+                    unk_symbol.append(symbol) 
+
+        #copy data
+        new_data=d
+        new_data["question"]=input_seq
+        new_data["equation"]=out_seq
+        new_data["number position"]=num_pos
+        processed_datas.append(new_data)
+
+
+    generate_number = []
+    for g in generate_nums:
+        if generate_nums_dict[g] >= min_generate_keep:
+            generate_number.append(g)
+    return processed_datas, generate_number, copy_nums,unk_symbol
 def num_transfer_draw(data,mask_type="number",min_generate_keep=0,equ_split_symbol=";"):
     '''transfer num process
 

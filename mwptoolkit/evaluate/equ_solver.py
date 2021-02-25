@@ -42,13 +42,3 @@ def joint_number_(text_list): #match longer fraction such as ( 1 / 1000000 )
             i+=1
     return new_list
 #joint_number_([])
-import torch
-x=torch.tensor([1,2,3,4])
-y=torch.tensor([6,5])
-z=torch.cat([x,y]).long()
-w=torch.tensor([1]).repeat(z.size()).long()
-print(w)
-print(z)
-u=torch.rand((6,8))
-u[1][z]=0.
-print(u)

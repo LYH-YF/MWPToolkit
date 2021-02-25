@@ -237,7 +237,7 @@ class DNS(nn.Module):
         """
         device=token_logit.device
         next_symbols=[]
-        current_logit=token_logit.data
+        current_logit=token_logit.clone().detach()
         if symbols==[]:
             filters=torch.cat([self.filter_op(),self.filter_END()])
             for b in range(current_logit.size(0)):

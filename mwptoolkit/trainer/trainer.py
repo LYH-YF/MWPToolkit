@@ -36,12 +36,17 @@ class AbstractTrainer(object):
     def _save_model(self):
         state_dict = {"model": self.model.state_dict()}
         if self.config["k_fold"]:
-            self.config["trained_model_path"][:-4]+"-{}.pth".format(self.config["fold_t"])
+            path=self.config["trained_model_path"][:-4]+"-fold{}.pth".format(self.config["fold_t"])
+            torch.save(state_dict,path)
         else:
             torch.save(state_dict, self.config["trained_model_path"])
 
     def _load_model(self):
-        state_dict = torch.load(self.config["trained_model_path"], map_location=self.config["map_location"])
+        if self.config["k_fold"]:
+            path=self.config["trained_model_path"][:-4]+"-fold{}.pth".format(self.config["fold_t"])
+            state_dict = torch.load(path, map_location=self.config["map_location"])
+        else:
+            state_dict = torch.load(self.config["trained_model_path"], map_location=self.config["map_location"])
         self.model.load_state_dict(state_dict["model"])
 
     def _build_optimizer(self):

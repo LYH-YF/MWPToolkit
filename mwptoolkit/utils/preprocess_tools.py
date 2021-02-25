@@ -954,8 +954,16 @@ def num_transfer_alg514_(data,mask_type="number",min_generate_keep=0,equ_split_s
         equations = d["equation"]
         equations = re.sub(r"[a-zA-Z]{2,}","x",equations)
         equations = re.sub(equ_split_symbol,SpecialTokens.BRG_TOKEN,equations)
-        num_list=d["number list"]
-        num_pos=d["number_position"]
+        num_list_=d["number list"]
+        num_pos_=d["number_position"]
+        num_list=[]
+        num_pos=[]
+        for num,pos in zip(num_list_,num_pos_):
+            if num in num_list:
+                continue
+            else:
+                num_list.append(num)
+                num_pos.append(pos)
         idx=0
         for num in num_list:
             if num in nums:

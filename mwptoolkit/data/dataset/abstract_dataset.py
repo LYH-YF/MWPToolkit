@@ -1,6 +1,6 @@
 import random
 import copy
-from mwptoolkit.utils.utils import read_json_data
+from mwptoolkit.utils.utils import read_json_data,write_json_data
 
 
 class AbstractDataset(object):

@@ -20,7 +20,8 @@ class TRNN(nn.Module):
     def forward(self,seq,seq_length,target=None):
         if target != None:
             self.generate_t()
-        else 
+        else:
+            self.generate_without_t()
     def generate_t(self):
         pass
     def generate_without_t(self):
@@ -30,5 +31,6 @@ class TRNN(nn.Module):
     def recursivenn_forward(self,seq,seq_length,target=None):
         template=self.seq2seq_forward(seq,seq_length)
     def template2tree(self):
-        pass
+        tree=BinaryTree()
+        tree.equ2tree()
 

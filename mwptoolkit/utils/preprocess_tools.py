@@ -975,7 +975,7 @@ def num_transfer_alg514_(data,mask_type="number",min_generate_keep=0,equ_split_s
             if idx in num_pos:
                 num_idx=num_pos.index(idx)
                 try:
-                    if abs(seg[idx]-num_list[num_idx])<1e-5:
+                    if abs(eval(seg[idx])-eval(num_list[num_idx]))<1e-5:
                         #seg[idx]=nums[num_list[num_idx]]
                         input_seq.append(nums[num_list[num_idx]])
                     else:
@@ -1240,7 +1240,7 @@ def num_transfer_draw_(data,mask_type="number",min_generate_keep=0,equ_split_sym
             if idx in num_pos:
                 num_idx=num_pos.index(idx)
                 try:
-                    if abs(seg[idx]-num_list[num_idx])<1e-5:
+                    if abs(eval(seg[idx])-eval(num_list[num_idx]))<1e-5:
                         #seg[idx]=nums[num_list[num_idx]]
                         input_seq.append(nums[num_list[num_idx]])
                     else:

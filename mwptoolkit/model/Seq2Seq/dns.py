@@ -117,7 +117,10 @@ class DNS(nn.Module):
         decoder_hidden = encoder_hidden
         output=[]
         for idx in range(self.max_gen_len):
-            decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+            if self.attention:
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+            else:
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden)
             #attn_list.append(attn)
             step_output = decoder_output.squeeze(1)
             token_logits = self.generate_linear(step_output)

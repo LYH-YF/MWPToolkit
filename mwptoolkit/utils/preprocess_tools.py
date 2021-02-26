@@ -304,8 +304,8 @@ def number_transfer_(data,mask_type="NUM",min_generate_keep=0):
         nums_fraction = sorted(nums_fraction,
                                key=lambda x: len(x),
                                reverse=True)
-        if d["id"]==133813:
-            print(1)
+        # if d["id"]==133813:
+        #     print(1)
         out_seq = seg_and_tag_(equations,nums_fraction,nums)
         for s in out_seq:  # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
@@ -1136,8 +1136,8 @@ def num_transfer_draw(data,mask_type="number",min_generate_keep=0,equ_split_symb
         #     max_equ__len[len(out_seq)]=1
         num_list=list(nums.keys())
         for s in out_seq:  # tag the num which is generated
-            if s=="18.0" or s=="12.0" or s=="162.0":
-                print(1)
+            # if s=="18.0" or s=="12.0" or s=="162.0":
+            #     print(1)
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0

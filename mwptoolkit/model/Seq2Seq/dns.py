@@ -39,7 +39,7 @@ class DNS(nn.Module):
             self.out_embedder=BaiscEmbedder(config["symbol_size"],config["embedding_size"],config["dropout_ratio"])
 
         self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
-                                        config["encoder_rnn_cell_type"],config["dropout_ratio"])
+                                        config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])
         if self.attention:
             self.decoder=AttentionalRNNDecoder(config["embedding_size"],config["decode_hidden_size"],config["hidden_size"],\
                                                 config["num_layers"],config["decoder_rnn_cell_type"],config["dropout_ratio"])
@@ -92,7 +92,10 @@ class DNS(nn.Module):
         for idx in range(seq_len):
             if with_t<self.teacher_force_ratio:
                 decoder_input = decoder_inputs[:,idx,:].unsqueeze(1)
-            decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+            if self.attention:
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+            else:
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden)
             #attn_list.append(attn)
             step_output = decoder_output.squeeze(1)
             token_logit = self.generate_linear(step_output)

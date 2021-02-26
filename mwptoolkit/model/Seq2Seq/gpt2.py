@@ -13,7 +13,7 @@ class GPT2(nn.Module):
         self.pretrained_model_path = config['pretrained_model_path']
         
         self.tokenizer=BertTokenizer.from_pretrained(self.pretrained_model_path)
-        _ =self.tokenizer.add_tokens(NumMask.alphabet)
+        _ =self.tokenizer.add_tokens(config["out_idx2symbol"])
         self.tokenizer.add_special_tokens({"additional_special_tokens":["<ans>"]})
         self.configuration = GPT2Config.from_pretrained(self.pretrained_model_path)
 

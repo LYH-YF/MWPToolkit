@@ -1,15 +1,65 @@
 import torch
 from torch import nn
 
+from mwptoolkit.utils.enum_type import SpecialTokens
+
 class TreeNode:  # the class save the tree node
     def __init__(self, embedding, left_flag=False):
         self.embedding = embedding
         self.left_flag = left_flag
 
+class Node():
+    def __init__(self,node_value,isleaf=True):
+        self.node_value = node_value
+        self.is_leaf = isleaf
+        self.embeding = None
+        self.left_node = None
+        self.right_node = None
+    def set_left_node(self, node):
+        self.leftnode = node
+    def set_right_node(self, node):
+        self.rightnode = node
+    
 class TreeEmbedding:  # the class save the tree
     def __init__(self, embedding, terminal=False):
         self.embedding = embedding
         self.terminal = terminal
+
+class BinaryTree():
+    def __init__(self,root_node=None):
+        self.root = root_node
+    def equ2tree(self, equ_list, out_idx2symbol, op_list, input_var, emb):
+        
+        stack = []
+        for idx in equ_list:
+            if idx == out_idx2symbol.index(SpecialTokens.PAD_TOKEN):
+                break
+            if idx == out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
+                break
+        
+            if out_idx2symbol[idx] in op_list:
+                node = Node(idx, isleaf=False)
+                node.set_right_node(stack.pop())
+                node.set_left_node(stack.pop())
+                stack.append(node)
+            else:
+                node = Node(idx, isleaf=True)
+                position = (input_var == idx).nonzero()
+                node.node_embeding = emb[position]
+                stack.append(node)
+        self.root = stack.pop()
+    def equ2tree_(self,equ_list):
+        stack=[]
+        for symbol in equ_list:
+            if symbol in ['+', '-', '*', '/', '^']:
+                node = Node(symbol, isleaf=False)
+                node.set_right_node(stack.pop())
+                node.set_left_node(stack.pop())
+                stack.append(node)
+            else:
+                node = Node(symbol, isleaf=True)
+                stack.append(node)
+        self.root = stack.pop()
 
 class Score(nn.Module):
     def __init__(self, input_size, hidden_size):
@@ -102,3 +152,35 @@ class SubTreeMerger(nn.Module):
                                    1)))
         sub_tree = sub_tree * sub_tree_g
         return sub_tree
+
+
+class RecursiveNN(nn.Module):
+    def __init__(self,emb_size,op_size):
+        super().__init__()
+        self.W = nn.Linear(emb_size * 2, emb_size)
+        self.generate_linear = nn.Linear(emb_size,op_size)
+        self.softmax = nn.functional.softmax
+    
+    def forward(self,expression_tree,num_embedding):
+        pass
+
+    def traverse(self,node):
+        if node.is_leaf:
+            currentNode = node.embedding.unsqueeze(0)
+        else:
+            left_vector = self.traverse(node.left_node)
+            right_vector = self.traverse(node.right_node)
+            
+            combined_v = torch.cat((left_vector, right_vector),1)
+            currentNode, op_prob = self.RecurCell(combined_v)
+            node.embedding = currentNode.squeeze(0)
+            
+            self.nodeProbList.append(op_prob)
+            #node.numclass_probs = proj_probs 
+            self.labelList.append(self.classes.index(node.root_value))
+        return currentNode
+    
+    def RecurCell(self,combine_emb):
+        node_embedding=self.W(combine_emb)
+        op=self.softmax(self.generate_linear(node_embedding))
+        return node_embedding,op

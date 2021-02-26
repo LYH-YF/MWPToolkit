@@ -11,11 +11,11 @@
     "test_batch_size":32,
     "max_output_len":30,
     "dropout_ratio":0.4,
-    "bidirectional":true,
+    "bidirectional":false,
     "step_size":20,
 
-    "share_vocab":false,
+    "share_vocab":true,
     "mask_symbol":"number",
-    "attention":true,
+    "attention":false,
     "symbol_for_tree":false
 }

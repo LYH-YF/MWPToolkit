@@ -128,6 +128,7 @@ class MultiEquationDataset(AbstractDataset):
             self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
         
         self.num_start = len(self.out_idx2symbol)
+        self.out_idx2symbol += self.generate_list
         
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
@@ -164,7 +165,6 @@ class MultiEquationDataset(AbstractDataset):
                 "the type of masking number ({}) is not implemented".format(
                     self.mask_symbol))
 
-        self.out_idx2symbol += self.generate_list
         for data in self.trainset:
             words_list = data["equation"]
             for word in words_list:

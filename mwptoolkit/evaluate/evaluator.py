@@ -99,10 +99,10 @@ class SeqEvaluator(AbstractEvaluator):
     def result_multi(self, test_res, test_tar, num_list, num_stack):
         r"""evaluate multiple euqations.
         """
-        print(test_tar)# tensor([20,  8, 10, 12,  5, 13, 11,  2])
+        #print(test_tar)# tensor([20,  8, 10, 12,  5, 13, 11,  2])
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
-        print(tar_exp)# ['x', '=', '(', '4', '*', '3', ')']
+        #print(tar_exp)# ['x', '=', '(', '4', '*', '3', ')']
         if res_exp == None:
             return False, False, res_exp, tar_exp
         if res_exp == tar_exp:

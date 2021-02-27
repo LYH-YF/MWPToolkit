@@ -72,6 +72,8 @@ class AbstractDataLoader(object):
             flag_not = True
             if word not in self.dataset.out_idx2symbol:
                 flag_not = False
+                if "NUM" in word:
+                    temp_num.append(int(word[4:]))
                 for i, j in enumerate(num_list):
                     if j == word:
                         temp_num.append(i)

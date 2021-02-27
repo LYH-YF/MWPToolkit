@@ -2,6 +2,7 @@ import random
 import torch
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
+
 def get_num_mask(num_size_batch, generate_nums):
     num_mask = []
     max_num_size = max(num_size_batch) + len(generate_nums)
@@ -73,7 +74,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             equ_tensor = []
             sentence = data["question"]
             equation = data["equation"]
-            ques_source=''.join(sentence)
+            ques_source=' '.join(sentence)
             #equ_source=''.join(equation)
             ques_source_batch.append(ques_source)
             equ_source_batch.append(equation)

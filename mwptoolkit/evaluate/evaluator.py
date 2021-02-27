@@ -99,8 +99,10 @@ class SeqEvaluator(AbstractEvaluator):
     def result_multi(self, test_res, test_tar, num_list, num_stack):
         r"""evaluate multiple euqations.
         """
+        print(test_tar)# tensor([20,  8, 10, 12,  5, 13, 11,  2])
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
+        print(tar_exp)# ['x', '=', '(', '4', '*', '3', ')']
         if res_exp == None:
             return False, False, res_exp, tar_exp
         if res_exp == tar_exp:
@@ -303,35 +305,64 @@ class SeqEvaluator(AbstractEvaluator):
         return self.compute_postfix_expression_multi(post_exp)
 
     def eval_source(self, test_res, test_tar, num_list, num_stack):
+        num_len = len(num_list)
         new_test_res = []
         for symbol in test_res:
-            try:
-                number = eval(symbol)
-                flag = True
-            except:
-                flag = False
-            if symbol in OPERATORS:
-                new_test_res.append(symbol)
-            elif symbol in NumMask.alphabet:
-                new_test_res.append(symbol)
-            elif flag == True:
-                new_test_res.append(symbol)
-            elif symbol in ['(', ')', '[', ']']:
-                new_test_res.append(symbol)
-            else:
+            if symbol in [SpecialTokens.PAD_TOKEN,SpecialTokens.EOS_TOKEN]:
                 break
-        res_ans = self.compute_expression(new_test_res, num_list)
-        tar_ans = self.compute_expression(test_tar, num_list)
-        if res_ans != None:
+            elif "NUM" in symbol:
+                num_idx = self.mask_list.index(symbol)
+                if num_idx >= num_len:
+                    return None
+                new_test_res.append(num_list[num_idx])
+            elif symbol == SpecialTokens.UNK_TOKEN:
+                try:
+                    pos_list = num_stack.pop()
+                    c = num_list[pos_list[0]]
+                    new_test_res.append(c)
+                except:
+                    new_test_res=None
+                    break
+            else:
+                new_test_res.append(symbol)
+        new_test_tar = []
+        for symbol in test_tar:
+            if symbol in [SpecialTokens.PAD_TOKEN,SpecialTokens.EOS_TOKEN]:
+                break
+            elif "NUM" in symbol:
+                num_idx = self.mask_list.index(symbol)
+                if num_idx >= num_len:
+                    return None
+                new_test_tar.append(num_list[num_idx])
+            elif symbol == SpecialTokens.UNK_TOKEN:
+                try:
+                    pos_list = num_stack.pop()
+                    c = num_list[pos_list[0]]
+                    new_test_tar.append(c)
+                except:
+                    new_test_tar=None
+                    break
+            else:
+                new_test_tar.append(symbol)
+
+        #res_ans = self.compute_expression_by_postfix(new_test_res)
+        #tar_ans = self.compute_expression_by_postfix(test_tar, num_list)
+        if self.single and self.linear:
             try:
-                if abs(res_ans - tar_ans) < 1e-4:
-                    return True, False, new_test_res, test_tar
+                if abs(self.compute_expression_by_postfix(new_test_res) - self.compute_expression_by_postfix(new_test_tar)) < 1e-4:
+                    return True, False, new_test_res, new_test_tar
                 else:
-                    return False, False, new_test_res, test_tar
+                    return False, False, new_test_res, new_test_tar
             except:
-                return False, False, new_test_res, test_tar
+                return False, False, new_test_res, new_test_tar
         else:
-            return False, False, new_test_res, test_tar
+            try:
+                if abs(self.compute_expression_by_postfix_multi(new_test_res) - self.compute_expression_by_postfix_multi(new_test_tar)) < 1e-4:
+                    return True, False, new_test_res, new_test_tar
+                else:
+                    return False, False, new_test_res, new_test_tar
+            except:
+                return False, False, new_test_res, new_test_tar
 
 
 class PreEvaluator(AbstractEvaluator):

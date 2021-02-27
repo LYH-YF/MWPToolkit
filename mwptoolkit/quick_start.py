@@ -65,7 +65,7 @@ def train_cross_validation(config):
 
         trainer = get_trainer(config["task_type"], config["model"])(config, model, dataloader, evaluator)
         logger.info("fold {}".format(fold_t))
-        if config["test only"]:
+        if config["test_only"]:
             trainer.test()
         else:
             trainer.fit()
@@ -105,7 +105,8 @@ def run_toolkit():
             config["out_sos_token"] = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
         else:
             if config["symbol_for_tree"]:
-                pass
+                config["out_symbol2idx"] = dataset.out_symbol2idx
+                config["out_idx2symbol"] = dataset.out_idx2symbol
             else:
                 config["out_symbol2idx"] = dataset.out_symbol2idx
                 config["out_idx2symbol"] = dataset.out_idx2symbol
@@ -118,17 +119,11 @@ def run_toolkit():
         config["operator_nums"] = dataset.operator_nums
         config["copy_nums"] = dataset.copy_nums
         config["generate_size"] = len(dataset.generate_list)
+        config["generate_list"] = dataset.generate_list
+        config["operator_list"] = dataset.operator_list
         config["num_start"] = dataset.num_start
 
         dataloader = create_dataloader(config)(config, dataset)
-        if config["equation_fix"] == FixType.Prefix:
-            evaluator = PreEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
-        elif config["equation_fix"] == FixType.Nonfix:
-            evaluator = SeqEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
-        elif config["equation_fix"] == FixType.Postfix:
-            evaluator = PostEvaluator(dataset.out_symbol2idx, dataset.out_idx2symbol, config)
-        else:
-            raise NotImplementedError
 
         model = get_model(config["model"])(config).to(config["device"])
         if config["pretrained_model_path"]:
@@ -136,6 +131,17 @@ def run_toolkit():
             config["embedding_size"] = len(model.tokenizer)
             config["in_word2idx"] = model.tokenizer.get_vocab()
             config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
+            config["out_symbol2idx"] = model.tokenizer.get_vocab()
+            config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
+        
+        if config["equation_fix"] == FixType.Prefix:
+            evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+        elif config["equation_fix"] == FixType.Nonfix:
+            evaluator = SeqEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+        elif config["equation_fix"] == FixType.Postfix:
+            evaluator = PostEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+        else:
+            raise NotImplementedError
 
         trainer = get_trainer(config["task_type"], config["model"])(config, model, dataloader, evaluator)
         logger.info(model)

@@ -80,7 +80,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
             num_pos=[]
             sentence = data["question"]
             equation = data["equation"]
-            ques_source=''.join(sentence)
+            ques_source=' '.join(sentence)
             #equ_source=''.join(equation)
             ques_source_batch.append(ques_source)
             equ_source_batch.append(equation)

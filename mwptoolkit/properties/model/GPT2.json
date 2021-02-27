@@ -1,8 +1,7 @@
 {
     "pretrained_model_path":"pretrain/gpt2",
     "learner": "schedule",
-    "mask_symbol":"alphabet",
-    "learning_rate": 0.3,
+    "learning_rate": 1e-4,
     "symbol_for_tree":false,
     "max_len":256,
     "warmup_steps": 1500,

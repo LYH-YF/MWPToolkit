@@ -3,7 +3,7 @@
     "min_word_keep":5,
     "min_generate_keep":50,
     "validset_divide":true,
-    "mask_symbol":"alphabet",
+    "mask_symbol":"number",
     "single":true,
     "linear":true
 }

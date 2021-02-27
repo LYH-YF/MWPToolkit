@@ -16,7 +16,6 @@
     
     "///":"data process parameters",
     "share_vocab":false,
-    "mask_symbol":"alphabet",
     "symbol_for_tree":false,
     "equation_prefix":"None",
     "max_equ_len":30,

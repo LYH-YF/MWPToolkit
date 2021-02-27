@@ -14,7 +14,6 @@
     "beam_size": 5,
     "decoding_strategy": "greedy_search",
     "share_vocab":true,
-    "mask_symbol":"alphabet",
     "symbol_for_tree":false,
     "max_len":128,
     "train_batch_size":64,

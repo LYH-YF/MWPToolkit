@@ -265,6 +265,7 @@ class GTS(nn.Module):
             else:
                 r.append(i)
         return r
+    
     def __str__(self) -> str:
         info=super().__str__()
         total=sum(p.numel() for p in self.parameters())

@@ -40,6 +40,7 @@ class MultiEquationDataset(AbstractDataset):
         self.generate_list = unk_symbol+generate_list
         self.copy_nums = copy_nums
         self.operator_nums = len(Operators.Multi)
+        self.operator_list = copy.deepcopy(Operators.Multi)
         self.unk_symbol=unk_symbol
 
     def _build_vocab(self):

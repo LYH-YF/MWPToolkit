@@ -729,6 +729,10 @@ class GTSTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
+        if batch["id"]==[80313]:
+            print(1)
+        else:
+            return [False], [False]
         num_start = self.dataloader.dataset.num_start
         generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
         test_out=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
@@ -922,7 +926,12 @@ class TransformerTrainer(AbstractTrainer):
         val_acc = []
         equ_acc = []
         for idx in range(batch_size):
-            val_ac, equ_ac, _, _ = self.evaluator.result(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
+            if self.config["task_type"]==TaskType.SingleEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            elif self.config["task_type"]==TaskType.MultiEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            else:
+                raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
         return val_acc, equ_acc
@@ -969,7 +978,7 @@ class TransformerTrainer(AbstractTrainer):
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
                 else:
-                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Train)
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
                     self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
                                     %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
@@ -1244,6 +1253,9 @@ class GPT2Trainer(TransformerTrainer):
         super().__init__(config, model, dataloader, evaluator)
         self._build_loss(config["vocab_size"], self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
 
+    def _build_optimizer(self):
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
+    
     def _train_batch(self, batch):
         outputs, target = self.model(batch["ques_source"], batch["equ_source"])
         outputs = torch.nn.functional.log_softmax(outputs, dim=1)
@@ -1253,13 +1265,16 @@ class GPT2Trainer(TransformerTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        test_out, _ = self.model(batch["ques_source"])
-        target = batch["equ_source"]
+        test_out, target = self.model.generate_without_t(batch["ques_source"])
+        #target = batch["equ_source"]
         batch_size = len(target)
         val_acc = []
         equ_acc = []
         for idx in range(batch_size):
-            val_ac, equ_ac, _, _ = self.evaluator.eval_source(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            if self.config["task_type"]==TaskType.SingleEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            elif self.config["task_type"]==TaskType.MultiEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
         return val_acc, equ_acc

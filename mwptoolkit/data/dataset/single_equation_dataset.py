@@ -35,6 +35,7 @@ class SingleEquationDataset(AbstractDataset):
         self.generate_list = generate_list
         self.copy_nums = copy_nums
         self.operator_nums = len(Operators.Single)
+        self.operator_list = copy.deepcopy(Operators.Single)
 
     def _build_vocab(self):
         words_count = {}

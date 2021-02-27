@@ -14,7 +14,6 @@
     
     "///":"data process parameters",
     "share_vocab":false,
-    "mask_symbol":"alphabet",
     "symbol_for_tree":false,
     
     "////":"train parameters",

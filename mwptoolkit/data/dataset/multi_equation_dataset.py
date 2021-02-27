@@ -13,7 +13,7 @@ class MultiEquationDataset(AbstractDataset):
         if self.dataset==DatasetName.alg514:
             transfer=num_transfer_alg514_
         elif self.dataset==DatasetName.draw:
-            transfer=num_transfer_draw_
+            transfer=num_transfer_draw
         else:
             transfer=num_transfer_multi
         self.trainset, generate_list, copy_nums, unk_symbol = transfer(

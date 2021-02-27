@@ -16,7 +16,7 @@ class RNNEncDec(nn.Module):
         self.decoder_rnn_cell_type=config["decoder_rnn_cell_type"]
         self.attention=config["attention"]
         self.share_vocab=config["share_vocab"]
-        self.max_gen_len=30
+        self.max_gen_len=config["max_output_len"]
         self.teacher_force_ratio=config["teacher_force_ratio"]
         if config["share_vocab"]:
             self.out_symbol2idx=config["out_symbol2idx"]

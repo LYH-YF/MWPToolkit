@@ -6,7 +6,7 @@
     "train_batch_size":32,
     "decoder_rnn_cell_type":"lstm",
     "encoder_rnn_cell_type":"lstm",
-    "teacher_force_ratio":0.9
+    "teacher_force_ratio":0.9,
     "num_layers":2,
     "epoch_nums":100,
     "test_batch_size":32,

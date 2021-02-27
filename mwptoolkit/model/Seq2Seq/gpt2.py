@@ -4,49 +4,64 @@ from transformers import GPT2LMHeadModel, GPT2Config, BertTokenizer, GPT2Tokeniz
 
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
 
-
 class GPT2(nn.Module):
     def __init__(self, config):
         super().__init__()
 
         #self.eval_generate_num = config['eval_generate_num']
-        self.device = config["device"]
+        self.device=config["device"]
+
         self.pretrained_model_path = config['pretrained_model_path']
 
-        self.tokenizer=GPT2Tokenizer.from_pretrained(self.pretrained_model_path)
-        #self.tokenizer = BertTokenizer.from_pretrained(self.pretrained_model_path)
-        
+        if config['dataset'] in ['math23k']:
+            # print ("tokenizer: ")
+            self.tokenizer = BertTokenizer.from_pretrained(self.pretrained_model_path)
+            self.eos_token_id = self.tokenizer.sep_token_id
+            self.eos_token = self.tokenizer.sep_token
+            self.start_token = self.tokenizer.cls_token
+        else:
+            self.tokenizer=GPT2Tokenizer.from_pretrained(self.pretrained_model_path)
+            self.eos_token_id = self.tokenizer.eos_token_id
+            self.eos_token = self.tokenizer.eos_token
+            self.start_token = ''
+
         self.configuration = GPT2Config.from_pretrained(self.pretrained_model_path)
 
         self.decoder = GPT2LMHeadModel.from_pretrained(self.pretrained_model_path, config=self.configuration)
-
-        self.init_tokenizer_and_resize(config["generate_list"],NumMask.number,config["operator_list"])
+        
+        self.init_tokenizer_and_resize(config["generate_list"],NumMask.number[:config["copy_nums"]],config["operator_list"])
         self.padding_token_idx = self.tokenizer.pad_token_id
         self.max_out_len = config['max_output_len']
+    
     def init_tokenizer_and_resize(self,generate_list,mask_number_list,operator_list):
         _ = self.tokenizer.add_tokens(operator_list)
         _ = self.tokenizer.add_tokens(generate_list)
         _ = self.tokenizer.add_tokens(mask_number_list)
-        self.tokenizer.add_special_tokens({"eos_token":SpecialTokens.EOS_TOKEN})
-        #self.tokenizer.add_special_tokens({"additional_special_tokens": ["<ans>"]},)
+        #self.tokenizer.add_special_tokens({"eos_token":SpecialTokens.EOS_TOKEN})
+        #self.tokenizer.eos_token=self.tokenizer.sep_token
+        self.tokenizer.add_special_tokens({"additional_special_tokens": ["<ans>"]},)
+        SpecialTokens.PAD_TOKEN=self.tokenizer.pad_token
+        SpecialTokens.EOS_TOKEN=self.eos_token
+        SpecialTokens.UNK_TOKEN=self.tokenizer.unk_token
         self.decoder.resize_token_embeddings(len(self.tokenizer))
-    def forward(self, seq, target=None):
 
+    def forward(self, seq,target=None):
+        
         if target != None:
-            token_logits, target = self.generate_t(seq, target)
-            return token_logits, target
+            token_logits,target=self.generate_t(seq,target)
+            return token_logits,target
         else:
-            all_output, target = self.generate_without_t(seq)
-            return all_output, target
-
-    def list2str(self, x):
-        y = ''.join(x)
+            all_output=self.generate_without_t(seq)
+            return all_output,None
+    def list2str(self,x):
+        y=''.join(x)
         return y
 
-    def generate_t(self, seq, target=None):
+
+    def generate_t(self,seq,target=None):
         srcs = []
         tgts = []
-        for idx, s in enumerate(seq):
+        for idx,s in enumerate(seq):
             src = self.tokenizer.encode(seq[idx])
             tgt = self.tokenizer.encode(target[idx])
             srcs.append(src)
@@ -55,16 +70,18 @@ class GPT2(nn.Module):
         src_length = max([len(_) for _ in srcs]) + 1
         tgt_length = max([len(_) for _ in tgts]) + 1
 
+
         for i in range(len(tgts)):
-            tgts[i] += (tgt_length - len(tgts[i])) * [self.tokenizer.eos_token_id]
+            tgts[i] += (tgt_length - len(tgts[i])) * [self.eos_token_id]
         tgts_tensor = torch.LongTensor(tgts)
 
         for i in range(len(srcs)):
-            srcs[i] = (src_length - len(srcs[i])) * [self.tokenizer.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
+            srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] +self.tokenizer.encode(['<ans>'])
         srcs_tensor = torch.LongTensor(srcs)
-        src_length += 1
+        src_length+=1
 
-        seq_mask = (tgts_tensor != self.tokenizer.eos_token_id)[:, :-1].float()
+
+        seq_mask = (tgts_tensor != self.eos_token_id)[:, :-1].float()
         seq_mask = torch.cat([torch.FloatTensor(seq_mask.shape[0], 1).fill_(1.), seq_mask], 1)
 
         tgts_inputs_tensor = tgts_tensor[:, :-1]
@@ -80,27 +97,19 @@ class GPT2(nn.Module):
         logits = self.decoder(inputs)[0]
         logits = logits[:, -tgts_outputs_tensor.shape[1]:, :].contiguous()
         logits = logits.view(-1, logits.shape[-1])
-        return logits, tgts_outputs_tensor
+        return logits,tgts_outputs_tensor
 
-    def generate_without_t(self, seq, target=None):
+    def generate_without_t(self,seq):
+
         srcs = []
-        tgts = []
-
         for idx, s in enumerate(seq):
             src = self.tokenizer.encode(seq[idx])
-            tgt = self.tokenizer.encode(target[idx])
             srcs.append(src)
-            tgts.append(tgt)
-
         src_length = max([len(_) for _ in srcs]) + 1
-        tgt_length = max([len(_) for _ in tgts]) + 1
-
-        for i in range(len(tgts)):
-            tgts[i] += (tgt_length - len(tgts[i])) * [self.tokenizer.eos_token_id]
-        tgts_tensor = torch.LongTensor(tgts)
 
         for i in range(len(srcs)):
-            srcs[i] = (src_length - len(srcs[i])) * [self.tokenizer.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
+            srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] + self.tokenizer.encode(
+                ['<ans>'])
         srcs_tensor = torch.LongTensor(srcs)
         src_length += 1
 
@@ -110,26 +119,32 @@ class GPT2(nn.Module):
         all_output = []
         for idx in range(self.max_out_len):
             outputs = self.decoder(inputs)
-            token_logit = outputs[0][:, -1, :]
-            tokens = token_logit.topk(1, dim=1)[1]
+            token_logit=outputs[0][:,-1,:]
+            tokens=token_logit.topk(1,dim=1)[1]
             # mask=tokens==self.tokenizer.pad_token_id
             all_output.append(tokens)
-            inputs = torch.cat((inputs, tokens), dim=1)
-        all_output = torch.cat(all_output, dim=1)
-        #all_output = self.decode_(all_output)
+            inputs=torch.cat((inputs,tokens),dim=1)
+        all_output=torch.cat(all_output,dim=1)
+        all_output = self.decode_(all_output)
         # print (all_output)
         # print ("all_output:", all_output.size())
-        return all_output, tgts_tensor
+        return all_output
 
-    def decode_(self, outputs):
-        batch_size = outputs.size(0)
-        all_outputs = []
+
+    def decode_(self,outputs):
+        batch_size=outputs.size(0)
+        all_outputs=[]
         for b in range(batch_size):
-            symbols = self.tokenizer.decode(outputs[b])
-            symbols = self.tokenizer.tokenize(symbols)
+            symbols=self.tokenizer.decode(outputs[b])
+            symbols=self.tokenizer.tokenize(symbols)
             symbols_ = []
             for token in symbols:
-                if token == self.tokenizer.eos_token:
+                if token == self.start_token:
+                    continue
+                if '/' == token[0] and len(token) == 2 and ('+' == token[1] or  '-' == token[1] or '*' == token[1] or '/' == token[1]):
+                    symbols_.append(token[0])
+                    symbols_.append(token[1:])
+                elif token == self.eos_token:
                     break
                 else:
                     symbols_.append(token)
@@ -138,6 +153,145 @@ class GPT2(nn.Module):
             all_outputs.append(symbols)
         # print (all_outputs)
         return all_outputs
+
+
+# class GPT2(nn.Module):
+#     def __init__(self, config):
+#         super().__init__()
+
+#         #self.eval_generate_num = config['eval_generate_num']
+#         self.device = config["device"]
+#         self.pretrained_model_path = config['pretrained_model_path']
+
+#         #self.tokenizer=GPT2Tokenizer.from_pretrained(self.pretrained_model_path)
+#         self.tokenizer = BertTokenizer.from_pretrained(self.pretrained_model_path)
+        
+#         self.configuration = GPT2Config.from_pretrained(self.pretrained_model_path)
+
+#         self.decoder = GPT2LMHeadModel.from_pretrained(self.pretrained_model_path, config=self.configuration)
+
+#         self.init_tokenizer_and_resize(config["generate_list"],NumMask.number,config["operator_list"])
+#         self.padding_token_idx = self.tokenizer.pad_token_id
+#         self.max_out_len = config['max_output_len']
+#     def init_tokenizer_and_resize(self,generate_list,mask_number_list,operator_list):
+#         _ = self.tokenizer.add_tokens(operator_list)
+#         _ = self.tokenizer.add_tokens(generate_list)
+#         _ = self.tokenizer.add_tokens(mask_number_list)
+#         #self.tokenizer.add_special_tokens({"eos_token":SpecialTokens.EOS_TOKEN})
+#         self.tokenizer.eos_token=self.tokenizer.sep_token
+#         #self.tokenizer.add_special_tokens({"additional_special_tokens": ["<ans>"]},)
+#         SpecialTokens.PAD_TOKEN=self.tokenizer.pad_token
+#         SpecialTokens.EOS_TOKEN=self.tokenizer.eos_token
+#         SpecialTokens.UNK_TOKEN=self.tokenizer.unk_token
+#         self.decoder.resize_token_embeddings(len(self.tokenizer))
+#     def forward(self, seq, target=None):
+
+#         if target != None:
+#             token_logits, target = self.generate_t(seq, target)
+#             return token_logits, target
+#         else:
+#             all_output, target = self.generate_without_t(seq)
+#             return all_output, target
+
+#     def list2str(self, x):
+#         y = ''.join(x)
+#         return y
+
+#     def generate_t(self, seq, target=None):
+#         srcs = []
+#         tgts = []
+#         for idx, s in enumerate(seq):
+#             src = self.tokenizer.encode(seq[idx])
+#             tgt = self.tokenizer.encode(target[idx])
+#             srcs.append(src)
+#             tgts.append(tgt)
+
+#         src_length = max([len(_) for _ in srcs]) + 1
+#         tgt_length = max([len(_) for _ in tgts]) + 1
+
+#         for i in range(len(tgts)):
+#             tgts[i] += (tgt_length - len(tgts[i])) * [self.tokenizer.eos_token_id]
+#         tgts_tensor = torch.LongTensor(tgts)
+
+#         for i in range(len(srcs)):
+#             srcs[i] = (src_length - len(srcs[i])) * [self.tokenizer.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
+#         srcs_tensor = torch.LongTensor(srcs)
+#         src_length += 1
+
+#         seq_mask = (tgts_tensor != self.tokenizer.eos_token_id)[:, :-1].float()
+#         seq_mask = torch.cat([torch.FloatTensor(seq_mask.shape[0], 1).fill_(1.), seq_mask], 1)
+
+#         tgts_inputs_tensor = tgts_tensor[:, :-1]
+#         tgts_outputs_tensor = tgts_tensor
+
+#         srcs_tensor = srcs_tensor.to(self.device)
+#         tgts_tensor = tgts_tensor.to(self.device)
+#         tgts_inputs_tensor = tgts_inputs_tensor.to(self.device)
+#         tgts_outputs_tensor = tgts_outputs_tensor.to(self.device)
+#         seq_mask = seq_mask.to(self.device)
+
+#         inputs = torch.cat([srcs_tensor, tgts_inputs_tensor], 1)
+#         logits = self.decoder(inputs)[0]
+#         logits = logits[:, -tgts_outputs_tensor.shape[1]:, :].contiguous()
+#         logits = logits.view(-1, logits.shape[-1])
+#         return logits, tgts_outputs_tensor
+
+#     def generate_without_t(self, seq, target=None):
+#         srcs = []
+#         tgts = []
+
+#         for idx, s in enumerate(seq):
+#             src = self.tokenizer.encode(seq[idx])
+#             tgt = self.tokenizer.encode(target[idx])
+#             srcs.append(src)
+#             tgts.append(tgt)
+
+#         src_length = max([len(_) for _ in srcs]) + 1
+#         tgt_length = max([len(_) for _ in tgts]) + 1
+
+#         for i in range(len(tgts)):
+#             tgts[i] += (tgt_length - len(tgts[i])) * [self.tokenizer.eos_token_id]
+#         tgts_tensor = torch.LongTensor(tgts)
+
+#         for i in range(len(srcs)):
+#             srcs[i] = (src_length - len(srcs[i])) * [self.tokenizer.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
+#         srcs_tensor = torch.LongTensor(srcs)
+#         src_length += 1
+
+#         srcs_tensor = srcs_tensor.to(self.device)
+#         inputs = srcs_tensor
+
+#         all_output = []
+#         for idx in range(self.max_out_len):
+#             outputs = self.decoder(inputs)
+#             token_logit = outputs[0][:, -1, :]
+#             tokens = token_logit.topk(1, dim=1)[1]
+#             # mask=tokens==self.tokenizer.pad_token_id
+#             all_output.append(tokens)
+#             inputs = torch.cat((inputs, tokens), dim=1)
+#         all_output = torch.cat(all_output, dim=1)
+#         #all_output = self.decode_(all_output)
+#         # print (all_output)
+#         # print ("all_output:", all_output.size())
+#         return all_output, tgts_tensor
+
+#     def decode_(self, outputs):
+#         batch_size = outputs.size(0)
+#         all_outputs = []
+#         for b in range(batch_size):
+#             symbols = self.tokenizer.decode(outputs[b])
+#             symbols = self.tokenizer.tokenize(symbols)
+#             symbols_ = []
+#             for token in symbols:
+#                 if token == self.tokenizer.eos_token:
+#                     break
+#                 else:
+#                     symbols_.append(token)
+#             symbols = symbols_[:]
+#             # print ("symbols",symbols)
+#             all_outputs.append(symbols)
+#         # print (all_outputs)
+#         return all_outputs
 
 
 # class GPT2(nn.Module):

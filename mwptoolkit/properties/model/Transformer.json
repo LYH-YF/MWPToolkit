@@ -18,5 +18,6 @@
     "max_len":128,
     "train_batch_size":64,
     "test_batch_size":64,
-    "epoch_nums":80
+    "epoch_nums":80,
+    "teacher_force_ratio":0.8
 }

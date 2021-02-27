@@ -17,7 +17,7 @@ class Transformer(nn.Module):
         self.max_output_len=config["max_output_len"]
         self.share_vocab=config["share_vocab"]
         self.decoding_strategy=config["decoding_strategy"]
-        self.teacher_force_ratio=0.9
+        self.teacher_force_ratio=config["teacher_force_ratio"]
         
         self.in_pad_idx=config["in_word2idx"]["<PAD>"]
         if config["share_vocab"]:

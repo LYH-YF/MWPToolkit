@@ -17,7 +17,7 @@ class RNNEncDec(nn.Module):
         self.attention=config["attention"]
         self.share_vocab=config["share_vocab"]
         self.max_gen_len=30
-        self.teacher_force_ratio=0.9
+        self.teacher_force_ratio=config["teacher_force_ratio"]
         if config["share_vocab"]:
             self.out_symbol2idx=config["out_symbol2idx"]
             self.out_idx2symbol=config["out_idx2symbol"]

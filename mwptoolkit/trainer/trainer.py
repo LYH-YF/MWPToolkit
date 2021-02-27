@@ -963,8 +963,8 @@ class TransformerTrainer(AbstractTrainer):
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
             self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-                                %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost)\
-                                +"\n---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
+                                %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+            self.logger.info("---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:

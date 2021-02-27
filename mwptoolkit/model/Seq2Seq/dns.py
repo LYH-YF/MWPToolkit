@@ -164,7 +164,10 @@ class DNS(nn.Module):
         filters.append(self.out_symbol2idx['*'])
         filters.append(self.out_symbol2idx['/'])
         filters.append(self.out_symbol2idx['^'])
-        filters.append(self.out_symbol2idx[')'])
+        try:
+            filters.append(self.out_symbol2idx[')'])
+        except:
+            pass
         try:
             filters.append(self.out_symbol2idx['='])
         except:
@@ -175,7 +178,10 @@ class DNS(nn.Module):
         r"""if r_t-1 is a number, then r_t will not be a number and not in {(, =)}.
         """
         filters = []
-        filters.append(self.out_symbol2idx['('])
+        try:
+            filters.append(self.out_symbol2idx['('])
+        except:
+            pass
         try:
             filters.append(self.out_symbol2idx['='])
         except:
@@ -196,14 +202,23 @@ class DNS(nn.Module):
             filters.append(self.out_symbol2idx['='])
         except:
             pass
-        filters.append(self.out_symbol2idx[')'])
+        try:
+            filters.append(self.out_symbol2idx[')'])
+        except:
+            pass
         return torch.tensor(filters).long()
     def rule4_filter(self):
         r"""if r_t-1 is '(' , then r_t will not in {(,), +, -, *, /, =}).
         """
         filters = []
-        filters.append(self.out_symbol2idx['('])
-        filters.append(self.out_symbol2idx[')'])
+        try:
+            filters.append(self.out_symbol2idx['('])
+        except:
+            pass
+        try:
+            filters.append(self.out_symbol2idx[')'])
+        except:
+            pass
         filters.append(self.out_symbol2idx['+'])
         filters.append(self.out_symbol2idx['-'])
         filters.append(self.out_symbol2idx['*'])
@@ -215,8 +230,14 @@ class DNS(nn.Module):
         r"""if r_t−1 is ')', then r_t will not be a number and not in {(,)};
         """
         filters = []
-        filters.append(self.out_symbol2idx['('])
-        filters.append(self.out_symbol2idx[')'])
+        try:
+            filters.append(self.out_symbol2idx['('])
+        except:
+            pass
+        try:
+            filters.append(self.out_symbol2idx[')'])
+        except:
+            pass
         for idx in range(self.num_start,len(self.out_idx2symbol)):
             filters.append(idx)
         return torch.tensor(filters).long()

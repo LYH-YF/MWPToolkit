@@ -752,6 +752,12 @@ class GTSTrainer(AbstractTrainer):
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             self._model_zero_grad()
+            # if self.batch_idx==42:
+            #     continue
+            # if self.batch_idx==43:
+            #     print(1)
+            # else:
+            #     continue
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
             self.loss.backward()

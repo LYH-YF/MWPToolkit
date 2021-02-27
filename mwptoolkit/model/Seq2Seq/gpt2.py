@@ -84,8 +84,8 @@ class GPT2(nn.Module):
         seq_mask = (tgts_tensor != self.eos_token_id)[:, :-1].float()
         seq_mask = torch.cat([torch.FloatTensor(seq_mask.shape[0], 1).fill_(1.), seq_mask], 1)
 
-        tgts_inputs_tensor = tgts_tensor[:, :-1]
-        tgts_outputs_tensor = tgts_tensor
+        tgts_inputs_tensor = tgts_tensor[:, :-1] #'[CLS] / * num_1 num_2 num_0 [SEP]
+        tgts_outputs_tensor = tgts_tensor        #'[CLS] / * num_1 num_2 num_0 [SEP] [SEP]'
 
         srcs_tensor = srcs_tensor.to(self.device)
         tgts_tensor = tgts_tensor.to(self.device)
@@ -125,7 +125,7 @@ class GPT2(nn.Module):
             all_output.append(tokens)
             inputs=torch.cat((inputs,tokens),dim=1)
         all_output=torch.cat(all_output,dim=1)
-        all_output = self.decode_(all_output)
+        #all_output = self.decode_(all_output)
         # print (all_output)
         # print ("all_output:", all_output.size())
         return all_output
@@ -154,6 +154,18 @@ class GPT2(nn.Module):
         # print (all_outputs)
         return all_outputs
 
+    def encode_(self,inputs):
+        outputs=[]
+        for idx,s in enumerate(inputs):
+            out = self.tokenizer.encode(inputs[idx])
+            outputs.append(out)
+
+        output_length = max([len(_) for _ in outputs]) + 1
+        for i in range(len(outputs)):
+            outputs[i] += (output_length - len(outputs[i])) * [self.eos_token_id]
+        outputs_tensor = torch.LongTensor(outputs)
+
+        return outputs_tensor
 
 # class GPT2(nn.Module):
 #     def __init__(self, config):

@@ -964,7 +964,7 @@ class TransformerTrainer(AbstractTrainer):
             loss_total, train_time_cost = self._train_epoch()
             self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
-            self.logger.info("---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
+            # self.logger.info("---------- lr [%1.8f]"%(self.optimizer.get_lr()[0]))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
@@ -1265,8 +1265,8 @@ class GPT2Trainer(TransformerTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        test_out, target = self.model.generate_without_t(batch["ques_source"])
-        #target = batch["equ_source"]
+        test_out, _ = self.model(batch["ques_source"])
+        target = self.model.encode_(batch["equ_source"])
         batch_size = len(target)
         val_acc = []
         equ_acc = []

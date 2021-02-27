@@ -16,12 +16,12 @@ class MultiEquationDataset(AbstractDataset):
             transfer=num_transfer_draw
         else:
             transfer=num_transfer_multi
-        self.trainset, generate_list, copy_nums, unk_symbol = transfer(
+        self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(
             self.trainset, self.mask_symbol, self.min_generate_keep,";")
-        self.validset, _g, _c, _u = transfer(self.validset,
+        self.validset, _g, valid_copy_nums, _u = transfer(self.validset,
                                                     self.mask_symbol,
                                                     self.min_generate_keep,";")
-        self.testset, _g, _c, _u = transfer(self.testset, self.mask_symbol,
+        self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol,
                                                     self.min_generate_keep,";")
 
         if self.equation_fix == FixType.Prefix:
@@ -38,7 +38,10 @@ class MultiEquationDataset(AbstractDataset):
         self.fix_process(fix)
 
         self.generate_list = unk_symbol+generate_list
-        self.copy_nums = copy_nums
+        if self.symbol_for_tree:
+            self.copy_nums = max([train_copy_nums,valid_copy_nums,test_copy_nums])
+        else:
+            self.copy_nums = train_copy_nums
         self.operator_nums = len(Operators.Multi)
         self.operator_list = copy.deepcopy(Operators.Multi)
         self.unk_symbol=unk_symbol

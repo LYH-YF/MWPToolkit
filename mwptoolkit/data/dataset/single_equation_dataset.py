@@ -17,9 +17,9 @@ class SingleEquationDataset(AbstractDataset):
             transfer = number_transfer_ape200k
         else:
             NotImplementedError
-        self.trainset, generate_list, copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
-        self.validset, _g, _c = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
-        self.testset, _g, _c = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
+        self.trainset, generate_list, train_copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
+        self.validset, _g, valid_copy_nums = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
+        self.testset, _g, test_copy_nums = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
 
         if self.equation_fix == FixType.Prefix:
             fix = from_infix_to_prefix
@@ -33,7 +33,10 @@ class SingleEquationDataset(AbstractDataset):
         self.fix_process(fix)
 
         self.generate_list = generate_list
-        self.copy_nums = copy_nums
+        if self.symbol_for_tree:
+            self.copy_nums = max([train_copy_nums,valid_copy_nums,test_copy_nums])
+        else:
+            self.copy_nums = train_copy_nums
         self.operator_nums = len(Operators.Single)
         self.operator_list = copy.deepcopy(Operators.Single)
 

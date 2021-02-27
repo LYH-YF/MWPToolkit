@@ -81,9 +81,9 @@ class MultiEquationDataLoader(AbstractDataLoader):
             sentence = data["question"]
             equation = data["equation"]
             ques_source=' '.join(sentence)
-            #equ_source=''.join(equation)
+            equ_source=' '.join(equation)
             ques_source_batch.append(ques_source)
-            equ_source_batch.append(equation)
+            equ_source_batch.append(equ_source)
             num_list_batch.append(data["number list"])
             #num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])

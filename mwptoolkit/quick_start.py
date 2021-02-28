@@ -15,7 +15,7 @@ def train_cross_validation(config):
         start_fold_t = check_pnt["fold_t"]
         best_folds_accuracy=check_pnt["best_folds_accuracy"]
     else:
-        start_fold_t = 2
+        start_fold_t = 0
         best_folds_accuracy=[]
     logger = getLogger()
     dataset = create_dataset(config)

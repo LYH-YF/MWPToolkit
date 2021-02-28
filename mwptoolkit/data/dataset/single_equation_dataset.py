@@ -33,7 +33,10 @@ class SingleEquationDataset(AbstractDataset):
         self.fix_process(fix)
 
         self.generate_list = generate_list
-        self.copy_nums = train_copy_nums
+        if self.symbol_for_tree:
+            self.copy_nums=max([train_copy_nums,valid_copy_nums,test_copy_nums])
+        else:
+            self.copy_nums = train_copy_nums
         self.operator_nums = len(Operators.Single)
         self.operator_list = copy.deepcopy(Operators.Single)
 

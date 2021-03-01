@@ -43,6 +43,8 @@ def train_cross_validation(config):
         config["operator_nums"] = dataset.operator_nums
         config["copy_nums"] = dataset.copy_nums
         config["generate_size"] = len(dataset.generate_list)
+        config["generate_list"] = dataset.generate_list
+        config["operator_list"] = dataset.operator_list
         config["num_start"] = dataset.num_start
         config["fold_t"]=fold_t
         config["best_folds_accuracy"]=best_folds_accuracy
@@ -52,6 +54,7 @@ def train_cross_validation(config):
         model = get_model(config["model"])(config).to(config["device"])
         if config["pretrained_model_path"]:
             config["vocab_size"] = len(model.tokenizer)
+            config["symbol_size"] = len(model.tokenizer)
             config["embedding_size"] = len(model.tokenizer)
             config["in_word2idx"] = model.tokenizer.get_vocab()
             config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
@@ -132,6 +135,7 @@ def run_toolkit():
         model = get_model(config["model"])(config).to(config["device"])
         if config["pretrained_model_path"]:
             config["vocab_size"] = len(model.tokenizer)
+            config["symbol_size"] = len(model.tokenizer)
             config["embedding_size"] = len(model.tokenizer)
             config["in_word2idx"] = model.tokenizer.get_vocab()
             config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())

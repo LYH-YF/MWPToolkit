@@ -1,15 +1,14 @@
 {
     "embedding_size": 512,
     "ffn_size": 1024,
-    "num_encoder_layers": 2,
-    "num_decoder_layers": 2,
+    "num_encoder_layers": 4,
+    "num_decoder_layers": 4,
     "num_heads": 8,
     "attn_dropout_ratio": 0.5,
     "attn_weight_dropout_ratio": 0.5,
     "ffn_dropout_ratio": 0.5,
     "embedding_dropout_ratio":0.5,
-    "learning_rate": 0.3,
-    "learner": "schedule",
+    "learning_rate": 0.0001,
     "warmup_steps": 1500,
     "beam_size": 5,
     "decoding_strategy": "greedy_search",
@@ -18,6 +17,6 @@
     "max_len":128,
     "train_batch_size":64,
     "test_batch_size":64,
-    "epoch_nums":80,
+    "epoch_nums":200,
     "teacher_force_ratio":0.8
 }

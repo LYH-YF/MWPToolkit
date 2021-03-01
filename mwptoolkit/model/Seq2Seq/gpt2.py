@@ -30,7 +30,7 @@ class GPT2(nn.Module):
         self.decoder = GPT2LMHeadModel.from_pretrained(self.pretrained_model_path, config=self.configuration)
         
         self.init_tokenizer_and_resize(config["generate_list"],NumMask.number[:config["copy_nums"]],config["operator_list"])
-        self.padding_token_idx = self.tokenizer.pad_token_id
+        #self.padding_token_idx = self.tokenizer.pad_token_id
         self.max_out_len = config['max_output_len']
     
     def init_tokenizer_and_resize(self,generate_list,mask_number_list,operator_list):
@@ -40,8 +40,8 @@ class GPT2(nn.Module):
         #self.tokenizer.add_special_tokens({"eos_token":SpecialTokens.EOS_TOKEN})
         #self.tokenizer.eos_token=self.tokenizer.sep_token
         self.tokenizer.add_special_tokens({"additional_special_tokens": ["<ans>"]},)
-        SpecialTokens.PAD_TOKEN=self.tokenizer.pad_token
-        SpecialTokens.EOS_TOKEN=self.eos_token
+        SpecialTokens.PAD_TOKEN=self.tokenizer.eos_token
+        #SpecialTokens.EOS_TOKEN=self.eos_token
         SpecialTokens.UNK_TOKEN=self.tokenizer.unk_token
         self.decoder.resize_token_embeddings(len(self.tokenizer))
 

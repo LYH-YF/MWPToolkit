@@ -2,7 +2,7 @@ import torch
 import time
 from logging import getLogger
 from mwptoolkit.utils.utils import time_since
-from mwptoolkit.utils.enum_type import PAD_TOKEN, DatasetType,TaskType
+from mwptoolkit.utils.enum_type import PAD_TOKEN, DatasetType,TaskType,SpecialTokens
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
 from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.loss.binary_cross_entropy_loss import BinaryCrossEntropyLoss
@@ -77,7 +77,7 @@ class Trainer(AbstractTrainer):
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
-        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN])
 
     def _build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
@@ -253,7 +253,7 @@ class SingleEquationTrainer(Trainer):
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
-        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN])
 
     def _build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
@@ -434,7 +434,7 @@ class MultiEquationTrainer(Trainer):
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
-        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN])
 
     def _build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
@@ -729,10 +729,10 @@ class GTSTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        if batch["id"]==[80313]:
-            print(1)
-        else:
-            return [False], [False]
+        # if batch["id"]==[80313]:
+        #     print(1)
+        # else:
+        #     return [False], [False]
         num_start = self.dataloader.dataset.num_start
         generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
         test_out=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
@@ -758,11 +758,15 @@ class GTSTrainer(AbstractTrainer):
             #     print(1)
             # else:
             #     continue
+            if self.batch_idx<=300 and self.batch_idx>30:
+                print(1)
+            else:
+                continue
             batch_loss = self._train_batch(batch)
-            loss_total += batch_loss
-            self.loss.backward()
-            self._optimizer_step()
-            self.loss.reset()
+            #loss_total += batch_loss
+            # self.loss.backward()
+            # self._optimizer_step()
+            # self.loss.reset()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total, epoch_time_cost
         #print("epoch [%2d]avr loss [%2.8f]"%(self.epoch_i,loss_total /self.batch_nums))
@@ -857,12 +861,12 @@ class TransformerTrainer(AbstractTrainer):
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
-        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+        self._build_loss(config["symbol_size"], config["out_symbol2idx"][SpecialTokens.PAD_TOKEN])
 
     def _build_optimizer(self):
-        optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
         #self.scheduler=torch.optim.lr_scheduler.StepLR(self.optimizer,step_size=5,gamma=0.8)
-        self.optimizer = WarmUpScheduler(optimizer, self.config["learning_rate"], self.config["embedding_size"], self.config["warmup_steps"])
+        #self.optimizer = WarmUpScheduler(optimizer, self.config["learning_rate"], self.config["embedding_size"], self.config["warmup_steps"])
 
     def _save_checkpoint(self):
         check_pnt = {
@@ -1046,7 +1050,7 @@ class SeqGANTrainer(AbstractTrainer):
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
-        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN])
 
     def _build_optimizer(self):
         self.generator_optimizer=torch.optim.Adam(self.model.generator.parameters(),\
@@ -1257,7 +1261,7 @@ class SeqGANTrainer(AbstractTrainer):
 class GPT2Trainer(TransformerTrainer):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)
-        self._build_loss(config["vocab_size"], self.dataloader.dataset.out_symbol2idx[PAD_TOKEN])
+        self._build_loss(config["vocab_size"], config["out_symbol2idx"][SpecialTokens.PAD_TOKEN])
 
     def _build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
@@ -1281,6 +1285,97 @@ class GPT2Trainer(TransformerTrainer):
                 val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
             elif self.config["task_type"]==TaskType.MultiEquation:
                 val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            val_acc.append(val_ac)
+            equ_acc.append(equ_ac)
+        return val_acc, equ_acc
+
+class BERTGenTrainer(TransformerTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+        self._build_loss(len(self.dataloader.dataset.out_symbol2idx), self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN])
+
+    def _build_optimizer(self):
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
+
+    # def _build_loss(self, symbol_size, out_pad_token):
+    #     weight = torch.ones(symbol_size).to(self.config["device"])
+    #     pad = out_pad_token
+    #     self.loss = NLLLoss(weight, pad)
+
+    def _train_batch(self, batch):
+        # print (batch)
+        outputs, target = self.model(batch["ques_source"], batch["equ_source"])
+        # print ("outputs, target:", outputs.size(), target.size())
+        outputs = torch.nn.functional.log_softmax(outputs, dim=1)
+
+        # print (outputs.size(), target.size())
+        # print (outputs)
+        # print (target)
+        self.loss.eval_batch(outputs, target.contiguous().view(-1))
+        batch_loss = self.loss.get_loss()
+        return batch_loss
+
+    def fit(self):
+        train_batch_size = self.config["train_batch_size"]
+        epoch_nums = self.config["epoch_nums"]
+
+        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+
+        self.logger.info("start training...")
+        for epo in range(self.start_epoch, epoch_nums):
+            self.epoch_i = epo + 1
+            self.model.train()
+            loss_total, train_time_cost = self._train_epoch()
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s" \
+                             % (self.epoch_i, loss_total / self.train_batch_nums, train_time_cost))
+                             # + "\n---------- lr [%1.8f]" % (self.optimizer.get_lr()[0]))
+
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
+                valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+
+                self.logger.info(
+                    "---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s" \
+                    % (valid_total, valid_equ_ac, valid_val_ac, valid_time_cost))
+                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                self.logger.info(
+                    "---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s" \
+                    % (test_total, test_equ_ac, test_val_ac, test_time_cost))
+
+                if valid_val_ac >= self.best_valid_value_accuracy:
+                    self.best_valid_value_accuracy = valid_val_ac
+                    self.best_valid_equ_accuracy = valid_equ_ac
+                    self.best_test_value_accuracy = test_val_ac
+                    self.best_test_equ_accuracy = test_equ_ac
+                    self._save_model()
+            if epo % 5 == 0:
+                self._save_checkpoint()
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]''' \
+                         % (self.best_valid_equ_accuracy, self.best_valid_value_accuracy, \
+                            self.best_test_equ_accuracy, self.best_test_value_accuracy))
+
+    def _eval_batch(self, batch):
+        test_out, _ = self.model(batch["ques_source"])
+        target = batch["equ_source"]
+        batch_size = len(target)
+        val_acc = []
+        equ_acc = []
+        for idx in range(batch_size):
+            # val_ac, equ_ac, _, _ = self.evaluator.eval_source(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+            if self.config["task_type"] == TaskType.SingleEquation:
+
+                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx],
+                                                             batch["num list"][idx], batch["num stack"][idx], True)
+            elif self.config["task_type"] == TaskType.MultiEquation:
+                # print("test_out[idx]:", test_out[idx])
+                # print("target[idx]:", target[idx])
+                # print()
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx],
+                                                             batch["num list"][idx], batch["num stack"][idx], True)
+            else:
+                raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
         return val_acc, equ_acc

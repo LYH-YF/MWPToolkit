@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from transformers import GPT2LMHeadModel, GPT2Config, BertTokenizer, GPT2Tokenizer
 
-from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
+from mwptoolkit.utils.enum_type import SpecialTokens, NumMask, DatasetName
 
 class GPT2(nn.Module):
     def __init__(self, config):
@@ -13,7 +13,7 @@ class GPT2(nn.Module):
 
         self.pretrained_model_path = config['pretrained_model_path']
 
-        if config['dataset'] in ['math23k']:
+        if config['dataset'] in [DatasetName.math23k, DatasetName.hmwp, DatasetName.ape200k]:
             # print ("tokenizer: ")
             self.tokenizer = BertTokenizer.from_pretrained(self.pretrained_model_path)
             self.eos_token_id = self.tokenizer.sep_token_id

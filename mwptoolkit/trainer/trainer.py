@@ -758,15 +758,15 @@ class GTSTrainer(AbstractTrainer):
             #     print(1)
             # else:
             #     continue
-            if self.batch_idx<=300 and self.batch_idx>30:
-                print(1)
-            else:
-                continue
+            # if self.batch_idx<=300 and self.batch_idx>30:
+            #     print(1)
+            # else:
+            #     continue
             batch_loss = self._train_batch(batch)
-            #loss_total += batch_loss
-            # self.loss.backward()
-            # self._optimizer_step()
-            # self.loss.reset()
+            loss_total += batch_loss
+            self.loss.backward()
+            self._optimizer_step()
+            self.loss.reset()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total, epoch_time_cost
         #print("epoch [%2d]avr loss [%2.8f]"%(self.epoch_i,loss_total /self.batch_nums))

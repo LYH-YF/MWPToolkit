@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -23,7 +24,12 @@ class MultiHeadAttention(nn.Module):
         self.linear_key = nn.Linear(embedding_size, embedding_size)
         self.linear_value = nn.Linear(embedding_size, embedding_size)
 
+        nn.init.normal_(self.linear_query.weight, mean=0, std=0.02)
+        nn.init.normal_(self.linear_key.weight, mean=0, std=0.02)
+        nn.init.normal_(self.linear_value.weight, mean=0, std=0.02)
+
         self.linear_out = nn.Linear(embedding_size, embedding_size)
+        nn.init.normal_(self.linear_out.weight, mean=0, std=0.02)
 
         self.weight_dropout = nn.Dropout(dropout_ratio)
 

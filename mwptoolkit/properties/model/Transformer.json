@@ -18,5 +18,5 @@
     "train_batch_size":64,
     "test_batch_size":64,
     "epoch_nums":200,
-    "teacher_force_ratio":0.8
+    "teacher_force_ratio":1.0
 }

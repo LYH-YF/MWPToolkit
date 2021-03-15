@@ -1,7 +1,7 @@
 import copy
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
-from mwptoolkit.utils.preprocess_tools import number_transfer_, number_transfer_ape200k
+from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, FixType, Operators, DatasetName
 from mwptoolkit.utils.enum_type import OPERATORS, SPECIAL_TOKENS
 
@@ -12,7 +12,7 @@ class SingleEquationDataset(AbstractDataset):
 
     def _preprocess(self):
         if self.dataset == DatasetName.math23k:
-            transfer = number_transfer_
+            transfer = number_transfer_math23k
         elif self.dataset == DatasetName.ape200k:
             transfer = number_transfer_ape200k
         else:

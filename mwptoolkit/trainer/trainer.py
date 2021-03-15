@@ -1386,7 +1386,7 @@ class TRNNTrainer(AbstractTrainer):
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
-        self._build_loss(config["symbol_size"], self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN],config["operator_nums"])
+        self._build_loss(config["temp_symbol_size"], self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN],config["operator_nums"])
     def _build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
 

@@ -44,7 +44,7 @@ class TRNN(nn.Module):
         seq_emb=self.embedder(seq)
         encoder_output,encoder_hidden=self.attn_encoder(seq_emb,seq_length)
         batch_size=encoder_output.size(0)
-        generate_num=[self.out_idx2symbol.index(num) for num in self.generate_list]
+        generate_num=[self.out_idx2symbol.index(SpecialTokens)]+[self.out_idx2symbol.index(num) for num in self.generate_list]
         generate_num=torch.tensor(generate_num).to(device)
         generate_emb=self.embedder(generate_num)
         tree=[]
@@ -53,7 +53,7 @@ class TRNN(nn.Module):
         batch_prob=[]
         batch_target=[]
         for b_i in range(batch_size):
-            look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
+            look_up = [SpecialTokens.UNK_TOKEN]+self.generate_list + NumMask.number[:len(num_pos[b_i])]
             x=encoder_output[b_i,num_pos[b_i]]
             num_embedding=torch.cat([generate_emb,encoder_output[b_i,num_pos[b_i]]],dim=0)
             tree_i=tree[b_i]

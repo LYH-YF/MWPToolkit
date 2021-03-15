@@ -126,7 +126,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
                     try:
                         idx = self.dataset.temp_symbol2idx[word]
                     except:
-                        idx = self.out_unk_token
+                        idx = self.temp_unk_token
                 temp_tensor.append(idx)
             if self.symbol_for_tree:
                 pass

@@ -176,12 +176,13 @@ class RecursiveNN(nn.Module):
         self.classes=["+","-","*","/","^"]
     
     def forward(self,expression_tree,num_embedding,look_up,out_idx2symbol):
+        device=num_embedding.device
         self.out_idx2symbol=out_idx2symbol
         self.leaf_emb(expression_tree,num_embedding,look_up)
         self.nodeProbList=[]
         self.labelList=[]
         _=self.traverse(expression_tree)
-        return torch.cat(self.nodeProbList,dim=0),torch.tensor(self.labelList)
+        return torch.cat(self.nodeProbList,dim=0).to(device),torch.tensor(self.labelList).to(device)
     def test(self,expression_tree,num_embedding,look_up,out_idx2symbol):
         self.out_idx2symbol=out_idx2symbol
         self.leaf_emb(expression_tree,num_embedding,look_up)
@@ -193,7 +194,10 @@ class RecursiveNN(nn.Module):
         if node.is_leaf:
             #symbol=self.out_idx2symbol[node.node_value]
             symbol=node.node_value
-            node.embedding = num_embed[look_up.index(symbol)]
+            if symbol not in look_up:
+                node.embedding = num_embed[0]
+            else:
+                node.embedding = num_embed[look_up.index(symbol)]
         else:
             self.leaf_emb(node.left_node, num_embed, look_up)
             self.leaf_emb(node.right_node, num_embed, look_up)

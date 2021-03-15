@@ -182,7 +182,13 @@ class RecursiveNN(nn.Module):
         self.nodeProbList=[]
         self.labelList=[]
         _=self.traverse(expression_tree)
-        return torch.cat(self.nodeProbList,dim=0).to(device),torch.tensor(self.labelList).to(device)
+        if self.nodeProbList != []:
+            nodeProb=torch.cat(self.nodeProbList,dim=0).to(device)
+            label=torch.tensor(self.labelList).to(device)
+        else:
+            nodeProb=self.nodeProbList
+            label=self.labelList
+        return nodeProb,label
     def test(self,expression_tree,num_embedding,look_up,out_idx2symbol):
         self.out_idx2symbol=out_idx2symbol
         self.leaf_emb(expression_tree,num_embedding,look_up)

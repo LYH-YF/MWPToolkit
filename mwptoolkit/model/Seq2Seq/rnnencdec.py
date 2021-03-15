@@ -80,7 +80,10 @@ class RNNEncDec(nn.Module):
     def generate_t(self,encoder_outputs,encoder_hidden,decoder_inputs):
         with_t=random.random()
         if with_t<self.teacher_force_ratio:
-            decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
+            if self.attention:
+                decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
+            else:
+                decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden)
             token_logits = self.generate_linear(decoder_outputs)
             token_logits=token_logits.view(-1, token_logits.size(-1))
             token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
@@ -91,7 +94,10 @@ class RNNEncDec(nn.Module):
             decoder_input = decoder_inputs[:,0,:].unsqueeze(1)
             token_logits=[]
             for idx in range(seq_len):
-                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+                if self.attention:
+                    decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+                else:
+                    decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden)
                 #attn_list.append(attn)
                 step_output = decoder_output.squeeze(1)
                 token_logit = self.generate_linear(step_output)
@@ -113,7 +119,10 @@ class RNNEncDec(nn.Module):
         all_outputs=[]
         decoder_hidden = encoder_hidden
         for idx in range(self.max_gen_len):
-            decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+            if self.attention:
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+            else:
+                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden)
             #attn_list.append(attn)
             step_output = decoder_output.squeeze(1)
             token_logits = self.generate_linear(step_output)

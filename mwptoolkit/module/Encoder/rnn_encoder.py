@@ -110,7 +110,7 @@ class SelfAttentionRNNEncoder(nn.Module):
         else:
             raise ValueError("The RNN type of encoder must be in ['lstm', 'gru', 'rnn'].")
 
-        self.attention=SeqAttention(hidden_size)
+        self.attention=SeqAttention(hidden_size,embedding_size)
 
     def init_hidden(self, input_embeddings):
         r""" Initialize initial hidden states of RNN.

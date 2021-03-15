@@ -3,11 +3,12 @@ from torch import nn
 from torch.nn import functional as F
 
 class SeqAttention(nn.Module):
-    def __init__(self, hidden_size):
+    def __init__(self, hidden_size,context_size):
         super(SeqAttention, self).__init__()
         self.hidden_size=hidden_size
+        self.context_size=context_size
 
-        self.linear_out = nn.Linear(hidden_size*2, hidden_size)
+        self.linear_out = nn.Linear(hidden_size*2, context_size)
 
     def forward(self, output, encoder_outputs,mask):
         '''
@@ -28,7 +29,7 @@ class SeqAttention(nn.Module):
         combined = torch.cat((mix, output), dim=2)
 
         output = torch.tanh(self.linear_out(combined.view(-1, 2*self.hidden_size)))\
-                            .view(batch_size, -1, self.hidden_size)
+                            .view(batch_size, -1, self.context_size)
 
         # output: (b, o, dim)
         # attn  : (b, o, i)

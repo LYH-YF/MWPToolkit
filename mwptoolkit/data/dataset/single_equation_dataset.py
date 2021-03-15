@@ -31,6 +31,7 @@ class SingleEquationDataset(AbstractDataset):
             raise NotImplementedError("the type of equation fix ({}) is not implemented.".format(self.equation_fix))
 
         self.fix_process(fix)
+        self.operator_mask_process()
 
         self.generate_list = generate_list
         if self.symbol_for_tree:
@@ -60,7 +61,7 @@ class SingleEquationDataset(AbstractDataset):
             self._build_symbol_for_tree()
         else:
             self._build_symbol()
-
+        self._build_template_symbol()
         if self.share_vocab:
             for symbol in self.out_idx2symbol:
                 if symbol in self.in_idx2word:
@@ -70,10 +71,13 @@ class SingleEquationDataset(AbstractDataset):
 
         self.in_word2idx = {}
         self.out_symbol2idx = {}
+        self.temp_symbol2idx = {}
         for idx, word in enumerate(self.in_idx2word):
             self.in_word2idx[word] = idx
         for idx, symbol in enumerate(self.out_idx2symbol):
             self.out_symbol2idx[symbol] = idx
+        for idx, symbol in enumerate(self.temp_idx2symbol):
+            self.temp_symbol2idx[symbol] = idx
 
     def _build_symbol_for_tree(self):
         self.out_idx2symbol = copy.deepcopy(Operators.Single)
@@ -85,7 +89,7 @@ class SingleEquationDataset(AbstractDataset):
             try:
                 self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
@@ -97,7 +101,7 @@ class SingleEquationDataset(AbstractDataset):
             try:
                 self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         else:
             raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
@@ -145,6 +149,65 @@ class SingleEquationDataset(AbstractDataset):
                 else:
                     self.out_idx2symbol.append(word)
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
+    
+    def _build_template_symbol(self):
+        if self.share_vocab:
+            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
+        else:
+            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
+        
+        self.temp_num_start = len(self.temp_idx2symbol)
+        self.temp_idx2symbol += self.generate_list
+        
+        if self.mask_symbol == MaskSymbol.NUM:
+            mask_list = NumMask.number
+            try:
+                self.temp_idx2symbol += [
+                    mask_list[i] for i in range(self.copy_nums)
+                ]
+            except IndexError:
+                raise IndexError(
+                    "{} numbers is not enough to mask {} numbers ".format(
+                        len(mask_list), self.copy_nums))
+        elif self.mask_symbol == MaskSymbol.alphabet:
+            mask_list = NumMask.alphabet
+            try:
+                self.temp_idx2symbol += [
+                    mask_list[i] for i in range(self.copy_nums)
+                ]
+            except IndexError:
+                raise IndexError(
+                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
+                    .format(self.copy_nums))
+        elif self.mask_symbol == MaskSymbol.number:
+            mask_list = NumMask.number
+            try:
+                self.temp_idx2symbol += [
+                    mask_list[i] for i in range(self.copy_nums)
+                ]
+            except IndexError:
+                raise IndexError(
+                    "{} numbers is not enough to mask {} numbers ".format(
+                        len(mask_list), self.copy_nums))
+        else:
+            raise NotImplementedError(
+                "the type of masking number ({}) is not implemented".format(
+                    self.mask_symbol))
 
+        for data in self.trainset:
+            words_list = data["template"]
+            for word in words_list:
+                if word in self.temp_idx2symbol:
+                    continue
+                elif word[0].isdigit():
+                    continue
+                elif (word[0].isalpha() or word[0].isdigit()) is not True:
+                    self.temp_idx2symbol.insert(self.temp_num_start,word)
+                    self.temp_num_start+=1
+                    continue
+                else:
+                    self.temp_idx2symbol.append(word)
+        self.temp_idx2symbol +=[SpecialTokens.UNK_TOKEN]
+    
     def get_vocab_size(self):
         return len(self.in_idx2word), len(self.out_idx2symbol)

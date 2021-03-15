@@ -12,13 +12,13 @@ class Node():
     def __init__(self,node_value,isleaf=True):
         self.node_value = node_value
         self.is_leaf = isleaf
-        self.embeding = None
+        self.embedding = None
         self.left_node = None
         self.right_node = None
     def set_left_node(self, node):
-        self.leftnode = node
+        self.left_node = node
     def set_right_node(self, node):
-        self.rightnode = node
+        self.right_node = node
     
 class TreeEmbedding:  # the class save the tree
     def __init__(self, embedding, terminal=False):
@@ -51,6 +51,8 @@ class BinaryTree():
     def equ2tree_(self,equ_list):
         stack=[]
         for symbol in equ_list:
+            if symbol in [SpecialTokens.EOS_TOKEN,SpecialTokens.PAD_TOKEN]:
+                break
             if symbol in ['+', '-', '*', '/', '^']:
                 node = Node(symbol, isleaf=False)
                 node.set_right_node(stack.pop())
@@ -60,6 +62,15 @@ class BinaryTree():
                 node = Node(symbol, isleaf=True)
                 stack.append(node)
         self.root = stack.pop()
+    def tree2equ(self,node):
+        equation=[]
+        if node.is_leaf:
+            equation.append(node.node_value)
+            return equation
+        right_equ = self.tree2equ(node.right_node)
+        left_equ = self.tree2equ(node.left_node)
+        equation=left_equ+right_equ+[node.node_value]
+        return equation
 
 class Score(nn.Module):
     def __init__(self, input_size, hidden_size):
@@ -157,13 +168,36 @@ class SubTreeMerger(nn.Module):
 class RecursiveNN(nn.Module):
     def __init__(self,emb_size,op_size):
         super().__init__()
+        self.emb_size=emb_size
+        self.op_size=op_size
         self.W = nn.Linear(emb_size * 2, emb_size)
         self.generate_linear = nn.Linear(emb_size,op_size)
         self.softmax = nn.functional.softmax
+        self.classes=["+","-","*","/","^"]
     
-    def forward(self,expression_tree,num_embedding):
-        pass
-
+    def forward(self,expression_tree,num_embedding,look_up,out_idx2symbol):
+        self.out_idx2symbol=out_idx2symbol
+        self.leaf_emb(expression_tree,num_embedding,look_up)
+        self.nodeProbList=[]
+        self.labelList=[]
+        _=self.traverse(expression_tree)
+        return torch.cat(self.nodeProbList,dim=0),torch.tensor(self.labelList)
+    def test(self,expression_tree,num_embedding,look_up,out_idx2symbol):
+        self.out_idx2symbol=out_idx2symbol
+        self.leaf_emb(expression_tree,num_embedding,look_up)
+        self.nodeProbList=[]
+        self.labelList=[]
+        _=self.test_traverse(expression_tree)
+        return expression_tree
+    def leaf_emb(self, node, num_embed, look_up):
+        if node.is_leaf:
+            #symbol=self.out_idx2symbol[node.node_value]
+            symbol=node.node_value
+            node.embedding = num_embed[look_up.index(symbol)]
+        else:
+            self.leaf_emb(node.left_node, num_embed, look_up)
+            self.leaf_emb(node.right_node, num_embed, look_up)
+    
     def traverse(self,node):
         if node.is_leaf:
             currentNode = node.embedding.unsqueeze(0)
@@ -177,10 +211,27 @@ class RecursiveNN(nn.Module):
             
             self.nodeProbList.append(op_prob)
             #node.numclass_probs = proj_probs 
-            self.labelList.append(self.classes.index(node.root_value))
+            self.labelList.append(self.classes.index(node.node_value))
         return currentNode
-    
+    def test_traverse(self,node):
+        if node.is_leaf:
+            currentNode = node.embedding.unsqueeze(0)
+        else:
+            left_vector = self.test_traverse(node.left_node)
+            right_vector = self.test_traverse(node.right_node)
+            
+            combined_v = torch.cat((left_vector, right_vector),1)
+            currentNode, op_prob = self.RecurCell(combined_v)
+            node.embedding = currentNode.squeeze(0)
+            op_prob = self.softmax(op_prob,dim=1)
+            op_idx = torch.topk(op_prob,1,1)[1]
+            node.node_value = self.classes[op_idx]
+            #self.nodeProbList.append(op_prob)
+            #node.numclass_probs = proj_probs 
+            #self.labelList.append(self.classes.index(node.node_value))
+        return currentNode
     def RecurCell(self,combine_emb):
         node_embedding=self.W(combine_emb)
-        op=self.softmax(self.generate_linear(node_embedding))
+        #op=self.softmax(self.generate_linear(node_embedding))
+        op=self.generate_linear(node_embedding)
         return node_embedding,op

@@ -1,6 +1,7 @@
 import random
 import copy
 from mwptoolkit.utils.utils import read_json_data,write_json_data
+from mwptoolkit.utils.preprocess_tools import operator_mask
 
 
 class AbstractDataset(object):
@@ -49,6 +50,13 @@ class AbstractDataset(object):
                 self.validset[idx]["equation"] = fix(data["equation"])
             for idx, data in enumerate(self.testset):
                 self.testset[idx]["equation"] = fix(data["equation"])
+    def operator_mask_process(self):
+        for idx, data in enumerate(self.trainset):
+            self.trainset[idx]["template"] = operator_mask(data["equation"])
+        for idx, data in enumerate(self.validset):
+            self.validset[idx]["template"] = operator_mask(data["equation"])
+        for idx, data in enumerate(self.testset):
+            self.testset[idx]["template"] = operator_mask(data["equation"])
 
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation

@@ -87,7 +87,7 @@ class AttentionalRNNDecoder(nn.Module):
         self.num_dec_layers = num_dec_layers
         self.rnn_cell_type = rnn_cell_type
 
-        self.attentioner=SeqAttention(hidden_size)
+        self.attentioner=SeqAttention(hidden_size,hidden_size)
         if rnn_cell_type == 'lstm':
             self.decoder = nn.LSTM(embedding_size, hidden_size, num_dec_layers, batch_first=True, dropout=dropout_ratio)
         elif rnn_cell_type == 'gru':

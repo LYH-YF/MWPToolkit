@@ -9,3 +9,4 @@ __pycache__
 /pretrain/gpt2_cn
 /pretrain/gpt2_en
 *.log
+/test.py

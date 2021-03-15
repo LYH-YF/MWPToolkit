@@ -1300,6 +1300,14 @@ def num_transfer_draw_(data,mask_type="number",min_generate_keep=0,equ_split_sym
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums,unk_symbol
 
+def operator_mask(expression):
+    template=[]
+    for symbol in expression:
+        if symbol in ["+","-","*","/","^","=","<BRG>"]:
+            template.append(SpecialTokens.OPT_TOKEN)
+        else:
+            template.append(symbol)
+    return template
 
 def from_infix_to_postfix(expression):
     r"""postfix for expression

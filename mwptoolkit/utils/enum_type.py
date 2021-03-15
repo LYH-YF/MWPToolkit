@@ -1,5 +1,5 @@
 OPERATORS = ["+", "-", "*", "/", "^"]
-SPECIAL_TOKENS = ["<PAD>", "<UNK>", "<SOS>", "<EOS>"]
+SPECIAL_TOKENS = ["<PAD>", "<UNK>", "<SOS>", "<EOS>", "<BRG>", "<OPT>"]
 OUTPUT_SPECIAL_TOKENS = ["<PAD>", "<UNK>"]
 PAD_TOKEN = "<PAD>"
 UNK_TOKEN = "<UNK>"
@@ -45,6 +45,7 @@ class SpecialTokens:
     SOS_TOKEN = "<SOS>"
     EOS_TOKEN = "<EOS>"
     BRG_TOKEN = "<BRG>"
+    OPT_TOKEN = "<OPT>"
 
 
 class MaskSymbol:

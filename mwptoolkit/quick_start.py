@@ -27,19 +27,26 @@ def train_cross_validation(config):
             config["in_word2idx"] = dataset.in_word2idx
             config["in_idx2word"] = dataset.in_idx2word
             config["out_sos_token"] = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
+            config["temp_symbol2idx"] = dataset.temp_symbol2idx
+            config["temp_idx2symbol"] = dataset.temp_idx2symbol
         else:
             if config["symbol_for_tree"]:
                 config["out_symbol2idx"] = dataset.out_symbol2idx
                 config["out_idx2symbol"] = dataset.out_idx2symbol
+                config["temp_symbol2idx"] = dataset.temp_symbol2idx
+                config["temp_idx2symbol"] = dataset.temp_idx2symbol
             else:
                 config["out_symbol2idx"] = dataset.out_symbol2idx
                 config["out_idx2symbol"] = dataset.out_idx2symbol
+                config["temp_symbol2idx"] = dataset.temp_symbol2idx
+                config["temp_idx2symbol"] = dataset.temp_idx2symbol
                 config["out_sos_token"] = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
                 config["out_eos_token"] = dataset.out_symbol2idx[SpecialTokens.EOS_TOKEN]
                 config["out_pad_token"] = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
 
         config["vocab_size"] = len(dataset.in_idx2word)
         config["symbol_size"] = len(dataset.out_idx2symbol)
+        config["temp_symbol_size"] = len(dataset.temp_idx2symbol)
         config["operator_nums"] = dataset.operator_nums
         config["copy_nums"] = dataset.copy_nums
         config["generate_size"] = len(dataset.generate_list)

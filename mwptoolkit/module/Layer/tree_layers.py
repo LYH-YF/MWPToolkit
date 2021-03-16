@@ -53,7 +53,7 @@ class BinaryTree():
         for symbol in equ_list:
             if symbol in [SpecialTokens.EOS_TOKEN,SpecialTokens.PAD_TOKEN]:
                 break
-            if symbol in ['+', '-', '*', '/', '^']:
+            if symbol in ['+', '-', '*', '/', '^','=',SpecialTokens.BRG_TOKEN,SpecialTokens.OPT_TOKEN]:
                 node = Node(symbol, isleaf=False)
                 node.set_right_node(stack.pop())
                 node.set_left_node(stack.pop())

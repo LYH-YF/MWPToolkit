@@ -1426,7 +1426,19 @@ class TRNNTrainer(AbstractTrainer):
         weight2=torch.ones(operator_num).to(self.config["device"])
         self.ans_module_loss=NLLLoss(weight2)
 
-    def _idx2word_2idx(self, batch_equation):
+    def _temp_idx2word_2idx(self, batch_equation):
+        batch_size, length = batch_equation.size()
+        batch_equation_ = []
+        for b in range(batch_size):
+            equation = []
+            for idx in range(length):
+                equation.append(self.dataloader.dataset.temp_symbol2idx[\
+                                            self.dataloader.dataset.in_idx2word[\
+                                                batch_equation[b,idx]]])
+            batch_equation_.append(equation)
+        batch_equation_ = torch.LongTensor(batch_equation_).to(self.config["device"])
+        return batch_equation_
+    def _equ_idx2word_2idx(self, batch_equation):
         batch_size, length = batch_equation.size()
         batch_equation_ = []
         for b in range(batch_size):
@@ -1439,7 +1451,7 @@ class TRNNTrainer(AbstractTrainer):
         batch_equation_ = torch.LongTensor(batch_equation_).to(self.config["device"])
         return batch_equation_
 
-    def idx2symbol(self,equation):
+    def _idx2symbol(self,equation):
         symbols=[]
         eos_idx=self.dataloader.dataset.temp_symbol2idx[SpecialTokens.EOS_TOKEN]
         pad_idx=self.dataloader.dataset.temp_symbol2idx[SpecialTokens.PAD_TOKEN]
@@ -1449,21 +1461,12 @@ class TRNNTrainer(AbstractTrainer):
                 break
             symbols.append(self.dataloader.dataset.temp_idx2symbol[idx])
         return symbols
-    def _train_batch(self, batch):
-        outputs = self.model(batch["question"], batch["ques len"], batch["equation"])
-        #outputs=torch.nn.functional.log_softmax(outputs,dim=1)
-        if self.config["share_vocab"]:
-            batch_equation = self._idx2word_2idx(batch["equation"])
-            self.loss.eval_batch(outputs, batch_equation.view(-1))
-        else:
-            self.loss.eval_batch(outputs, batch["equation"].view(-1))
-        batch_loss = self.loss.get_loss()
-        return batch_loss
+    
     def _train_batch_seq2seq(self, batch):
         outputs = self.model.seq2seq_forward(batch["question"], batch["ques len"], batch["template"])
         #outputs=torch.nn.functional.log_softmax(outputs,dim=1)
         if self.config["share_vocab"]:
-            batch_equation = self._idx2word_2idx(batch["template"])
+            batch_equation = self._temp_idx2word_2idx(batch["template"])
             self.seq2seq_loss.eval_batch(outputs, batch_equation.view(-1))
         else:
             self.seq2seq_loss.eval_batch(outputs, batch["template"].view(-1))
@@ -1481,19 +1484,27 @@ class TRNNTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        test_out = self.model(batch["question"], batch["ques len"])
+        template,equation = self.model(batch["question"], batch["ques len"],batch["num pos"])
         if self.config["share_vocab"]:
-            target = self._idx2word_2idx(batch["equation"])
+            temp_target = self._temp_idx2word_2idx(batch["template"])
+            equ_target = self._equ_idx2word_2idx(batch["equation"])
         else:
-            target = batch["equation"]
-        batch_size = target.size(0)
-        val_acc = []
+            temp_target = batch["template"]
+            equ_target = batch["equation"]
+        batch_size = temp_target.size(0)
         equ_acc = []
+        val_acc = []
         for idx in range(batch_size):
+            test=self.idx2symbol(template[idx])
+            tar=self.idx2symbol(temp_target[idx])
+            if test==tar:
+                equ_ac=True
+            else:
+                equ_ac=False
             if self.config["task_type"]==TaskType.SingleEquation:
-                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+                val_ac, _, _, _ = self.evaluator.result(equation[idx], equ_target[idx], batch["num list"][idx], batch["num stack"][idx])
             elif self.config["task_type"]==TaskType.MultiEquation:
-                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
+                val_ac, _, _, _ = self.evaluator.result_multi(equation[idx], equ_target[idx], batch["num list"][idx], batch["num stack"][idx])
             else:
                 raise NotImplementedError
             val_acc.append(val_ac)
@@ -1502,14 +1513,14 @@ class TRNNTrainer(AbstractTrainer):
     def _eval_batch_seq2seq(self,batch):
         test_out = self.model.seq2seq_forward(batch["question"], batch["ques len"])
         if self.config["share_vocab"]:
-            target = self._idx2word_2idx(batch["template"])
+            target = self._temp_idx2word_2idx(batch["template"])
         else:
             target = batch["template"]
         batch_size = target.size(0)
         equ_acc = []
         for idx in range(batch_size):
-            test=self.idx2symbol(test_out[idx])
-            tar=self.idx2symbol(target[idx])
+            test=self._idx2symbol(test_out[idx])
+            tar=self._idx2symbol(target[idx])
             if test==tar:
                 equ_ac=True
             else:
@@ -1521,7 +1532,7 @@ class TRNNTrainer(AbstractTrainer):
             batch["equ_source"][idx]=equ.split(" ")
         test_out = self.model.test_ans_module(batch["question"], batch["ques len"], batch["num pos"], batch["equ_source"])
         if self.config["share_vocab"]:
-            target = self._idx2word_2idx(batch["equation"])
+            target = self._equ_idx2word_2idx(batch["equation"])
         else:
             target = batch["equation"]
         batch_size = target.size(0)
@@ -1621,8 +1632,9 @@ class TRNNTrainer(AbstractTrainer):
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(eval_set):
-            batch_equ_ac = self._eval_batch_seq2seq(batch)
-            batch_val_ac = self._eval_batch_answer_module(batch)
+            #batch_equ_ac = self._eval_batch_seq2seq(batch)
+            #batch_val_ac = self._eval_batch_answer_module(batch)
+            batch_val_ac,batch_equ_ac=self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)

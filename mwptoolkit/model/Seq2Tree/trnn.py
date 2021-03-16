@@ -25,20 +25,20 @@ class TRNN(nn.Module):
                                                     temp_config["rnn_cell_type"],temp_config["dropout_ratio"],temp_config["bidirectional"])
         self.recursivenn=RecursiveNN(temp_config["embedding_size"],temp_config["operator_nums"])
     
-    def forward(self,seq,seq_length,target=None):
+    def forward(self,seq,seq_length,num_pos,target=None):
         if target != None:
             self.generate_t()
         else:
-            self.generate_without_t()
+            self.generate_without_t(seq,seq_length,num_pos)
     def generate_t(self):
-        pass
-    def generate_without_t(self):
-        pass
+        raise NotImplementedError("use model.seq2seq_forward() to train seq2seq module, use model.answer_module_forward() to train answer module.")
+    def generate_without_t(self,seq,seq_length,num_pos):
+        outputs=self.seq2seq(seq,seq_length)
+        templates=self.idx2symbol(outputs)
+        equations=self.test_ans_module(seq,seq_length,num_pos,templates)
+        return templates,equations
     def seq2seq_forward(self,seq,seq_length,target=None):
         return self.seq2seq(seq,seq_length,target)
-    def recursivenn_forward(self,seq,seq_length,template=None):
-        tree=self.template2tree(template,seq,)
-    
     def answer_module_forward(self,seq,seq_length,num_pos, template):
         device=seq.device
         seq_emb=self.embedder(seq)
@@ -54,7 +54,6 @@ class TRNN(nn.Module):
         batch_target=[]
         for b_i in range(batch_size):
             look_up = [SpecialTokens.UNK_TOKEN]+self.generate_list + NumMask.number[:len(num_pos[b_i])]
-            x=encoder_output[b_i,num_pos[b_i]]
             num_embedding=torch.cat([generate_emb,encoder_output[b_i,num_pos[b_i]]],dim=0)
             tree_i=tree[b_i]
             prob,target=self.recursivenn.forward(tree_i.root,num_embedding,look_up,self.out_idx2symbol)
@@ -62,23 +61,28 @@ class TRNN(nn.Module):
                 batch_prob.append(prob)
                 batch_target.append(target)
         return batch_prob,batch_target
+    
     def test_ans_module(self,seq,seq_length,num_pos, template):
         device=seq.device
         seq_emb=self.embedder(seq)
         encoder_output,encoder_hidden=self.attn_encoder(seq_emb,seq_length)
         batch_size=encoder_output.size(0)
-        generate_num=[self.out_idx2symbol.index(num) for num in self.generate_list]
+        generate_num=[self.out_idx2symbol.index(SpecialTokens.UNK_TOKEN)]+[self.out_idx2symbol.index(num) for num in self.generate_list]
         generate_num=torch.tensor(generate_num).to(device)
         generate_emb=self.embedder(generate_num)
         tree=[]
         equations=[]
-        for temp in template:
-            tree.append(self.template2tree(temp))
+        # for temp in template:
+        #     tree.append(self.template2tree(temp))
         for b_i in range(batch_size):
-            look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
-            x=encoder_output[b_i,num_pos[b_i]]
+            look_up = [SpecialTokens.UNK_TOKEN] + self.generate_list + NumMask.number[:len(num_pos[b_i])]
             num_embedding=torch.cat([generate_emb,encoder_output[b_i,num_pos[b_i]]],dim=0)
-            tree_i=tree[b_i]
+            #tree_i=tree[b_i]
+            try:
+                tree_i=self.template2tree(template[b_i])
+            except:
+                equations.append([])
+                continue
             nodes_pred=self.recursivenn.test(tree_i.root,num_embedding,look_up,self.out_idx2symbol)
             tree_i.root=nodes_pred
             equation=self.tree2equation(tree_i)
@@ -93,6 +97,9 @@ class TRNN(nn.Module):
         equation=tree.tree2equ(tree.root)
         return equation
     def idx2symbol(self,output):
+        r"""idx to symbol
+        tempalte idx to template symbol
+        """
         batch_size=output.size(0)
         seq_len=output.size(1)
         symbol_list=[]
@@ -103,9 +110,15 @@ class TRNN(nn.Module):
             symbol_list.append(symbols)
         return symbol_list
     def symbol2idx(self,symbols):
+        r"""symbol to idx
+        equation symbol to equation idx
+        """
         outputs=[]
         for symbol in symbols:
-            idx=self.out_idx2symbol.index(symbol)
+            if symbol not in self.out_idx2symbol:
+                idx=self.out_idx2symbol.index(SpecialTokens.UNK_TOKEN)
+            else:
+                idx=self.out_idx2symbol.index(symbol)
             outputs.append(idx)
         return outputs
 

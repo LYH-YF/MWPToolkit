@@ -179,6 +179,8 @@ class SeqEvaluator(AbstractEvaluator):
                     return None
             else:
                 res.append(symbol)
+        if res == []:
+            return None
         return res
 
     def compute_postfix_expression(self, post_fix):
@@ -474,6 +476,8 @@ class PreEvaluator(AbstractEvaluator):
                     return None
             else:
                 res.append(symbol)
+        if res == []:
+            return None
         return res
 
     def compute_prefix_expression(self, pre_fix):
@@ -703,6 +707,8 @@ class PostEvaluator(AbstractEvaluator):
                     return None
             else:
                 res.append(symbol)
+        if res == []:
+            return None
         return res
 
     def compute_postfix_expression(self, post_fix):

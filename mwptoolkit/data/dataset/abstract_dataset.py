@@ -1,7 +1,7 @@
 import random
 import copy
 from mwptoolkit.utils.utils import read_json_data,write_json_data
-from mwptoolkit.utils.preprocess_tools import operator_mask
+from mwptoolkit.utils.preprocess_tools import operator_mask,get_group_nums
 
 
 class AbstractDataset(object):
@@ -18,6 +18,7 @@ class AbstractDataset(object):
         self.k_fold = config["k_fold"]
         self.dataset = config["dataset"]
         self.read_local_folds = config["read_local_folds"]
+        self.language=config["language"]
 
     def _load_dataset(self):
         '''
@@ -100,6 +101,11 @@ class AbstractDataset(object):
             self._build_vocab()
             yield k
 
+    def build_group_nums_for_graph(self):
+        self.trainset=get_group_nums(self.trainset,self.language)
+        self.validset=get_group_nums(self.validset,self.language)
+        self.testset=get_group_nums(self.testset,self.language)
+    
     def dataset_load(self):
         r"""dataset process and build vocab
         """

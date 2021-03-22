@@ -12,6 +12,7 @@
     "dropout_ratio":0.5,
     "bidirectional":true,
     "step_size":20,
+    "beam_size":5,
     "share_vocab":false,
     "mask_symbol":"number",
     "symbol_for_tree":true

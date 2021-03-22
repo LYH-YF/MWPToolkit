@@ -1662,6 +1662,8 @@ class TRNNTrainer(AbstractTrainer):
 class Graph2TreeTrainer(GTSTrainer):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)
+        self.logger.info("get group nums...")
+        self.dataloader.dataset.build_group_nums_for_graph()
     
     def _train_batch(self, batch):
         '''
@@ -1672,7 +1674,7 @@ class Graph2TreeTrainer(GTSTrainer):
         num_start = self.dataloader.dataset.num_start
         generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
 
-        outputs=self.model(batch["question"],batch["ques len"],batch["ques source 1"],batch["num list"],batch["num stack"],batch["num size"],\
+        outputs=self.model(batch["question"],batch["ques len"],batch["group nums"],batch["num list"],batch["num stack"],batch["num size"],\
                                 generate_nums,batch["num pos"],num_start,batch["equation"],batch["equ len"],UNK_TOKEN=unk)
         self.loss.eval_batch(outputs, batch["equation"], batch["equ mask"])
         batch_loss = self.loss.get_loss()
@@ -1681,7 +1683,7 @@ class Graph2TreeTrainer(GTSTrainer):
     def _eval_batch(self, batch):
         num_start = self.dataloader.dataset.num_start
         generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
-        test_out=self.model(batch["question"],batch["ques len"],batch["ques source 1"],batch["num list"],batch["num stack"],batch["num size"],\
+        test_out=self.model(batch["question"],batch["ques len"],batch["group nums"],batch["num list"],batch["num stack"],batch["num size"],\
                                 generate_nums,batch["num pos"],num_start)
         
         if self.config["task_type"]==TaskType.SingleEquation:

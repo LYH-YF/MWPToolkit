@@ -2,6 +2,7 @@ import re
 from copy import deepcopy
 from collections import OrderedDict
 from fractions import Fraction
+import stanza
 
 from mwptoolkit.utils.enum_type import MaskSymbol,NumMask,SpecialTokens
 
@@ -1496,6 +1497,66 @@ def num_transfer_draw_(data,mask_type="number",min_generate_keep=0,equ_split_sym
         if generate_nums_dict[g] >= min_generate_keep:
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums,unk_symbol
+
+def get_group_nums(datas,language):
+    nlp=stanza.Pipeline(language,
+                        processors='depparse,tokenize,pos,lemma',
+                        tokenize_pretokenized=True,
+                        logging_level='error')
+    
+    for idx,data in enumerate(datas):
+        group_nums=[]
+        num_pos=data["number position"]
+        sent_len=len(data["question"])
+        doc=nlp(data["ques source 1"])
+        token_list=doc.to_dict()[0]
+        for n_pos in num_pos:
+            pos_stack=[]
+            group_num=[]
+            pos_stack.append([n_pos,token_list[n_pos]["deprel"]])
+            head_pos=token_list[n_pos]['head']
+            for idx,x in enumerate(token_list):
+                if x['head']==head_pos and n_pos!=idx:
+                    deprel=x["deprel"]
+                    pos_stack.append([idx,deprel])
+            while pos_stack:
+                pos_dep=pos_stack.pop(0)
+                pos=pos_dep[0]
+                dep=pos_dep[1]
+                head_pos=token_list[pos]['head']-1
+                upos=token_list[pos]['upos']
+                if upos not in ['NOUN','NUM','ADJ','VERB','DET', 'SYM']:
+                    continue
+                elif upos == 'NOUN' and dep not in ['compound','nsubj:pass','nsubj','compound']:
+                    continue
+                elif upos == 'VERB' and dep not in ['conj','root']:
+                    continue
+                elif upos == 'ADJ' and dep not in ['amod']:
+                    continue
+                elif upos == 'DET' and dep not in ['advmod']:
+                    continue
+                elif upos == 'SYM' and dep not in ['obl']:
+                    continue
+                else:
+                    group_num.append(pos)
+                if head_pos>=0:
+                    head_dep=token_list[head_pos]['deprel']
+                    if [head_pos,head_dep] in pos_stack:
+                        pass
+                    else:
+                        pos_stack.append([head_pos,head_dep])
+            if group_num == []:
+                group_num.append(n_pos)
+            if len(group_num) == 1:
+                if n_pos-1 >=0:
+                    group_num.append(n_pos-1)
+                if n_pos+1 <= sent_len:
+                    group_num.append(n_pos+1)
+            group_nums.append(group_num)
+        datas[idx]["group nums"]=group_nums
+    
+    return datas
+
 
 def operator_mask(expression):
     template=[]

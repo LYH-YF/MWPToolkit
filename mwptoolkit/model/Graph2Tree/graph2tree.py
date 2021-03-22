@@ -31,7 +31,7 @@ class Graph2Tree(nn.Module):
         self.node_generater=NodeGenerater(config["hidden_size"],config["operator_nums"],config["embedding_size"],config["dropout_ratio"])
         self.merge=SubTreeMerger(config["hidden_size"],config["embedding_size"],config["dropout_ratio"])
     
-    def forward(self,seq, seq_length,seq_source,num_list, nums_stack, num_size, generate_nums, num_pos,\
+    def forward(self,seq, seq_length,group_nums,num_list, nums_stack, num_size, generate_nums, num_pos,\
                 num_start,target=None, target_length=None,UNK_TOKEN=None):
         # sequence mask for attention
         seq_mask = []
@@ -48,7 +48,8 @@ class Graph2Tree(nn.Module):
         num_mask = torch.BoolTensor(num_mask).to(self.device)
         
         #build graph inputs
-        graphs=self.build_graph_input(seq_source,seq_length,num_list,num_pos)
+        #graphs=self.build_graph_input(seq_source,seq_length,num_list,num_pos)
+        graphs=self.build_graph(seq_length,num_list,num_pos,group_nums)
 
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
@@ -228,6 +229,60 @@ class Graph2Tree(nn.Module):
             if flag:
                 break
         return beams[0].out
+    
+    def build_graph(self,seq_length,num_list,num_pos,group_nums):
+        max_len=seq_length.max()
+        batch_size=len(seq_length)
+        batch_graph=[]
+        for b_i in range(batch_size):
+            x=torch.zeros((max_len,max_len))
+            for idx in range(len(seq_length)):
+                x[idx,idx]=1
+            quantity_cell_graph=torch.clone(x)
+            graph_greater=torch.clone(x)
+            graph_lower=torch.clone(x)
+            graph_quanbet=torch.clone(x)
+            graph_attbet=torch.clone(x)
+            for idx,n_pos in enumerate(num_pos[b_i]):
+                for pos in group_nums[b_i][idx]:
+                    quantity_cell_graph[n_pos,pos]=1
+                    quantity_cell_graph[pos,n_pos]=1
+                    graph_quanbet[n_pos,pos]=1
+                    graph_quanbet[pos,n_pos]=1
+                    graph_attbet[n_pos,pos]=1
+                    graph_attbet[pos,n_pos]=1
+            for idx_i in range(len(num_pos)):
+                for idx_j in range(len(num_pos)):
+                    try:
+                        num_i=eval(num_list[idx_i])
+                    except:# % in num
+                        num_i=eval(num_list[idx_i][:-1]+'/100')
+                    try:
+                        num_j=eval(num_list[idx_j])
+                    except:
+                        num_j=eval(num_list[idx_j][:-1]+'/100')
+                    if num_i > num_j:
+                        graph_greater[num_pos[idx_i]][num_pos[idx_j]] = 1
+                        graph_lower[num_pos[idx_j]][num_pos[idx_i]]=1
+                    else:
+                        graph_greater[num_pos[idx_j]][num_pos[idx_i]] = 1
+                        graph_lower[num_pos[idx_i]][num_pos[idx_j]]=1
+            group_num_=itertools.chain.from_iterable(group_nums[b_i])
+            combn=itertools.permutations(group_num_,2)
+            for idx in combn:
+                graph_quanbet[idx]=1
+                graph_quanbet[idx]=1
+                graph_attbet[idx]=1
+                graph_attbet[idx]=1
+            quantity_cell_graph=quantity_cell_graph.to(self.device)
+            graph_greater=graph_greater.to(self.device)
+            graph_lower=graph_lower.to(self.device)
+            graph_quanbet=graph_quanbet.to(self.device)
+            graph_attbet=graph_attbet.to(self.device)
+            graph=torch.stack([quantity_cell_graph,graph_greater,graph_lower,graph_quanbet,graph_attbet],dim=0)
+            batch_graph.append(graph)
+        batch_graph=torch.stack(batch_graph)
+        return batch_graph
     
     def build_graph_input(self,sentences,sent_len,num_list,num_pos):
         max_len=sent_len.max()

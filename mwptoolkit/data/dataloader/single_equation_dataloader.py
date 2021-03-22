@@ -72,6 +72,8 @@ class SingleEquationDataLoader(AbstractDataLoader):
         
         num_size_batch = []
         num_stack_batch = []
+
+        group_nums_batch=[]
         for data in batch_data:
             ques_tensor = []
             equ_tensor = []
@@ -91,6 +93,10 @@ class SingleEquationDataLoader(AbstractDataLoader):
             id_batch.append(data["id"])
             #ques_len_batch.append(len(data["question"]))
             ans_batch.append(data["ans"])
+            try:
+                group_nums_batch.append(data["group nums"])
+            except:
+                group_nums_batch.append([])
             num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
             num_stack_batch.append(
                 self._build_num_stack(equation, data["number list"]))
@@ -179,5 +185,6 @@ class SingleEquationDataLoader(AbstractDataLoader):
             "ques_source":ques_source_batch,
             "equ_source":equ_source_batch,
             "temp_source":temp_source_batch,
-            "ques source 1":ques_source_1_batch
+            "ques source 1":ques_source_1_batch,
+            "group nums":group_nums_batch
         }

@@ -5,5 +5,6 @@
     "validset_divide":true,
     "mask_symbol":"number",
     "single":true,
-    "linear":true
+    "linear":true,
+    "language":"zh"
 }

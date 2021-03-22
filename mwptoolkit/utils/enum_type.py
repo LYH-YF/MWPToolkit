@@ -33,6 +33,9 @@ class DatasetType:
     Test = "test"
     Valid = "valid"
 
+class DatasetLanguage:
+    en="en"
+    zh="zh"
 
 class TaskType:
     MultiEquation = "multi_equation"

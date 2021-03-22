@@ -1484,6 +1484,8 @@ class TRNNTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
+        equ_acc = []
+        val_acc = []
         template,equation = self.model(batch["question"], batch["ques len"],batch["num pos"])
         if self.config["share_vocab"]:
             temp_target = self._temp_idx2word_2idx(batch["template"])
@@ -1492,11 +1494,9 @@ class TRNNTrainer(AbstractTrainer):
             temp_target = batch["template"]
             equ_target = batch["equation"]
         batch_size = temp_target.size(0)
-        equ_acc = []
-        val_acc = []
         for idx in range(batch_size):
-            test=self.idx2symbol(template[idx])
-            tar=self.idx2symbol(temp_target[idx])
+            test=self._idx2symbol(template[idx])
+            tar=self._idx2symbol(temp_target[idx])
             if test==tar:
                 equ_ac=True
             else:
@@ -1658,3 +1658,36 @@ class TRNNTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+
+class Graph2TreeTrainer(GTSTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+    
+    def _train_batch(self, batch):
+        '''
+        seq, seq_length, nums_stack, num_size, generate_nums, num_pos,\
+                UNK_TOKEN,num_start,target=None, target_length=None,max_length=30,beam_size=5
+        '''
+        unk = self.dataloader.out_unk_token
+        num_start = self.dataloader.dataset.num_start
+        generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
+
+        outputs=self.model(batch["question"],batch["ques len"],batch["ques source 1"],batch["num list"],batch["num stack"],batch["num size"],\
+                                generate_nums,batch["num pos"],num_start,batch["equation"],batch["equ len"],UNK_TOKEN=unk)
+        self.loss.eval_batch(outputs, batch["equation"], batch["equ mask"])
+        batch_loss = self.loss.get_loss()
+        return batch_loss
+    
+    def _eval_batch(self, batch):
+        num_start = self.dataloader.dataset.num_start
+        generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
+        test_out=self.model(batch["question"],batch["ques len"],batch["ques source 1"],batch["num list"],batch["num stack"],batch["num size"],\
+                                generate_nums,batch["num pos"],num_start)
+        
+        if self.config["task_type"]==TaskType.SingleEquation:
+            val_ac, equ_ac, _, _ = self.evaluator.result(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
+        elif self.config["task_type"]==TaskType.MultiEquation:
+            val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
+        else:
+            raise NotImplementedError
+        return [val_ac], [equ_ac]

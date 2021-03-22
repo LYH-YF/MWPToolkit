@@ -4,5 +4,6 @@
     "min_generate_keep":0,
     "mask_symbol":"number",
     "single":false,
-    "linear":true
+    "linear":true,
+    "language":"en"
 }

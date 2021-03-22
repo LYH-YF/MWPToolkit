@@ -79,7 +79,7 @@ def get_model(model_name):
     Returns:
         Generator: model class
     """
-    model_submodule = ['Seq2Seq', 'Seq2Tree', 'VAE', 'GAN']
+    model_submodule = ['Seq2Seq', 'Seq2Tree', 'VAE', 'GAN', 'Graph2Tree']
     try:
         model_file_name = model_name.lower()
         for submodule in model_submodule:

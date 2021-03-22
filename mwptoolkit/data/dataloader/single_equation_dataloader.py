@@ -55,6 +55,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
         ques_source_batch=[]
         equ_source_batch=[]
         temp_source_batch=[]
+        ques_source_1_batch=[]
 
         num_list_batch = []
         num_pos_batch = []
@@ -84,6 +85,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             ques_source_batch.append(ques_source)
             equ_source_batch.append(equ_source)
             temp_source_batch.append(temp_source)
+            ques_source_1_batch.append(data["ques source 1"])
             num_list_batch.append(data["number list"])
             num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
@@ -176,5 +178,6 @@ class SingleEquationDataLoader(AbstractDataLoader):
             "num size":num_size_batch,
             "ques_source":ques_source_batch,
             "equ_source":equ_source_batch,
-            "temp_source":temp_source_batch
+            "temp_source":temp_source_batch,
+            "ques source 1":ques_source_1_batch
         }

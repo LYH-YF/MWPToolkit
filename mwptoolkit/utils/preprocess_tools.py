@@ -1,6 +1,7 @@
 import re
 from copy import deepcopy
 from collections import OrderedDict
+from fractions import Fraction
 
 from mwptoolkit.utils.enum_type import MaskSymbol,NumMask,SpecialTokens
 
@@ -476,7 +477,7 @@ def number_transfer_math23k(data,mask_type="NUM",min_generate_keep=0):
         nums_fraction = sorted(nums_fraction,
                                key=lambda x: len(x),
                                reverse=True)
-        # if d["id"]==133813:
+        # if d["id"]=='23100':
         #     print(1)
         out_seq = seg_and_tag_math23k(equations,nums_fraction,nums)
         for s in out_seq:  # tag the num which is generated
@@ -487,16 +488,37 @@ def number_transfer_math23k(data,mask_type="NUM",min_generate_keep=0):
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
         num_pos = []
+        source=deepcopy(input_seq)
         for i, j in enumerate(input_seq):
             if "NUM" in j:
                 num_pos.append(i)
+                num_idx=equ_mask_list.index(j)
+                num_str=num_list[num_idx]
+                if '%' in num_str:
+                    num=str(eval(num_str[:-1]+'/100'))
+                else:
+                    try:
+                        num=str(eval(num_str))
+                    except:
+                        if re.match("\d+\(\d+/\d+\)",num_str): # match fraction like '5(3/4)'
+                            idx=num_str.index('(')
+                            a=num_str[:idx]
+                            b=num_str[idx:]
+                        if re.match("\(\d+/\d+\)\d+",num_str): # match fraction like '(3/4)5'
+                            idx=num_str.index(')')
+                            a=num_str[:idx+1]
+                            b=num_str[idx+1:]
+                        num=str(eval(a)+eval(b))
+                    num_list[num_idx]=num
+                source[i]=num
+        source=' '.join(source)
         assert len(num_list) == len(num_pos)
-
         #copy data
         # if d["id"]=="8883":
         #     print(1)
         new_data=d
         new_data["question"]=input_seq
+        new_data["ques source 1"]=source
         new_data["equation"]=out_seq
         new_data["number list"]=num_list
         new_data["number position"]=num_pos

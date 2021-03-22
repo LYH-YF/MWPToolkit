@@ -27,16 +27,17 @@ class TRNN(nn.Module):
     
     def forward(self,seq,seq_length,num_pos,target=None):
         if target != None:
-            self.generate_t()
+            return self.generate_t()
         else:
-            self.generate_without_t(seq,seq_length,num_pos)
+            templates,equations=self.generate_without_t(seq,seq_length,num_pos)
+            return templates,equations
     def generate_t(self):
         raise NotImplementedError("use model.seq2seq_forward() to train seq2seq module, use model.answer_module_forward() to train answer module.")
     def generate_without_t(self,seq,seq_length,num_pos):
         outputs=self.seq2seq(seq,seq_length)
         templates=self.idx2symbol(outputs)
         equations=self.test_ans_module(seq,seq_length,num_pos,templates)
-        return templates,equations
+        return outputs,equations
     def seq2seq_forward(self,seq,seq_length,target=None):
         return self.seq2seq(seq,seq_length,target)
     def answer_module_forward(self,seq,seq_length,num_pos, template):

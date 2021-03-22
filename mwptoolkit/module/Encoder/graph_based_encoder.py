@@ -4,10 +4,9 @@ from torch import nn
 from mwptoolkit.module.Graph.graph_module import Graph_Module
 
 class GraphBasedEncoder(nn.Module):
-    def __init__(self, input_size, embedding_size, hidden_size,rnn_cell_type,bidirectional, num_layers=2, dropout_ratio=0.5):
+    def __init__(self, embedding_size, hidden_size,rnn_cell_type,bidirectional, num_layers=2, dropout_ratio=0.5):
         super(GraphBasedEncoder, self).__init__()
 
-        self.input_size = input_size
         self.embedding_size = embedding_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
@@ -33,8 +32,8 @@ class GraphBasedEncoder(nn.Module):
         pade_outputs, pade_hidden = self.encoder(packed, pade_hidden)
         pade_outputs, hidden_states = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs,batch_first=True)
 
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
-        pade_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
-        _, pade_outputs = self.gcn(pade_outputs, batch_graph)
+        #problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
+        rnn_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
+        _, graph_outputs = self.gcn(rnn_outputs, batch_graph)
         #pade_outputs = pade_outputs.transpose(0, 1)
-        return pade_outputs, problem_output
+        return pade_outputs, graph_outputs

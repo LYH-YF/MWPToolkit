@@ -251,22 +251,22 @@ class Graph2Tree(nn.Module):
                     graph_quanbet[pos,n_pos]=1
                     graph_attbet[n_pos,pos]=1
                     graph_attbet[pos,n_pos]=1
-            for idx_i in range(len(num_pos)):
-                for idx_j in range(len(num_pos)):
+            for idx_i in range(len(num_pos[b_i])):
+                for idx_j in range(len(num_pos[b_i])):
                     try:
-                        num_i=eval(num_list[idx_i])
+                        num_i=eval(num_list[b_i][idx_i])
                     except:# % in num
-                        num_i=eval(num_list[idx_i][:-1]+'/100')
+                        num_i=eval(num_list[b_i][idx_i][:-1]+'/100')
                     try:
-                        num_j=eval(num_list[idx_j])
+                        num_j=eval(num_list[b_i][idx_j])
                     except:
-                        num_j=eval(num_list[idx_j][:-1]+'/100')
+                        num_j=eval(num_list[b_i][idx_j][:-1]+'/100')
                     if num_i > num_j:
-                        graph_greater[num_pos[idx_i]][num_pos[idx_j]] = 1
-                        graph_lower[num_pos[idx_j]][num_pos[idx_i]]=1
+                        graph_greater[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
+                        graph_lower[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]]=1
                     else:
-                        graph_greater[num_pos[idx_j]][num_pos[idx_i]] = 1
-                        graph_lower[num_pos[idx_i]][num_pos[idx_j]]=1
+                        graph_greater[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]] = 1
+                        graph_lower[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]]=1
             group_num_=itertools.chain.from_iterable(group_nums[b_i])
             combn=itertools.permutations(group_num_,2)
             for idx in combn:

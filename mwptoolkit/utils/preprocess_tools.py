@@ -1503,7 +1503,7 @@ def get_group_nums(datas,language):
                         processors='depparse,tokenize,pos,lemma',
                         tokenize_pretokenized=True,
                         logging_level='error')
-    
+    new_datas=[]
     for idx,data in enumerate(datas):
         group_nums=[]
         num_pos=data["number position"]
@@ -1553,9 +1553,11 @@ def get_group_nums(datas,language):
                 if n_pos+1 <= sent_len:
                     group_num.append(n_pos+1)
             group_nums.append(group_num)
-        datas[idx]["group nums"]=group_nums
+        #datas[idx]["group nums"]=group_nums
+        data["group nums"]=group_nums
+        new_datas.append(data)
     
-    return datas
+    return new_datas
 
 
 def operator_mask(expression):

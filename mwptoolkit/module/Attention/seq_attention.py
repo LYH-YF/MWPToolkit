@@ -11,7 +11,7 @@ class SeqAttention(nn.Module):
         self.linear_out = nn.Linear(hidden_size*2, context_size)
 
     def forward(self, output, encoder_outputs,mask):
-        '''
+        r'''
         Args:
             hidden: shape [batch_size, 1, hidden_size].
             encoder_outputs: shape [batch_size, sequence_length, hidden_size].

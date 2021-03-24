@@ -1098,6 +1098,9 @@ def num_transfer_alg514(data,mask_type="number",min_generate_keep=0,equ_split_sy
         new_data["equation"]=out_seq
         new_data["number list"]=num_list
         new_data["number position"]=num_pos
+        if num_list==[]:
+            new_data["number list"]=["-inf"]
+            new_data["number position"]=[-1]
         processed_datas.append(new_data)
 
 

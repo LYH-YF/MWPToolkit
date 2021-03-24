@@ -67,6 +67,7 @@ class MultiEquationDataset(AbstractDataset):
             self._build_symbol_for_tree()
         else:
             self._build_symbol()
+        self._build_template_symbol()
 
         if self.share_vocab:
             for symbol in self.out_idx2symbol:
@@ -199,7 +200,7 @@ class MultiEquationDataset(AbstractDataset):
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
+                self.temp_idx2symbol += [
                     mask_list[i] for i in range(self.copy_nums)
                 ]
             except IndexError:
@@ -209,7 +210,7 @@ class MultiEquationDataset(AbstractDataset):
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.out_idx2symbol += [
+                self.temp_idx2symbol += [
                     mask_list[i] for i in range(self.copy_nums)
                 ]
             except IndexError:
@@ -219,7 +220,7 @@ class MultiEquationDataset(AbstractDataset):
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
+                self.temp_idx2symbol += [
                     mask_list[i] for i in range(self.copy_nums)
                 ]
             except IndexError:

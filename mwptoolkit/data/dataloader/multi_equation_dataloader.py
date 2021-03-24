@@ -56,8 +56,11 @@ class MultiEquationDataLoader(AbstractDataLoader):
         '''
         ques_batch = []
         equ_batch = []
+        temp_batch = []
         ques_source_batch=[]
         equ_source_batch=[]
+        temp_source_batch=[]
+        ques_source_1_batch=[]
 
         num_list_batch = []
         num_pos_batch = []
@@ -74,21 +77,32 @@ class MultiEquationDataLoader(AbstractDataLoader):
         
         num_size_batch = []
         num_stack_batch = []
+
+        group_nums_batch=[]
         for data in batch_data:
             ques_tensor = []
             equ_tensor = []
+            temp_tensor = []
             num_pos=[]
             sentence = data["question"]
             equation = data["equation"]
+            template = data["template"]
             ques_source=' '.join(sentence)
             equ_source=' '.join(equation)
+            temp_source=' '.join(template)
             ques_source_batch.append(ques_source)
             equ_source_batch.append(equ_source)
+            temp_source_batch.append(temp_source)
+            ques_source_1_batch.append(data["ques source 1"])
             num_list_batch.append(data["number list"])
             #num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
             #ques_len_batch.append(len(data["question"]))
             ans_batch.append(data["ans"])
+            try:
+                group_nums_batch.append(data["group nums"])
+            except:
+                group_nums_batch.append([])
             num_stack_batch.append(
                 self._build_num_stack(equation, data["number list"]))
             if self.symbol_for_tree:
@@ -118,20 +132,37 @@ class MultiEquationDataLoader(AbstractDataLoader):
                     except:
                         idx = self.out_unk_token
                 equ_tensor.append(idx)
+            for word in template:
+                if self.share_vocab:
+                    try:
+                        idx = self.dataset.in_word2idx[word]
+                    except:
+                        idx = self.in_unk_token
+                else:
+                    try:
+                        idx = self.dataset.temp_symbol2idx[word]
+                    except:
+                        idx = self.temp_unk_token
+                temp_tensor.append(idx)
             if self.symbol_for_tree:
                 pass
             else:
                 if self.share_vocab:
                     equ_tensor.append(self.dataset.in_word2idx["<EOS>"])
+                    temp_tensor.append(self.dataset.in_word2idx["<EOS>"])
                 else:
                     equ_tensor.append(self.dataset.out_symbol2idx["<EOS>"])
+                    temp_tensor.append(self.dataset.temp_symbol2idx["<EOS>"])
             
             equ_len_batch.append(len(equ_tensor))
             ques_len_batch.append(len(ques_tensor))
             ques_batch.append(ques_tensor)
             equ_batch.append(equ_tensor)
+            temp_batch.append(temp_tensor)
         ques_batch=self._pad_input_batch(ques_batch,ques_len_batch)
         equ_batch=self._pad_output_batch(equ_batch,equ_len_batch)
+        temp_batch=self._pad_output_batch(temp_batch,equ_len_batch)
+
         ques_mask_batch=self._get_mask(ques_len_batch)
         equ_mask_batch=self._get_mask(equ_len_batch)
         num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
@@ -140,6 +171,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
         # to tensor
         ques_tensor_batch = torch.tensor(ques_batch).to(self.device)
         equ_tensor_batch = torch.tensor(equ_batch).to(self.device)
+        temp_tensor_batch = torch.tensor(temp_batch).to(self.device)
         ques_mask_batch = torch.tensor(ques_mask_batch).to(self.device).bool()
         num_mask_batch = torch.tensor(num_mask_batch).to(self.device).bool()
         ques_len_batch=torch.tensor(ques_len_batch).long()
@@ -147,6 +179,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
         return {
             "question": ques_tensor_batch,
             "equation": equ_tensor_batch,
+            "template": temp_tensor_batch,
             "ques len":ques_len_batch,
             "equ len": equ_len_batch,
             "num list": num_list_batch,
@@ -159,5 +192,8 @@ class MultiEquationDataLoader(AbstractDataLoader):
             "ans": ans_batch,
             "num size":num_size_batch,
             "ques_source":ques_source_batch,
-            "equ_source":equ_source_batch
+            "equ_source":equ_source_batch,
+            "temp_source":temp_source_batch,
+            "ques source 1":ques_source_1_batch,
+            "group nums":group_nums_batch
         }

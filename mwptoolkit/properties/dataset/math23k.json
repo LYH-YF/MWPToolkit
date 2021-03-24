@@ -1,7 +1,7 @@
 {
     "equation_fix":"prefix",
     "min_word_keep":5,
-    "min_generate_keep":0,
+    "min_generate_keep":5,
     "validset_divide":false,
     "mask_symbol":"number",
     "single":true,

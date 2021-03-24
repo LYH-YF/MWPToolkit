@@ -1,7 +1,7 @@
 import copy
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
-from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514
+from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514,num_transfer_hmwp
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName
 
 class MultiEquationDataset(AbstractDataset):
@@ -14,6 +14,8 @@ class MultiEquationDataset(AbstractDataset):
             transfer=num_transfer_alg514
         elif self.dataset==DatasetName.draw:
             transfer=num_transfer_draw
+        elif self.dataset==DatasetName.hmwp:
+            transfer=num_transfer_hmwp
         else:
             transfer=num_transfer_multi
         self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(

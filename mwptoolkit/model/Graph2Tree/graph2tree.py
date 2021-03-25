@@ -236,7 +236,7 @@ class Graph2Tree(nn.Module):
         batch_graph=[]
         for b_i in range(batch_size):
             x=torch.zeros((max_len,max_len))
-            for idx in range(len(seq_length)):
+            for idx in range(seq_length[b_i]):
                 x[idx,idx]=1
             quantity_cell_graph=torch.clone(x)
             graph_greater=torch.clone(x)

@@ -1,4 +1,5 @@
 import re
+import json
 from copy import deepcopy
 from collections import OrderedDict
 from fractions import Fraction
@@ -175,7 +176,7 @@ def seg_and_tag_math23k(st, nums_fraction, nums):  # seg the equation and tag th
         p_start = pos_st.start() + 1
         p_end = pos_st.end()
         if p_start > 0:
-            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
+            res += seg_and_tag_math23k(st[:p_start], nums_fraction, nums)
         try:
             st_num = str(eval(st[p_start:p_end]))
         except:  # % in number
@@ -192,7 +193,7 @@ def seg_and_tag_math23k(st, nums_fraction, nums):  # seg the equation and tag th
             except:
                 res.append(st_num)
         if p_end < len(st):
-            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
+            res += seg_and_tag_math23k(st[p_end:], nums_fraction, nums)
         return res
     for n in nums_fraction:
         if n in st:
@@ -233,6 +234,30 @@ def seg_and_tag_math23k(st, nums_fraction, nums):  # seg the equation and tag th
 
 def seg_and_tag_mawps(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    if pos_st:
+        p_start = pos_st.start() + 1
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
+        try:
+            st_num = str(eval(st[p_start:p_end]))
+        except:  # % in number
+            st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number = str(int(eval(st_num)))
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
+        return res
     for n in nums_fraction:
         if n in st:
             p_start = st.find(n)
@@ -1236,7 +1261,32 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
         # if d["id"]==34492:
         #     print(1)
-        out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
+        out_seq=[]
+        pos_st = re.search(r"^-((\d+\.?\d*))", equations)  #search negative number starting
+        if pos_st:
+            p_start = pos_st.start()
+            p_end = pos_st.end()
+            if p_start > 0:
+                out_seq += seg_and_tag_mawps(equations[:p_start], nums_fraction, nums)
+            try:
+                st_num = str(eval(equations[p_start:p_end]))
+            except:  # % in number
+                st_num = equations[p_start:p_end]
+            try:
+                out_seq.append(nums[st_num])
+            except:
+                try:
+                    number = str(int(eval(st_num)))
+                    if abs(eval(number) - eval(st_num)) < 1e-4:
+                        out_seq.append(nums[number])
+                    else:
+                        out_seq.append(st_num)
+                except:
+                    out_seq.append(st_num)
+            if p_end < len(equations):
+                out_seq += seg_and_tag_mawps(equations[p_end:], nums_fraction, nums)
+        else:
+            out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
         # try:
         #     max_equ__len[len(out_seq)]+=1
         # except:
@@ -1246,6 +1296,9 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
             # if s=="18.0" or s=="12.0" or s=="162.0":
             #     print(1)
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
+                generate_nums.append(s)
+                generate_nums_dict[s] = 0
+            if re.match(r"^-((\d+\.?\d*))",s) and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:
@@ -1354,6 +1407,25 @@ def num_transfer_hmwp(data, mask_type="number", min_generate_keep=0, equ_split_s
         #     text=text[:start]+number+text[end:]
         #     pos=re.search(r'\d+\s\d+',text)
         # seg = text.split(" ")
+        #text=d["original_text"]
+        #pos=re.search(r'\D\s-\s((\d+\.\d+)|\d+)\s',text) # search negative number in sequence
+        # pos=re.search(r'\D\s-\s((\d+\.\d+)|\d+)\s',text)
+        # while(pos):
+        #     start=pos.start()+2
+        #     end=pos.end()-1
+        #     number=text[start:end]
+        #     number=''.join(number.split(" "))
+        #     text=text[:start]+number+text[end:]
+        #     pos=re.search(r'\D\s-\s((\d+\.\d+)|\d+)\s',text)
+        # pos=re.search(r'(?![)]\s-\s((\d+\.\d+)|\d+)\s)\D\s-\s((\d+\.\d+)|\d+)\s',text)
+        # while(pos):
+        #     start=pos.start()+2
+        #     end=pos.end()-1
+        #     number=text[start:end]
+        #     number=''.join(number.split(" "))
+        #     text=text[:start]+number+text[end:]
+        #     pos=re.search(r'[^)]\s-\s((\d+\.\d+)|\d+)\s',text)
+        # seg = text.split(" ")
         seg = d["original_text"].split(" ")
         equations = d["equation"]
         equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
@@ -1460,6 +1532,13 @@ def num_transfer_hmwp(data, mask_type="number", min_generate_keep=0, equ_split_s
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums, unk_symbol
 
+def write_json_data(data, filename):
+    """
+    write data to a json file
+    """
+    with open(filename, 'w+', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    f.close()
 
 
 def get_group_nums(datas, language):
@@ -1484,8 +1563,8 @@ def get_group_nums(datas, language):
                 pos_dep = pos_stack.pop(0)
                 pos = pos_dep[0]
                 dep = pos_dep[1]
-                head_pos = token_list[pos]['head'] - 1
                 upos = token_list[pos]['upos']
+                head_pos = token_list[pos]['head'] - 1
                 if upos not in ['NOUN', 'NUM', 'ADJ', 'VERB', 'DET', 'SYM']:
                     continue
                 elif upos == 'NOUN' and dep not in ['compound', 'nsubj:pass', 'nsubj', 'compound']:
@@ -1516,8 +1595,16 @@ def get_group_nums(datas, language):
             group_nums.append(group_num)
         #datas[idx]["group nums"]=group_nums
         data["group nums"] = group_nums
-        new_datas.append(data)
-
+        # new_datas.append(data)
+        # group_words=[]
+        # for group_num in group_nums:
+        #     group_word=[]
+        #     for idx in group_num:
+        #         group_word.append(token_list[idx]["text"])
+        #     group_words.append(group_word)
+        # path="/group_nums.json"
+        # json_data={"sentence":data["ques source 1"],"num pos":num_pos,"words":group_words}
+        # write_json_data(json_data,path)
     return new_datas
 
 

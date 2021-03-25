@@ -1632,8 +1632,8 @@ class TRNNTrainer(AbstractTrainer):
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(eval_set):
-            #batch_equ_ac = self._eval_batch_seq2seq(batch)
-            #batch_val_ac = self._eval_batch_answer_module(batch)
+            # batch_equ_ac = self._eval_batch_seq2seq(batch)
+            # batch_val_ac = self._eval_batch_answer_module(batch)
             batch_val_ac,batch_equ_ac=self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)

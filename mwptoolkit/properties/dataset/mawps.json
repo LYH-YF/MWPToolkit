@@ -3,6 +3,7 @@
     "min_word_keep":5,
     "min_generate_keep":5,
     "mask_symbol":"number",
+    "max_output_len":30,
     "single":false,
     "linear":true,
     "language":"en"

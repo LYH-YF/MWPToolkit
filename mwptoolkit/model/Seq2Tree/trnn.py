@@ -23,7 +23,7 @@ class TRNN(nn.Module):
         self.embedder=BaiscEmbedder(temp_config["vocab_size"],temp_config["embedding_size"],temp_config["dropout_ratio"])
         self.attn_encoder=SelfAttentionRNNEncoder(temp_config["embedding_size"],temp_config["hidden_size"],temp_config["num_layers"],\
                                                     temp_config["rnn_cell_type"],temp_config["dropout_ratio"],temp_config["bidirectional"])
-        self.recursivenn=RecursiveNN(temp_config["embedding_size"],temp_config["operator_nums"])
+        self.recursivenn=RecursiveNN(temp_config["embedding_size"],temp_config["operator_nums"],temp_config["operator_list"])
     
     def forward(self,seq,seq_length,num_pos,target=None):
         if target != None:

@@ -166,14 +166,14 @@ class SubTreeMerger(nn.Module):
 
 
 class RecursiveNN(nn.Module):
-    def __init__(self,emb_size,op_size):
+    def __init__(self,emb_size,op_size,op_list):
         super().__init__()
         self.emb_size=emb_size
         self.op_size=op_size
         self.W = nn.Linear(emb_size * 2, emb_size)
         self.generate_linear = nn.Linear(emb_size,op_size)
         self.softmax = nn.functional.softmax
-        self.classes=["+","-","*","/","^"]
+        self.classes=op_list
     
     def forward(self,expression_tree,num_embedding,look_up,out_idx2symbol):
         device=num_embedding.device

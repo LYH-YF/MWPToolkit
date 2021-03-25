@@ -78,7 +78,7 @@ class TRNN(nn.Module):
         for b_i in range(batch_size):
             look_up = [SpecialTokens.UNK_TOKEN] + self.generate_list + NumMask.number[:len(num_pos[b_i])]
             num_embedding=torch.cat([generate_emb,encoder_output[b_i,num_pos[b_i]]],dim=0)
-            tree_i=tree[b_i]
+            #tree_i=tree[b_i]
             try:
                 tree_i=self.template2tree(template[b_i])
             except:

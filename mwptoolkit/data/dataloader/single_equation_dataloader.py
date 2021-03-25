@@ -89,7 +89,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             temp_source_batch.append(temp_source)
             ques_source_1_batch.append(data["ques source 1"])
             num_list_batch.append(data["number list"])
-            num_pos_batch.append(data["number position"])
+            #num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
             #ques_len_batch.append(len(data["question"]))
             ans_batch.append(data["ans"])
@@ -97,13 +97,14 @@ class SingleEquationDataLoader(AbstractDataLoader):
                 group_nums_batch.append(data["group nums"])
             except:
                 group_nums_batch.append([])
-            num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
+            #num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
             num_stack_batch.append(
                 self._build_num_stack(equation, data["number list"]))
-            if self.symbol_for_tree:
-                pass
-            else:
-                ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
+            # if self.symbol_for_tree:
+            #     pass
+            # else:
+            #     ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
+            ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
             for word in sentence:
                 try:
                     idx = self.dataset.in_word2idx[word]
@@ -111,7 +112,8 @@ class SingleEquationDataLoader(AbstractDataLoader):
                     idx = self.in_unk_token
                 ques_tensor.append(idx)
             ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
-            
+            num_pos=[pos+1 for pos in data["number position"]]
+            num_pos_batch.append(num_pos)
             for word in equation:
                 if self.share_vocab:
                     try:
@@ -157,8 +159,18 @@ class SingleEquationDataLoader(AbstractDataLoader):
         
         ques_mask_batch=self._get_mask(ques_len_batch)
         equ_mask_batch=self._get_mask(equ_len_batch)
+        num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
         num_mask_batch = get_num_mask(num_size_batch, self.dataset.generate_list)
-
+        
+        new_group_nums_batch=[]
+        for group_nums in group_nums_batch:
+            new_group_nums=[]
+            for group_num in group_nums:
+                new_group_num=[]
+                for pos in group_num:
+                    new_group_num.append(pos+1)
+                new_group_nums.append(new_group_num)
+            new_group_nums_batch.append(new_group_nums)
         # to tensor
         ques_tensor_batch = torch.tensor(ques_batch).to(self.device)
         equ_tensor_batch = torch.tensor(equ_batch).to(self.device)
@@ -167,6 +179,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
         num_mask_batch = torch.tensor(num_mask_batch).to(self.device).bool()
         ques_len_batch=torch.tensor(ques_len_batch).long()
         equ_mask_batch=torch.tensor(equ_mask_batch).to(self.device).bool()
+        
         return {
             "question": ques_tensor_batch,
             "equation": equ_tensor_batch,
@@ -186,5 +199,5 @@ class SingleEquationDataLoader(AbstractDataLoader):
             "equ_source":equ_source_batch,
             "temp_source":temp_source_batch,
             "ques source 1":ques_source_1_batch,
-            "group nums":group_nums_batch
+            "group nums":new_group_nums_batch
         }

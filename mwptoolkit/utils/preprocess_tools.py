@@ -339,6 +339,114 @@ def seg_and_tag_mawps(st, nums_fraction, nums):  # seg the equation and tag the 
     return res
 
 
+def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the num
+    res = []
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)\s-\s((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    if pos_st:
+        p_start = pos_st.start() + 2
+        p_end = pos_st.end()
+        num_str=''.join(st[p_start:p_end].split(" "))
+        if p_start > 0:
+            res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
+        try:
+            st_num = str(eval(num_str))
+        except:  # % in number
+            st_num = num_str
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number = str(int(eval(st_num)))
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
+        return res
+    for n in nums_fraction:
+        if n in st:
+            p_start = st.find(n)
+            p_end = p_start + len(n)
+            if p_start > 0:
+                res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
+            try:
+                res.append(nums[n])
+            except:
+                res.append(n)
+            if p_end < len(st):
+                res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
+            return res
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-(\d+\.\d+)", st)  #search negative number but filtate minus symbol
+    if pos_st:
+        p_start = pos_st.start() + 1
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
+        try:
+            st_num = str(eval(st[p_start:p_end]))
+        except:  # % in number
+            st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number = str(int(eval(st_num)))
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
+        return res
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
+        try:
+            st_num = str(eval(st[p_start:p_end]))
+        except:  # % in number
+            st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number = str(int(eval(st_num)))
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
+        return res
+    pos_st = re.search("<BRG>", st)
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
+        res.append(st[p_start:p_end])
+        if p_end < len(st):
+            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
+        return res
+    for ss in st:
+        if ss.isalpha():
+            res.append(ss.lower())
+        elif ss == " ":
+            continue
+        else:
+            res.append(ss)
+    return res
+
+
 def number_transfer_(data, mask_type="NUM", min_generate_keep=0):
     '''transfer num process
 
@@ -1474,7 +1582,7 @@ def num_transfer_hmwp(data, mask_type="number", min_generate_keep=0, equ_split_s
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
         # if d["id"]==76:
         #     print(1)
-        out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
+        out_seq = seg_and_tag_hmwp(equations, nums_fraction, nums)
         # try:
         #     max_equ__len[len(out_seq)]+=1
         # except:
@@ -1595,7 +1703,7 @@ def get_group_nums(datas, language):
             group_nums.append(group_num)
         #datas[idx]["group nums"]=group_nums
         data["group nums"] = group_nums
-        # new_datas.append(data)
+        new_datas.append(data)
         # group_words=[]
         # for group_num in group_nums:
         #     group_word=[]

@@ -105,10 +105,11 @@ class MultiEquationDataLoader(AbstractDataLoader):
                 group_nums_batch.append([])
             num_stack_batch.append(
                 self._build_num_stack(equation, data["number list"]))
-            if self.symbol_for_tree:
-                pass
-            else:
-                ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
+            # if self.symbol_for_tree:
+            #     pass
+            # else:
+            #     ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
+            ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
             for word in sentence:
                 try:
                     idx = self.dataset.in_word2idx[word]
@@ -168,6 +169,16 @@ class MultiEquationDataLoader(AbstractDataLoader):
         num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
         num_mask_batch = get_num_mask(num_size_batch, self.dataset.generate_list)
 
+        new_group_nums_batch=[]
+        for group_nums in group_nums_batch:
+            new_group_nums=[]
+            for group_num in group_nums:
+                new_group_num=[]
+                for pos in group_num:
+                    new_group_num.append(pos+1)
+                new_group_nums.append(new_group_num)
+            new_group_nums_batch.append(new_group_nums)
+
         # to tensor
         ques_tensor_batch = torch.tensor(ques_batch).to(self.device)
         equ_tensor_batch = torch.tensor(equ_batch).to(self.device)
@@ -195,5 +206,5 @@ class MultiEquationDataLoader(AbstractDataLoader):
             "equ_source":equ_source_batch,
             "temp_source":temp_source_batch,
             "ques source 1":ques_source_1_batch,
-            "group nums":group_nums_batch
+            "group nums":new_group_nums_batch
         }

@@ -1,5 +1,6 @@
 import random
 import torch
+import warnings
 from torch import nn
 from torch.nn import functional as F
 
@@ -38,7 +39,7 @@ class MathEN(nn.Module):
         if self.self_attention:
             self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])
-            raise Warning("self attention encoder is not implement, replace with BasicRNNEncoder")
+            raise warnings.warn("self attention encoder is not implement, replace with BasicRNNEncoder")
         else:
             self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])

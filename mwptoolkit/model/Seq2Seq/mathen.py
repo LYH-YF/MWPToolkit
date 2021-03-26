@@ -39,7 +39,7 @@ class MathEN(nn.Module):
         if self.self_attention:
             self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])
-            raise warnings.warn("self attention encoder is not implement, replace with BasicRNNEncoder")
+            warnings.warn("self attention encoder is not implement, replace with BasicRNNEncoder")
         else:
             self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])

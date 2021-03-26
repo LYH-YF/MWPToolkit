@@ -1,4 +1,6 @@
 import copy
+import warnings
+
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
 from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514,num_transfer_hmwp
@@ -8,6 +10,8 @@ class MultiEquationDataset(AbstractDataset):
     def __init__(self, config):
         super().__init__(config)
         self.equation_fix = config["equation_fix"]
+        self.rule1 = config["rule1"]
+        self.rule2 = config["rule2"]
     
     def _preprocess(self):
         if self.dataset==DatasetName.alg514:
@@ -25,6 +29,21 @@ class MultiEquationDataset(AbstractDataset):
                                                     self.min_generate_keep,";")
         self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol,
                                                     self.min_generate_keep,";")
+
+        if self.rule1:
+            if self.linear and self.single:
+                self.en_rule1_process()
+            else:
+                warnings.warn("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
+                #raise Warning("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
+
+        if self.rule2:
+            if self.linear and self.single:
+                self.en_rule2_process()
+            else:
+                warnings.warn("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
+                #raise UserWarning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
+
 
         if self.equation_fix == FixType.Prefix:
             fix = from_infix_to_prefix

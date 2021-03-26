@@ -48,15 +48,19 @@ class TRNN(nn.Module):
         generate_num=[self.out_idx2symbol.index(SpecialTokens.UNK_TOKEN)]+[self.out_idx2symbol.index(num) for num in self.generate_list]
         generate_num=torch.tensor(generate_num).to(device)
         generate_emb=self.embedder(generate_num)
-        tree=[]
-        for temp in template:
-            tree.append(self.template2tree(temp))
+        # tree=[]
+        # for temp in template:
+        #     tree.append(self.template2tree(temp))
         batch_prob=[]
         batch_target=[]
         for b_i in range(batch_size):
             look_up = [SpecialTokens.UNK_TOKEN]+self.generate_list + NumMask.number[:len(num_pos[b_i])]
             num_embedding=torch.cat([generate_emb,encoder_output[b_i,num_pos[b_i]]],dim=0)
-            tree_i=tree[b_i]
+            #tree_i=tree[b_i]
+            try:
+                tree_i=self.template2tree(template[b_i])
+            except IndexError:
+                continue
             prob,target=self.recursivenn.forward(tree_i.root,num_embedding,look_up,self.out_idx2symbol)
             if prob != []:
                 batch_prob.append(prob)

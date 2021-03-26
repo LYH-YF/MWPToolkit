@@ -1,7 +1,7 @@
 import random
 import copy
 from mwptoolkit.utils.utils import read_json_data,write_json_data
-from mwptoolkit.utils.preprocess_tools import operator_mask,get_group_nums
+from mwptoolkit.utils.preprocess_tools import operator_mask,get_group_nums,EN_rule1_stat,EN_rule2
 
 
 class AbstractDataset(object):
@@ -19,6 +19,8 @@ class AbstractDataset(object):
         self.dataset = config["dataset"]
         self.read_local_folds = config["read_local_folds"]
         self.language=config["language"]
+        self.single = config["single"]
+        self.linear = config["linear"]
 
     def _load_dataset(self):
         '''
@@ -58,7 +60,45 @@ class AbstractDataset(object):
             self.validset[idx]["template"] = operator_mask(data["equation"])
         for idx, data in enumerate(self.testset):
             self.testset[idx]["template"] = operator_mask(data["equation"])
-
+    def en_rule1_process(self,k):
+        rule1_list=EN_rule1_stat(self.trainset,k)
+        for idx, data in enumerate(self.trainset):
+            flag=False
+            equ_list=data["equation"]
+            for equ_lists in rule1_list:
+                if equ_list in equ_lists:
+                    self.trainset[idx]["equation"] = equ_lists[0]
+                    flag=True
+                    break
+                if flag:
+                    break
+        for idx, data in enumerate(self.validset):
+            flag=False
+            equ_list=data["equation"]
+            for equ_lists in rule1_list:
+                if equ_list in equ_lists:
+                    self.validset[idx]["equation"] = equ_lists[0]
+                    flag=True
+                    break
+                if flag:
+                    break
+        for idx, data in enumerate(self.testset):
+            flag=False
+            equ_list=data["equation"]
+            for equ_lists in rule1_list:
+                if equ_list in equ_lists:
+                    self.testset[idx]["equation"] = equ_lists[0]
+                    flag=True
+                    break
+                if flag:
+                    break
+    def en_rule2_process(self):
+        for idx, data in enumerate(self.trainset):
+                self.trainset[idx]["equation"] = EN_rule2(data["equation"])
+        for idx, data in enumerate(self.validset):
+            self.validset[idx]["equation"] = EN_rule2(data["equation"])
+        for idx, data in enumerate(self.testset):
+            self.testset[idx]["equation"] = EN_rule2(data["equation"])
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation
 

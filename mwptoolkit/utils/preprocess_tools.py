@@ -1,5 +1,6 @@
 import re
 import json
+import random
 from copy import deepcopy
 from collections import OrderedDict
 from fractions import Fraction
@@ -1648,7 +1649,142 @@ def write_json_data(data, filename):
         json.dump(data, f, indent=4, ensure_ascii=False)
     f.close()
 
+def trans_symbol_2_number(equ_list,num_list):
+    symbol_list=NumMask.number
+    new_equ_list = []
+    for symbol in equ_list:
+        if 'NUM' in symbol:
+            index = symbol_list.index(symbol)
+            new_equ_list.append(str(num_list[index]))
+        else:
+            new_equ_list.append(symbol)
+    return new_equ_list
 
+def EN_rule1_stat(datas,sample_k=100):
+    rule_1 = []
+    for data in datas:
+        temp_data = data
+        equ_list=data["equation"]
+        rule_1.append(equ_list)
+    samples = random.sample(range(10, 100), k=sample_k)
+    random.shuffle(samples)
+    ans_dict = {}
+    for equ_list in rule_1:
+        new_equ = trans_symbol_2_number(equ_list, samples)
+        new_equ = ''.join(new_equ)
+        new_equ = new_equ.replace("^","**",10)
+        new_equ = new_equ.replace("[","(",10)
+        new_equ = new_equ.replace("]",")",10)
+        try:
+            ans = eval(new_equ)
+        except:
+            ans = float("inf")
+        try:
+            ans_dict[ans].append(equ_list)
+        except:
+            ans_dict[ans] = []
+            ans_dict[ans].append(equ_list)
+    class_list = []
+    for k,v in ans_dict.items():
+        class_list.append(v)
+    for i in range(50):
+        samples = random.sample(range(10, 100), k=sample_k)
+        random.shuffle(samples)
+        class_copy = deepcopy(class_list)
+        class_list = []
+        for equ_lists in class_copy:
+            ans_dict = {}
+            for equ_list in equ_lists:
+                new_equ = trans_symbol_2_number(equ_list, samples)
+                new_equ = ''.join(new_equ)
+                new_equ = new_equ.replace("^","**",10)
+                new_equ = new_equ.replace("[","(",10)
+                new_equ = new_equ.replace("]",")",10)
+                try:
+                    ans = eval(new_equ)
+                except:
+                    ans = float("inf")
+                try:
+                    ans_dict[ans].append(equ_list)
+                except:
+                    ans_dict[ans] = []
+                    ans_dict[ans].append(equ_list)
+            for k,v in ans_dict.items():
+                class_list.append(v)
+    class_copy = deepcopy(class_list)
+    class_list = []
+    for equ_lists in class_copy:
+        class_list_temp = []
+        for equ_list in equ_lists:
+            if equ_list not in class_list_temp:
+                class_list_temp.append(equ_list)
+            class_list_temp = sorted(class_list_temp, key=lambda x: len(x), reverse=False)
+        class_list.append(class_list_temp)
+    return class_list
+def EN_rule2(equ_list):
+    new_list=[]
+    i=0
+    while i<len(equ_list):
+        if (i + 4) < len(equ_list) and 'NUM' in equ_list[i] and '+' in equ_list[i + 1] and 'NUM' in equ_list[i + 2] and '+' in equ_list[i + 3] and 'NUM' in equ_list[i + 4]:
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 5 < len(equ_list) and equ_list[i + 5] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue  
+            temp = [equ_list[i], equ_list[i + 2], equ_list[i + 4]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1] + ['+'] + sort_temp[1:2] + ['+'] + sort_temp[2:3]
+            new_list += new_temp
+            i += 5
+        elif (i+4)<len(equ_list) and 'NUM' in equ_list[i] and '*' in equ_list[i+1] and 'NUM' in equ_list[i+2] and '*' in equ_list[i+3] and 'NUM' in equ_list[i+4]:
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 5 < len(equ_list) and equ_list[i + 5] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue  
+            temp = [equ_list[i], equ_list[i+2], equ_list[i+4]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1]+['*']+sort_temp[1:2]+['*']+sort_temp[2:3]
+            new_list += new_temp
+            i += 5
+        elif (i + 2) < len(equ_list) and 'NUM' in equ_list[i] and '+' in equ_list[i + 1] and 'NUM' in equ_list[i + 2]:
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 3 < len(equ_list) and equ_list[i + 3] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue  
+            temp = [equ_list[i], equ_list[i+2]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1]+['+']+sort_temp[1:2]
+            new_list += new_temp
+            i += 3
+        elif (i + 2) < len(equ_list) and 'NUM' in equ_list[i] and '*' in equ_list[i + 1] and 'NUM' in equ_list[i + 2]:
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 3 < len(equ_list) and equ_list[i + 3] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue  
+            temp = [equ_list[i], equ_list[i+2]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1]+['*']+sort_temp[1:2]
+            new_list += new_temp
+            i += 3
+        else:
+            new_list.append(equ_list[i])
+            i += 1
+    return new_list
 def get_group_nums(datas, language):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
     new_datas = []

@@ -1488,23 +1488,23 @@ class TRNNTrainer(AbstractTrainer):
         val_acc = []
         template,equation = self.model(batch["question"], batch["ques len"],batch["num pos"])
         if self.config["share_vocab"]:
-            temp_target = self._temp_idx2word_2idx(batch["template"])
+            #temp_target = self._temp_idx2word_2idx(batch["template"])
             equ_target = self._equ_idx2word_2idx(batch["equation"])
         else:
-            temp_target = batch["template"]
+            #temp_target = batch["template"]
             equ_target = batch["equation"]
-        batch_size = temp_target.size(0)
+        batch_size = equ_target.size(0)
         for idx in range(batch_size):
-            test=self._idx2symbol(template[idx])
-            tar=self._idx2symbol(temp_target[idx])
-            if test==tar:
-                equ_ac=True
-            else:
-                equ_ac=False
+            # test=self._idx2symbol(template[idx])
+            # tar=self._idx2symbol(temp_target[idx])
+            # if test==tar:
+            #     equ_ac=True
+            # else:
+            #     equ_ac=False
             if self.config["task_type"]==TaskType.SingleEquation:
-                val_ac, _, _, _ = self.evaluator.result(equation[idx], equ_target[idx], batch["num list"][idx], batch["num stack"][idx])
+                val_ac, equ_ac, _, _ = self.evaluator.result(equation[idx], equ_target[idx], batch["num list"][idx], batch["num stack"][idx])
             elif self.config["task_type"]==TaskType.MultiEquation:
-                val_ac, _, _, _ = self.evaluator.result_multi(equation[idx], equ_target[idx], batch["num list"][idx], batch["num stack"][idx])
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(equation[idx], equ_target[idx], batch["num list"][idx], batch["num stack"][idx])
             else:
                 raise NotImplementedError
             val_acc.append(val_ac)

@@ -346,7 +346,7 @@ def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the n
     if pos_st:
         p_start = pos_st.start() + 2
         p_end = pos_st.end()
-        num_str=''.join(st[p_start:p_end].split(" "))
+        num_str = ''.join(st[p_start:p_end].split(" "))
         if p_start > 0:
             res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
         try:
@@ -782,7 +782,7 @@ def number_transfer_ape200k(data, mask_type="NUM", min_generate_keep=0):
             except:
                 continue
         assert len(num_list) == len(num_pos)
-        
+
         source = deepcopy(input_seq)
         for i, j in enumerate(input_seq):
             if "NUM" in j:
@@ -1370,7 +1370,7 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
         # if d["id"]==34492:
         #     print(1)
-        out_seq=[]
+        out_seq = []
         pos_st = re.search(r"^-((\d+\.?\d*))", equations)  #search negative number starting
         if pos_st:
             p_start = pos_st.start()
@@ -1407,7 +1407,7 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
-            if re.match(r"^-((\d+\.?\d*))",s) and s not in generate_nums and s not in num_list:
+            if re.match(r"^-((\d+\.?\d*))", s) and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:
@@ -1429,7 +1429,7 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
                     unk_symbol.append(symbol)
         source = deepcopy(input_seq)
         for i, j in enumerate(input_seq):
-            if "NUM" in j and j not in ["NUMBERS","NUMBER"]:
+            if "NUM" in j and j not in ["NUMBERS", "NUMBER"]:
                 num_idx = equ_mask_list.index(j)
                 num_str = num_list[num_idx]
                 if '%' in num_str:
@@ -1641,6 +1641,7 @@ def num_transfer_hmwp(data, mask_type="number", min_generate_keep=0, equ_split_s
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums, unk_symbol
 
+
 def write_json_data(data, filename):
     """
     write data to a json file
@@ -1649,8 +1650,9 @@ def write_json_data(data, filename):
         json.dump(data, f, indent=4, ensure_ascii=False)
     f.close()
 
-def trans_symbol_2_number(equ_list,num_list):
-    symbol_list=NumMask.number
+
+def trans_symbol_2_number(equ_list, num_list):
+    symbol_list = NumMask.number
     new_equ_list = []
     for symbol in equ_list:
         if 'NUM' in symbol:
@@ -1660,11 +1662,12 @@ def trans_symbol_2_number(equ_list,num_list):
             new_equ_list.append(symbol)
     return new_equ_list
 
-def EN_rule1_stat(datas,sample_k=100):
+
+def EN_rule1_stat(datas, sample_k=100):
     rule_1 = []
     for data in datas:
         temp_data = data
-        equ_list=data["equation"]
+        equ_list = data["equation"]
         rule_1.append(equ_list)
     samples = random.sample(range(10, 100), k=sample_k)
     random.shuffle(samples)
@@ -1672,9 +1675,9 @@ def EN_rule1_stat(datas,sample_k=100):
     for equ_list in rule_1:
         new_equ = trans_symbol_2_number(equ_list, samples)
         new_equ = ''.join(new_equ)
-        new_equ = new_equ.replace("^","**",10)
-        new_equ = new_equ.replace("[","(",10)
-        new_equ = new_equ.replace("]",")",10)
+        new_equ = new_equ.replace("^", "**", 10)
+        new_equ = new_equ.replace("[", "(", 10)
+        new_equ = new_equ.replace("]", ")", 10)
         try:
             ans = eval(new_equ)
         except:
@@ -1685,7 +1688,7 @@ def EN_rule1_stat(datas,sample_k=100):
             ans_dict[ans] = []
             ans_dict[ans].append(equ_list)
     class_list = []
-    for k,v in ans_dict.items():
+    for k, v in ans_dict.items():
         class_list.append(v)
     for i in range(50):
         samples = random.sample(range(10, 100), k=sample_k)
@@ -1697,9 +1700,9 @@ def EN_rule1_stat(datas,sample_k=100):
             for equ_list in equ_lists:
                 new_equ = trans_symbol_2_number(equ_list, samples)
                 new_equ = ''.join(new_equ)
-                new_equ = new_equ.replace("^","**",10)
-                new_equ = new_equ.replace("[","(",10)
-                new_equ = new_equ.replace("]",")",10)
+                new_equ = new_equ.replace("^", "**", 10)
+                new_equ = new_equ.replace("[", "(", 10)
+                new_equ = new_equ.replace("]", ")", 10)
                 try:
                     ans = eval(new_equ)
                 except:
@@ -1709,7 +1712,7 @@ def EN_rule1_stat(datas,sample_k=100):
                 except:
                     ans_dict[ans] = []
                     ans_dict[ans].append(equ_list)
-            for k,v in ans_dict.items():
+            for k, v in ans_dict.items():
                 class_list.append(v)
     class_copy = deepcopy(class_list)
     class_list = []
@@ -1721,11 +1724,13 @@ def EN_rule1_stat(datas,sample_k=100):
             class_list_temp = sorted(class_list_temp, key=lambda x: len(x), reverse=False)
         class_list.append(class_list_temp)
     return class_list
+
+
 def EN_rule2(equ_list):
-    new_list=[]
-    i=0
-    while i<len(equ_list):
-        if (i + 4) < len(equ_list) and 'NUM' in equ_list[i] and '+' in equ_list[i + 1] and 'NUM' in equ_list[i + 2] and '+' in equ_list[i + 3] and 'NUM' in equ_list[i + 4]:
+    new_list = []
+    i = 0
+    while i < len(equ_list):
+        if (i + 4) < len(equ_list) and 'NUM' in equ_list[i] or equ_list[i].isalpha() and '+' in equ_list[i + 1] and 'NUM' in equ_list[i + 2] and '+' in equ_list[i + 3] and 'NUM' in equ_list[i + 4]:
             if i - 1 >= 0 and equ_list[i - 1] in ['/', '-', '*']:
                 new_list.append(equ_list[i])
                 i += 1
@@ -1733,13 +1738,13 @@ def EN_rule2(equ_list):
             if i + 5 < len(equ_list) and equ_list[i + 5] in ['/', '-', '*']:
                 new_list.append(equ_list[i])
                 i += 1
-                continue  
+                continue
             temp = [equ_list[i], equ_list[i + 2], equ_list[i + 4]]
             sort_temp = sorted(temp)
             new_temp = sort_temp[0:1] + ['+'] + sort_temp[1:2] + ['+'] + sort_temp[2:3]
             new_list += new_temp
             i += 5
-        elif (i+4)<len(equ_list) and 'NUM' in equ_list[i] and '*' in equ_list[i+1] and 'NUM' in equ_list[i+2] and '*' in equ_list[i+3] and 'NUM' in equ_list[i+4]:
+        elif (i + 4) < len(equ_list) and 'NUM' in equ_list[i] and '*' in equ_list[i + 1] and 'NUM' in equ_list[i + 2] and '*' in equ_list[i + 3] and 'NUM' in equ_list[i + 4]:
             if i - 1 >= 0 and equ_list[i - 1] in ['/', '-']:
                 new_list.append(equ_list[i])
                 i += 1
@@ -1747,10 +1752,10 @@ def EN_rule2(equ_list):
             if i + 5 < len(equ_list) and equ_list[i + 5] in ['/', '-']:
                 new_list.append(equ_list[i])
                 i += 1
-                continue  
-            temp = [equ_list[i], equ_list[i+2], equ_list[i+4]]
+                continue
+            temp = [equ_list[i], equ_list[i + 2], equ_list[i + 4]]
             sort_temp = sorted(temp)
-            new_temp = sort_temp[0:1]+['*']+sort_temp[1:2]+['*']+sort_temp[2:3]
+            new_temp = sort_temp[0:1] + ['*'] + sort_temp[1:2] + ['*'] + sort_temp[2:3]
             new_list += new_temp
             i += 5
         elif (i + 2) < len(equ_list) and 'NUM' in equ_list[i] and '+' in equ_list[i + 1] and 'NUM' in equ_list[i + 2]:
@@ -1761,10 +1766,10 @@ def EN_rule2(equ_list):
             if i + 3 < len(equ_list) and equ_list[i + 3] in ['/', '-', '*']:
                 new_list.append(equ_list[i])
                 i += 1
-                continue  
-            temp = [equ_list[i], equ_list[i+2]]
+                continue
+            temp = [equ_list[i], equ_list[i + 2]]
             sort_temp = sorted(temp)
-            new_temp = sort_temp[0:1]+['+']+sort_temp[1:2]
+            new_temp = sort_temp[0:1] + ['+'] + sort_temp[1:2]
             new_list += new_temp
             i += 3
         elif (i + 2) < len(equ_list) and 'NUM' in equ_list[i] and '*' in equ_list[i + 1] and 'NUM' in equ_list[i + 2]:
@@ -1775,16 +1780,86 @@ def EN_rule2(equ_list):
             if i + 3 < len(equ_list) and equ_list[i + 3] in ['/', '-']:
                 new_list.append(equ_list[i])
                 i += 1
-                continue  
-            temp = [equ_list[i], equ_list[i+2]]
+                continue
+            temp = [equ_list[i], equ_list[i + 2]]
             sort_temp = sorted(temp)
-            new_temp = sort_temp[0:1]+['*']+sort_temp[1:2]
+            new_temp = sort_temp[0:1] + ['*'] + sort_temp[1:2]
             new_list += new_temp
             i += 3
         else:
             new_list.append(equ_list[i])
             i += 1
     return new_list
+
+
+def EN_rule2_(equ_list):
+    new_list = []
+    i = 0
+    while i < len(equ_list):
+        if (i + 4) < len(equ_list) and ('NUM' in equ_list[i] or equ_list[i].isalpha()) and '+' in equ_list[i + 1] and (
+                'NUM' in equ_list[i + 2] or equ_list[i + 2].isalpha()) and '+' in equ_list[i + 3] and ('NUM' in equ_list[i + 4] or equ_list[i + 4].isalpha()):
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 5 < len(equ_list) and equ_list[i + 5] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            temp = [equ_list[i], equ_list[i + 2], equ_list[i + 4]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1] + ['+'] + sort_temp[1:2] + ['+'] + sort_temp[2:3]
+            new_list += new_temp
+            i += 5
+        elif (i + 4) < len(equ_list) and ('NUM' in equ_list[i] or equ_list[i].isalpha()) and '*' in equ_list[i + 1] and (
+                'NUM' in equ_list[i + 2] or equ_list[i + 2].isalpha()) and '*' in equ_list[i + 3] and ('NUM' in equ_list[i + 4] or equ_list[i + 4].isalpha()):
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 5 < len(equ_list) and equ_list[i + 5] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            temp = [equ_list[i], equ_list[i + 2], equ_list[i + 4]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1] + ['*'] + sort_temp[1:2] + ['*'] + sort_temp[2:3]
+            new_list += new_temp
+            i += 5
+        elif (i + 2) < len(equ_list) and ('NUM' in equ_list[i] or equ_list[i].isalpha()) and '+' in equ_list[i + 1] and ('NUM' in equ_list[i + 2] or equ_list[i + 2].isalpha()):
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 3 < len(equ_list) and equ_list[i + 3] in ['/', '-', '*']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            temp = [equ_list[i], equ_list[i + 2]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1] + ['+'] + sort_temp[1:2]
+            new_list += new_temp
+            i += 3
+        elif (i + 2) < len(equ_list) and ('NUM' in equ_list[i] or equ_list[i].isalpha()) and '*' in equ_list[i + 1] and ('NUM' in equ_list[i + 2] or equ_list[i + 2].isalpha()):
+            if i - 1 >= 0 and equ_list[i - 1] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            if i + 3 < len(equ_list) and equ_list[i + 3] in ['/', '-']:
+                new_list.append(equ_list[i])
+                i += 1
+                continue
+            temp = [equ_list[i], equ_list[i + 2]]
+            sort_temp = sorted(temp)
+            new_temp = sort_temp[0:1] + ['*'] + sort_temp[1:2]
+            new_list += new_temp
+            i += 3
+        else:
+            new_list.append(equ_list[i])
+            i += 1
+    return new_list
+
+
 def get_group_nums(datas, language):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
     new_datas = []

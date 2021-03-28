@@ -4,7 +4,8 @@ from torch import nn
 
 from mwptoolkit.module.Layer.tree_layers import Node,BinaryTree
 from mwptoolkit.module.Layer.tree_layers import RecursiveNN
-from mwptoolkit.module.Encoder.rnn_encoder import SelfAttentionRNNEncoder
+from mwptoolkit.module.Encoder.rnn_encoder import SelfAttentionRNNEncoder,BasicRNNEncoder
+from mwptoolkit.module.Attention.seq_attention import SeqAttention
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.model.Seq2Seq.rnnencdec import RNNEncDec
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
@@ -16,13 +17,18 @@ class TRNN(nn.Module):
         self.generate_list=config["generate_list"]
         self.temp_idx2symbol=config["temp_idx2symbol"]
         self.out_idx2symbol=config["out_idx2symbol"]
+        self.bidirectional=config["bidirectional"]
+        self.hidden_size=config["hidden_size"]
         temp_config["out_idx2symbol"]=temp_config["temp_idx2symbol"]
         temp_config["out_symbol2idx"]=temp_config["temp_symbol2idx"]
         temp_config["symbol_size"]=temp_config["temp_symbol_size"]
         self.seq2seq = RNNEncDec(temp_config)
         self.embedder=BaiscEmbedder(temp_config["vocab_size"],temp_config["embedding_size"],temp_config["dropout_ratio"])
-        self.attn_encoder=SelfAttentionRNNEncoder(temp_config["embedding_size"],temp_config["hidden_size"],temp_config["num_layers"],\
+        self.attn_encoder=SelfAttentionRNNEncoder(temp_config["embedding_size"],temp_config["hidden_size"],temp_config["embedding_size"],temp_config["num_layers"],\
                                                     temp_config["rnn_cell_type"],temp_config["dropout_ratio"],temp_config["bidirectional"])
+        # self.encoder=BasicRNNEncoder(temp_config["embedding_size"],temp_config["hidden_size"],temp_config["num_layers"],\
+        #                                             temp_config["rnn_cell_type"],temp_config["dropout_ratio"],temp_config["bidirectional"])
+        self.self_attn=SeqAttention(temp_config["hidden_size"],temp_config["embedding_size"])
         self.recursivenn=RecursiveNN(temp_config["embedding_size"],temp_config["operator_nums"],temp_config["operator_list"])
     
     def forward(self,seq,seq_length,num_pos,target=None):
@@ -71,6 +77,7 @@ class TRNN(nn.Module):
         device=seq.device
         seq_emb=self.embedder(seq)
         encoder_output,encoder_hidden=self.attn_encoder(seq_emb,seq_length)
+        
         batch_size=encoder_output.size(0)
         generate_num=[self.out_idx2symbol.index(SpecialTokens.UNK_TOKEN)]+[self.out_idx2symbol.index(num) for num in self.generate_list]
         generate_num=torch.tensor(generate_num).to(device)

@@ -1,7 +1,7 @@
 import random
 import copy
 from mwptoolkit.utils.utils import read_json_data,write_json_data
-from mwptoolkit.utils.preprocess_tools import operator_mask,get_group_nums,EN_rule1_stat,EN_rule2
+from mwptoolkit.utils.preprocess_tools import operator_mask,get_group_nums,EN_rule1_stat,EN_rule2_
 
 
 class AbstractDataset(object):
@@ -94,11 +94,11 @@ class AbstractDataset(object):
                     break
     def en_rule2_process(self):
         for idx, data in enumerate(self.trainset):
-                self.trainset[idx]["equation"] = EN_rule2(data["equation"])
+                self.trainset[idx]["equation"] = EN_rule2_(data["equation"])
         for idx, data in enumerate(self.validset):
-            self.validset[idx]["equation"] = EN_rule2(data["equation"])
+            self.validset[idx]["equation"] = EN_rule2_(data["equation"])
         for idx, data in enumerate(self.testset):
-            self.testset[idx]["equation"] = EN_rule2(data["equation"])
+            self.testset[idx]["equation"] = EN_rule2_(data["equation"])
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation
 

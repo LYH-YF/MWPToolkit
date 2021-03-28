@@ -86,6 +86,7 @@ class SelfAttentionRNNEncoder(nn.Module):
     def __init__(self,
                  embedding_size,
                  hidden_size,
+                 context_size,
                  num_layers,
                  rnn_cell_type,
                  dropout_ratio,
@@ -110,7 +111,7 @@ class SelfAttentionRNNEncoder(nn.Module):
         else:
             raise ValueError("The RNN type of encoder must be in ['lstm', 'gru', 'rnn'].")
 
-        self.attention=SeqAttention(hidden_size,embedding_size)
+        self.attention=SeqAttention(hidden_size,context_size)
 
     def init_hidden(self, input_embeddings):
         r""" Initialize initial hidden states of RNN.
@@ -157,6 +158,13 @@ class SelfAttentionRNNEncoder(nn.Module):
 
         outputs, outputs_length = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
 
-        outputs, atte = self.attention.forward(outputs,outputs,mask=None)
+        if self.bidirectional:
+            encoder_outputs = outputs[:, :, self.hidden_size:] + outputs[:, :, :self.hidden_size]
+            if (self.rnn_cell_type == 'lstm'):
+                encoder_hidden = (hidden_states[0][::2].contiguous(), hidden_states[1][::2].contiguous())
+            else:
+                encoder_hidden = hidden_states[::2].contiguous()
+
+        outputs, attn = self.attention.forward(encoder_outputs,encoder_outputs,mask=None)
 
         return outputs, hidden_states

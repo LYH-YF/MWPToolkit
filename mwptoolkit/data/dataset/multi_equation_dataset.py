@@ -38,11 +38,12 @@ class MultiEquationDataset(AbstractDataset):
                 #raise Warning("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
 
         if self.rule2:
-            if self.linear and self.single:
-                self.en_rule2_process()
-            else:
-                warnings.warn("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
-                #raise UserWarning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
+            self.en_rule2_process()
+            # if self.linear and self.single:
+            #     self.en_rule2_process()
+            # else:
+            #     warnings.warn("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
+            #     #raise UserWarning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
 
 
         if self.equation_fix == FixType.Prefix:

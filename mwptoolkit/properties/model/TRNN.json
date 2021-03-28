@@ -16,6 +16,8 @@
     "share_vocab":false,
     "mask_symbol":"number",
     "attention":false,
-    "symbol_for_tree":false
+    "symbol_for_tree":false,
+    "rule1":true,
+    "rule2":true
 
 }

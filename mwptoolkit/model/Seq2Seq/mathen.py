@@ -37,9 +37,11 @@ class MathEN(nn.Module):
             self.out_embedder=BaiscEmbedder(config["symbol_size"],config["embedding_size"],config["dropout_ratio"])
         
         if self.self_attention:
-            self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
+            self.encoder=SelfAttentionRNNEncoder(config["embedding_size"],config["hidden_size"],config["hidden_size"],config["num_layers"],\
                                         config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])
-            warnings.warn("self attention encoder is not implement, replace with BasicRNNEncoder")
+            # self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
+            #                             config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])
+            # warnings.warn("self attention encoder is not implement, replace with BasicRNNEncoder")
         else:
             self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["encoder_rnn_cell_type"],config["dropout_ratio"],config["bidirectional"])
@@ -60,13 +62,19 @@ class MathEN(nn.Module):
 
         seq_emb=self.in_embedder(seq)
         encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
-
+        
+        if self.self_attention:
+            pass
+        else:
+            if self.bidirectional:
+                encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+        
         if self.bidirectional:
-            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
             if (self.encoder_rnn_cell_type == 'lstm'):
                 encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:
                 encoder_hidden = encoder_hidden[::2].contiguous()
+        
         if self.encoder.rnn_cell_type == self.decoder.rnn_cell_type:
             pass
         elif (self.encoder.rnn_cell_type == 'gru') and (self.decoder.rnn_cell_type == 'lstm'):

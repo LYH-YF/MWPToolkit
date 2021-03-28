@@ -253,14 +253,14 @@ class Graph2Tree(nn.Module):
                     graph_attbet[pos,n_pos]=1
             for idx_i in range(len(num_pos[b_i])):
                 for idx_j in range(len(num_pos[b_i])):
-                    try:
-                        num_i=eval(num_list[b_i][idx_i])
-                    except:# % in num
+                    if '%' in num_list[b_i][idx_i]:
                         num_i=eval(num_list[b_i][idx_i][:-1]+'/100')
-                    try:
-                        num_j=eval(num_list[b_i][idx_j])
-                    except:
+                    else:
+                        num_i=float(num_list[b_i][idx_i])
+                    if '%' in num_list[b_i][idx_i]:
                         num_j=eval(num_list[b_i][idx_j][:-1]+'/100')
+                    else:
+                        num_j=float(num_list[b_i][idx_j])
                     if num_i > num_j:
                         graph_greater[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
                         graph_lower[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]]=1

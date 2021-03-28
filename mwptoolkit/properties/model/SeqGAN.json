@@ -21,7 +21,5 @@
     "max_equ_len":30,
     
     "////":"train parameters",
-    "train_batch_size":64,
-    "test_batch_size":64,
     "epoch_nums":100
 }

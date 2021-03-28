@@ -9,8 +9,6 @@
     "decoder_rnn_cell_type":"lstm",
     "dropout_ratio":0.5,
     "teacher_force_ratio":0.9,
-    "train_batch_size":32,
-    "test_batch_size":32,
     "epoch_nums":100,
     "bidirectional":true,
     "share_vocab":false,

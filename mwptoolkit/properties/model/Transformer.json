@@ -15,8 +15,6 @@
     "share_vocab":true,
     "symbol_for_tree":false,
     "max_len":128,
-    "train_batch_size":64,
-    "test_batch_size":64,
     "epoch_nums":200,
     "teacher_force_ratio":1.0
 }

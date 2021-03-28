@@ -6,7 +6,6 @@
     "max_len":256,
     "warmup_steps": 1500,
     "share_vocab":true,
-    "train_batch_size":4,
     "test_batch_size":1,
     "epoch_nums":80
 }

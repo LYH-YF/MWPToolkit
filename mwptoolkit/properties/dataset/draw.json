@@ -6,5 +6,7 @@
     "max_output_len":50,
     "single":false,
     "linear":true,
-    "language":"en"
+    "language":"en",
+    "train_batch_size":32,
+    "test_batch_size":32
 }

@@ -257,7 +257,7 @@ class Graph2Tree(nn.Module):
                         num_i=eval(num_list[b_i][idx_i][:-1]+'/100')
                     else:
                         num_i=float(num_list[b_i][idx_i])
-                    if '%' in num_list[b_i][idx_i]:
+                    if '%' in num_list[b_i][idx_j]:
                         num_j=eval(num_list[b_i][idx_j][:-1]+'/100')
                     else:
                         num_j=float(num_list[b_i][idx_j])

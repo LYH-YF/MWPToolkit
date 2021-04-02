@@ -241,7 +241,6 @@ class GTS(nn.Module):
         return all_num.masked_fill_(masked_index, 0.0)
     
     def generate_tree_input(self,target, decoder_output, nums_stack_batch, num_start, unk):
-        # when the decoder input is copied num but the num has two pos, chose the max
         target_input = copy.deepcopy(target)
         for i in range(len(target)):
             if target[i] == unk:

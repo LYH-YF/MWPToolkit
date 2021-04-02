@@ -94,7 +94,7 @@ class AbstractDataset(object):
                     break
     def en_rule2_process(self):
         for idx, data in enumerate(self.trainset):
-                self.trainset[idx]["equation"] = EN_rule2_(data["equation"])
+            self.trainset[idx]["equation"] = EN_rule2_(data["equation"])
         for idx, data in enumerate(self.validset):
             self.validset[idx]["equation"] = EN_rule2_(data["equation"])
         for idx, data in enumerate(self.testset):

@@ -1144,7 +1144,7 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
     max_equ__len = {}
     unk_symbol = []
     for d in data:
-        # if d["id"]==2022:
+        # if d["id"]==6958:
         #     print(1)
         sent_idx = 0
         equ_idx = 0
@@ -1926,6 +1926,18 @@ def get_group_nums(datas, language):
         # write_json_data(json_data,path)
     return new_datas
 
+def get_deprel_tree(datas,language):
+    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
+    new_datas = []
+    for idx, data in enumerate(datas):
+        group_nums = []
+        doc = nlp(data["ques source 1"])
+        token_list = doc.to_dict()[0]
+        for idx,x in enumerate(token_list):
+            group_nums.append([x['head']-1,idx])
+        data["group nums"] = group_nums
+        new_datas.append(data)
+    return new_datas
 
 def operator_mask(expression):
     template = []

@@ -1,6 +1,7 @@
 import torch
 import time
 from logging import getLogger
+from torch import nn
 from mwptoolkit.utils.utils import time_since
 from mwptoolkit.utils.enum_type import PAD_TOKEN, DatasetType,TaskType,SpecialTokens
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
@@ -47,7 +48,8 @@ class AbstractTrainer(object):
             state_dict = torch.load(path, map_location=self.config["map_location"])
         else:
             state_dict = torch.load(self.config["trained_model_path"], map_location=self.config["map_location"])
-        self.model.load_state_dict(state_dict["model"])
+        #self.model = nn.DataParallel(self.model)
+        self.model.load_state_dict(state_dict["model"],False)
 
     def _build_optimizer(self):
         raise NotImplementedError

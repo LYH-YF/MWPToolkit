@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 from mwptoolkit.utils.enum_type import SpecialTokens
 
@@ -24,7 +25,48 @@ class TreeEmbedding:  # the class save the tree
     def __init__(self, embedding, terminal=False):
         self.embedding = embedding
         self.terminal = terminal
-
+class Tree():
+    def __init__(self):
+        self.parent = None
+        self.num_children = 0
+        self.children = []
+    
+    def __str__(self, level = 0):
+        ret = ""
+        for child in self.children:
+            if isinstance(child,type(self)):
+                ret += child.__str__(level+1)
+            else:
+                ret += "\t"*level + str(child) + "\n"
+        return ret
+    
+    def add_child(self,c):
+        if isinstance(c,type(self)):
+            c.parent = self
+        self.children.append(c)
+        self.num_children = self.num_children + 1
+    
+    def to_string(self):
+        r_list = []
+        for i in range(self.num_children):
+            if isinstance(self.children[i], Tree):
+                r_list.append("( " + self.children[i].to_string() + " )")
+            else:
+                r_list.append(str(self.children[i]))
+        return "".join(r_list)
+    
+    def to_list(self, form_manager):
+        r_list = []
+        for i in range(self.num_children):
+            if isinstance(self.children[i], type(self)):
+                r_list.append(form_manager.get_symbol_idx("("))
+                cl = self.children[i].to_list(form_manager)
+                for k in range(len(cl)):
+                    r_list.append(cl[k])
+                r_list.append(form_manager.get_symbol_idx(")"))
+            else:
+                r_list.append(self.children[i])
+        return r_list
 class BinaryTree():
     def __init__(self,root_node=None):
         self.root = root_node
@@ -245,3 +287,29 @@ class RecursiveNN(nn.Module):
         #op=self.softmax(self.generate_linear(node_embedding))
         op=self.generate_linear(node_embedding)
         return node_embedding,op
+
+class Dec_LSTM(nn.Module):
+    def __init__(self,embedding_size,hidden_size,dropout_ratio):
+        super(Dec_LSTM, self).__init__()
+        #self.opt = opt
+        self.embedding_size = embedding_size
+        self.hidden_size = hidden_size
+        self.dropout_ratio=dropout_ratio
+        
+        self.i2h = nn.Linear(self.embedding_size+2*self.hidden_size, 4*self.hidden_size)
+        self.h2h = nn.Linear(self.hidden_size, 4*self.hidden_size)
+
+        self.dropout = nn.Dropout(self.dropout_ratio)
+
+    def forward(self, x, prev_c, prev_h, parent_h, sibling_state):
+        input_cat = torch.cat((x, parent_h, sibling_state),1)
+        gates = self.i2h(input_cat) + self.h2h(prev_h)
+        ingate, forgetgate, cellgate, outgate = gates.chunk(4,1)
+        ingate = F.sigmoid(ingate)
+        forgetgate = F.sigmoid(forgetgate)
+        cellgate = F.tanh(cellgate)
+        outgate = F.sigmoid(outgate)
+        cellgate = self.dropout(cellgate)
+        cy = (forgetgate * prev_c) + (ingate * cellgate)
+        hy = outgate * F.tanh(cy)
+        return cy, hy

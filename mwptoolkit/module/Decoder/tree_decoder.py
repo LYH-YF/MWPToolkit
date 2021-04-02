@@ -2,7 +2,8 @@ import torch
 from torch import nn
 
 from mwptoolkit.module.Attention.tree_attention import TreeAttention
-from mwptoolkit.module.Layer.tree_layers import Score
+from mwptoolkit.module.Layer.tree_layers import Score,Dec_LSTM
+from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 
 class TreeDecoder(nn.Module):
     r'''
@@ -88,3 +89,20 @@ class TreeDecoder(nn.Module):
         # return p_leaf, num_score, op, current_embeddings, current_attn
 
         return num_score, op, current_node, current_context, embedding_weight
+
+
+class RNNBasedTreeDecoder(nn.Module):
+    def __init__(self, input_size,embedding_size,hidden_size,dropout_ratio):
+        super(RNNBasedTreeDecoder, self).__init__()
+        #self.opt = opt
+        self.hidden_size = hidden_size
+        self.embedding_size = embedding_size
+        self.embedding = BaiscEmbedder(input_size, embedding_size,dropout_ratio, padding_idx=0)
+
+        self.lstm = Dec_LSTM(embedding_size,hidden_size,dropout_ratio)
+
+    def forward(self, input_src, prev_c, prev_h, parent_h, sibling_state):
+
+        src_emb = self.embedding(input_src)
+        prev_cy, prev_hy = self.lstm(src_emb, prev_c, prev_h, parent_h, sibling_state)
+        return prev_cy, prev_hy

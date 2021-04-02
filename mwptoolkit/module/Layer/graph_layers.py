@@ -27,6 +27,26 @@ class PositionwiseFeedForward(nn.Module):
     def forward(self, x):
         return self.w_2(self.dropout(F.relu(self.w_1(x))))
 
+class MeanAggregator(nn.Module):
+    def __init__(self, input_dim, output_dim, activation = F.relu, concat = False):
+        super(MeanAggregator, self).__init__()
+        
+        self.concat = concat
+        self.fc_x = nn.Linear(input_dim, output_dim, bias=True)
+        self.activation = activation
+
+    def forward(self, inputs):
+        x, neibs, _ = inputs
+        agg_neib = neibs.mean(dim=1)
+        if self.concat:
+            out_tmp = torch.cat([x, agg_neib],dim=1)
+            out = self.fc_x(out_tmp)
+        else:
+            out = self.fc_x(x) + self.fc_neib(agg_neib)
+        if self.activation:
+            out = self.activation(out)
+        return out
+    
 
 
 # Graph_Conv

@@ -1696,3 +1696,164 @@ class Graph2TreeTrainer(GTSTrainer):
         else:
             raise NotImplementedError
         return [val_ac], [equ_ac]
+
+class Graph2TreeIBMTrainer(AbstractTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+        self._build_optimizer()
+        if config["resume"]:
+            self._load_checkpoint()
+        self._build_loss(config["symbol_size"])
+        self.dataloader.dataset.build_deprel_tree()
+
+    
+    def _build_loss(self, symbol_size):
+        weight = torch.ones(symbol_size).to(self.config["device"])
+        #pad = out_pad_token
+        self.loss = NLLLoss(weight)
+    
+    def _build_optimizer(self):
+        self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(),  lr=self.config["learning_rate"], weight_decay=1e-5)
+        self.decoder_optimizer = torch.optim.Adam(self.model.decoder.parameters(),  lr=self.config["learning_rate"])
+        self.attention_optimizer = torch.optim.Adam(self.model.attention.parameters(),  lr=self.config["learning_rate"])
+        
+    def _optimizer_step(self):
+        self.encoder_optimizer.step()
+        self.decoder_optimizer.step()
+        self.attention_optimizer.step()
+
+    def _model_zero_grad(self):
+        self.model.encoder.zero_grad()
+        self.model.decoder.zero_grad()
+        self.model.attention.zero_grad()
+
+    def _model_train(self):
+        self.model.encoder.train()
+        self.model.decoder.train()
+        self.model.attention.train()
+
+    def _model_eval(self):
+        self.model.encoder.eval()
+        self.model.decoder.eval()
+        self.model.attention.eval()
+
+    def _train_batch(self, batch):
+        outputs,target=self.model(batch["question"],batch["ques len"],batch["group nums"],batch["equation"])
+        self.loss.eval_batch(outputs, target)
+        batch_loss = self.loss.get_loss()
+        return batch_loss
+
+    def _eval_batch(self, batch):
+        '''seq, seq_length, group_nums, target'''
+        test_out=self.model(batch["question"],batch["ques len"],batch["group nums"])
+        val_acc = []
+        equ_acc = []
+        batch_size = len(batch["equation"])
+        for idx in range(batch_size):
+            if self.config["task_type"]==TaskType.SingleEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], batch["equation"][idx], batch["num list"][idx], batch["num stack"][idx])
+            elif self.config["task_type"]==TaskType.MultiEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], batch["equation"][idx], batch["num list"][idx], batch["num stack"][idx])
+            else:
+                raise NotImplementedError
+            val_acc.append(val_ac)
+            equ_acc.append(equ_ac)
+        return val_acc, equ_acc
+    
+    def _train_epoch(self):
+        epoch_start_time = time.time()
+        loss_total = 0.
+        self._model_train()
+        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+            self.batch_idx = batch_idx + 1
+            self._model_zero_grad()
+            
+            batch_loss = self._train_batch(batch)
+            loss_total += batch_loss
+            self.loss.backward()
+            self._optimizer_step()
+            self.loss.reset()
+        epoch_time_cost = time_since(time.time() - epoch_start_time)
+        return loss_total, epoch_time_cost
+    
+    def fit(self):
+        train_batch_size = self.config["train_batch_size"]
+        epoch_nums = self.config["epoch_nums"]
+        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        
+        self.logger.info("start training...")
+        for epo in range(self.start_epoch, epoch_nums):
+            self.epoch_i = epo + 1
+            self.model.train()
+            loss_total, train_time_cost = self._train_epoch()
+
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
+                                %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+
+                    self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                    %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+            if epo % 5 == 0:
+                self._save_checkpoint()
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+                            %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+                                self.best_test_equ_accuracy,self.best_test_value_accuracy))
+        
+
+    def evaluate(self, eval_set):
+        self._model_eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        test_start_time = time.time()
+        for batch in self.dataloader.load_data(eval_set):
+            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
+            value_ac += batch_val_ac.count(True)
+            equation_ac += batch_equ_ac.count(True)
+            eval_total += len(batch_val_ac)
+
+        test_time_cost = time_since(time.time() - test_start_time)
+        return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
+
+    def test(self):
+        #self._load_model()
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        test_start_time = time.time()
+
+        for batch in self.dataloader.load_data(DatasetType.Test):
+            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
+            value_ac += batch_val_ac.count(True)
+            equation_ac += batch_equ_ac.count(True)
+            eval_total += len(batch_val_ac)
+        test_time_cost = time_since(time.time() - test_start_time)
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))

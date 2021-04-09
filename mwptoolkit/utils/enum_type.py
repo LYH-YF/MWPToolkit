@@ -17,6 +17,7 @@ class FixType:
     Prefix = "prefix"
     Postfix = "postfix"
     Nonfix = None
+    MultiWayTree = "multi_way_tree"
 
 
 class DatasetName:
@@ -43,12 +44,13 @@ class TaskType:
 
 
 class SpecialTokens:
-    PAD_TOKEN = "<PAD>"
-    UNK_TOKEN = "<UNK>"
-    SOS_TOKEN = "<SOS>"
-    EOS_TOKEN = "<EOS>"
-    BRG_TOKEN = "<BRG>"
-    OPT_TOKEN = "<OPT>"
+    PAD_TOKEN = "<PAD>" # padding token
+    UNK_TOKEN = "<UNK>" # unknown token
+    SOS_TOKEN = "<SOS>" # start token
+    EOS_TOKEN = "<EOS>" # end token
+    NON_TOKEN = "<NON>" # non-terminal token
+    BRG_TOKEN = "<BRG>" # equation connecting token
+    OPT_TOKEN = "<OPT>" # operator mask token
 
 
 class MaskSymbol:

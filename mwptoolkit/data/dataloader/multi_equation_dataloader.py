@@ -61,6 +61,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
         equ_source_batch=[]
         temp_source_batch=[]
         ques_source_1_batch=[]
+        infix_equ_batch=[]
 
         num_list_batch = []
         num_pos_batch = []
@@ -94,6 +95,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
             equ_source_batch.append(equ_source)
             temp_source_batch.append(temp_source)
             ques_source_1_batch.append(data["ques source 1"])
+            infix_equ_batch.append(data["infix equation"])
             num_list_batch.append(data["number list"])
             #num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
@@ -206,5 +208,6 @@ class MultiEquationDataLoader(AbstractDataLoader):
             "equ_source":equ_source_batch,
             "temp_source":temp_source_batch,
             "ques source 1":ques_source_1_batch,
-            "group nums":new_group_nums_batch
+            "group nums":new_group_nums_batch,
+            "infix equation":infix_equ_batch
         }

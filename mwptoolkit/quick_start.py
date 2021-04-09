@@ -2,7 +2,7 @@ from logging import getLogger
 import torch
 
 from mwptoolkit.config.configuration import Config
-from mwptoolkit.evaluate.evaluator import SeqEvaluator, PostEvaluator, PreEvaluator
+from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator
 from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
@@ -31,6 +31,11 @@ def train_cross_validation(config):
             config["temp_idx2symbol"] = dataset.temp_idx2symbol
         else:
             if config["symbol_for_tree"]:
+                config["out_symbol2idx"] = dataset.out_symbol2idx
+                config["out_idx2symbol"] = dataset.out_idx2symbol
+                config["temp_symbol2idx"] = dataset.temp_symbol2idx
+                config["temp_idx2symbol"] = dataset.temp_idx2symbol
+            elif config["equation_fix"] == FixType.MultiWayTree:
                 config["out_symbol2idx"] = dataset.out_symbol2idx
                 config["out_idx2symbol"] = dataset.out_idx2symbol
                 config["temp_symbol2idx"] = dataset.temp_symbol2idx
@@ -74,6 +79,8 @@ def train_cross_validation(config):
             evaluator = SeqEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
         elif config["equation_fix"] == FixType.Postfix:
             evaluator = PostEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+        elif config["equation_fix"] == FixType.MultiWayTree:
+            evaluator = MultiWayTreeEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
         else:
             raise NotImplementedError
 

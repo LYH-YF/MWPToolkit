@@ -1942,7 +1942,10 @@ def get_deprel_tree(datas,language):
 def operator_mask(expression):
     template = []
     for symbol in expression:
-        if symbol in ["+", "-", "*", "/", "^", "=", "<BRG>"]:
+        if isinstance(symbol,list):
+            sub_temp=operator_mask(symbol)
+            template.append(sub_temp)
+        elif symbol in ["+", "-", "*", "/", "^", "=", "<BRG>"]:
             template.append(SpecialTokens.OPT_TOKEN)
         else:
             template.append(symbol)
@@ -2010,6 +2013,30 @@ def from_infix_to_prefix(expression):
         res.append(st.pop())
     res.reverse()
     return res
+
+
+def from_infix_to_multi_way_tree(expression):
+    res=[]
+    st=[]
+    level=0
+    for e in expression:
+        if e in ['(','[']:
+            level+=1
+            st.append(e)
+        elif e in [')',']']:
+            level-=1
+            st.append(e)
+            if level==0:
+                sub_res=from_infix_to_multi_way_tree(st[1:-1])
+                res.append(sub_res)
+                st=[]
+        else:
+            if level!=0:
+                st.append(e)
+            else:
+                res.append(e)
+    return res
+
 
 
 def num_transfer_draw_(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):

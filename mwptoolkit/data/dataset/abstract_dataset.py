@@ -1,8 +1,8 @@
 import random
 import copy
 from mwptoolkit.utils.utils import read_json_data,write_json_data
-from mwptoolkit.utils.preprocess_tools import operator_mask,get_group_nums,EN_rule1_stat,EN_rule2_
-
+from mwptoolkit.utils.preprocess_tools import operator_mask,EN_rule1_stat,EN_rule2_
+from mwptoolkit.utils.preprocess_tools import get_group_nums,get_deprel_tree
 
 class AbstractDataset(object):
     '''abstract dataset'''
@@ -48,11 +48,22 @@ class AbstractDataset(object):
         """
         if fix != None:
             for idx, data in enumerate(self.trainset):
+                self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
                 self.trainset[idx]["equation"] = fix(data["equation"])
             for idx, data in enumerate(self.validset):
+                self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
                 self.validset[idx]["equation"] = fix(data["equation"])
             for idx, data in enumerate(self.testset):
+                self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
                 self.testset[idx]["equation"] = fix(data["equation"])
+        else:
+            for idx, data in enumerate(self.trainset):
+                self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+            for idx, data in enumerate(self.validset):
+                self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+            for idx, data in enumerate(self.testset):
+                self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+                
     def operator_mask_process(self):
         for idx, data in enumerate(self.trainset):
             self.trainset[idx]["template"] = operator_mask(data["equation"])
@@ -60,6 +71,7 @@ class AbstractDataset(object):
             self.validset[idx]["template"] = operator_mask(data["equation"])
         for idx, data in enumerate(self.testset):
             self.testset[idx]["template"] = operator_mask(data["equation"])
+    
     def en_rule1_process(self,k):
         rule1_list=EN_rule1_stat(self.trainset,k)
         for idx, data in enumerate(self.trainset):
@@ -99,6 +111,17 @@ class AbstractDataset(object):
             self.validset[idx]["equation"] = EN_rule2_(data["equation"])
         for idx, data in enumerate(self.testset):
             self.testset[idx]["equation"] = EN_rule2_(data["equation"])
+    
+    def build_group_nums_for_graph(self):
+        self.trainset=get_group_nums(self.trainset,self.language)
+        self.validset=get_group_nums(self.validset,self.language)
+        self.testset=get_group_nums(self.testset,self.language)
+    
+    def build_deprel_tree(self):
+        self.trainset=get_deprel_tree(self.trainset,self.language)
+        self.validset=get_deprel_tree(self.validset,self.language)
+        self.testset=get_deprel_tree(self.testset,self.language)
+    
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation
 
@@ -141,11 +164,6 @@ class AbstractDataset(object):
             self._build_vocab()
             yield k
 
-    def build_group_nums_for_graph(self):
-        self.trainset=get_group_nums(self.trainset,self.language)
-        self.validset=get_group_nums(self.validset,self.language)
-        self.testset=get_group_nums(self.testset,self.language)
-    
     def dataset_load(self):
         r"""dataset process and build vocab
         """

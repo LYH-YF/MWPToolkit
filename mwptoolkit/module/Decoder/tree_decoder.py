@@ -94,7 +94,6 @@ class TreeDecoder(nn.Module):
 class RNNBasedTreeDecoder(nn.Module):
     def __init__(self, input_size,embedding_size,hidden_size,dropout_ratio):
         super(RNNBasedTreeDecoder, self).__init__()
-        #self.opt = opt
         self.hidden_size = hidden_size
         self.embedding_size = embedding_size
         self.embedding = BaiscEmbedder(input_size, embedding_size,dropout_ratio, padding_idx=0)

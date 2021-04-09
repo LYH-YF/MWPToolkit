@@ -2,7 +2,7 @@ import copy
 import warnings
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
-from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
+from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
 from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514,num_transfer_hmwp
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName
 
@@ -52,6 +52,8 @@ class MultiEquationDataset(AbstractDataset):
             fix = from_infix_to_postfix
         elif self.equation_fix == FixType.Nonfix:
             fix = None
+        elif self.equation_fix == FixType.MultiWayTree:
+            fix = from_infix_to_multi_way_tree
         else:
             raise NotImplementedError(
                 "the type of equation fix ({}) is not implemented.".format(

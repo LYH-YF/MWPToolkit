@@ -1,6 +1,6 @@
 import random
 import torch
-from mwptoolkit.utils.enum_type import SpecialTokens
+from mwptoolkit.utils.enum_type import FixType, SpecialTokens
 
 class AbstractDataLoader(object):
     def __init__(self,config,dataset):
@@ -9,7 +9,7 @@ class AbstractDataLoader(object):
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
         self.share_vocab=config["share_vocab"]
-        self.equation_prefix=config["equation_fix"]
+        self.equation_fix=config["equation_fix"]
         self.symbol_for_tree=config["symbol_for_tree"]
         self.train_batch_size=config["train_batch_size"]
         self.test_batch_size=config["test_batch_size"]
@@ -20,7 +20,7 @@ class AbstractDataLoader(object):
         self.in_pad_token=dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
         self.in_unk_token=dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
         
-        if self.symbol_for_tree:
+        if self.symbol_for_tree or self.equation_fix==FixType.MultiWayTree:
             self.out_pad_token=self.in_pad_token
             self.out_unk_token=dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
             self.temp_unk_token=dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
@@ -62,6 +62,74 @@ class AbstractDataLoader(object):
             else:
                 batch_target[idx]=batch_target[idx][:max_length]
         return batch_target
+    
+    def _equ_symbol2idx(self,equation):
+        equ_idx=[]
+        if self.equation_fix == FixType.MultiWayTree:
+            for symbol in equation:
+                if isinstance(symbol,list):
+                    sub_equ_idx=self._equ_symbol2idx(symbol)
+                    equ_idx.append(sub_equ_idx)
+                else:
+                    if self.share_vocab:
+                        try:
+                            idx = self.dataset.in_word2idx[symbol]
+                        except:
+                            idx = self.in_unk_token
+                    else:
+                        try:
+                            idx = self.dataset.out_symbol2idx[symbol]
+                        except:
+                            idx = self.out_unk_token
+                    equ_idx.append(idx)
+        else:
+            for word in equation:
+                if self.share_vocab:
+                    try:
+                        idx = self.dataset.in_word2idx[word]
+                    except:
+                        idx = self.in_unk_token
+                else:
+                    try:
+                        idx = self.dataset.out_symbol2idx[word]
+                    except:
+                        idx = self.out_unk_token
+                equ_idx.append(idx)
+        return equ_idx
+    
+    def _temp_symbol2idx(self,template):
+        temp_idx=[]
+        if self.equation_fix == FixType.MultiWayTree:
+            for symbol in template:
+                if isinstance(symbol,list):
+                    sub_equ_idx=self._equ_symbol2idx(symbol)
+                    temp_idx.append(sub_equ_idx)
+                else:
+                    if self.share_vocab:
+                        try:
+                            idx = self.dataset.in_word2idx[symbol]
+                        except:
+                            idx = self.in_unk_token
+                    else:
+                        try:
+                            idx = self.dataset.temp_symbol2idx[symbol]
+                        except:
+                            idx = self.out_unk_token
+                    temp_idx.append(idx)
+        else:
+            for word in template:
+                if self.share_vocab:
+                    try:
+                        idx = self.dataset.in_word2idx[word]
+                    except:
+                        idx = self.in_unk_token
+                else:
+                    try:
+                        idx = self.dataset.temp_symbol2idx[word]
+                    except:
+                        idx = self.temp_unk_token
+                temp_idx.append(idx)
+        return temp_idx
     
     def _get_mask(self,batch_seq_len):
         max_length=max(batch_seq_len)

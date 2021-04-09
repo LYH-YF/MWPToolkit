@@ -55,15 +55,20 @@ class Tree():
                 r_list.append(str(self.children[i]))
         return "".join(r_list)
     
-    def to_list(self, form_manager):
+    def to_list(self,out_idx2symbol):
         r_list = []
         for i in range(self.num_children):
             if isinstance(self.children[i], type(self)):
-                r_list.append(form_manager.get_symbol_idx("("))
-                cl = self.children[i].to_list(form_manager)
-                for k in range(len(cl)):
-                    r_list.append(cl[k])
-                r_list.append(form_manager.get_symbol_idx(")"))
+                #r_list.append(form_manager.get_symbol_idx("("))
+                cl = self.children[i].to_list()
+                r_list.append(cl)
+                # for k in range(len(cl)):
+                #     r_list.append(cl[k])
+                #r_list.append(form_manager.get_symbol_idx(")"))
+            elif i==out_idx2symbol.index(SpecialTokens.NON_TOKEN):
+                continue
+            elif i==out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
+                continue
             else:
                 r_list.append(self.children[i])
         return r_list

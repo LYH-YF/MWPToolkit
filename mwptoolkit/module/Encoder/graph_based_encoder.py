@@ -120,7 +120,7 @@ class GraphEncoder(nn.Module):
         # if self.opt.gpuid > -1:
         #     self.using_gpu = True
 
-        self.embedding_bilstm = nn.LSTM(input_size=self.embedding_size, hidden_size=self.hidden_size/2, bidirectional=True, bias = True, batch_first = True, dropout= self.opt.dropout_en_out, num_layers=1)
+        self.embedding_bilstm = nn.LSTM(input_size=self.embedding_size, hidden_size=self.hidden_size//2, bidirectional=True, bias = True, batch_first = True, dropout= dropout_ratio, num_layers=1)
         self.padding_vector = torch.randn(1,self.hidden_size, dtype = torch.float, requires_grad=True)
 
     def forward(self, fw_adj_info, bw_adj_info, feature_info, batch_nodes):
@@ -135,8 +135,9 @@ class GraphEncoder(nn.Module):
         #     batch_nodes = batch_nodes.cuda()
         device = batch_nodes.device
 
-        feature_by_sentence = feature_info[:-1,:].view(batch_nodes.size()[0], -1)
-        feature_sentence_vector = self.embedding(feature_by_sentence)
+        #feature_by_sentence = feature_info[:-1,:].view(batch_nodes.size()[0], -1)
+        #feature_sentence_vector = self.embedding(feature_by_sentence)
+        feature_sentence_vector = self.embedding(feature_info)
         #feature_sentence_vector = self.input_dropout(feature_sentence_vector)
         
         output_vector, (ht,_) = self.embedding_bilstm(feature_sentence_vector)
@@ -146,14 +147,15 @@ class GraphEncoder(nn.Module):
         #     feature_embedded = torch.cat([feature_vector, self.padding_vector.cuda()], 0)
         # else:
         #     feature_embedded = torch.cat([feature_vector, self.padding_vector], 0)
-        feature_embedded = torch.cat([feature_vector, self.padding_vector.to(device)], 0)
+        #feature_embedded = torch.cat([feature_vector, self.padding_vector.to(device)], 0)
+        feature_embedded=feature_vector
 
         batch_size = feature_embedded.size()[0]
         node_repres = feature_embedded.view(batch_size, -1)
 
         #fw_sampler = UniformNeighborSampler(fw_adj_info)
         #bw_sampler = UniformNeighborSampler(bw_adj_info)
-        nodes = batch_nodes.view(-1, )
+        nodes = batch_nodes.long().view(-1, )
 
         fw_hidden = F.embedding(nodes, node_repres)
         bw_hidden = F.embedding(nodes, node_repres)

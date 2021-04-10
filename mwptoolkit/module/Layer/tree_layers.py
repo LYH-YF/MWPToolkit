@@ -60,7 +60,7 @@ class Tree():
         for i in range(self.num_children):
             if isinstance(self.children[i], type(self)):
                 #r_list.append(form_manager.get_symbol_idx("("))
-                cl = self.children[i].to_list()
+                cl = self.children[i].to_list(out_idx2symbol)
                 r_list.append(cl)
                 # for k in range(len(cl)):
                 #     r_list.append(cl[k])
@@ -310,11 +310,11 @@ class Dec_LSTM(nn.Module):
         input_cat = torch.cat((x, parent_h, sibling_state),1)
         gates = self.i2h(input_cat) + self.h2h(prev_h)
         ingate, forgetgate, cellgate, outgate = gates.chunk(4,1)
-        ingate = F.sigmoid(ingate)
-        forgetgate = F.sigmoid(forgetgate)
-        cellgate = F.tanh(cellgate)
-        outgate = F.sigmoid(outgate)
+        ingate = torch.sigmoid(ingate)
+        forgetgate = torch.sigmoid(forgetgate)
+        cellgate = torch.tanh(cellgate)
+        outgate = torch.sigmoid(outgate)
         cellgate = self.dropout(cellgate)
         cy = (forgetgate * prev_c) + (ingate * cellgate)
-        hy = outgate * F.tanh(cy)
+        hy = outgate * torch.tanh(cy)
         return cy, hy

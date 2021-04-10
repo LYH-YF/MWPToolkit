@@ -1717,7 +1717,40 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
         self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(),  lr=self.config["learning_rate"], weight_decay=1e-5)
         self.decoder_optimizer = torch.optim.Adam(self.model.decoder.parameters(),  lr=self.config["learning_rate"])
         self.attention_optimizer = torch.optim.Adam(self.model.attention.parameters(),  lr=self.config["learning_rate"])
-        
+    
+    def _save_checkpoint(self):
+        check_pnt = {
+            "model": self.model.state_dict(),
+            "encoder_optimizer": self.encoder_optimizer.state_dict(),
+            "decoder_optimizer": self.decoder_optimizer.state_dict(),
+            "attention_optimizer": self.attention_optimizer.state_dict(), 
+            "start_epoch": self.epoch_i,
+            "best_valid_value_accuracy": self.best_valid_value_accuracy,
+            "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
+            "best_test_value_accuracy": self.best_test_value_accuracy,
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t":self.config["fold_t"]
+        }
+        torch.save(check_pnt, self.config["checkpoint_path"])
+
+    def _load_checkpoint(self):
+        check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.encoder_optimizer.load_state_dict(check_pnt["encoder_optimizer"])
+        self.decoder_optimizer.load_state_dict(check_pnt["decoder_optimizer"])
+        self.attention_optimizer.load_state_dict(check_pnt["attention_optimizer"])
+        # other parameter
+        self.start_epoch = check_pnt["start_epoch"]
+        self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
+        self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
+        self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
+        self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
+
+
     def _optimizer_step(self):
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
@@ -1842,7 +1875,7 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
-        #self._load_model()
+        self._load_model()
         self.model.eval()
         value_ac = 0
         equation_ac = 0

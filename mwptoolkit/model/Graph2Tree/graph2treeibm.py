@@ -153,9 +153,9 @@ class Graph2TreeIBM(nn.Module):
                     sibling_state = queue_decode[sibling_index]["s"][1]
 
                 if head == 1:
-                    prev_word = torch.tensor([self.out_idx2symbol.index(SpecialTokens.SOS_TOKEN)], dtype=torch.long)
+                    prev_word = torch.tensor([self.out_idx2symbol.index(SpecialTokens.SOS_TOKEN)], dtype=torch.long).to(device)
                 else:
-                    prev_word = torch.tensor([self.out_idx2symbol.index(SpecialTokens.NON_TOKEN)], dtype=torch.long)
+                    prev_word = torch.tensor([self.out_idx2symbol.index(SpecialTokens.NON_TOKEN)], dtype=torch.long).to(device)
                 
                 i_child = 1
                 while True:
@@ -216,7 +216,7 @@ class Graph2TreeIBM(nn.Module):
             slide+=max_length
         fw_adj_info_batch=torch.cat(fw_adj_info_batch,dim=0)
         bw_adj_info_batch=torch.cat(bw_adj_info_batch,dim=0)
-        nodes_batch=torch.range(0,fw_adj_info_batch.size(0)-1).view(batch_size,max_length)
+        nodes_batch=torch.arange(0,fw_adj_info_batch.size(0)).view(batch_size,max_length)
         # for b_i in range(batch_size):
         #     x = torch.zeros((max_length, max_length))
         #     for idx in range(seq_length[b_i]):

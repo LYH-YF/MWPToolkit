@@ -59,13 +59,7 @@ class Graph2TreeIBM(nn.Module):
         graph_cell_state = graph_embedding
         graph_hidden_state = graph_embedding
         
-        dec_s = {}
-        for i in range(1, self.max_length + 1):
-            dec_s[i] = {}
-            for j in range(self.max_length + 1):
-                dec_s[i][j] = {}
 
-        cur_index = 1
         tree_batch=[]
         for tar_equ in target:
             tree_batch.append(self.equ2tree(tar_equ))
@@ -73,6 +67,12 @@ class Graph2TreeIBM(nn.Module):
         dec_batch, queue_tree, max_index = self.get_dec_batch(tree_batch, batch_size)
         predict=[]
         label=[]
+        dec_s = {}
+        for i in range(1, max_index + 1):
+            dec_s[i] = {}
+            for j in range(max_index + 1):
+                dec_s[i][j] = {}
+        cur_index = 1
         while (cur_index <= max_index):
             for j in range(1, 3):
                 dec_s[cur_index][0][j] = torch.zeros((batch_size, self.hidden_size), dtype=torch.float, requires_grad=True).to(device)
@@ -111,7 +111,7 @@ class Graph2TreeIBM(nn.Module):
                 if teacher_force != True and i > 0:
                     input_word = pred.argmax(1)
                 else:
-                    input_word = dec_batch[cur_index][:, i]
+                    input_word = dec_batch[cur_index][:, i].to(device)
 
                 dec_s[cur_index][i + 1][1], dec_s[cur_index][i + 1][2] = self.decoder(input_word, dec_s[cur_index][i][1], dec_s[cur_index][i][2], parent_h, sibling_state)
                 pred = self.attention(enc_outputs, dec_s[cur_index][i + 1][2], structural_info)
@@ -119,10 +119,10 @@ class Graph2TreeIBM(nn.Module):
                 predict.append(pred)
                 label.append(dec_batch[cur_index][:,i+1])
             cur_index = cur_index + 1
-        predict=torch.stack(predict,dim=1)
-        label=torch.stack(label,dim=1)
+        predict=torch.stack(predict,dim=1).to(device)
+        label=torch.stack(label,dim=1).to(device)
         #label=label.view(batch_size,-1)
-        predict=predict.view(-1,predict.size(1))
+        predict=predict.view(-1,predict.size(2))
         label=label.view(-1,label.size(1))
         return predict,label
     
@@ -137,7 +137,7 @@ class Graph2TreeIBM(nn.Module):
             queue_decode = []
             queue_decode.append({"s": (prev_c[b_i].unsqueeze(0), prev_h[b_i].unsqueeze(0)), "parent":0, "child_index":1, "t": Tree()})
             head = 1
-            while head <= len(queue_decode) and head <=10:
+            while head <= len(queue_decode) and head <=100:
                 s = queue_decode[head-1]["s"]
                 parent_h = s[1]
                 t = queue_decode[head-1]["t"]

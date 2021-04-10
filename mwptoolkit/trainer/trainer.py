@@ -1704,6 +1704,7 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
         if config["resume"]:
             self._load_checkpoint()
         self._build_loss(config["symbol_size"])
+        self.logger.info("get group nums...")
         self.dataloader.dataset.build_deprel_tree()
 
     
@@ -1739,7 +1740,7 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
 
     def _train_batch(self, batch):
         outputs,target=self.model(batch["question"],batch["ques len"],batch["group nums"],batch["equation"])
-        self.loss.eval_batch(outputs, target)
+        self.loss.eval_batch(outputs, target.view(-1))
         batch_loss = self.loss.get_loss()
         return batch_loss
 

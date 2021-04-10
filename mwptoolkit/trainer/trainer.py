@@ -1705,7 +1705,7 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
             self._load_checkpoint()
         self._build_loss(config["symbol_size"])
         self.logger.info("get group nums...")
-        self.dataloader.dataset.build_deprel_tree()
+        #self.dataloader.dataset.build_deprel_tree()
 
     
     def _build_loss(self, symbol_size):
@@ -1768,11 +1768,12 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             self._model_zero_grad()
-            
+            if batch_idx != 5:
+                continue
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
-            self.loss.backward()
-            self._optimizer_step()
+            #self.loss.backward()
+            #self._optimizer_step()
             self.loss.reset()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total, epoch_time_cost

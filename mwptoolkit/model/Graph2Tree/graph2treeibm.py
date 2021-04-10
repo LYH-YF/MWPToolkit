@@ -68,9 +68,9 @@ class Graph2TreeIBM(nn.Module):
         predict=[]
         label=[]
         dec_s = {}
-        for i in range(1, max_index + 1):
+        for i in range(1, self.max_length + 1):
             dec_s[i] = {}
-            for j in range(max_index + 1):
+            for j in range(self.max_length + 1):
                 dec_s[i][j] = {}
         cur_index = 1
         while (cur_index <= max_index):
@@ -82,28 +82,28 @@ class Graph2TreeIBM(nn.Module):
             
 
             if cur_index == 1:
-                for i in range(batch_size):
-                    dec_s[1][0][1][i, :] = graph_cell_state[i]
-                    dec_s[1][0][2][i, :] = graph_hidden_state[i]
+                for b_i in range(batch_size):
+                    dec_s[1][0][1][b_i, :] = graph_cell_state[b_i]
+                    dec_s[1][0][2][b_i, :] = graph_hidden_state[b_i]
 
             else:
-                for i in range(1, batch_size + 1):
-                    if (cur_index <= len(queue_tree[i])):
-                        par_index = queue_tree[i][cur_index - 1]["parent"]
-                        child_index = queue_tree[i][cur_index - 1]["child_index"]
+                for b_i in range(1, batch_size + 1):
+                    if (cur_index <= len(queue_tree[b_i])):
+                        par_index = queue_tree[b_i][cur_index - 1]["parent"]
+                        child_index = queue_tree[b_i][cur_index - 1]["child_index"]
 
-                        dec_s[cur_index][0][1][i-1,:] = \
-                            dec_s[par_index][child_index][1][i-1,:]
-                        dec_s[cur_index][0][2][i - 1, :] = dec_s[par_index][child_index][2][i - 1, :]
+                        dec_s[cur_index][0][1][b_i-1,:] = \
+                            dec_s[par_index][child_index][1][b_i-1,:]
+                        dec_s[cur_index][0][2][b_i - 1, :] = dec_s[par_index][child_index][2][b_i - 1, :]
 
                     flag_sibling = False
-                    for q_index in range(len(queue_tree[i])):
-                        if (cur_index <= len(queue_tree[i])) and (q_index < cur_index - 1) and (queue_tree[i][q_index]["parent"] == queue_tree[i][cur_index - 1]["parent"]) and (
-                                queue_tree[i][q_index]["child_index"] < queue_tree[i][cur_index - 1]["child_index"]):
+                    for q_index in range(len(queue_tree[b_i])):
+                        if (cur_index <= len(queue_tree[b_i])) and (q_index < cur_index - 1) and (queue_tree[b_i][q_index]["parent"] == queue_tree[b_i][cur_index - 1]["parent"]) and (
+                                queue_tree[b_i][q_index]["child_index"] < queue_tree[b_i][cur_index - 1]["child_index"]):
                             flag_sibling = True
                             sibling_index = q_index
                     if flag_sibling:
-                        sibling_state[i - 1, :] = dec_s[sibling_index][dec_batch[sibling_index].size(1) - 1][2][i - 1, :]
+                        sibling_state[b_i - 1, :] = dec_s[sibling_index][dec_batch[sibling_index].size(1) - 1][2][b_i - 1, :]
 
             parent_h = dec_s[cur_index][0][2]
             for i in range(dec_batch[cur_index].size(1) - 1):
@@ -112,7 +112,7 @@ class Graph2TreeIBM(nn.Module):
                     input_word = pred.argmax(1)
                 else:
                     input_word = dec_batch[cur_index][:, i].to(device)
-
+                #if cur_index==3 and 
                 dec_s[cur_index][i + 1][1], dec_s[cur_index][i + 1][2] = self.decoder(input_word, dec_s[cur_index][i][1], dec_s[cur_index][i][2], parent_h, sibling_state)
                 pred = self.attention(enc_outputs, dec_s[cur_index][i + 1][2], structural_info)
                 #loss += criterion(pred, dec_batch[cur_index][:,i+1])
@@ -252,13 +252,15 @@ class Graph2TreeIBM(nn.Module):
             batch_w_list = []
             for i in range(1, batch_size + 1):
                 w_list = []
+                counts = 0
                 if (cur_index <= len(queue_tree[i])):
                     t = queue_tree[i][cur_index - 1]["tree"]
 
                     for ic in range(t.num_children):
                         if isinstance(t.children[ic], Tree):
                             #w_list.append(4)
-                            queue_tree[i].append({"tree": t.children[ic], "parent": cur_index, "child_index": ic + 1})
+                            queue_tree[i].append({"tree": t.children[ic], "parent": cur_index, "child_index": ic + 1 - counts})
+                            counts+=1
                         else:
                             w_list.append(t.children[ic])
                     if len(queue_tree[i]) > max_index:
@@ -266,21 +268,34 @@ class Graph2TreeIBM(nn.Module):
                 if len(w_list) > max_w_len:
                     max_w_len = len(w_list)
                 batch_w_list.append(w_list)
-            dec_batch[cur_index] = torch.zeros((batch_size, max_w_len + 2), dtype=torch.long)
+            # if cur_index == 1:
+            #     dec_batch[cur_index] = torch.zeros((batch_size, max_w_len + 1), dtype=torch.long)
+            #     for i in range(batch_size):
+            #         w_list = batch_w_list[i]
+            #         if len(w_list) > 0:
+            #             for j in range(len(w_list)):
+            #                 dec_batch[cur_index][i][j + 1] = w_list[j]
+            #         # add <SOS>
+            #         dec_batch[cur_index][i][0] = self.out_idx2symbol.index(SpecialTokens.SOS_TOKEN)
+            # else:
+            #     dec_batch[cur_index] = torch.zeros((batch_size, max_w_len), dtype=torch.long)
+            #     for i in range(batch_size):
+            #         w_list = batch_w_list[i]
+            #         if len(w_list) > 0:
+            #             for j in range(len(w_list)):
+            #                 dec_batch[cur_index][i][j] = w_list[j]
+                    
+            dec_batch[cur_index] = torch.zeros((batch_size, max_w_len + 1), dtype=torch.long)
             for i in range(batch_size):
                 w_list = batch_w_list[i]
                 if len(w_list) > 0:
                     for j in range(len(w_list)):
                         dec_batch[cur_index][i][j + 1] = w_list[j]
-                    # add <SOS>
-                    if cur_index == 1:
-                        dec_batch[cur_index][i][0] = self.out_idx2symbol.index(SpecialTokens.SOS_TOKEN)
-                    # else:
-                    #     dec_batch[cur_index][i][0] = form_manager.get_symbol_idx('(')
-                    #dec_batch[cur_index][i][len(w_list) + 1] = 2
-
-            # if using_gpu:
-            #   dec_batch[cur_index] = dec_batch[cur_index].cuda()
+                # add <SOS> or <NON>
+                if cur_index == 1:
+                    dec_batch[cur_index][i][0] = self.out_idx2symbol.index(SpecialTokens.SOS_TOKEN)
+                else:
+                    dec_batch[cur_index][i][0] = self.out_idx2symbol.index(SpecialTokens.NON_TOKEN)
             cur_index += 1
 
         return dec_batch, queue_tree, max_index

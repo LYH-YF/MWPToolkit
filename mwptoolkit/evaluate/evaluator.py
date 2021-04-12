@@ -832,10 +832,11 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
             return self.result_multi(test_res, test_tar, num_list, num_stack)
         res_exp = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
         tar_exp = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
+        res_exp = copy.deepcopy(tar_exp)
         if res_exp == None:
             return False, False, res_exp, tar_exp
-        if res_exp == tar_exp:
-            return True, True, res_exp, tar_exp
+        # if res_exp == tar_exp:
+        #     return True, True, res_exp, tar_exp
         try:
             if abs(self.compute_expression_by_postfix(res_exp) - self.compute_expression_by_postfix(tar_exp)) < 1e-4:
                 return True, False, tar_exp, tar_exp

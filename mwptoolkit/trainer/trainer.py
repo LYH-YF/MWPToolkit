@@ -1705,7 +1705,7 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
             self._load_checkpoint()
         self._build_loss(config["symbol_size"])
         self.logger.info("get group nums...")
-        #self.dataloader.dataset.build_deprel_tree()
+        self.dataloader.dataset.build_deprel_tree()
 
     
     def _build_loss(self, symbol_size):

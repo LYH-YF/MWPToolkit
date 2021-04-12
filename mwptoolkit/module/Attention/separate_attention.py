@@ -32,9 +32,9 @@ class SeparateAttention(nn.Module):
             enc_attention_2 = torch.bmm(enc_2.permute(0,2,1), attention_2)
 
         if self.separate_attention:
-            hid = F.tanh(self.linear_att(torch.cat((enc_attention.squeeze(2), enc_attention_2.squeeze(2),dec_s_top), 1)))
+            hid = torch.tanh(self.linear_att(torch.cat((enc_attention.squeeze(2), enc_attention_2.squeeze(2),dec_s_top), 1)))
         else:
-            hid = F.tanh(self.linear_att(torch.cat((enc_attention.squeeze(2),dec_s_top), 1)))
+            hid = torch.tanh(self.linear_att(torch.cat((enc_attention.squeeze(2),dec_s_top), 1)))
         h2y_in = hid
         
         h2y_in = self.dropout(h2y_in)

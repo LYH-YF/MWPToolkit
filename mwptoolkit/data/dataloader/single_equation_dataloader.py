@@ -96,21 +96,17 @@ class SingleEquationDataLoader(AbstractDataLoader):
             ques_source_1_batch.append(data["ques source 1"])
             infix_equ_batch.append(data["infix equation"])
             num_list_batch.append(data["number list"])
-            #num_pos_batch.append(data["number position"])
             id_batch.append(data["id"])
-            #ques_len_batch.append(len(data["question"]))
             ans_batch.append(data["ans"])
             try:
                 group_nums_batch.append(data["group nums"])
             except:
                 group_nums_batch.append([])
-            #num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
+            
             num_stack_batch.append(
                 self._build_num_stack(equation, data["number list"]))
-            # if self.symbol_for_tree:
-            #     pass
-            # else:
-            #     ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
+            
+            # question word to index
             ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
             for word in sentence:
                 try:
@@ -121,31 +117,9 @@ class SingleEquationDataLoader(AbstractDataLoader):
             ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
             num_pos=[pos+1 for pos in data["number position"]]
             num_pos_batch.append(num_pos)
-            # for word in equation:
-            #     if self.share_vocab:
-            #         try:
-            #             idx = self.dataset.in_word2idx[word]
-            #         except:
-            #             idx = self.in_unk_token
-            #     else:
-            #         try:
-            #             idx = self.dataset.out_symbol2idx[word]
-            #         except:
-            #             idx = self.out_unk_token
-            #     equ_tensor.append(idx)
+
+            # equation symbol to index
             equ_tensor=self._equ_symbol2idx(equation)
-            # for word in template:
-            #     if self.share_vocab:
-            #         try:
-            #             idx = self.dataset.in_word2idx[word]
-            #         except:
-            #             idx = self.in_unk_token
-            #     else:
-            #         try:
-            #             idx = self.dataset.temp_symbol2idx[word]
-            #         except:
-            #             idx = self.temp_unk_token
-            #     temp_tensor.append(idx)
             temp_tensor=self._temp_symbol2idx(template)
             if self.symbol_for_tree or self.equation_fix==FixType.MultiWayTree:
                 pass

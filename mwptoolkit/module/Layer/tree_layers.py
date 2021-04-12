@@ -65,9 +65,9 @@ class Tree():
                 # for k in range(len(cl)):
                 #     r_list.append(cl[k])
                 #r_list.append(form_manager.get_symbol_idx(")"))
-            elif i==out_idx2symbol.index(SpecialTokens.NON_TOKEN):
+            elif self.children[i]==out_idx2symbol.index(SpecialTokens.NON_TOKEN):
                 continue
-            elif i==out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
+            elif self.children[i]==out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
                 continue
             else:
                 r_list.append(self.children[i])
@@ -318,3 +318,16 @@ class Dec_LSTM(nn.Module):
         cy = (forgetgate * prev_c) + (ingate * cellgate)
         hy = outgate * torch.tanh(cy)
         return cy, hy
+
+class DQN(nn.Module):
+    def __init__(self,input_size,embedding_size,hidden_size,output_size,dropout_ratio):
+        super(DQN,self).__init__()
+        self.hidden_layer_1=nn.Linear(input_size,hidden_size)
+        self.hidden_layer_2=nn.Linear(hidden_size,embedding_size)
+        self.action_pred=nn.Linear(hidden_size,output_size)
+    def forward(self,inputs):
+        out_1=self.hidden_layer_1(inputs)
+        out_2=self.hidden_layer_2(out_1)
+        pred=self.action_pred(out_2)
+        return pred,out_2 
+

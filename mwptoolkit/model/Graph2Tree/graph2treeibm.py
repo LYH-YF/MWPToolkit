@@ -63,6 +63,7 @@ class Graph2TreeIBM(nn.Module):
         tree_batch=[]
         for tar_equ in target:
             tree_batch.append(self.equ2tree(tar_equ))
+        
 
         dec_batch, queue_tree, max_index = self.get_dec_batch(tree_batch, batch_size)
         predict=[]

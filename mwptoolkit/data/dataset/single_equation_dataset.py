@@ -167,9 +167,9 @@ class SingleEquationDataset(AbstractDataset):
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
     def _build_symbol(self):
         if self.share_vocab:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + OPERATORS
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
         else:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + OPERATORS
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
 
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list

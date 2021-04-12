@@ -118,7 +118,6 @@ class MultiEquationDataset(AbstractDataset):
         self.out_idx2symbol = copy.deepcopy(Operators.Multi)
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
-        #self.out_idx2symbol += self.unk_symbol
 
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
@@ -164,7 +163,7 @@ class MultiEquationDataset(AbstractDataset):
             SpecialTokens.EOS_TOKEN,
             SpecialTokens.NON_TOKEN
         ]
-        self.out_idx2symbol += Operators.Single
+        self.out_idx2symbol += Operators.Multi
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
 
@@ -254,7 +253,8 @@ class MultiEquationDataset(AbstractDataset):
             SpecialTokens.PAD_TOKEN,
             SpecialTokens.SOS_TOKEN,
             SpecialTokens.EOS_TOKEN,
-            SpecialTokens.NON_TOKEN
+            SpecialTokens.NON_TOKEN,
+            SpecialTokens.OPT_TOKEN
         ]
         self.temp_num_start = len(self.temp_idx2symbol)
         self.temp_idx2symbol += self.generate_list
@@ -298,9 +298,9 @@ class MultiEquationDataset(AbstractDataset):
     
     def _build_template_symbol(self):
         if self.share_vocab:
-            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
+            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
         else:
-            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
+            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
         
         self.temp_num_start = len(self.temp_idx2symbol)
         self.temp_idx2symbol += self.generate_list

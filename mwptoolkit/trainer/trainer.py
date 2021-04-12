@@ -1703,15 +1703,15 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
-        self._build_loss(config["symbol_size"])
+        self._build_loss(config["symbol_size"],config["out_symbol2idx"][SpecialTokens.PAD_TOKEN])
         self.logger.info("get group nums...")
         self.dataloader.dataset.build_deprel_tree()
 
     
-    def _build_loss(self, symbol_size):
+    def _build_loss(self, symbol_size,out_pad_token):
         weight = torch.ones(symbol_size).to(self.config["device"])
-        #pad = out_pad_token
-        self.loss = NLLLoss(weight)
+        pad = out_pad_token
+        self.loss = NLLLoss(weight,pad)
     
     def _build_optimizer(self):
         self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(),  lr=self.config["learning_rate"], weight_decay=1e-5)

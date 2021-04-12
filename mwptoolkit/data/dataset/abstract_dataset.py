@@ -17,6 +17,7 @@ class AbstractDataset(object):
         self.share_vocab = config["share_vocab"]
         self.k_fold = config["k_fold"]
         self.dataset = config["dataset"]
+        self.model = config["model"]
         self.read_local_folds = config["read_local_folds"]
         self.language=config["language"]
         self.single = config["single"]
@@ -122,7 +123,7 @@ class AbstractDataset(object):
         self.validset,_=get_deprel_tree(self.validset,self.language)
         self.testset,_=get_deprel_tree(self.testset,self.language)
 
-        self._update_vocab(tokens)
+        #self._update_vocab(tokens)
     
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation

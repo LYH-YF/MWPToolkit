@@ -1,5 +1,6 @@
 import copy
 import warnings
+from logging import getLogger
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
@@ -70,6 +71,15 @@ class MultiEquationDataset(AbstractDataset):
         self.operator_nums = len(Operators.Multi)
         self.operator_list = copy.deepcopy(Operators.Multi)
         self.unk_symbol=unk_symbol
+
+        if self.model.lower() in ['graph2treeibm']:
+            logger=getLogger()
+            logger.info("build deprel tree...")
+            self.build_deprel_tree()
+        if self.model.lower() in ['graph2tree']:
+            logger=getLogger()
+            logger.info("build deprel tree...")
+            self.build_group_nums_for_graph()
 
     def _build_vocab(self):
         words_count = {}

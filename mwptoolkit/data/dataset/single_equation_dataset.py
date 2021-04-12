@@ -340,5 +340,14 @@ class SingleEquationDataset(AbstractDataset):
             raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
+    
+    def _update_vocab(self, vocab_list):
+        index=len(self.in_idx2word)
+        for word in vocab_list:
+            if word not in self.in_idx2word:
+                self.in_idx2word.append(word)
+                self.in_word2idx[word]=index
+                index+=1
+    
     def get_vocab_size(self):
         return len(self.in_idx2word), len(self.out_idx2symbol)

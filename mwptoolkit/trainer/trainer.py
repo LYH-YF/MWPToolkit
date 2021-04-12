@@ -1704,7 +1704,7 @@ class Graph2TreeIBMTrainer(AbstractTrainer):
         if config["resume"]:
             self._load_checkpoint()
         self._build_loss(config["symbol_size"],config["out_symbol2idx"][SpecialTokens.PAD_TOKEN])
-        self.logger.info("get group nums...")
+        self.logger.info("build deprel tree...")
         self.dataloader.dataset.build_deprel_tree()
 
     

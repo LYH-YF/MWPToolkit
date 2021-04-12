@@ -1929,15 +1929,29 @@ def get_group_nums(datas, language):
 def get_deprel_tree(datas,language):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
     new_datas = []
+    deprel_tokens=[]
     for idx, data in enumerate(datas):
         group_nums = []
+        deprel_token=[]
         doc = nlp(data["ques source 1"])
         token_list = doc.to_dict()[0]
+        length=len(data["question"])
         for idx,x in enumerate(token_list):
-            group_nums.append([x['head']-1,idx])
+            token=x['deprel']
+            if token in deprel_token:
+                deprel_idx=deprel_token.index(token)+length
+            else:
+                deprel_token.append(token)
+                deprel_idx=deprel_token.index(token)+length
+            group_nums.append([x['head']-1,deprel_idx])
+            group_nums.append([deprel_idx,idx])
         data["group nums"] = group_nums
+        data["question"] = data["question"]+deprel_token
         new_datas.append(data)
-    return new_datas
+        for token in deprel_token:
+            if token not in deprel_tokens:
+                deprel_tokens.append(token)
+    return new_datas,deprel_tokens
 
 def operator_mask(expression):
     template = []

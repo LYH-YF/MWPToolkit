@@ -118,9 +118,11 @@ class AbstractDataset(object):
         self.testset=get_group_nums(self.testset,self.language)
     
     def build_deprel_tree(self):
-        self.trainset=get_deprel_tree(self.trainset,self.language)
-        self.validset=get_deprel_tree(self.validset,self.language)
-        self.testset=get_deprel_tree(self.testset,self.language)
+        self.trainset,tokens=get_deprel_tree(self.trainset,self.language)
+        self.validset,_=get_deprel_tree(self.validset,self.language)
+        self.testset,_=get_deprel_tree(self.testset,self.language)
+
+        self._update_vocab(tokens)
     
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation
@@ -176,3 +178,7 @@ class AbstractDataset(object):
 
     def _build_vocab(self):
         raise NotImplementedError
+    
+    def _update_vocab(self,vocab_list):
+        raise NotImplementedError
+

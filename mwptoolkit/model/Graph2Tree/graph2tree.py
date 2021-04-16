@@ -255,10 +255,14 @@ class Graph2Tree(nn.Module):
                 for idx_j in range(len(num_pos[b_i])):
                     if '%' in num_list[b_i][idx_i]:
                         num_i=eval(num_list[b_i][idx_i][:-1]+'/100')
+                    elif '(' in num_list[b_i][idx_i]:
+                        num_i=eval(num_list[b_i][idx_i][1:-1])
                     else:
                         num_i=float(num_list[b_i][idx_i])
                     if '%' in num_list[b_i][idx_j]:
                         num_j=eval(num_list[b_i][idx_j][:-1]+'/100')
+                    elif '(' in num_list[b_i][idx_j]:
+                        num_j=eval(num_list[b_i][idx_j][1:-1])
                     else:
                         num_j=float(num_list[b_i][idx_j])
                     if num_i > num_j:

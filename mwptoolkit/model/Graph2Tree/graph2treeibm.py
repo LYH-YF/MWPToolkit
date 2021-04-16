@@ -198,19 +198,19 @@ class Graph2TreeIBM(nn.Module):
             bw_idx=torch.zeros(max_length).long()
             for idx in group_nums[b_i]:
                 if fw_idx[idx[0]] < max_degree:
-                    fw_adj_info[idx[0], fw_idx[idx[0]]] = idx[1]
+                    fw_adj_info[idx[0], fw_idx[idx[0]]] = idx[1]+slide
                     fw_idx[idx[0]]+=1
                 if bw_idx[idx[1]] < max_degree:
-                    bw_adj_info[idx[1], bw_idx[idx[1]]] = idx[0]
+                    bw_adj_info[idx[1], bw_idx[idx[1]]] = idx[0]+slide
                     bw_idx[idx[1]]+=1
             for row_idx,col_idx in enumerate(fw_idx):
                 for idx_slide in range(max_degree-col_idx):
-                    fw_adj_info[row_idx,col_idx+idx_slide]=max_length-1
+                    fw_adj_info[row_idx,col_idx+idx_slide]=max_length-1+slide
             for row_idx,col_idx in enumerate(bw_idx):
                 for idx_slide in range(max_degree-col_idx):
-                    bw_adj_info[row_idx,col_idx+idx_slide]=max_length-1
-            fw_adj_info+=slide
-            bw_adj_info+=slide
+                    bw_adj_info[row_idx,col_idx+idx_slide]=max_length-1+slide
+            #fw_adj_info+=slide
+            #bw_adj_info+=slide
 
             fw_adj_info_batch.append(fw_adj_info)
             bw_adj_info_batch.append(bw_adj_info)

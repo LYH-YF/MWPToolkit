@@ -1,5 +1,6 @@
 import json
 import math
+import copy
 import importlib
 import random
 import numpy as np
@@ -138,3 +139,7 @@ def init_seed(seed, reproducibility):
     else:
         torch.backends.cudnn.benchmark = True
         torch.backends.cudnn.deterministic = False
+
+def clones(module, N):
+    "Produce N identical layers."
+    return torch.nn.ModuleList([copy.deepcopy(module) for _ in range(N)])

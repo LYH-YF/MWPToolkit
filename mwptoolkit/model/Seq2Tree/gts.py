@@ -15,6 +15,7 @@ class GTS(nn.Module):
         #parameter
         self.hidden_size=config["hidden_size"]
         self.device=config["device"]
+        self.beam_size=config['beam_size']
         #module
         self.embedder=BaiscEmbedder(config["vocab_size"],config["embedding_size"],config["dropout_ratio"])
         self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
@@ -26,6 +27,7 @@ class GTS(nn.Module):
     def forward(self,seq, seq_length, nums_stack, num_size, generate_nums, num_pos,\
                 num_start,target=None, target_length=None,max_length=30,beam_size=5,UNK_TOKEN=None):
         # sequence mask for attention
+        beam_size=self.beam_size
         seq_mask = []
         max_len = max(seq_length)
         for i in seq_length:

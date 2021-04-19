@@ -2,6 +2,8 @@ import torch
 from torch import nn
 
 from mwptoolkit.module.Attention.seq_attention import SeqAttention
+from mwptoolkit.module.Attention.group_attention import GroupAttention
+from mwptoolkit.module.Layer.transformer_layer import Encoder,EncoderLayer,PositionwiseFeedForward
 
 
 class BasicRNNEncoder(nn.Module):
@@ -167,4 +169,71 @@ class SelfAttentionRNNEncoder(nn.Module):
 
         outputs, attn = self.attention.forward(encoder_outputs,encoder_outputs,mask=None)
 
+        return outputs, hidden_states
+
+
+class GroupAttentionRNNEncoder(nn.Module):
+    def __init__(self, embedding_size, hidden_size,num_layers, bidirectional, rnn_cell_type, dropout_ratio,in_word2idx,d_ff=2048,N=1):
+        super(GroupAttentionRNNEncoder, self).__init__()
+        self.hidden_size=hidden_size
+        self.bidirectional = bidirectional
+        self.rnn_cell_type=rnn_cell_type
+        self.num_layers=num_layers
+        self.num_directions = 2 if self.bidirectional else 1
+        if bidirectional:
+            self.d_model = 2*hidden_size
+        else:
+            self.d_model = hidden_size
+        if rnn_cell_type == 'lstm':
+            self.encoder = nn.LSTM(embedding_size, hidden_size, num_layers,
+                                   batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+        elif rnn_cell_type == 'gru':
+            self.encoder = nn.GRU(embedding_size, hidden_size, num_layers,
+                                  batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+        elif rnn_cell_type == 'rnn':
+            self.encoder = nn.RNN(embedding_size, hidden_size, num_layers,
+                                  batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+        else:
+            raise ValueError("The RNN type of encoder must be in ['lstm', 'gru', 'rnn'].")
+        self.group_attention = GroupAttention(8,self.d_model,dropout_ratio,in_word2idx)
+        self.onelayer = Encoder(
+            EncoderLayer(
+                self.d_model,
+                GroupAttention(8,self.d_model,dropout_ratio,in_word2idx),
+                PositionwiseFeedForward(self.d_model, d_ff, dropout_ratio),
+                dropout_ratio),
+            N)
+    def init_hidden(self, input_embeddings):
+        r""" Initialize initial hidden states of RNN.
+
+        Args:
+            input_embeddings (Torch.Tensor): input sequence embedding, shape: [batch_size, sequence_length, embedding_size].
+
+        Returns:
+            Torch.Tensor: the initial hidden states.
+        """
+        batch_size = input_embeddings.size(0)
+        device = input_embeddings.device
+        if self.rnn_cell_type == 'lstm':
+            h_0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size).to(device)
+            c_0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size).to(device)
+            hidden_states = (h_0, c_0)
+            return hidden_states
+        elif self.rnn_cell_type == 'gru' or self.rnn_cell_type == 'rnn':
+            tp_vec = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
+            return tp_vec.to(device)
+        else:
+            raise NotImplementedError("No such rnn type {} for initializing encoder states.".format(self.rnn_type))
+
+    def forward(self,input_seq, input_embeddings, input_length, hidden_states=None):
+        if hidden_states is None:
+            hidden_states = self.init_hidden(input_embeddings)
+
+        packed_input_embeddings = torch.nn.utils.rnn.pack_padded_sequence(input_embeddings, input_length,
+                                                                          batch_first=True, enforce_sorted=False)
+        outputs, hidden_states = self.encoder(packed_input_embeddings, hidden_states)
+
+        outputs, outputs_length = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
+        src_mask = self.group_attention.get_mask(input_seq)
+        outputs = self.onelayer(outputs,src_mask)
         return outputs, hidden_states

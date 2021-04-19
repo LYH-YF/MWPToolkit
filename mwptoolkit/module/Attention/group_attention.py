@@ -1,24 +1,9 @@
+import math
 from torch import nn
 import torch
+from torch.nn import functional as F
 from mwptoolkit.utils.utils import clones
-def src_to_mask(src):
-    src = src.cpu().numpy()
-    batch_data_mask_tok = []
-    for encode_sen_idx in src:
 
-        token = 1
-        mask = [0] * len(encode_sen_idx)
-        for num in range(len(encode_sen_idx)):
-            mask[num] = token
-            if (encode_sen_idx[num] == data_loader.vocab_dict["．"] or encode_sen_idx[num] == data_loader.vocab_dict["，"]) \
-                    and num != len(encode_sen_idx) - 1:
-                token += 1
-            if encode_sen_idx[num]==0:mask[num] = 0
-        for num in range(len(encode_sen_idx)):
-            if mask[num] == token and token != 1:
-                mask[num] = 1000
-        batch_data_mask_tok.append(mask)
-    return torch.tensor(batch_data_mask_tok)
 def group_mask(batch,type="self",pad=0):
     length = batch.shape[1]
     lis = []
@@ -33,7 +18,7 @@ def group_mask(batch,type="self",pad=0):
                     #copy = np.zeros(length)
                     copy = torch.zeros(length)
                 else:
-                    copy = tok.copy()
+                    copy = torch.clone(tok)
                     if ele != 1000:copy[copy == 1000] = 0
                     copy[copy != ele] = 0
                     copy[copy == ele] = 1
@@ -46,9 +31,9 @@ def group_mask(batch,type="self",pad=0):
                 #copy = np.expand_dims(copy,-1)
                 #mask = np.concatenate((mask,copy),axis=1)
                 copy = torch.unsqueeze(copy,-1)
-                mask = torch.cat([mask,copy],dim=1)
+                mask = torch.cat([mask,copy.float()],dim=1)
             mask = mask[:,1:]
-            mask = mask.transpose()
+            mask = mask.transpose(0,1)
             #mask = np.expand_dims(mask,0)
             mask = torch.unsqueeze(mask,0)
             lis.append(mask)
@@ -65,7 +50,7 @@ def group_mask(batch,type="self",pad=0):
                     copy = torch.zeros(length)
                     #copy = np.zeros(length)
                 else:
-                    copy = tok.copy()
+                    copy = torch.clone(tok)
                     copy[copy==1000] = 0
                     copy[copy ==ele] = 0
                     copy[copy!= 0] = 1
@@ -76,9 +61,9 @@ def group_mask(batch,type="self",pad=0):
                 # copy = np.expand_dims(copy,-1)
                 # mask = np.concatenate((mask,copy),axis=1)
                 copy = torch.unsqueeze(copy,-1)
-                mask = torch.cat([mask,copy],dim=1)
+                mask = torch.cat([mask,copy.float()],dim=1)
             mask = mask[:,1:]
-            mask = mask.transpose()
+            mask = mask.transpose(0,1)
             #mask = np.expand_dims(mask,0)
             mask = torch.unsqueeze(mask,0)
             lis.append(mask)
@@ -95,19 +80,19 @@ def group_mask(batch,type="self",pad=0):
                     #copy = np.zeros(length)
                     copy = torch.zeros(length)
                 else:
-                    copy = tok.copy()
+                    copy = torch.clone(tok)
                     copy[copy != 1000] = 0
                     copy[copy == 1000] = 1
                 if ele==1000:
-                	copy[copy==0] = -1
-                	copy[copy==1] = 0
-                	copy[copy==-1] = 1
+                    copy[copy==0] = -1
+                    copy[copy==1] = 0
+                    copy[copy==-1] = 1
                 # copy = np.expand_dims(copy,-1)
                 # mask = np.concatenate((mask,copy),axis=1)
                 copy = torch.unsqueeze(copy,-1)
-                mask = torch.cat([mask,copy],dim=1)
+                mask = torch.cat([mask,copy.float()],dim=1)
             mask = mask[:,1:]
-            mask = mask.transpose()
+            mask = mask.transpose(0,1)
             #mask = np.expand_dims(mask,0)
             mask = torch.unsqueeze(mask,0)
             lis.append(mask)
@@ -118,7 +103,7 @@ def group_mask(batch,type="self",pad=0):
     return res
 
 class GroupAttention(nn.Module):
-    def __init__(self, h, d_model, dropout=0.1):
+    def __init__(self, h, d_model, dropout,in_word2idx):
         "Take in model size and number of heads."
         super(GroupAttention, self).__init__()
         assert d_model % h == 0
@@ -128,16 +113,21 @@ class GroupAttention(nn.Module):
         self.linears = clones(nn.Linear(d_model, d_model), 3)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
+        self.in_word2idx=in_word2idx
 
     def get_mask(self,src,pad=0):
-        mask = src_to_mask(src)
-        self.src_mask_self = torch.from_numpy(group_mask(mask,"self",pad).astype('uint8')).unsqueeze(1)
-        self.src_mask_between = torch.from_numpy(group_mask(mask,"between",pad).astype('uint8')).unsqueeze(1)
-        self.src_mask_question = torch.from_numpy(group_mask(mask, "question", pad).astype('uint8')).unsqueeze(1)
+        device=src.device
+        mask = self.src_to_mask(src)
+        self.src_mask_self = group_mask(mask,"self",pad).bool().unsqueeze(1)
+        self.src_mask_between = group_mask(mask,"between",pad).bool().unsqueeze(1)
+        self.src_mask_question = group_mask(mask, "question", pad).bool().unsqueeze(1)
+        #self.src_mask_self = torch.from_numpy(group_mask(mask,"self",pad).int()).unsqueeze(1)
+        #self.src_mask_between = torch.from_numpy(group_mask(mask,"between",pad).int()).unsqueeze(1)
+        #self.src_mask_question = torch.from_numpy(group_mask(mask, "question", pad).int()).unsqueeze(1)
         self.src_mask_global = (src != pad).unsqueeze(-2).unsqueeze(1)
         self.src_mask_global = self.src_mask_global.expand(self.src_mask_self.shape)
-        self.final = torch.cat((self.src_mask_between.cuda(),self.src_mask_self.cuda(),self.src_mask_global.cuda(),self.src_mask_question.cuda()),1)
-        return self.final.cuda()
+        self.final = torch.cat((self.src_mask_between.to(device),self.src_mask_self.to(device),self.src_mask_global.to(device),self.src_mask_question.to(device)),1)
+        return self.final.to(device)
 
     def forward(self, query, key, value, mask=None):
         #print("query",query,"\nkey",key,"\nvalue",value)
@@ -158,7 +148,7 @@ class GroupAttention(nn.Module):
 
 
         # 2) Apply attention on all the projected vectors in batch.
-        x, self.attn = attention(query, key, value, mask=mask,
+        x, self.attn = self.attention(query, key, value, mask=mask,
                                  dropout=self.dropout)
 
 
@@ -166,3 +156,33 @@ class GroupAttention(nn.Module):
         x = x.transpose(1, 2).contiguous() \
             .view(nbatches, -1, self.h * self.d_k)
         return self.linears[-1](x)
+    def src_to_mask(self,src):
+        src = src.cpu().numpy()
+        batch_data_mask_tok = []
+        for encode_sen_idx in src:
+
+            token = 1
+            mask = [0] * len(encode_sen_idx)
+            for num in range(len(encode_sen_idx)):
+                mask[num] = token
+                if (encode_sen_idx[num] == self.in_word2idx['．'] or encode_sen_idx[num] == self.in_word2idx["，"]) \
+                        and num != len(encode_sen_idx) - 1:
+                    token += 1
+                if encode_sen_idx[num]==0:mask[num] = 0
+            for num in range(len(encode_sen_idx)):
+                if mask[num] == token and token != 1:
+                    mask[num] = 1000
+            batch_data_mask_tok.append(mask)
+        return torch.tensor(batch_data_mask_tok)
+    def attention(self,query, key, value, mask=None, dropout=None):
+        "Compute 'Scaled Dot Product Attention'"
+
+        d_k = query.size(-1)
+        scores = torch.matmul(query, key.transpose(-2, -1)) \
+                /math.sqrt(d_k)
+        if mask is not None:
+            scores = scores.masked_fill(mask == 0, -1e9)
+        p_attn = F.softmax(scores, dim=-1)
+        if dropout is not None:
+            p_attn = dropout(p_attn)
+        return torch.matmul(p_attn, value), p_attn

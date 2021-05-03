@@ -1,0 +1,20 @@
+{
+    "embedding_size":128,
+    "hidden_size":512,
+    "decode_hidden_size":512,
+    "learning_rate":0.001,
+    "num_layers":2,
+    "rnn_cell_type":"lstm",
+    "encoder_rnn_cell_type":"lstm",
+    "decoder_rnn_cell_type":"lstm",
+    "dropout_ratio":0.5,
+    "epoch_nums":100,
+    "bidirectional":true,
+    "share_vocab":false,
+    "mask_symbol":"number",
+    "attention":false,
+    "symbol_for_tree":false,
+    "rule1":false,
+    "rule2":false
+
+}

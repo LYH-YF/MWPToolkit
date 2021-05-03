@@ -75,6 +75,7 @@ class Tree():
 class BinaryTree():
     def __init__(self,root_node=None):
         self.root = root_node
+        self.rel_quants = []
     def equ2tree(self, equ_list, out_idx2symbol, op_list, input_var, emb):
         
         stack = []
@@ -118,6 +119,49 @@ class BinaryTree():
         left_equ = self.tree2equ(node.left_node)
         equation=left_equ+right_equ+[node.node_value]
         return equation
+    def is_float(self, num_str):
+        try:
+            float(num_str)
+        except:
+            return False
+        else: 
+            return True
+    def is_equal(self, v1, v2):
+        if self.is_float(v1) == False or self.is_float(v2) == False:
+            return False 
+        if abs(float(v1) - float(v2)) < 1e-5 :
+            return True
+        return False
+    def lca(self, root, va, vb, parent):
+        left = False
+        right = False
+        if not self.result and root.left_node:
+            left = self.lca(root.left_node, va, vb, root)
+        if not self.result and root.left_node:
+            right = self.lca(root.right_node, va, vb, root)
+        mid = False
+        if self.is_equal(root.node_value, va) or self.is_equal(root.node_value, vb):
+            mid = True
+        if not self.result  and (left+right+mid) == 2:
+            if mid:
+                self.result = parent
+            else:
+                self.result = root
+        return left or mid or right
+    def is_in_rel_quants(self, value,rel_quants):
+        if value in rel_quants:
+            return True
+        else:
+            return False 
+    def query(self, va, vb):
+        if self.root == None:
+            return None
+        self.result = None
+        self.lca(self.root, va, vb, None )
+        if self.result:
+            return self.result.value
+        else:
+            return self.result
 
 class Score(nn.Module):
     def __init__(self, input_size, hidden_size):
@@ -328,6 +372,12 @@ class DQN(nn.Module):
     def forward(self,inputs):
         out_1=self.hidden_layer_1(inputs)
         out_2=self.hidden_layer_2(out_1)
-        pred=self.action_pred(out_2)
-        return pred,out_2 
+        pred=self.action_pred(out_1)
+        return pred,out_2
+    
+    def play_one(self,inputs):
+        pred,obv=self.forward(inputs)
+        act=pred.topk(1,dim=0)[1]
+
+        return act,obv
 

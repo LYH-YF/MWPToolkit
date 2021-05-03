@@ -11,7 +11,7 @@ class TreeAttention(nn.Module):
         self.score = nn.Linear(hidden_size, 1)
 
     def forward(self, hidden, encoder_outputs, seq_mask=None):
-        '''
+        r'''
         Args:
             hidden: shape [batch_size, 1, hidden_size].
             encoder_outputs: shape [batch_size, sequence_length, hidden_size].

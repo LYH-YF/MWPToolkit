@@ -104,8 +104,8 @@ def train_cross_validation(config):
                     %(sum(best_equ_accuracy)/len(best_equ_accuracy),sum(best_value_accuracy)/len(best_value_accuracy)))
 
 
-def run_toolkit():
-    config = Config()
+def run_toolkit(model_name, dataset_name, task_type, config_dict={}):
+    config = Config(model_name, dataset_name, task_type, config_dict)
 
     init_seed(config['random_seed'], True)
 

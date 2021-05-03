@@ -222,7 +222,7 @@ class BERTGen(nn.Module):
         decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
         return output
 
-    def __str__(self) -> str:
+    def __str__(self):
         info = super().__str__()
         total = sum(p.numel() for p in self.parameters())
         trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)

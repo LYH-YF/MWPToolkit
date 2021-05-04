@@ -42,12 +42,12 @@ class MathDQN(nn.Module):
         embs=[]
         for b_i in range(batch_size):
             tree.append(self.equ2tree(target[b_i],num_list[b_i],ans[b_i]))
-            look_up = [SpecialTokens.UNK_TOKEN]+self.generate_list + NumMask.number[:len(num_pos[b_i])]
+            look_up = [SpecialTokens.UNK_TOKEN]+self.generate_list + num_list[b_i]
             num_embedding=torch.cat([generate_emb,encoder_output[b_i,num_pos[b_i]]],dim=0)
-            num_list_=self.get_num_list(target[b_i])
+            num_list_, emb_ = self.get_num_list(target[b_i],num_list[b_i],look_up,num_embedding)
             look_ups.append(num_list_)
-            embs.append(num_embedding)
-        self.env.make_env(tree,num_list,embs,self.operator_list)
+            embs.append(emb_)
+        self.env.make_env(tree,look_ups,embs,self.operator_list)
         self.replay_memory=deque(maxlen=self.replay_size)
         for b_i in range(batch_size):
             obs=self.env.reset()
@@ -59,7 +59,10 @@ class MathDQN(nn.Module):
                 if done:
                     break
             x=self.env.curr_agent.state.nodes
+            print(1)
         states, actions, rewards, next_states, dones = self.sample_experiences(batch_size)
+        dones = dones.to(device)
+        rewards = rewards.to(device)
         self.dqn.eval()
         next_Q_values,_ = self.dqn(next_states)
         self.dqn.train()
@@ -74,6 +77,42 @@ class MathDQN(nn.Module):
         all_Q_values,_ = self.dqn(states)
         Q_values = torch.sum(all_Q_values * mask,dim=1)
         return Q_values,target_Q_values
+    def predict(self,seq,seq_length,num_pos,num_list,ans,target=None):
+        batch_size=seq.size(0)
+        device=seq.device
+
+        seq_emb=self.embedder(seq)
+        encoder_output, encoder_hidden = self.encoder(seq_emb, seq_length)
+        
+        generate_num=[self.out_idx2symbol.index(SpecialTokens.UNK_TOKEN)]+[self.out_idx2symbol.index(num) for num in self.generate_list]
+        generate_num=torch.tensor(generate_num).to(device)
+        generate_emb=self.embedder(generate_num)
+        tree=[]
+        look_ups=[]
+        embs=[]
+        for b_i in range(batch_size):
+            tree.append(self.equ2tree(target[b_i],num_list[b_i],ans[b_i]))
+            look_up = [SpecialTokens.UNK_TOKEN]+self.generate_list + num_list[b_i]
+            num_embedding=torch.cat([generate_emb,encoder_output[b_i,num_pos[b_i]]],dim=0)
+            num_list_, emb_ = self.get_num_list(target[b_i],num_list[b_i],look_up,num_embedding)
+            look_ups.append(num_list_)
+            embs.append(emb_)
+        self.env.make_env(tree,look_ups,embs,self.operator_list)
+        acc=0
+        for b_i in range(batch_size):
+            obs=self.env.validate_reset(b_i)
+            for step in range(self.max_out_len):
+                action,next_obs=self.dqn.play_one(obs)
+                next_obs, done, flag=self.env.val_step(action,next_obs)
+                obs=next_obs
+                if done:
+                    if flag:
+                        acc+=1
+                    break
+                x=self.env.curr_agent.state.nodes
+                print(1)
+        return acc
+
 
     def sample_experiences(self,batch_size):
         indices = torch.randint(len(self.replay_memory), size=(batch_size,1))
@@ -93,13 +132,25 @@ class MathDQN(nn.Module):
         dones=torch.tensor(dones)
         rewards=torch.tensor(rewards)
         return states, actions, rewards, next_states, dones
+    
     def equ2tree(self,equation,num_list,ans):
         tree=GoldTree()
         tree.equ2tree(equation,self.out_idx2symbol,self.operator_list,num_list,ans)
         return tree
-    def get_num_list(self,equation):
-        num_list=[]
+    def get_num_list(self,equation,num_list,look_up,emb):
+        num_list_=[]
+        emb_list=[]
         for idx in equation:
             if idx>self.num_start:
-                num_list.append(self.out_idx2symbol[idx])
-        return num_list
+                symbol=self.out_idx2symbol[idx]
+                if symbol in NumMask.number:
+                    i=NumMask.number.index(symbol)
+                    num=num_list[i]
+                else:
+                    num=symbol
+                if num in num_list_:
+                    continue
+                i=look_up.index(num)
+                emb_list.append(emb[i])
+                num_list_.append(num)
+        return num_list_,emb_list

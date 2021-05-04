@@ -3,6 +3,7 @@ import math
 import copy
 import importlib
 import random
+import re
 import numpy as np
 import torch
 
@@ -140,6 +141,32 @@ def init_seed(seed, reproducibility):
         torch.backends.cudnn.benchmark = True
         torch.backends.cudnn.deterministic = False
 
+
 def clones(module, N):
     "Produce N identical layers."
     return torch.nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
+
+
+def str2float(v):
+    if not isinstance(v,str):
+        return v
+    else:
+        if '%' in v:
+            v=v[:-1]
+            return float(v)/100
+        if '(' in v:
+            try:
+                return eval(v)
+            except:
+                if re.match('^\d+\(',v):
+                    idx = v.index('(')
+                    a = v[:idx]
+                    b = v[idx:]
+                    return eval(a)+eval(b)
+                if re.match('.*\)\d+$',v):
+                    l=len(v)
+                    temp_v=v[::-1]
+                    idx = temp_v.index(')')
+                    a = v[:l-idx]
+                    b = v[l-idx:]
+                    return eval(a)+eval(b)

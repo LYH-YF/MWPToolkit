@@ -1,10 +1,34 @@
-import numpy as np
 import time
+import re
 
 import torch
+import numpy as np
 
 #from tqdm import tqdm  # for progressive bar during loading
 
+def str2float(v):
+    if not isinstance(v,str):
+        return v
+    else:
+        if '%' in v:
+            v=v[:-1]
+            return float(v)/100
+        if '(' in v:
+            try:
+                return eval(v)
+            except:
+                if re.match('^\d+\(',v):
+                    idx = v.index('(')
+                    a = v[:idx]
+                    b = v[idx:]
+                    return eval(a)+eval(b)
+                if re.match('.*\)\d+$',v):
+                    l=len(v)
+                    temp_v=v[::-1]
+                    idx = temp_v.index(')')
+                    a = v[:l-idx]
+                    b = v[l-idx:]
+                    return eval(a)+eval(b)
 
 class Env:
 
@@ -37,24 +61,10 @@ class Env:
         self.curr_agent = self.agents[num]
         self.curr_agent.init_state_info()
         return self.curr_agent.feat_vector
-
-
-    
-
-    # def get_all_features(self):
-    #     parse_dict = self.config.parse_dict
-    #     gold_trees = self.config.gold_trees
-    #     picks = self.config.picks
-
-    #     features = {}
-    #     print("reading word problems...")
-    #     for i in tqdm(range(self.config.wp_total_num)):
-    #         p = picks.get(str(i), [])
-    #         agent = Agent(parse_dict[i], gold_trees[i], self.config.reject[i], p)
-    #         agent.get_feature_from_schema_info()
-    #         features.update(agent.get_possible_features())
-    #         self.agents.append(agent)
-    #     return features
+    def validate_reset(self, iteration):
+        self.curr_agent = self.agents[iteration]
+        self.curr_agent.init_state_info()
+        return self.curr_agent.feat_vector
 
     def separate_data_set(self):
         train_set = []
@@ -70,19 +80,13 @@ class Env:
     def reset_inner_count(self):
         self.count = 0
 
-
-    def validate_reset(self, iteration):
-        self.curr_agent = self.validate_set[iteration]
-        self.curr_agent.init_state_info(self.index_to_feature)
-        return np.array(self.curr_agent.feat_vector)
-
     def step(self, action_op,next_states):
         next_states, reward, done, flag = self.curr_agent.compound_two_nodes(action_op,next_states)
         return next_states, reward, done
 
-    def val_step(self, action_op, loc):
-        next_states, done, flag, etime = self.curr_agent.compound_two_nodes_predict(action_op, loc, './predict/analysis_')
-        return next_states, done, flag, etime
+    def val_step(self, action_op, next_states):
+        next_states, done, flag = self.curr_agent.compound_two_nodes_predict(action_op,next_states)
+        return next_states, done, flag
         
 
 class Node:
@@ -112,9 +116,17 @@ class Node:
         elif op == '*':
              return v2 * v1
         elif op == '/':
-            return v1 / v2
+            try:
+                res=v1 / v2
+            except:
+                res=float('inf')
+            return res
         elif op == '^':
-            return v1**v2
+            try:
+                res=v1 ** v2
+            except:
+                res=float('inf')
+            return res
 
     def combine_node(self, node1, node2, op):
         self.is_compound = True
@@ -124,11 +136,12 @@ class Node:
         value1 = 0
         value2 = 0
         if node1.is_compound == False:
-            value1 = float(node1.value)
+            #value1 = float(node1.value)
+            value1 = str2float(node1.value)
         else: 
             value1 = node1.value 
         if node2.is_compound == False:
-            value2 = float(node2.value)
+            value2 = str2float(node2.value)
         else: 
             value2 = node2.value 
         self.value = self.compute_val(value1, value2, op) 
@@ -290,7 +303,7 @@ class Agent:
     def get_feat_vector(self, index1, index2):
         emb1=self.quantities_emb[index1]
         emb2=self.quantities_emb[index2]
-        self.feat_vector=torch.cat([emb1,emb2])
+        self.feat_vector=torch.cat([emb1,emb2],dim=-1)
 
         return self.feat_vector
 
@@ -333,39 +346,35 @@ class Agent:
         #self.index_to_feat = index_to_feat
         self.get_feat_vector(self.node_1_index, self.node_2_index)
 
-    def compound_two_nodes_predict(self, op, loc, prefix="./test/analysis_"):
-        filename = prefix + loc 
-        start = time.time()
+    def compound_two_nodes_predict(self, op, next_states):
+        op_symbol=self.op_list[op]
         if self.breakout == 1:
             #self.write_single_info(filename, 1, "parse", "_error")
-            return next_states, 1, 0, time.time() - start
+            return next_states, 1, 0
 
         self.reward = 0
         node1 = self.state.get_node_via_index(self.node_1_index)
         node2 = self.state.get_node_via_index(self.node_2_index)
-        fix_node1 = self.state.fix_nodes[self.node_1_index]
-        fix_node2 = self.state.fix_nodes[self.node_2_index]
-        self.write_info(filename, op)
         newNode = Node()
-        newNode.combine_node(node1, node2, op)
+        newNode.combine_node(node1, node2, op_symbol)
         self.state.change(self.node_1_index, self.node_2_index, newNode)
         if len(self.state.nodes) == 1:
-            if abs(float(self.state.nodes[0].value) - float(self.gold_tree.gold_ans)) < 1e-4:
+            if abs(str2float(self.state.nodes[0].value) - str2float(self.gold_tree.gold_ans)) < 1e-4:
                 #self.write_single_info(filename, 1, "compute_state_node==1", "_right")
-                return next_states, 1, 1, time.time() - start
+                return next_states, 1, 1
             else:
                 #self.write_single_info(filename, 1, "compute_state_node==1", "_error")
-                return next_states, 1, 0, time.time() - start
+                return next_states, 1, 0
         elif len(self.state.nodes) == 0:
             #self.write_single_info(filename, 1, "state_node==0", "_error")
-            return next_states, 1, 0, time.time() - start
+            return next_states, 1, 0
         else:
             elem_pair = self.select_combine()
             self.node_1_index = elem_pair[0]
             self.node_2_index = elem_pair[1]
             next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
             #self.write_single_info(filename, 1, "next", "_step")
-            return next_states, 0, 0, time.time() - start
+            return next_states, 0, 0
             
     def compound_two_nodes(self, op, next_states):
         self.reward = 0
@@ -402,7 +411,7 @@ class Agent:
                     newNode.combine_node(node1, node2, op_symbol)
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
-                        if abs(float(self.state.nodes[0].value) - float(self.gold_tree.gold_ans)) < 1e-4:
+                        if abs(str2float(self.state.nodes[0].value) - str2float(self.gold_tree.gold_ans)) < 1e-4:
                             return next_states, 5, 1, 1
                         else:
                             return next_states, -1, 1, 0
@@ -415,7 +424,7 @@ class Agent:
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
-                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index, self.index_to_feat)
+                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
                     return next_states, -5, 3, 0
@@ -430,7 +439,7 @@ class Agent:
                         return next_states, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
-                        if abs(float(self.state.nodes[0].value) - float(self.gold_tree.gold_ans)) < 1e-4:
+                        if abs(str2float(self.state.nodes[0].value) - str2float(self.gold_tree.gold_ans)) < 1e-4:
                             return next_states, 5, 1, 1
                         else:
                             return next_states, -1, 1, 0
@@ -458,7 +467,7 @@ class Agent:
                         return next_states, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
-                        if self.state.nodes[0].node_value == self.gold_tree.gold_ans < 1e-4:
+                        if abs(str2float(self.state.nodes[0].value) == str2float(self.gold_tree.gold_ans)) < 1e-4:
                             return next_states, 5, 1, 1
                         else:
                             return next_states, -1, 1, 0
@@ -471,7 +480,7 @@ class Agent:
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
-                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index, self.index_to_feat)
+                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
                     return next_states, -5, 3, 0
@@ -486,7 +495,7 @@ class Agent:
                         return next_states, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
-                        if self.state.nodes[0].node_value == self.gold_tree.gold_ans < 1e-4:
+                        if abs(str2float(self.state.nodes[0].value) == str2float(self.gold_tree.gold_ans)) < 1e-4:
                             return next_states, 5, 1, 1
                         else:
                             return next_states, -1, 1, 0
@@ -499,7 +508,7 @@ class Agent:
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
-                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index, self.index_to_feat)
+                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
                     return next_states, -5, 3, 0
@@ -514,7 +523,7 @@ class Agent:
                         return next_states, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
-                        if self.state.nodes[0].node_value == self.gold_tree.gold_ans < 1e-4:
+                        if abs(str2float(self.state.nodes[0].value) == str2float(self.gold_tree.gold_ans)) < 1e-4:
                             return next_states, 5, 1, 1
                         else:
                             return next_states, -1, 1, 0
@@ -527,7 +536,7 @@ class Agent:
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
-                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index, self.index_to_feat)
+                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
                     return next_states, -5, 3, 0
@@ -555,7 +564,7 @@ class Agent:
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
-                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index, self.index_to_feat)
+                        next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
                     return next_states, -5, 3, 0

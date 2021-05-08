@@ -1946,7 +1946,7 @@ class MathDQNTrainer(AbstractTrainer):
     def _eval_batch(self, batch):
         '''seq,seq_length,num_pos,target=None'''
         ans_acc = self.model.predict(batch['question'],batch["ques len"],batch['num pos'],batch['num list'],batch['ans'],batch['equation'])
-        val_acc=[True]*ans_acc
+        val_acc=[True]*ans_acc+[False]*(len(batch['equation'])-ans_acc)
         equ_acc=[]
 
         return val_acc, equ_acc
@@ -1956,6 +1956,7 @@ class MathDQNTrainer(AbstractTrainer):
         loss_total = 0.
         self.model.train()
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+            self.model.train()
             self.batch_idx = batch_idx + 1
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
@@ -1975,9 +1976,11 @@ class MathDQNTrainer(AbstractTrainer):
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
+            #self.logger.info(self.model.training)
             loss_total, train_time_cost = self._train_epoch()
             self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+            #self.logger.info(self.model.training)
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
@@ -2008,6 +2011,7 @@ class MathDQNTrainer(AbstractTrainer):
                         self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
+        #self.logger.info(self.model.training)
         self.logger.info('''training finished.
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\

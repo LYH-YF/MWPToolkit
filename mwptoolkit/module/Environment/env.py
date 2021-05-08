@@ -4,31 +4,8 @@ import re
 import torch
 import numpy as np
 
-#from tqdm import tqdm  # for progressive bar during loading
+from mwptoolkit.utils.utils import str2float
 
-def str2float(v):
-    if not isinstance(v,str):
-        return v
-    else:
-        if '%' in v:
-            v=v[:-1]
-            return float(v)/100
-        if '(' in v:
-            try:
-                return eval(v)
-            except:
-                if re.match('^\d+\(',v):
-                    idx = v.index('(')
-                    a = v[:idx]
-                    b = v[idx:]
-                    return eval(a)+eval(b)
-                if re.match('.*\)\d+$',v):
-                    l=len(v)
-                    temp_v=v[::-1]
-                    idx = temp_v.index(')')
-                    a = v[:l-idx]
-                    b = v[l-idx:]
-                    return eval(a)+eval(b)
 
 class Env:
 
@@ -44,6 +21,10 @@ class Env:
         #self.index_to_feature, self.feature_to_index = self.get_index_to_feature_and_feature_to_index()
         #self.train_set, self.validate_set = self.separate_data_set()
         #equations=batch_data['equation']
+        self.count = 0
+        self.agents = []
+        self.curr_agent = None
+
         for b_i in range(len(batch_tree)):
             agent = Agent(
                 parse_obj={},
@@ -80,12 +61,12 @@ class Env:
     def reset_inner_count(self):
         self.count = 0
 
-    def step(self, action_op,next_states):
-        next_states, reward, done, flag = self.curr_agent.compound_two_nodes(action_op,next_states)
+    def step(self, action_op):
+        next_states, reward, done, flag = self.curr_agent.compound_two_nodes(action_op)
         return next_states, reward, done
 
-    def val_step(self, action_op, next_states):
-        next_states, done, flag = self.curr_agent.compound_two_nodes_predict(action_op,next_states)
+    def val_step(self, action_op):
+        next_states, done, flag = self.curr_agent.compound_two_nodes_predict(action_op)
         return next_states, done, flag
         
 
@@ -339,18 +320,18 @@ class Agent:
             self.breakout = 1
             #self.feat_dim = len(index_to_feat)
             #self.feat_vector = next_states
-            self.feat_vector = torch.randn(self.quantities_emb.size())
+            self.feat_vector = torch.randn(self.quantities_emb[0].size(-1)*2)
             return
         self.node_1_index = elem_pair[0] 
         self.node_2_index = elem_pair[1]
         #self.index_to_feat = index_to_feat
         self.get_feat_vector(self.node_1_index, self.node_2_index)
 
-    def compound_two_nodes_predict(self, op, next_states):
+    def compound_two_nodes_predict(self, op):
         op_symbol=self.op_list[op]
         if self.breakout == 1:
             #self.write_single_info(filename, 1, "parse", "_error")
-            return next_states, 1, 0
+            return None, 1, 0
 
         self.reward = 0
         node1 = self.state.get_node_via_index(self.node_1_index)
@@ -361,13 +342,13 @@ class Agent:
         if len(self.state.nodes) == 1:
             if abs(str2float(self.state.nodes[0].value) - str2float(self.gold_tree.gold_ans)) < 1e-4:
                 #self.write_single_info(filename, 1, "compute_state_node==1", "_right")
-                return next_states, 1, 1
+                return None, 1, 1
             else:
                 #self.write_single_info(filename, 1, "compute_state_node==1", "_error")
-                return next_states, 1, 0
+                return None, 1, 0
         elif len(self.state.nodes) == 0:
             #self.write_single_info(filename, 1, "state_node==0", "_error")
-            return next_states, 1, 0
+            return None, 1, 0
         else:
             elem_pair = self.select_combine()
             self.node_1_index = elem_pair[0]
@@ -376,10 +357,10 @@ class Agent:
             #self.write_single_info(filename, 1, "next", "_step")
             return next_states, 0, 0
             
-    def compound_two_nodes(self, op, next_states):
+    def compound_two_nodes(self, op):
         self.reward = 0
         if self.breakout == 1:
-            return next_states, 0, 1, 0
+            return None, 0, 1, 0
 
         node1 = self.state.get_node_via_index(self.node_1_index)
         node2 = self.state.get_node_via_index(self.node_2_index)
@@ -412,164 +393,164 @@ class Agent:
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
                         if abs(str2float(self.state.nodes[0].value) - str2float(self.gold_tree.gold_ans)) < 1e-4:
-                            return next_states, 5, 1, 1
+                            return None, 5, 1, 1
                         else:
-                            return next_states, -1, 1, 0
+                            return None, -1, 1, 0
                     elif len(self.state.nodes) == 0:
-                        return next_states, -1, 1, 0
+                        return None, -1, 1, 0
                     else:
                         elem_pair = self.select_combine()
                         if len(elem_pair) == 0:
-                            return next_states, -1, 2, 0
+                            return None, -1, 2, 0
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
                         next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
-                    return next_states, -5, 3, 0
+                    return None, -5, 3, 0
             else:
-                return next_states, -5, 4, 0
+                return None, -5, 4, 0
         elif op_symbol == '-':
             if flag1 and flag2:
                 if self.gold_tree.query(fix_node1.value, fix_node2.value) == '-':
                     newNode = Node()
                     newNode.combine_node(node1, node2, op_symbol)
                     if newNode.value < 0 :
-                        return next_states, -5, 1, 1
+                        return None, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
                         if abs(str2float(self.state.nodes[0].value) - str2float(self.gold_tree.gold_ans)) < 1e-4:
-                            return next_states, 5, 1, 1
+                            return None, 5, 1, 1
                         else:
-                            return next_states, -1, 1, 0
+                            return None, -1, 1, 0
                     elif len(self.state.nodes) == 0:
-                        return next_states, -1, 1, 0
+                        return None, -1, 1, 0
                     else:
                         elem_pair = self.select_combine()
                         if len(elem_pair) == 0:
-                            return next_states, -1, 2, 0
+                            return None, -1, 2, 0
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
                         next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
-                    return next_states, -5, 3, 0
+                    return None, -5, 3, 0
             else:
-                return next_states, -5, 4, 0
+                return None, -5, 4, 0
         elif op_symbol == '*':
             if flag1 and flag2:
                 if self.gold_tree.query(fix_node1.value, fix_node2.value) == '*':
                     newNode = Node()
                     newNode.combine_node(node1, node2, op_symbol)
                     if newNode.value < 0 :
-                        return next_states, -5, 1, 1
+                        return None, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
                         if abs(str2float(self.state.nodes[0].value) == str2float(self.gold_tree.gold_ans)) < 1e-4:
-                            return next_states, 5, 1, 1
+                            return None, 5, 1, 1
                         else:
-                            return next_states, -1, 1, 0
+                            return None, -1, 1, 0
                     elif len(self.state.nodes) == 0:
-                        return next_states, -1, 1, 0
+                        return None, -1, 1, 0
                     else:
                         elem_pair = self.select_combine()
                         if len(elem_pair) == 0:
-                            return next_states, -1, 2, 0
+                            return None, -1, 2, 0
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
                         next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
-                    return next_states, -5, 3, 0
+                    return None, -5, 3, 0
             else:
-                return next_states, -5, 4, 0
+                return None, -5, 4, 0
         elif op_symbol == '/':
             if flag1 and flag2:
                 if self.gold_tree.query(fix_node1.value, fix_node2.value) == '/':
                     newNode = Node()
                     newNode.combine_node(node1, node2, op_symbol)
                     if newNode.value < 0 :
-                        return next_states, -5, 1, 1
+                        return None, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
                         if abs(str2float(self.state.nodes[0].value) == str2float(self.gold_tree.gold_ans)) < 1e-4:
-                            return next_states, 5, 1, 1
+                            return None, 5, 1, 1
                         else:
-                            return next_states, -1, 1, 0
+                            return None, -1, 1, 0
                     elif len(self.state.nodes) == 0:
-                        return next_states, -1, 1, 0
+                        return None, -1, 1, 0
                     else:
                         elem_pair = self.select_combine()
                         if len(elem_pair) == 0:
-                            return next_states, -1, 2, 0
+                            return None, -1, 2, 0
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
                         next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
-                    return next_states, -5, 3, 0
+                    return None, -5, 3, 0
             else:
-                return next_states, -5, 4, 0
+                return None, -5, 4, 0
         elif op_symbol == '^':
             if flag1 and flag2:
                 if self.gold_tree.query(fix_node1.value, fix_node2.value) == '^':
                     newNode = Node()
                     newNode.combine_node(node1, node2, op_symbol)
                     if newNode.value < 0 :
-                        return next_states, -5, 1, 1
+                        return None, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
                         if abs(str2float(self.state.nodes[0].value) == str2float(self.gold_tree.gold_ans)) < 1e-4:
-                            return next_states, 5, 1, 1
+                            return None, 5, 1, 1
                         else:
-                            return next_states, -1, 1, 0
+                            return None, -1, 1, 0
                     elif len(self.state.nodes) == 0:
-                        return next_states, -1, 1, 0
+                        return None, -1, 1, 0
                     else:
                         elem_pair = self.select_combine()
                         if len(elem_pair) == 0:
-                            return next_states, -1, 2, 0
+                            return None, -1, 2, 0
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
                         next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
-                    return next_states, -5, 3, 0
+                    return None, -5, 3, 0
             else:
-                return next_states, -5, 4, 0
+                return None, -5, 4, 0
         else:
             if flag1 and flag2:
                 if self.gold_tree.query(fix_node1.value, fix_node2.value) == '-':
                     newNode = Node()
                     newNode.combine_node(node1, node2, op)
                     if newNode.value < 0 :
-                        return next_states, -5, 1, 1
+                        return None, -5, 1, 1
                     self.state.change(self.node_1_index, self.node_2_index, newNode)
                     if len(self.state.nodes) == 1:
                         if self.state.nodes[0].node_value == self.gold_tree.gold_ans < 1e-4:
-                            return next_states, 5, 1, 1
+                            return None, 5, 1, 1
                         else:
-                            return next_states, -1, 1, 0
+                            return None, -1, 1, 0
                     elif len(self.state.nodes) == 0:
-                        return next_states, -1, 1, 0
+                        return None, -1, 1, 0
                     else:
                         elem_pair = self.select_combine()
                         if len(elem_pair) == 0:
-                            return next_states, -1, 2, 0
+                            return None, -1, 2, 0
                         self.node_1_index = elem_pair[0]
                         self.node_2_index = elem_pair[1]
                         self.candidate_select.remove(elem_pair)
                         next_states = self.get_feat_vector(self.node_1_index, self.node_2_index)
                         return next_states, 5, 0, 0
                 else:
-                    return next_states, -5, 3, 0
+                    return None, -5, 3, 0
             else:
-                return next_states, -5, 4, 0
+                return None, -5, 4, 0
 
         
 

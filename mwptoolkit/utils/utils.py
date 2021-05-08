@@ -170,3 +170,7 @@ def str2float(v):
                     a = v[:l-idx]
                     b = v[l-idx:]
                     return eval(a)+eval(b)
+        else:
+            if v == '<UNK>':
+                return float('inf')
+            return float(v)

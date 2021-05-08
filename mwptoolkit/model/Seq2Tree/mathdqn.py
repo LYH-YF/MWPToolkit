@@ -52,27 +52,29 @@ class MathDQN(nn.Module):
         for b_i in range(batch_size):
             obs=self.env.reset()
             for step in range(self.max_out_len):
+                obs = obs.to(device)
                 action,next_obs=self.dqn.play_one(obs)
-                next_obs, reward, done=self.env.step(action,next_obs)
+                n_o, reward, done=self.env.step(action)
+                if n_o != None:
+                    next_obs=n_o
                 self.replay_memory.append((obs, action, reward, next_obs, done))
                 obs=next_obs
                 if done:
                     break
-            x=self.env.curr_agent.state.nodes
-            print(1)
         states, actions, rewards, next_states, dones = self.sample_experiences(batch_size)
         dones = dones.to(device)
         rewards = rewards.to(device)
-        self.dqn.eval()
+        #self.dqn.eval()
         next_Q_values,_ = self.dqn(next_states)
-        self.dqn.train()
+        #self.dqn.train()
         max_next_Q_values = torch.max(next_Q_values, dim=1)[0]
         discount_rate=0.95
         target_Q_values = rewards + (1 - dones) * discount_rate * max_next_Q_values
 
         mask = torch.zeros(batch_size, len(self.operator_list))
         idxs = torch.arange(0,batch_size)
-        mask[idxs,actions]=1
+        #mask[idxs,actions]=1
+        mask = mask.to(device)
         
         all_Q_values,_ = self.dqn(states)
         Q_values = torch.sum(all_Q_values * mask,dim=1)
@@ -102,15 +104,16 @@ class MathDQN(nn.Module):
         for b_i in range(batch_size):
             obs=self.env.validate_reset(b_i)
             for step in range(self.max_out_len):
+                obs = obs.to(device)
                 action,next_obs=self.dqn.play_one(obs)
-                next_obs, done, flag=self.env.val_step(action,next_obs)
+                n_o, done, flag=self.env.val_step(action)
+                if n_o != None:
+                    next_obs=n_o
                 obs=next_obs
                 if done:
                     if flag:
                         acc+=1
                     break
-                x=self.env.curr_agent.state.nodes
-                print(1)
         return acc
 
 

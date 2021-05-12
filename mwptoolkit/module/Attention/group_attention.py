@@ -114,6 +114,25 @@ class GroupAttention(nn.Module):
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
         self.in_word2idx=in_word2idx
+        self.ignore_list=[]
+        # chinese dataset
+        try:
+            self.ignore_list.append(in_word2idx['．'])
+        except:
+            pass
+        try:
+            self.ignore_list.append(self.in_word2idx["，"])
+        except:
+            pass
+        # english dataset
+        try:
+            self.ignore_list.append(self.in_word2idx["."])
+        except:
+            pass
+        try:
+            self.ignore_list.append(self.in_word2idx[","])
+        except:
+            pass
 
     def get_mask(self,src,pad=0):
         device=src.device
@@ -165,8 +184,9 @@ class GroupAttention(nn.Module):
             mask = [0] * len(encode_sen_idx)
             for num in range(len(encode_sen_idx)):
                 mask[num] = token
-                if (encode_sen_idx[num] == self.in_word2idx['．'] or encode_sen_idx[num] == self.in_word2idx["，"]) \
-                        and num != len(encode_sen_idx) - 1:
+                # if (encode_sen_idx[num] == self.in_word2idx['．'] or encode_sen_idx[num] == self.in_word2idx["，"]) \
+                #         and num != len(encode_sen_idx) - 1:
+                if (encode_sen_idx[num] in self.ignore_list) and num != len(encode_sen_idx) - 1:
                     token += 1
                 if encode_sen_idx[num]==0:mask[num] = 0
             for num in range(len(encode_sen_idx)):

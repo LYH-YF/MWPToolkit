@@ -3,9 +3,11 @@ import json
 import random
 from copy import deepcopy
 from collections import OrderedDict
-from fractions import Fraction
+
 import stanza
 
+
+from mwptoolkit.utils.utils import str2float, lists2dict
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens
 
 
@@ -38,7 +40,7 @@ def joint_number(text_list):
     return new_list
 
 
-def joint_number_(text_list):  #match longer fraction such as ( 1 / 1000000 )
+def joint_number_(text_list):  # match longer fraction such as ( 1 / 1000000 )
     new_list = []
     i = 0
     while i < len(text_list):
@@ -340,6 +342,83 @@ def seg_and_tag_mawps(st, nums_fraction, nums):  # seg the equation and tag the 
     return res
 
 
+def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the num
+    res = []
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    if pos_st:
+        p_start = pos_st.start() + 1
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_multi(st[:p_start], nums_fraction, nums)
+        st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number = str(int(str2float(st_num)))
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
+        return res
+    for n in nums_fraction:
+        if n in st:
+            p_start = st.find(n)
+            p_end = p_start + len(n)
+            if p_start > 0:
+                res += seg_and_tag_multi(st[:p_start], nums_fraction, nums)
+            try:
+                res.append(nums[n])
+            except:
+                res.append(n)
+            if p_end < len(st):
+                res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
+            return res
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_multi(st[:p_start], nums_fraction, nums)
+        st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number = str(int(str2float(st_num)))
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(st_num)
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
+        return res
+    pos_st = re.search("<BRG>", st)
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_multi(st[:p_start], nums_fraction, nums)
+        res.append(st[p_start:p_end])
+        if p_end < len(st):
+            res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
+        return res
+    for ss in st:
+        if ss.isalpha():
+            res.append(ss.lower())
+        elif ss == " ":
+            continue
+        else:
+            res.append(ss)
+    return res
+
+
 def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
     pos_st = re.search(r"([+]|-|[*]|/|[(]|=)\s-\s((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
@@ -349,15 +428,12 @@ def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the n
         num_str = ''.join(st[p_start:p_end].split(" "))
         if p_start > 0:
             res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
-        try:
-            st_num = str(eval(num_str))
-        except:  # % in number
-            st_num = num_str
+        st_num = num_str
         try:
             res.append(nums[st_num])
         except:
             try:
-                number = str(int(eval(st_num)))
+                number = str(int(str2float(st_num)))
                 if abs(eval(number) - eval(st_num)) < 1e-4:
                     res.append(nums[number])
                 else:
@@ -380,45 +456,18 @@ def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the n
             if p_end < len(st):
                 res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
             return res
-    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-(\d+\.\d+)", st)  #search negative number but filtate minus symbol
-    if pos_st:
-        p_start = pos_st.start() + 1
-        p_end = pos_st.end()
-        if p_start > 0:
-            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
-        try:
-            st_num = str(eval(st[p_start:p_end]))
-        except:  # % in number
-            st_num = st[p_start:p_end]
-        try:
-            res.append(nums[st_num])
-        except:
-            try:
-                number = str(int(eval(st_num)))
-                if abs(eval(number) - eval(st_num)) < 1e-4:
-                    res.append(nums[number])
-                else:
-                    res.append(st_num)
-            except:
-                res.append(st_num)
-        if p_end < len(st):
-            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
-        return res
     pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
         if p_start > 0:
-            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
-        try:
-            st_num = str(eval(st[p_start:p_end]))
-        except:  # % in number
-            st_num = st[p_start:p_end]
+            res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
+        st_num = st[p_start:p_end]
         try:
             res.append(nums[st_num])
         except:
             try:
-                number = str(int(eval(st_num)))
+                number = str(int(str2float(st_num)))
                 if abs(eval(number) - eval(st_num)) < 1e-4:
                     res.append(nums[number])
                 else:
@@ -426,17 +475,17 @@ def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the n
             except:
                 res.append(st_num)
         if p_end < len(st):
-            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
+            res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
         return res
     pos_st = re.search("<BRG>", st)
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
         if p_start > 0:
-            res += seg_and_tag_mawps(st[:p_start], nums_fraction, nums)
+            res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
         res.append(st[p_start:p_end])
         if p_end < len(st):
-            res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
+            res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
         return res
     for ss in st:
         if ss.isalpha():
@@ -448,8 +497,8 @@ def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the n
     return res
 
 
-def number_transfer_(data, mask_type="NUM", min_generate_keep=0):
-    '''transfer num process
+def number_transfer_math23k(data, mask_type="number", min_generate_keep=0):
+    r'''transfer num process
 
     Args:
         data: list.
@@ -488,153 +537,48 @@ def number_transfer_(data, mask_type="NUM", min_generate_keep=0):
         equations = d["equation"][2:]
         if '千' in equations:
             equations = equations[:equations.index('千')]
-
-        for s in seg:
-            if s == 0:
-                input_seq.append(s)
-            else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    #nums.append(s[pos.start():pos.end()])
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            nums[s[pos.start():pos.end()]] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            input_seq.append(nums[s[pos.start():pos.end()]])
-                    except:
-                        nums[s[pos.start():pos.end()]] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    finally:
-                        num_list.append(s[pos.start():pos.end()])
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
-                else:
-                    input_seq.append(s)
-        nums_count = len(list(nums.keys()))
-        if copy_nums < nums_count:
-            copy_nums = nums_count
-        nums_fraction = []
-
-        for num, mask in nums.items():
-            if re.search("\d*\(\d+/\d+\)\d*", num):
-                nums_fraction.append(num)
-        nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-        # if d["id"]==133813:
-        #     print(1)
-        out_seq = seg_and_tag_(equations, nums_fraction, nums)
-        for s in out_seq:  # tag the num which is generated
-            if s[0].isdigit() and s not in generate_nums and s not in num_list:
-                generate_nums.append(s)
-                generate_nums_dict[s] = 0
-            if s in generate_nums and s not in num_list:
-                generate_nums_dict[s] = generate_nums_dict[s] + 1
-
-        num_pos = []
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_pos.append(i)
-        assert len(num_list) == len(num_pos)
-
-        #copy data
-        # if d["id"]=="8883":
-        #     print(1)
-        new_data = d
-        new_data["question"] = input_seq
-        new_data["equation"] = out_seq
-        new_data["number list"] = num_list
-        new_data["number position"] = num_pos
-        processed_datas.append(new_data)
-
-    generate_number = []
-    for g in generate_nums:
-        if generate_nums_dict[g] >= min_generate_keep:
-            generate_number.append(g)
-    return processed_datas, generate_number, copy_nums
-
-
-def number_transfer_math23k(data, mask_type="NUM", min_generate_keep=0):
-    '''transfer num process
-
-    Args:
-        data: list.
-        mask_type: str | default 'NUM', the way to mask num, optinal['NUM', 'alphabet', 'number'].
-        min_generate_keep: int | default 5, the number to control if the numbers of equations will be kept as generating number.
-
-    Return:
-        processed_datas: list type.
-        generate_number: list type, symbols to generate extra.
-        copy_nums: int, the count of copied symbol from question to equation.
-    '''
-    if mask_type == MaskSymbol.NUM:
-        sent_mask_list = NumMask.NUM
-        equ_mask_list = NumMask.number
-    elif mask_type == MaskSymbol.alphabet:
-        sent_mask_list = NumMask.alphabet
-        equ_mask_list = NumMask.alphabet
-    elif mask_type == MaskSymbol.number:
-        sent_mask_list = NumMask.number
-        equ_mask_list = NumMask.number
-
-    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
-
-    generate_nums = []
-    generate_nums_dict = {}
-    copy_nums = 0
-    processed_datas = []
-    for d in data:
-        sent_idx = 0
-        equ_idx = 0
-        #nums = []
-        nums = OrderedDict()
-        num_list = []
+        num_pos_dict = {}
+        # match and split number
         input_seq = []
-        seg = d["segmented_text"].split(" ")
-        equations = d["equation"][2:]
-        if '千' in equations:
-            equations = equations[:equations.index('千')]
-
         for s in seg:
-            if s == 0:
-                input_seq.append(s)
+            pos = re.search(pattern, s)
+            if pos and pos.start() == 0:
+                input_seq.append(s[pos.start():pos.end()])
+                if pos.end() < len(s):
+                    input_seq.append(s[pos.end():])
             else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    #nums.append(s[pos.start():pos.end()])
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            nums[s[pos.start():pos.end()]] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            input_seq.append(nums[s[pos.start():pos.end()]])
-                    except:
-                        nums[s[pos.start():pos.end()]] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    finally:
-                        num_list.append(s[pos.start():pos.end()])
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
+                input_seq.append(s)
+        # find all num position
+        for word_pos, word in enumerate(input_seq):
+            pos = re.search(pattern, word)
+            if pos and pos.start() == 0:
+                if word in num_pos_dict:
+                    num_pos_dict[word].append(word_pos)
                 else:
-                    input_seq.append(s)
+                    num_list.append(word)
+                    num_pos_dict[word] = [word_pos]
+        num_list = sorted(num_list, key=lambda x: max(num_pos_dict[x]), reverse=False)
+        nums = lists2dict(num_list, equ_mask_list[:len(num_list)])
+        nums_for_ques = lists2dict(num_list, sent_mask_list[:len(num_list)])
+
+        all_pos = []
+        # number transform
+        for num, mask in nums_for_ques.items():
+            for pos in num_pos_dict[num]:
+                input_seq[pos] = mask
+                all_pos.append(pos)
+
+        #input_seq = deepcopy(seg)
         nums_count = len(list(nums.keys()))
         if copy_nums < nums_count:
             copy_nums = nums_count
-        nums_fraction = []
 
+        nums_fraction = []
         for num, mask in nums.items():
             if re.search("\d*\(\d+/\d+\)\d*", num):
                 nums_fraction.append(num)
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-        # if d["id"]=='23100':
-        #     print(1)
+
         out_seq = seg_and_tag_math23k(equations, nums_fraction, nums)
         for s in out_seq:  # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
@@ -643,31 +587,21 @@ def number_transfer_math23k(data, mask_type="NUM", min_generate_keep=0):
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-        num_pos = []
         source = deepcopy(input_seq)
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_pos.append(i)
-                num_idx = equ_mask_list.index(j)
-                num_str = num_list[num_idx]
-                if '%' in num_str:
-                    num = str(eval(num_str[:-1] + '/100'))
-                else:
-                    try:
-                        num = str(eval(num_str))
-                    except:
-                        if re.match("\d+\(\d+/\d+\)", num_str):  # match fraction like '5(3/4)'
-                            idx = num_str.index('(')
-                            a = num_str[:idx]
-                            b = num_str[idx:]
-                        if re.match("\(\d+/\d+\)\d+", num_str):  # match fraction like '(3/4)5'
-                            idx = num_str.index(')')
-                            a = num_str[:idx + 1]
-                            b = num_str[idx + 1:]
-                        num = str(eval(a) + eval(b))
-                    num_list[num_idx] = num
-                source[i] = num
+        for pos in all_pos:
+            for key, value in num_pos_dict.items():
+                if pos in value:
+                    num_str = key
+                    break
+            num = str(str2float(num_str))
+            source[pos] = num
         source = ' '.join(source)
+        #get final number position
+        num_pos = []
+        for num in num_list:
+            # select the latest position as the number position
+            # if the number corresponds multiple positions
+            num_pos.append(max(num_pos_dict[num]))
         assert len(num_list) == len(num_pos)
         #copy data
         # if d["id"]=="8883":
@@ -687,7 +621,7 @@ def number_transfer_math23k(data, mask_type="NUM", min_generate_keep=0):
     return processed_datas, generate_number, copy_nums
 
 
-def number_transfer_ape200k(data, mask_type="NUM", min_generate_keep=0):
+def number_transfer_ape200k(data, mask_type="number", min_generate_keep=0):
     '''transfer num process
 
     Args:
@@ -721,6 +655,7 @@ def number_transfer_ape200k(data, mask_type="NUM", min_generate_keep=0):
         equ_idx = 0
         #nums = []
         nums = OrderedDict()
+        num_pos_dict = {}
         num_list = []
         input_seq = []
         seg = d["segmented_text"].split(" ")
@@ -731,81 +666,73 @@ def number_transfer_ape200k(data, mask_type="NUM", min_generate_keep=0):
         if '千' in equations:
             equations = equations[:equations.index('千')]
 
+        # match and split number
+        input_seq = []
         for s in seg:
-            if s == 0:
-                input_seq.append(s)
+            pos = re.search(pattern, s)
+            if pos and pos.start() == 0:
+                input_seq.append(s[pos.start():pos.end()])
+                if pos.end() < len(s):
+                    input_seq.append(s[pos.end():])
             else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    #nums.append(s[pos.start():pos.end()])
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            nums[s[pos.start():pos.end()]] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            input_seq.append(nums[s[pos.start():pos.end()]])
-                    except:
-                        nums[s[pos.start():pos.end()]] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
+                input_seq.append(s)
+        # find all num position
+        for word_pos, word in enumerate(input_seq):
+            pos = re.search(pattern, word)
+            if pos and pos.start() == 0:
+                if word in num_pos_dict:
+                    num_pos_dict[word].append(word_pos)
                 else:
-                    input_seq.append(s)
+                    num_list.append(word)
+                    num_pos_dict[word] = [word_pos]
+        num_list = sorted(num_list, key=lambda x: max(num_pos_dict[x]), reverse=False)
+        nums = lists2dict(num_list, equ_mask_list[:len(num_list)])
+        nums_for_ques = lists2dict(num_list, sent_mask_list[:len(num_list)])
+
+        all_pos = []
+        # number transform
+        for num, mask in nums_for_ques.items():
+            for pos in num_pos_dict[num]:
+                input_seq[pos] = mask
+                all_pos.append(pos)
+
         nums_count = len(list(nums.keys()))
         if copy_nums < nums_count:
             copy_nums = nums_count
-        nums_fraction = []
 
+        nums_fraction = []
         for num, mask in nums.items():
             if re.search("\d*\(\d+/\d+\)\d*", num):
                 nums_fraction.append(num)
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-
+        # equation tag
         out_seq = seg_and_tag_ape200k(equations, nums_fraction, nums)
-        num_list = list(nums.keys())
-        for s in out_seq:  # tag the num which is generated
+
+        # tag the num which is generated
+        for s in out_seq:
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-        num_pos = []
-        mask_num_list = list(nums.values())
-        for num in mask_num_list:
-            try:
-                num_pos.append(input_seq.index(num))
-            except:
-                continue
-        assert len(num_list) == len(num_pos)
-
         source = deepcopy(input_seq)
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_idx = equ_mask_list.index(j)
-                num_str = num_list[num_idx]
-                if '%' in num_str:
-                    num = str(eval(num_str[:-1] + '/100'))
-                else:
-                    try:
-                        num = str(eval(num_str))
-                    except:
-                        if re.match("\d+\(\d+/\d+\)", num_str):  # match fraction like '5(3/4)'
-                            idx = num_str.index('(')
-                            a = num_str[:idx]
-                            b = num_str[idx:]
-                        if re.match("\(\d+/\d+\)\d+", num_str):  # match fraction like '(3/4)5'
-                            idx = num_str.index(')')
-                            a = num_str[:idx + 1]
-                            b = num_str[idx + 1:]
-                        num = str(eval(a) + eval(b))
-                    num_list[num_idx] = num
-                source[i] = num
+        for pos in all_pos:
+            for key, value in num_pos_dict.items():
+                if pos in value:
+                    num_str = key
+                    break
+            num = str(str2float(num_str))
+            source[pos] = num
         source = ' '.join(source)
+
+        #get final number position
+        num_pos = []
+        for num in num_list:
+            # select the latest position as the number position
+            # if the number corresponds multiple positions
+            num_pos.append(max(num_pos_dict[num]))
+        assert len(num_list) == len(num_pos)
 
         #copy data
         new_data = d
@@ -821,295 +748,6 @@ def number_transfer_ape200k(data, mask_type="NUM", min_generate_keep=0):
         if generate_nums_dict[g] >= min_generate_keep:
             generate_number.append(g)
     return processed_datas, generate_number, copy_nums
-
-
-def num_transfer_mawps(data, mask_type="number", min_generate_keep=0):
-    '''transfer num process
-
-    Args:
-        data: list.
-        mask_type: str | default 'NUM', the way to mask num, optinal['NUM', 'alphabet', 'number'].
-        min_generate_keep: int | default 5, the number to control if the numbers of equations will be kept as generating number.
-
-    Return:
-        processed_datas: list type.
-        generate_number: list type, symbols to generate extra.
-        copy_nums: int, the count of copied symbol from question to equation.
-    '''
-    if mask_type == MaskSymbol.NUM:
-        sent_mask_list = NumMask.NUM
-        equ_mask_list = NumMask.number
-    elif mask_type == MaskSymbol.alphabet:
-        sent_mask_list = NumMask.alphabet
-        equ_mask_list = NumMask.alphabet
-    elif mask_type == MaskSymbol.number:
-        sent_mask_list = NumMask.number
-        equ_mask_list = NumMask.number
-
-    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
-
-    generate_nums = []
-    generate_nums_dict = {}
-    copy_nums = 0
-    processed_datas = []
-    for d in data:
-        sent_idx = 0
-        equ_idx = 0
-        #nums = []
-        nums = OrderedDict()
-        #num_list=[]
-        input_seq = []
-        seg = d["segmented_text"].split(" ")
-        equations = d["equation"]
-
-        for s in seg:
-            if s == 0:
-                input_seq.append(s)
-            else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    number = str(eval(s[pos.start():pos.end()]))
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            nums[number] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            input_seq.append(nums[number])
-                    except:
-                        #number=str(eval(s[pos.start():pos.end()]))
-                        nums[number] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
-                else:
-                    input_seq.append(s)
-        nums_count = len(list(nums.keys()))
-        if copy_nums < nums_count:
-            copy_nums = nums_count
-        nums_fraction = []
-
-        for num, mask in nums.items():
-            if re.search("\d*\(\d+/\d+\)\d*", num):
-                nums_fraction.append(num)
-        nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-        # if d["id"]==76:
-        #     print(1)
-        out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
-        num_list = list(nums.keys())
-        for s in out_seq:  # tag the num which is generated
-            if s[0].isdigit() and s not in generate_nums and s not in num_list:
-                generate_nums.append(s)
-                generate_nums_dict[s] = 0
-            if s in generate_nums and s not in num_list:
-                generate_nums_dict[s] = generate_nums_dict[s] + 1
-
-        num_pos = []
-        mask_num_list = list(nums.values())
-        for num in mask_num_list:
-            try:
-                num_pos.append(input_seq.index(num))
-            except:
-                continue
-        assert len(num_list) == len(num_pos)
-        source = deepcopy(input_seq)
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_idx = equ_mask_list.index(j)
-                num_str = num_list[num_idx]
-                if '%' in num_str:
-                    num = str(eval(num_str[:-1] + '/100'))
-                else:
-                    try:
-                        num = str(eval(num_str))
-                    except:
-                        if re.match("\d+\(\d+/\d+\)", num_str):  # match fraction like '5(3/4)'
-                            idx = num_str.index('(')
-                            a = num_str[:idx]
-                            b = num_str[idx:]
-                        if re.match("\(\d+/\d+\)\d+", num_str):  # match fraction like '(3/4)5'
-                            idx = num_str.index(')')
-                            a = num_str[:idx + 1]
-                            b = num_str[idx + 1:]
-                        num = str(eval(a) + eval(b))
-                    num_list[num_idx] = num
-                source[i] = num
-        source = ' '.join(source)
-
-        #copy data
-        new_data = d
-        new_data["question"] = input_seq
-        new_data["equation"] = out_seq
-        new_data["ques source 1"] = source
-        new_data["number list"] = num_list
-        new_data["number position"] = num_pos
-        processed_datas.append(new_data)
-
-    generate_number = []
-    for g in generate_nums:
-        if generate_nums_dict[g] >= min_generate_keep:
-            generate_number.append(g)
-    return processed_datas, generate_number, copy_nums
-
-
-def num_transfer_multi(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):
-    '''transfer num process
-
-    Args:
-        data: list.
-        mask_type: str | default 'NUM', the way to mask num, optinal['NUM', 'alphabet', 'number'].
-        min_generate_keep: int | default 5, the number to control if the numbers of equations will be kept as generating number.
-
-    Return:
-        processed_datas: list type.
-        generate_number: list type, symbols to generate extra.
-        copy_nums: int, the count of copied symbol from question to equation.
-    '''
-    if mask_type == MaskSymbol.NUM:
-        sent_mask_list = NumMask.NUM
-        equ_mask_list = NumMask.number
-    elif mask_type == MaskSymbol.alphabet:
-        sent_mask_list = NumMask.alphabet
-        equ_mask_list = NumMask.alphabet
-    elif mask_type == MaskSymbol.number:
-        sent_mask_list = NumMask.number
-        equ_mask_list = NumMask.number
-
-    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
-
-    generate_nums = []
-    generate_nums_dict = {}
-    copy_nums = 0
-    processed_datas = []
-    max_equ__len = {}
-    unk_symbol = []
-    for d in data:
-        # if d["id"]==2022:
-        #     print(1)
-        sent_idx = 0
-        equ_idx = 0
-        #nums = []
-        nums = OrderedDict()
-        #num_list=[]
-        input_seq = []
-        seg = d["original_text"].split(" ")
-        equations = d["equation"]
-        equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
-        equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
-
-        for s in seg:
-            if s == 0:
-                input_seq.append(s)
-            else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    try:
-                        number = str(eval(s[pos.start():pos.end()]))
-                    except:  # "%" in number
-                        number = s[pos.start():pos.end()]
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            nums[number] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            input_seq.append(nums[number])
-                    except:
-                        #number=str(eval(s[pos.start():pos.end()]))
-                        nums[number] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
-                else:
-                    input_seq.append(s)
-        nums_count = len(list(nums.keys()))
-        if copy_nums < nums_count:
-            copy_nums = nums_count
-        nums_fraction = []
-
-        for num, mask in nums.items():
-            if re.search("\d*\(\d+/\d+\)\d*", num):
-                nums_fraction.append(num)
-            # if re.search("-\d+|(-\d+\.\d+)",num):
-            #     nums_fraction.append(num)
-        nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-        # if d["id"]==76:
-        #     print(1)
-        out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
-        # try:
-        #     max_equ__len[len(out_seq)]+=1
-        # except:
-        #     max_equ__len[len(out_seq)]=1
-        num_list = list(nums.keys())
-        for s in out_seq:  # tag the num which is generated
-            if s[0].isdigit() and s not in generate_nums and s not in num_list:
-                generate_nums.append(s)
-                generate_nums_dict[s] = 0
-            if s in generate_nums and s not in num_list:
-                generate_nums_dict[s] = generate_nums_dict[s] + 1
-
-        num_pos = []
-        mask_num_list = list(nums.values())
-        for num in mask_num_list:
-            try:
-                num_pos.append(input_seq.index(num))
-            except:
-                continue
-        assert len(num_list) == len(num_pos)
-        for symbol in out_seq:
-            if len(symbol) == 1 and symbol.isalpha():
-                if symbol in unk_symbol:
-                    continue
-                else:
-                    unk_symbol.append(symbol)
-        source = deepcopy(input_seq)
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_idx = equ_mask_list.index(j)
-                num_str = num_list[num_idx]
-                if '%' in num_str:
-                    num = str(eval(num_str[:-1] + '/100'))
-                else:
-                    try:
-                        num = str(eval(num_str))
-                    except:
-                        if re.match("\d+\(\d+/\d+\)", num_str):  # match fraction like '5(3/4)'
-                            idx = num_str.index('(')
-                            a = num_str[:idx]
-                            b = num_str[idx:]
-                        if re.match("\(\d+/\d+\)\d+", num_str):  # match fraction like '(3/4)5'
-                            idx = num_str.index(')')
-                            a = num_str[:idx + 1]
-                            b = num_str[idx + 1:]
-                        num = str(eval(a) + eval(b))
-                    num_list[num_idx] = num
-                source[i] = num
-        source = ' '.join(source)
-
-        #copy data
-        new_data = d
-        new_data["question"] = input_seq
-        new_data["equation"] = out_seq
-        new_data["ques source 1"] = source
-        new_data["number list"] = num_list
-        new_data["number position"] = num_pos
-        processed_datas.append(new_data)
-
-    generate_number = []
-    for g in generate_nums:
-        if generate_nums_dict[g] >= min_generate_keep:
-            generate_number.append(g)
-    return processed_datas, generate_number, copy_nums, unk_symbol
 
 
 def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):
@@ -1150,6 +788,7 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
         equ_idx = 0
         #nums = []
         nums = OrderedDict()
+        num_pos_dict = {}
         #num_list=[]
         input_seq = []
         seg = d["original_text"].split(" ")
@@ -1161,101 +800,84 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
         equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
         equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
 
+        # match and split number
+        input_seq = []
         for s in seg:
-            if s == 0:
-                input_seq.append(s)
+            pos = re.search(pattern, s)
+            if pos and pos.start() == 0:
+                input_seq.append(s[pos.start():pos.end()])
+                if pos.end() < len(s):
+                    input_seq.append(s[pos.end():])
             else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    try:
-                        number = str(eval(s[pos.start():pos.end()]))
-                    except:  # "%" in number
-                        number = s[pos.start():pos.end()]
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            nums[number] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            input_seq.append(nums[number])
-                    except:
-                        #number=str(eval(s[pos.start():pos.end()]))
-                        nums[number] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
+                input_seq.append(s)
+        # find all num position
+        num_list = []
+        for word_pos, word in enumerate(input_seq):
+            pos = re.search(pattern, word)
+            if pos and pos.start() == 0:
+                if word in num_pos_dict:
+                    num_pos_dict[word].append(word_pos)
                 else:
-                    input_seq.append(s)
+                    num_list.append(word)
+                    num_pos_dict[word] = [word_pos]
+        num_list = sorted(num_list, key=lambda x: max(num_pos_dict[x]), reverse=False)
+        nums = lists2dict(num_list, equ_mask_list[:len(num_list)])
+        nums_for_ques = lists2dict(num_list, sent_mask_list[:len(num_list)])
+
+        all_pos = []
+        # number transform
+        for num, mask in nums_for_ques.items():
+            for pos in num_pos_dict[num]:
+                input_seq[pos] = mask
+                all_pos.append(pos)
+
+        #input_seq = deepcopy(seg)
         nums_count = len(list(nums.keys()))
         if copy_nums < nums_count:
             copy_nums = nums_count
-        nums_fraction = []
 
+        nums_fraction = []
         for num, mask in nums.items():
             if re.search("\d*\(\d+/\d+\)\d*", num):
                 nums_fraction.append(num)
-            # if re.search("-\d+|(-\d+\.\d+)",num):
-            #     nums_fraction.append(num)
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-        # if d["id"]==6666:
-        #     print(1)
-        out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
-        # try:
-        #     max_equ__len[len(out_seq)]+=1
-        # except:
-        #     max_equ__len[len(out_seq)]=1
-        num_list = list(nums.keys())
-        for s in out_seq:  # tag the num which is generated
+
+        out_seq = seg_and_tag_multi(equations, nums_fraction, nums)
+
+        # tag the num which is generated
+        for s in out_seq:
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-        num_pos = []
-        mask_num_list = list(nums.values())
-        for num in mask_num_list:
-            try:
-                num_pos.append(input_seq.index(num))
-            except:
-                continue
-        assert len(num_list) == len(num_pos)
-        for symbol in out_seq:
-            if len(symbol) == 1 and symbol.isalpha():
-                if symbol in unk_symbol:
+        # get unknown number
+        for s in out_seq:
+            if len(s) == 1 and s.isalpha():
+                if s in unk_symbol:
                     continue
                 else:
-                    unk_symbol.append(symbol)
-        source = deepcopy(input_seq)
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_idx = equ_mask_list.index(j)
-                num_str = num_list[num_idx]
-                if '%' in num_str:
-                    num = str(eval(num_str[:-1] + '/100'))
-                else:
-                    try:
-                        num = str(eval(num_str))
-                    except:
-                        if re.match("\d+\(\d+/\d+\)", num_str):  # match fraction like '5(3/4)'
-                            idx = num_str.index('(')
-                            a = num_str[:idx]
-                            b = num_str[idx:]
-                        if re.match("\(\d+/\d+\)\d+", num_str):  # match fraction like '(3/4)5'
-                            idx = num_str.index(')')
-                            a = num_str[:idx + 1]
-                            b = num_str[idx + 1:]
-                        num = str(eval(a) + eval(b))
-                    num_list[num_idx] = num
-                source[i] = num
-        source = ' '.join(source)
+                    unk_symbol.append(s)
 
-        #copy data
+        source = deepcopy(input_seq)
+        for pos in all_pos:
+            for key, value in num_pos_dict.items():
+                if pos in value:
+                    num_str = key
+                    break
+            num = str(str2float(num_str))
+            source[pos] = num
+        source = ' '.join(source)
+        # get final number position
+        num_pos = []
+        for num in num_list:
+            # select the latest position as the number position
+            # if the number corresponds multiple positions
+            num_pos.append(max(num_pos_dict[num]))
+        assert len(num_list) == len(num_pos)
+
+        # copy data
         new_data = d
         new_data["question"] = input_seq
         new_data["equation"] = out_seq
@@ -1265,6 +887,142 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
         if num_list == []:
             new_data["number list"] = ["-inf"]
             new_data["number position"] = [-1]
+        processed_datas.append(new_data)
+
+    generate_number = []
+    for g in generate_nums:
+        if generate_nums_dict[g] >= min_generate_keep:
+            generate_number.append(g)
+    return processed_datas, generate_number, copy_nums, unk_symbol
+
+
+def num_transfer_multi(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):
+    '''transfer num process
+
+    Args:
+        data: list.
+        mask_type: str | default 'NUM', the way to mask num, optinal['NUM', 'alphabet', 'number'].
+        min_generate_keep: int | default 5, the number to control if the numbers of equations will be kept as generating number.
+
+    Return:
+        processed_datas: list type.
+        generate_number: list type, symbols to generate extra.
+        copy_nums: int, the count of copied symbol from question to equation.
+    '''
+    if mask_type == MaskSymbol.NUM:
+        sent_mask_list = NumMask.NUM
+        equ_mask_list = NumMask.number
+    elif mask_type == MaskSymbol.alphabet:
+        sent_mask_list = NumMask.alphabet
+        equ_mask_list = NumMask.alphabet
+    elif mask_type == MaskSymbol.number:
+        sent_mask_list = NumMask.number
+        equ_mask_list = NumMask.number
+
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+
+    generate_nums = []
+    generate_nums_dict = {}
+    copy_nums = 0
+    processed_datas = []
+    max_equ__len = {}
+    unk_symbol = []
+    for d in data:
+        sent_idx = 0
+        equ_idx = 0
+        nums = OrderedDict()
+        num_pos_dict = {}
+        num_list = []
+        input_seq = []
+        seg = d["original_text"].split(" ")
+        equations = d["equation"]
+        equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
+        equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
+
+        # match and split number
+        input_seq = []
+        for s in seg:
+            pos = re.search(pattern, s)
+            if pos and pos.start() == 0:
+                input_seq.append(s[pos.start():pos.end()])
+                if pos.end() < len(s):
+                    input_seq.append(s[pos.end():])
+            else:
+                input_seq.append(s)
+
+        # find all num position
+        num_list = []
+        for word_pos, word in enumerate(input_seq):
+            pos = re.search(pattern, word)
+            if pos and pos.start() == 0:
+                if word in num_pos_dict:
+                    num_pos_dict[word].append(word_pos)
+                else:
+                    num_list.append(word)
+                    num_pos_dict[word] = [word_pos]
+        num_list = sorted(num_list, key=lambda x: max(num_pos_dict[x]), reverse=False)
+        nums = lists2dict(num_list, equ_mask_list[:len(num_list)])
+        nums_for_ques = lists2dict(num_list, sent_mask_list[:len(num_list)])
+
+        all_pos = []
+        # number transform
+        for num, mask in nums_for_ques.items():
+            for pos in num_pos_dict[num]:
+                input_seq[pos] = mask
+                all_pos.append(pos)
+
+        nums_count = len(list(nums.keys()))
+        if copy_nums < nums_count:
+            copy_nums = nums_count
+
+        nums_fraction = []
+        for num, mask in nums.items():
+            if re.search("\d*\(\d+/\d+\)\d*", num):
+                nums_fraction.append(num)
+        nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
+
+        out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
+
+        # tag the num which is generated
+        for s in out_seq:
+            if s[0].isdigit() and s not in generate_nums and s not in num_list:
+                generate_nums.append(s)
+                generate_nums_dict[s] = 0
+            if s in generate_nums and s not in num_list:
+                generate_nums_dict[s] = generate_nums_dict[s] + 1
+
+        # get unknown number
+        for s in out_seq:
+            if len(s) == 1 and s.isalpha():
+                if s in unk_symbol:
+                    continue
+                else:
+                    unk_symbol.append(s)
+
+        source = deepcopy(input_seq)
+        for pos in all_pos:
+            for key, value in num_pos_dict.items():
+                if pos in value:
+                    num_str = key
+                    break
+            num = str(str2float(num_str))
+            source[pos] = num
+        source = ' '.join(source)
+        # get final number position
+        num_pos = []
+        for num in num_list:
+            # select the latest position as the number position
+            # if the number corresponds multiple positions
+            num_pos.append(max(num_pos_dict[num]))
+        assert len(num_list) == len(num_pos)
+
+        #copy data
+        new_data = d
+        new_data["question"] = input_seq
+        new_data["equation"] = out_seq
+        new_data["ques source 1"] = source
+        new_data["number list"] = num_list
+        new_data["number position"] = num_pos
         processed_datas.append(new_data)
 
     generate_number = []
@@ -1312,6 +1070,7 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
         equ_idx = 0
         #nums = []
         nums = OrderedDict()
+        num_pos_dict = {}
         #num_list=[]
         input_seq = []
         seg = d["original_text"].split(" ")
@@ -1327,65 +1086,60 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
         equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
         equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
 
+        # match and split number
+        input_seq = []
         for s in seg:
-            if s == 0:
-                input_seq.append(s)
+            pos = re.search(pattern, s)
+            if pos and pos.start() == 0:
+                input_seq.append(s[pos.start():pos.end()])
+                if pos.end() < len(s):
+                    input_seq.append(s[pos.end():])
             else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    try:
-                        number = str(eval(s[pos.start():pos.end()]))
-                    except:  # "%" in number
-                        number = s[pos.start():pos.end()]
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            nums[number] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            input_seq.append(nums[number])
-                    except:
-                        #number=str(eval(s[pos.start():pos.end()]))
-                        nums[number] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
+                input_seq.append(s)
+        # find all num position
+        num_list = []
+        for word_pos, word in enumerate(input_seq):
+            pos = re.search(pattern, word)
+            if pos and pos.start() == 0:
+                if word in num_pos_dict:
+                    num_pos_dict[word].append(word_pos)
                 else:
-                    input_seq.append(s)
+                    num_list.append(word)
+                    num_pos_dict[word] = [word_pos]
+        num_list = sorted(num_list, key=lambda x: max(num_pos_dict[x]), reverse=False)
+        nums = lists2dict(num_list, equ_mask_list[:len(num_list)])
+        nums_for_ques = lists2dict(num_list, sent_mask_list[:len(num_list)])
+
+        all_pos = []
+        # number transform
+        for num, mask in nums_for_ques.items():
+            for pos in num_pos_dict[num]:
+                input_seq[pos] = mask
+                all_pos.append(pos)
+
         nums_count = len(list(nums.keys()))
         if copy_nums < nums_count:
             copy_nums = nums_count
-        nums_fraction = []
 
+        nums_fraction = []
         for num, mask in nums.items():
             if re.search("\d*\(\d+/\d+\)\d*", num):
                 nums_fraction.append(num)
-            # if re.search("-\d+|(-\d+\.\d+)",num):
-            #     nums_fraction.append(num)
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-        # if d["id"]==34492:
-        #     print(1)
+
         out_seq = []
         pos_st = re.search(r"^-((\d+\.?\d*))", equations)  #search negative number starting
         if pos_st:
             p_start = pos_st.start()
             p_end = pos_st.end()
             if p_start > 0:
-                out_seq += seg_and_tag_mawps(equations[:p_start], nums_fraction, nums)
-            try:
-                st_num = str(eval(equations[p_start:p_end]))
-            except:  # % in number
-                st_num = equations[p_start:p_end]
+                out_seq += seg_and_tag_multi(equations[:p_start], nums_fraction, nums)
+            st_num = equations[p_start:p_end]
             try:
                 out_seq.append(nums[st_num])
             except:
                 try:
-                    number = str(int(eval(st_num)))
+                    number = str(int(str2float(st_num)))
                     if abs(eval(number) - eval(st_num)) < 1e-4:
                         out_seq.append(nums[number])
                     else:
@@ -1393,17 +1147,12 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
                 except:
                     out_seq.append(st_num)
             if p_end < len(equations):
-                out_seq += seg_and_tag_mawps(equations[p_end:], nums_fraction, nums)
+                out_seq += seg_and_tag_multi(equations[p_end:], nums_fraction, nums)
         else:
-            out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
-        # try:
-        #     max_equ__len[len(out_seq)]+=1
-        # except:
-        #     max_equ__len[len(out_seq)]=1
-        num_list = list(nums.keys())
-        for s in out_seq:  # tag the num which is generated
-            # if s=="18.0" or s=="12.0" or s=="162.0":
-            #     print(1)
+            out_seq = seg_and_tag_multi(equations, nums_fraction, nums)
+
+        # tag the num which is generated
+        for s in out_seq:
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
@@ -1413,43 +1162,30 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-        num_pos = []
-        mask_num_list = list(nums.values())
-        for num in mask_num_list:
-            try:
-                num_pos.append(input_seq.index(num))
-            except:
-                continue
-        assert len(num_list) == len(num_pos)
-        for symbol in out_seq:
-            if len(symbol) == 1 and symbol.isalpha():
-                if symbol in unk_symbol:
+        # get unknown number
+        for s in out_seq:
+            if len(s) == 1 and s.isalpha():
+                if s in unk_symbol:
                     continue
                 else:
-                    unk_symbol.append(symbol)
+                    unk_symbol.append(s)
+
         source = deepcopy(input_seq)
-        for i, j in enumerate(input_seq):
-            if "NUM" in j and j not in ["NUMBERS", "NUMBER"]:
-                num_idx = equ_mask_list.index(j)
-                num_str = num_list[num_idx]
-                if '%' in num_str:
-                    num = str(eval(num_str[:-1] + '/100'))
-                else:
-                    try:
-                        num = str(eval(num_str))
-                    except:
-                        if re.match("\d+\(\d+/\d+\)", num_str):  # match fraction like '5(3/4)'
-                            idx = num_str.index('(')
-                            a = num_str[:idx]
-                            b = num_str[idx:]
-                        if re.match("\(\d+/\d+\)\d+", num_str):  # match fraction like '(3/4)5'
-                            idx = num_str.index(')')
-                            a = num_str[:idx + 1]
-                            b = num_str[idx + 1:]
-                        num = str(eval(a) + eval(b))
-                    num_list[num_idx] = num
-                source[i] = num
+        for pos in all_pos:
+            for key, value in num_pos_dict.items():
+                if pos in value:
+                    num_str = key
+                    break
+            num = str(str2float(num_str))
+            source[pos] = num
         source = ' '.join(source)
+        # get final number position
+        num_pos = []
+        for num in num_list:
+            # select the latest position as the number position
+            # if the number corresponds multiple positions
+            num_pos.append(max(num_pos_dict[num]))
+        assert len(num_list) == len(num_pos)
 
         #copy data
         new_data = d
@@ -1505,127 +1241,87 @@ def num_transfer_hmwp(data, mask_type="number", min_generate_keep=0, equ_split_s
         sent_idx = 0
         equ_idx = 0
         nums = OrderedDict()
+        num_pos_dict = {}
         input_seq = []
-        # text=d["original_text"]
-        # pos=re.search(r'\d+\s\d+',text)
-        # while(pos):
-        #     start=pos.start()
-        #     end=pos.end()
-        #     number=text[start:end]
-        #     number=''.join(number.split(" "))
-        #     text=text[:start]+number+text[end:]
-        #     pos=re.search(r'\d+\s\d+',text)
-        # seg = text.split(" ")
-        #text=d["original_text"]
-        #pos=re.search(r'\D\s-\s((\d+\.\d+)|\d+)\s',text) # search negative number in sequence
-        # pos=re.search(r'\D\s-\s((\d+\.\d+)|\d+)\s',text)
-        # while(pos):
-        #     start=pos.start()+2
-        #     end=pos.end()-1
-        #     number=text[start:end]
-        #     number=''.join(number.split(" "))
-        #     text=text[:start]+number+text[end:]
-        #     pos=re.search(r'\D\s-\s((\d+\.\d+)|\d+)\s',text)
-        # pos=re.search(r'(?![)]\s-\s((\d+\.\d+)|\d+)\s)\D\s-\s((\d+\.\d+)|\d+)\s',text)
-        # while(pos):
-        #     start=pos.start()+2
-        #     end=pos.end()-1
-        #     number=text[start:end]
-        #     number=''.join(number.split(" "))
-        #     text=text[:start]+number+text[end:]
-        #     pos=re.search(r'[^)]\s-\s((\d+\.\d+)|\d+)\s',text)
-        # seg = text.split(" ")
         seg = d["original_text"].split(" ")
         equations = d["equation"]
         equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
         equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
 
+        # match and split number
+        input_seq = []
         for s in seg:
-            if s == 0:
-                input_seq.append(s)
+            pos = re.search(pattern, s)
+            if pos and pos.start() == 0:
+                input_seq.append(s[pos.start():pos.end()])
+                if pos.end() < len(s):
+                    input_seq.append(s[pos.end():])
             else:
-                pos = re.search(pattern, s)
-                if pos and pos.start() == 0:
-                    try:
-                        number = str(eval(s[pos.start():pos.end()]))
-                    except:  # "%" in number
-                        number = s[pos.start():pos.end()]
-                    try:
-                        if mask_type == "NUM":
-                            input_seq.append(sent_mask_list[sent_idx])
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            nums[number] = equ_mask_list[equ_idx]
-                            sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                            equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        else:
-                            #number=str(eval(s[pos.start():pos.end()]))
-                            input_seq.append(nums[number])
-                    except:
-                        #number=str(eval(s[pos.start():pos.end()]))
-                        nums[number] = equ_mask_list[equ_idx]
-                        input_seq.append(sent_mask_list[sent_idx])
-                        equ_idx = (equ_idx + 1) % len(equ_mask_list)
-                        sent_idx = (sent_idx + 1) % len(sent_mask_list)
-                    if pos.end() < len(s):
-                        input_seq.append(s[pos.end():])
+                input_seq.append(s)
+        # find all num position
+        num_list = []
+        for word_pos, word in enumerate(input_seq):
+            pos = re.search(pattern, word)
+            if pos and pos.start() == 0:
+                if word in num_pos_dict:
+                    num_pos_dict[word].append(word_pos)
                 else:
-                    input_seq.append(s)
+                    num_list.append(word)
+                    num_pos_dict[word] = [word_pos]
+        num_list = sorted(num_list, key=lambda x: max(num_pos_dict[x]), reverse=False)
+        nums = lists2dict(num_list, equ_mask_list[:len(num_list)])
+        nums_for_ques = lists2dict(num_list, sent_mask_list[:len(num_list)])
+
+        all_pos = []
+        # number transform
+        for num, mask in nums_for_ques.items():
+            for pos in num_pos_dict[num]:
+                input_seq[pos] = mask
+                all_pos.append(pos)
+
         nums_count = len(list(nums.keys()))
         if copy_nums < nums_count:
             copy_nums = nums_count
-        nums_fraction = []
 
+        nums_fraction = []
         for num, mask in nums.items():
             if re.search("\d*\(\d+/\d+\)\d*", num):
                 nums_fraction.append(num)
-            # if re.search("-\d+|(-\d+\.\d+)",num):
-            #     nums_fraction.append(num)
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
-        # if d["id"]==76:
-        #     print(1)
+
         out_seq = seg_and_tag_hmwp(equations, nums_fraction, nums)
-        # try:
-        #     max_equ__len[len(out_seq)]+=1
-        # except:
-        #     max_equ__len[len(out_seq)]=1
-        num_list = list(nums.keys())
-        for s in out_seq:  # tag the num which is generated
+        # tag the num which is generated
+        for s in out_seq:
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-        num_pos = []
-        mask_num_list = list(nums.values())
-        for num in mask_num_list:
-            try:
-                num_pos.append(input_seq.index(num))
-            except:
-                continue
-        assert len(num_list) == len(num_pos)
-        for symbol in out_seq:
-            if len(symbol) == 1 and symbol.isalpha():
-                if symbol in unk_symbol:
+        # get unknown number
+        for s in out_seq:
+            if len(s) == 1 and s.isalpha():
+                if s in unk_symbol:
                     continue
                 else:
-                    unk_symbol.append(symbol)
-        source = deepcopy(input_seq)
-        for i, j in enumerate(input_seq):
-            if "NUM" in j:
-                num_idx = equ_mask_list.index(j)
-                num_str = num_list[num_idx]
-                if '%' in num_str:
-                    num = str(eval(num_str[:-1] + '/100'))
-                else:
-                    try:
-                        num = str(eval(num_str))
-                    except:
-                        num = num_str
-                    num_list[num_idx] = num
-                source[i] = num
-        source = ' '.join(source)
+                    unk_symbol.append(s)
 
+        source = deepcopy(input_seq)
+        for pos in all_pos:
+            for key, value in num_pos_dict.items():
+                if pos in value:
+                    num_str = key
+                    break
+            num = str(str2float(num_str))
+            source[pos] = num
+        source = ' '.join(source)
+        # get final number position
+        num_pos = []
+        for num in num_list:
+            # select the latest position as the number position
+            # if the number corresponds multiple positions
+            num_pos.append(max(num_pos_dict[num]))
+        assert len(num_list) == len(num_pos)
         #copy data
         new_data = d
         new_data["question"] = input_seq
@@ -1926,38 +1622,40 @@ def get_group_nums(datas, language):
         # write_json_data(json_data,path)
     return new_datas
 
-def get_deprel_tree(datas,language):
+
+def get_deprel_tree(datas, language):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
     new_datas = []
-    deprel_tokens=[]
+    deprel_tokens = []
     for idx, data in enumerate(datas):
         group_nums = []
-        deprel_token=[]
+        deprel_token = []
         doc = nlp(data["ques source 1"])
         token_list = doc.to_dict()[0]
-        length=len(data["question"])
-        for idx,x in enumerate(token_list):
-            token=x['deprel']
+        length = len(data["question"])
+        for idx, x in enumerate(token_list):
+            token = x['deprel']
             if token in deprel_token:
-                deprel_idx=deprel_token.index(token)+length
+                deprel_idx = deprel_token.index(token) + length
             else:
                 deprel_token.append(token)
-                deprel_idx=deprel_token.index(token)+length
-            group_nums.append([x['head']-1,deprel_idx])
-            group_nums.append([deprel_idx,idx])
+                deprel_idx = deprel_token.index(token) + length
+            group_nums.append([x['head'] - 1, deprel_idx])
+            group_nums.append([deprel_idx, idx])
         data["group nums"] = group_nums
-        data["question"] = data["question"]+deprel_token
+        data["question"] = data["question"] + deprel_token
         new_datas.append(data)
         for token in deprel_token:
             if token not in deprel_tokens:
                 deprel_tokens.append(token)
-    return new_datas,deprel_tokens
+    return new_datas, deprel_tokens
+
 
 def operator_mask(expression):
     template = []
     for symbol in expression:
-        if isinstance(symbol,list):
-            sub_temp=operator_mask(symbol)
+        if isinstance(symbol, list):
+            sub_temp = operator_mask(symbol)
             template.append(sub_temp)
         elif symbol in ["+", "-", "*", "/", "^", "=", "<BRG>"]:
             template.append(SpecialTokens.OPT_TOKEN)
@@ -2030,27 +1728,26 @@ def from_infix_to_prefix(expression):
 
 
 def from_infix_to_multi_way_tree(expression):
-    res=[]
-    st=[]
-    level=0
+    res = []
+    st = []
+    level = 0
     for e in expression:
-        if e in ['(','[']:
-            level+=1
+        if e in ['(', '[']:
+            level += 1
             st.append(e)
-        elif e in [')',']']:
-            level-=1
+        elif e in [')', ']']:
+            level -= 1
             st.append(e)
-            if level==0:
-                sub_res=from_infix_to_multi_way_tree(st[1:-1])
+            if level == 0:
+                sub_res = from_infix_to_multi_way_tree(st[1:-1])
                 res.append(sub_res)
-                st=[]
+                st = []
         else:
-            if level!=0:
+            if level != 0:
                 st.append(e)
             else:
                 res.append(e)
     return res
-
 
 
 def num_transfer_draw_(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):

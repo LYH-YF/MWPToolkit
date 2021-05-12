@@ -64,16 +64,16 @@ class MathDQN(nn.Module):
         states, actions, rewards, next_states, dones = self.sample_experiences(batch_size)
         dones = dones.to(device)
         rewards = rewards.to(device)
-        #self.dqn.eval()
+        self.dqn.eval()
         next_Q_values,_ = self.dqn(next_states)
-        #self.dqn.train()
+        self.dqn.train()
         max_next_Q_values = torch.max(next_Q_values, dim=1)[0]
         discount_rate=0.95
         target_Q_values = rewards + (1 - dones) * discount_rate * max_next_Q_values
 
         mask = torch.zeros(batch_size, len(self.operator_list))
         idxs = torch.arange(0,batch_size)
-        #mask[idxs,actions]=1
+        mask[idxs,actions]=1
         mask = mask.to(device)
         
         all_Q_values,_ = self.dqn(states)

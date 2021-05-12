@@ -32,3 +32,15 @@ class PositionEmbedder(nn.Module):
         outputs=input_embedding+self.pe.squeeze()[:seq_len]
         outputs=self.dropout(outputs)
         return outputs
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, pos_size, dim):
+        super(PositionalEncoding, self).__init__()
+        pe = torch.rand(pos_size, dim)
+        # (0, 1) => (-1, 1)
+        pe = pe * 2 - 1
+        self.pe = nn.Parameter(pe)
+    
+    def forward(self, input):
+        output = input + self.pe[:input.size(1)]
+        return output

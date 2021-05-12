@@ -6,6 +6,7 @@ import random
 import re
 import numpy as np
 import torch
+from collections import OrderedDict
 
 from mwptoolkit.utils.enum_type import TaskType
 
@@ -151,26 +152,37 @@ def str2float(v):
     if not isinstance(v,str):
         return v
     else:
-        if '%' in v:
+        if '%' in v: # match %
             v=v[:-1]
             return float(v)/100
         if '(' in v:
             try:
-                return eval(v)
+                return eval(v) # match fraction
             except:
-                if re.match('^\d+\(',v):
+                if re.match('^\d+\(',v): # match fraction like '5(3/4)'
                     idx = v.index('(')
                     a = v[:idx]
                     b = v[idx:]
                     return eval(a)+eval(b)
-                if re.match('.*\)\d+$',v):
+                if re.match('.*\)\d+$',v): # match fraction like '(3/4)5'
                     l=len(v)
                     temp_v=v[::-1]
                     idx = temp_v.index(')')
                     a = v[:l-idx]
                     b = v[l-idx:]
                     return eval(a)+eval(b)
+            return float(v)
         else:
             if v == '<UNK>':
                 return float('inf')
             return float(v)
+
+
+def lists2dict(list1,list2):
+    r''' convert two lists to dict, elements of first list as keys, another's as values. 
+    '''
+    assert len(list1) == len(list2)
+    the_dict=OrderedDict()
+    for i,j in zip(list1,list2):
+        the_dict[i]=j
+    return the_dict

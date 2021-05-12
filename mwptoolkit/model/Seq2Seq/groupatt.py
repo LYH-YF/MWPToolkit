@@ -88,9 +88,9 @@ class GroupATT(nn.Module):
         with_t=random.random()
         if with_t<self.teacher_force_ratio:
             if self.attention:
-                decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
+                decoder_outputs, decoder_hidden = self.decoder(decoder_inputs, encoder_hidden,encoder_outputs)
             else:
-                decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden)
+                decoder_outputs, decoder_hidden = self.decoder(decoder_inputs, encoder_hidden)
             token_logits = self.generate_linear(decoder_outputs)
             token_logits=token_logits.view(-1, token_logits.size(-1))
             token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)

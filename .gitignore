@@ -10,3 +10,4 @@ __pycache__
 /pretrain/gpt2_en
 *.log
 /test.py
+/mwptoolkit/utils/old.py

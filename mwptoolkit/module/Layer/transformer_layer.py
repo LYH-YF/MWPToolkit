@@ -4,6 +4,7 @@ from torch import nn
 from torch.nn import functional as F
 
 from mwptoolkit.module.Attention.multi_head_attention import MultiHeadAttention
+from mwptoolkit.module.Attention.group_attention import GroupAttention
 from mwptoolkit.utils.utils import clones
 
 class TransformerLayer(nn.Module):
@@ -84,34 +85,49 @@ class TransformerLayer(nn.Module):
 
         return x, self_attn_weights, external_attn_weights
 
-class Encoder(nn.Module):
-    "Core encoder is a stack of N layers"
+# class Encoder(nn.Module):
+#     "Core encoder is a stack of N layers"
 
-    def __init__(self, layer, N):
-        super(Encoder, self).__init__()
-        self.layers = clones(layer, N)
-        self.norm = LayerNorm(layer.size)
+#     def __init__(self, layer, N):
+#         super(Encoder, self).__init__()
+#         self.layers = clones(layer, N)
+#         self.norm = LayerNorm(layer.size)
 
-    def forward(self, x, mask):
-        "Pass the input (and mask) through each layer in turn."
-        for layer in self.layers:
-            x = layer(x, mask)
-        return self.norm(x)
+#     def forward(self, x, mask):
+#         "Pass the input (and mask) through each layer in turn."
+#         for layer in self.layers:
+#             x = layer(x, mask)
+#         return self.norm(x)
 
-class EncoderLayer(nn.Module):
-    "Encoder is made up of self-attn and feed forward (defined below)"
-    def __init__(self, size, self_attn, feed_forward, dropout):
-        super(EncoderLayer, self).__init__()
-        self.self_attn = self_attn
-        self.feed_forward = feed_forward
+class GAEncoderLayer(nn.Module):
+    "Group attention based encoder layer"
+    def __init__(self, size, h, d_model,dropout_ratio,d_ff,in_word2idx):
+        super(GAEncoderLayer, self).__init__()
+        self.self_attn = GroupAttention(h,d_model,dropout_ratio,in_word2idx)
+        self.feed_forward = PositionwiseFeedForward(d_model,d_ff,dropout_ratio)
         
-        self.sublayer = clones(SublayerConnection(size, dropout), 2)
+        self.sublayer = clones(SublayerConnection(size, dropout_ratio), 2)
         self.size = size
 
     def forward(self, x, mask):
         "Follow Figure 1 (left) for connections."
         x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
         return self.sublayer[1](x, self.feed_forward)
+
+# class EncoderLayer(nn.Module):
+#     "Encoder is made up of self-attn and feed forward (defined below)"
+#     def __init__(self, size, self_attn, feed_forward, dropout):
+#         super(EncoderLayer, self).__init__()
+#         self.self_attn = self_attn
+#         self.feed_forward = feed_forward
+        
+#         self.sublayer = clones(SublayerConnection(size, dropout), 2)
+#         self.size = size
+
+#     def forward(self, x, mask):
+#         "Follow Figure 1 (left) for connections."
+#         x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
+#         return self.sublayer[1](x, self.feed_forward)
 
 class SublayerConnection(nn.Module):
     """
@@ -120,7 +136,8 @@ class SublayerConnection(nn.Module):
     """
     def __init__(self, size, dropout):
         super(SublayerConnection, self).__init__()
-        self.norm = LayerNorm(size)
+        #self.norm = LayerNorm(size)
+        self.norm = nn.LayerNorm(size,eps=1e-6)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, sublayer):

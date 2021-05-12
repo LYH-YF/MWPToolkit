@@ -60,7 +60,7 @@ class MaskSymbol:
 
 
 class NumMask:
-    NUM = ["NUM"]
+    NUM = ["NUM"]*100
     alphabet = [
         "NUM_a", "NUM_b", "NUM_c", "NUM_d", "NUM_e", "NUM_f", "NUM_g", "NUM_h", "NUM_i", "NUM_j", "NUM_k", "NUM_l", "NUM_m", "NUM_n", "NUM_o", "NUM_p", "NUM_q", "NUM_r", "NUM_s", "NUM_t", "NUM_u",
         "NUM_v", "NUM_w", "NUM_x", "NUM_y", "NUM_z"

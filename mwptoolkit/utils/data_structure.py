@@ -1,39 +1,46 @@
-from mwptoolkit.utils.enum_type import SpecialTokens,NumMask
+from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
+
 
 class Node():
-    def __init__(self,node_value,isleaf=True):
+    def __init__(self, node_value, isleaf=True):
         self.node_value = node_value
         self.is_leaf = isleaf
         self.embedding = None
         self.left_node = None
         self.right_node = None
+
     def set_left_node(self, node):
         self.left_node = node
+
     def set_right_node(self, node):
         self.right_node = node
 
 
 class AbstractTree():
     def __init__(self):
-        self.root=None
+        self.root = None
+
     def equ2tree():
         raise NotImplementedError
+
     def tree2equ():
         raise NotImplementedError
 
+
 class BinaryTree(AbstractTree):
-    def __init__(self,root_node=None):
+    def __init__(self, root_node=None):
         super().__init__()
-        self.root=root_node
+        self.root = root_node
+
     def equ2tree(self, equ_list, out_idx2symbol, op_list, input_var, emb):
-        
+
         stack = []
         for idx in equ_list:
             if idx == out_idx2symbol.index(SpecialTokens.PAD_TOKEN):
                 break
             if idx == out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
                 break
-        
+
             if out_idx2symbol[idx] in op_list:
                 node = Node(idx, isleaf=False)
                 node.set_right_node(stack.pop())
@@ -45,12 +52,13 @@ class BinaryTree(AbstractTree):
                 node.node_embeding = emb[position]
                 stack.append(node)
         self.root = stack.pop()
-    def equ2tree_(self,equ_list):
-        stack=[]
+
+    def equ2tree_(self, equ_list):
+        stack = []
         for symbol in equ_list:
-            if symbol in [SpecialTokens.EOS_TOKEN,SpecialTokens.PAD_TOKEN]:
+            if symbol in [SpecialTokens.EOS_TOKEN, SpecialTokens.PAD_TOKEN]:
                 break
-            if symbol in ['+', '-', '*', '/', '^','=',SpecialTokens.BRG_TOKEN,SpecialTokens.OPT_TOKEN]:
+            if symbol in ['+', '-', '*', '/', '^', '=', SpecialTokens.BRG_TOKEN, SpecialTokens.OPT_TOKEN]:
                 node = Node(symbol, isleaf=False)
                 node.set_right_node(stack.pop())
                 node.set_left_node(stack.pop())
@@ -59,29 +67,32 @@ class BinaryTree(AbstractTree):
                 node = Node(symbol, isleaf=True)
                 stack.append(node)
         self.root = stack.pop()
-    def tree2equ(self,node):
-        equation=[]
+
+    def tree2equ(self, node):
+        equation = []
         if node.is_leaf:
             equation.append(node.node_value)
             return equation
         right_equ = self.tree2equ(node.right_node)
         left_equ = self.tree2equ(node.left_node)
-        equation=left_equ+right_equ+[node.node_value]
+        equation = left_equ + right_equ + [node.node_value]
         return equation
 
+
 class GoldTree(AbstractTree):
-    def __init__(self,root_node=None,gold_ans=None):
+    def __init__(self, root_node=None, gold_ans=None):
         super().__init__()
-        self.root=root_node
-        self.gold_ans=gold_ans
-    def equ2tree(self, equ_list, out_idx2symbol, op_list,num_list,ans):
+        self.root = root_node
+        self.gold_ans = gold_ans
+
+    def equ2tree(self, equ_list, out_idx2symbol, op_list, num_list, ans):
         stack = []
         for idx in equ_list:
             if idx == out_idx2symbol.index(SpecialTokens.PAD_TOKEN):
                 break
             if idx == out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
                 break
-            symbol=out_idx2symbol[idx]
+            symbol = out_idx2symbol[idx]
             if symbol in op_list:
                 node = Node(symbol, isleaf=False)
                 node.set_right_node(stack.pop())
@@ -89,26 +100,29 @@ class GoldTree(AbstractTree):
                 stack.append(node)
             else:
                 if symbol in NumMask.number:
-                    i=NumMask.number.index(symbol)
-                    value=num_list[i]
-                    node = Node(value,isleaf=True)
+                    i = NumMask.number.index(symbol)
+                    value = num_list[i]
+                    node = Node(value, isleaf=True)
                 elif symbol == SpecialTokens.UNK_TOKEN:
-                    node = Node('-inf',isleaf=True)
+                    node = Node('-inf', isleaf=True)
                 else:
                     node = Node(symbol, isleaf=True)
                 stack.append(node)
         self.root = stack.pop()
         self.gold_ans = ans
-    def is_float(self, num_str,num_list):
+
+    def is_float(self, num_str, num_list):
         if num_str in num_list:
             return True
         else:
             return False
+
     def is_equal(self, v1, v2):
-        if v1==v2:
+        if v1 == v2:
             return True
         else:
             return False
+
     def lca(self, root, va, vb, parent):
         left = False
         right = False
@@ -119,23 +133,90 @@ class GoldTree(AbstractTree):
         mid = False
         if self.is_equal(root.node_value, va) or self.is_equal(root.node_value, vb):
             mid = True
-        if not self.result  and (left+right+mid) == 2:
+        if not self.result and (left + right + mid) == 2:
             if mid:
                 self.result = parent
             else:
                 self.result = root
         return left or mid or right
-    def is_in_rel_quants(self, value,rel_quants):
+
+    def is_in_rel_quants(self, value, rel_quants):
         if value in rel_quants:
             return True
         else:
-            return False 
+            return False
+
     def query(self, va, vb):
         if self.root == None:
             return None
         self.result = None
-        self.lca(self.root, va, vb, None )
+        self.lca(self.root, va, vb, None)
         if self.result:
             return self.result.node_value
         else:
             return self.result
+
+
+class DependencyNode():
+    def __init__(self, node_value, position, relation, is_leaf=True):
+        self.node_value = node_value
+        self.position = position
+        self.relation = relation
+        self.embedding = None
+        self.left_nodes = []
+        self.right_nodes = []
+        self.is_leaf = is_leaf
+
+    def add_left_node(self, node):
+        self.left_nodes.append(node)
+
+    def add_right_node(self, node):
+        self.right_nodes.append(node)
+
+
+class DependencyTree():
+    def __init__(self, root_node=None):
+        self.root = root_node
+
+    def sentence2tree(self, sentence, dependency_info):
+        r'''
+        dependency info [relation,child,father]
+        '''
+        node_dict = {}
+        for r, c, f in dependency_info:
+            if f in node_dict:
+                node_dict[f].append((r, c))
+            else:
+                node_dict[f] = [(r, c)]
+        relation, root_idx = node_dict[-1]
+        child_list = node_dict.get(root_idx, [])
+        if child_list:
+            node = DependencyNode(sentence[root_idx], root_idx, relation, is_leaf=False)
+            left_list, right_list = self._build_sub_node(root_idx, child_list, relation, node_dict, sentence)
+            for child in left_list:
+                node.add_left_node(child)
+            for child in right_list:
+                node.add_right_node(child)
+        else:
+            node = DependencyNode(sentence[root_idx], root_idx)
+        self.root = node
+
+    def _build_sub_node(self, father_idx, child_list, node_dict, sentence):
+        left_list = []
+        right_list = []
+        for relation, child_idx in child_list:
+            sub_child_list = node_dict.get(child_idx, [])
+            if sub_child_list:
+                child_node = DependencyNode(sentence[child_idx], child_idx, relation, is_leaf=False)
+                sub_left_list, sub_right_list = self._build_sub_node(child_idx, sub_child_list, node_dict, sentence)
+                for node in sub_left_list:
+                    child_node.add_left_node(node)
+                for node in sub_right_list:
+                    child_node.add_right_node(node)
+            else:
+                child_node = DependencyNode(sentence[child_idx], child_idx, relation)
+            if child_idx < father_idx:
+                left_list.append(child_node)
+            else:
+                right_list.append(child_node)
+        return left_list, right_list

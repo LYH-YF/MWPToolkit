@@ -188,11 +188,11 @@ class DependencyTree():
                 node_dict[f].append((r, c))
             else:
                 node_dict[f] = [(r, c)]
-        relation, root_idx = node_dict[-1]
+        relation, root_idx = node_dict[-1][0]
         child_list = node_dict.get(root_idx, [])
         if child_list:
             node = DependencyNode(sentence[root_idx], root_idx, relation, is_leaf=False)
-            left_list, right_list = self._build_sub_node(root_idx, child_list, relation, node_dict, sentence)
+            left_list, right_list = self._build_sub_node(root_idx, child_list, node_dict, sentence)
             for child in left_list:
                 node.add_left_node(child)
             for child in right_list:

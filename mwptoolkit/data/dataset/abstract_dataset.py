@@ -35,12 +35,10 @@ class AbstractDataset(object):
         self.testset = read_json_data(testset_file)
     def _load_fold_dataset(self):
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
-        #validset_file = self.dataset_path + "/validset_fold{}.json"
         testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
         self.trainset = read_json_data(trainset_file)
-        #self.validset = read_json_data(validset_file)
-        self.validset = []
         self.testset = read_json_data(testset_file)
+        self.validset = []
     def fix_process(self, fix):
         r"""equation process
 

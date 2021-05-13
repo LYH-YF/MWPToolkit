@@ -2,73 +2,82 @@ import random
 import torch
 from mwptoolkit.utils.enum_type import FixType, SpecialTokens
 
+
 class AbstractDataLoader(object):
-    def __init__(self,config,dataset):
+    def __init__(self, config, dataset):
         super().__init__()
-        self.device=config["device"]
-        self.train_batch_size=config["train_batch_size"]
-        self.test_batch_size=config["test_batch_size"]
-        self.share_vocab=config["share_vocab"]
-        self.equation_fix=config["equation_fix"]
-        self.symbol_for_tree=config["symbol_for_tree"]
-        self.train_batch_size=config["train_batch_size"]
-        self.test_batch_size=config["test_batch_size"]
-        self.max_len=config["max_len"]
-        self.max_equ_len=config["max_equ_len"]
-        
-        self.dataset=dataset
-        self.in_pad_token=dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
-        self.in_unk_token=dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
-        
-        if self.symbol_for_tree or self.equation_fix==FixType.MultiWayTree:
-            self.out_pad_token=self.in_pad_token
-            self.out_unk_token=dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
-            self.temp_unk_token=dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
+        self.device = config["device"]
+        self.train_batch_size = config["train_batch_size"]
+        self.test_batch_size = config["test_batch_size"]
+        self.share_vocab = config["share_vocab"]
+        self.equation_fix = config["equation_fix"]
+        self.symbol_for_tree = config["symbol_for_tree"]
+        self.train_batch_size = config["train_batch_size"]
+        self.test_batch_size = config["test_batch_size"]
+        self.max_len = config["max_len"]
+        self.max_equ_len = config["max_equ_len"]
+
+        self.dataset = dataset
+        self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
+        self.in_unk_token = dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
+
+        if self.symbol_for_tree or self.equation_fix == FixType.MultiWayTree:
+            self.out_pad_token = self.in_pad_token
+            self.out_unk_token = dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
+            self.temp_unk_token = dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
         else:
             if self.share_vocab:
-                self.out_pad_token=self.in_pad_token
-                self.out_unk_token=self.in_unk_token
-                self.temp_pad_token=self.in_pad_token
-                self.temp_unk_token=self.in_unk_token
+                self.out_pad_token = self.in_pad_token
+                self.out_unk_token = self.in_unk_token
+                self.temp_pad_token = self.in_pad_token
+                self.temp_unk_token = self.in_unk_token
             else:
-                self.out_pad_token=dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
-                self.out_unk_token=dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
-                self.temp_pad_token=dataset.temp_symbol2idx[SpecialTokens.PAD_TOKEN]
-                self.temp_unk_token=dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
-                
+                self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+                self.out_unk_token = dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
+                self.temp_pad_token = dataset.temp_symbol2idx[SpecialTokens.PAD_TOKEN]
+                self.temp_unk_token = dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
 
-    
-    def _pad_input_batch(self,batch_seq,batch_seq_len):
+    def _pad_input_batch(self, batch_seq, batch_seq_len):
         if self.max_len != None:
-            max_length=self.max_len
+            max_length = self.max_len
         else:
-            max_length=max(batch_seq_len)
-        for idx,length in enumerate(batch_seq_len):
-            if length<max_length:
-                x=batch_seq[idx]+[self.in_pad_token for i in range(max_length-length)]
-                batch_seq[idx]+=[self.in_pad_token for i in range(max_length-length)]
+            max_length = max(batch_seq_len)
+        for idx, length in enumerate(batch_seq_len):
+            if length < max_length:
+                x = batch_seq[idx] + [self.in_pad_token for i in range(max_length - length)]
+                batch_seq[idx] += [self.in_pad_token for i in range(max_length - length)]
             else:
-                batch_seq[idx]=batch_seq[idx][:max_length]
+                batch_seq[idx] = batch_seq[idx][:max_length]
         return batch_seq
-    
-    def _pad_output_batch(self,batch_target,batch_target_len):
+
+    def _pad_output_batch(self, batch_target, batch_target_len):
         if self.max_equ_len != None:
-            max_length=self.max_equ_len
+            max_length = self.max_equ_len
         else:
-            max_length=max(batch_target_len)
-        for idx,length in enumerate(batch_target_len):
-            if length<max_length:
-                batch_target[idx]+=[self.out_pad_token for i in range(max_length-length)]
+            max_length = max(batch_target_len)
+        for idx, length in enumerate(batch_target_len):
+            if length < max_length:
+                batch_target[idx] += [self.out_pad_token for i in range(max_length - length)]
             else:
-                batch_target[idx]=batch_target[idx][:max_length]
+                batch_target[idx] = batch_target[idx][:max_length]
         return batch_target
-    
-    def _equ_symbol2idx(self,equation):
-        equ_idx=[]
+
+    def _word2idx(self, sentence):
+        sentence_idx = []
+        for word in sentence:
+            try:
+                idx = self.dataset.in_word2idx[word]
+            except:
+                idx = self.in_unk_token
+            sentence_idx.append(idx)
+        return sentence_idx
+
+    def _equ_symbol2idx(self, equation):
+        equ_idx = []
         if self.equation_fix == FixType.MultiWayTree:
             for symbol in equation:
-                if isinstance(symbol,list):
-                    sub_equ_idx=self._equ_symbol2idx(symbol)
+                if isinstance(symbol, list):
+                    sub_equ_idx = self._equ_symbol2idx(symbol)
                     equ_idx.append(sub_equ_idx)
                 else:
                     if self.share_vocab:
@@ -96,13 +105,13 @@ class AbstractDataLoader(object):
                         idx = self.out_unk_token
                 equ_idx.append(idx)
         return equ_idx
-    
-    def _temp_symbol2idx(self,template):
-        temp_idx=[]
+
+    def _temp_symbol2idx(self, template):
+        temp_idx = []
         if self.equation_fix == FixType.MultiWayTree:
             for symbol in template:
-                if isinstance(symbol,list):
-                    sub_equ_idx=self._equ_symbol2idx(symbol)
+                if isinstance(symbol, list):
+                    sub_equ_idx = self._equ_symbol2idx(symbol)
                     temp_idx.append(sub_equ_idx)
                 else:
                     if self.share_vocab:
@@ -130,14 +139,14 @@ class AbstractDataLoader(object):
                         idx = self.temp_unk_token
                 temp_idx.append(idx)
         return temp_idx
-    
-    def _get_mask(self,batch_seq_len):
-        max_length=max(batch_seq_len)
-        batch_mask=[]
-        for idx,length in enumerate(batch_seq_len):
-            batch_mask.append([1]*length+[0]*(max_length-length))
+
+    def _get_mask(self, batch_seq_len):
+        max_length = max(batch_seq_len)
+        batch_mask = []
+        for idx, length in enumerate(batch_seq_len):
+            batch_mask.append([1] * length + [0] * (max_length - length))
         return batch_mask
-    
+
     def _build_num_stack(self, equation, num_list):
         num_stack = []
         for word in equation:
@@ -157,6 +166,6 @@ class AbstractDataLoader(object):
                 num_stack.append([_ for _ in range(len(num_list))])
         num_stack.reverse()
         return num_stack
-    
+
     def load_data(self):
         raise NotImplementedError

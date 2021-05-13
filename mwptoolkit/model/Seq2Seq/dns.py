@@ -219,6 +219,10 @@ class DNS(nn.Module):
             filters.append(self.out_symbol2idx[')'])
         except:
             pass
+        try:
+            filters.append(self.out_symbol2idx['='])
+        except:
+            pass
         filters.append(self.out_symbol2idx['+'])
         filters.append(self.out_symbol2idx['-'])
         filters.append(self.out_symbol2idx['*'])

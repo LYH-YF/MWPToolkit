@@ -4,11 +4,13 @@ import random
 from copy import deepcopy
 from collections import OrderedDict
 
+import nltk
 import stanza
 
 
 from mwptoolkit.utils.utils import str2float, lists2dict
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens
+from mwptoolkit.utils.data_structure import DependencyTree
 
 
 def split_number(text_list):
@@ -782,8 +784,8 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
     max_equ__len = {}
     unk_symbol = []
     for d in data:
-        # if d["id"]==6958:
-        #     print(1)
+        if d["id"]==5580:
+            print(1)
         sent_idx = 0
         equ_idx = 0
         #nums = []
@@ -805,7 +807,8 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
         for s in seg:
             pos = re.search(pattern, s)
             if pos and pos.start() == 0:
-                input_seq.append(s[pos.start():pos.end()])
+                #input_seq.append(s[pos.start():pos.end()])
+                input_seq.append(str(str2float(s[pos.start():pos.end()])))
                 if pos.end() < len(s):
                     input_seq.append(s[pos.end():])
             else:
@@ -1253,11 +1256,14 @@ def num_transfer_hmwp(data, mask_type="number", min_generate_keep=0, equ_split_s
         for s in seg:
             pos = re.search(pattern, s)
             if pos and pos.start() == 0:
-                input_seq.append(s[pos.start():pos.end()])
+                #input_seq.append(s[pos.start():pos.end()])
+                input_seq.append(str(str2float(s[pos.start():pos.end()])))
                 if pos.end() < len(s):
                     input_seq.append(s[pos.end():])
             else:
                 input_seq.append(s)
+        if d['id']==15538078:
+            print(1)
         # find all num position
         num_list = []
         for word_pos, word in enumerate(input_seq):
@@ -1650,6 +1656,52 @@ def get_deprel_tree(datas, language):
                 deprel_tokens.append(token)
     return new_datas, deprel_tokens
 
+
+def get_deprel_tree(datas,language):
+    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
+    new_datas = []
+    deprel_tokens = []
+    for idx, data in enumerate(datas):
+        group_nums = []
+        deprel_token = []
+        sentences=nltk.tokenize.sent_tokenize(data["ques source 1"])
+        #s=split_sentence(data["ques source 1"])
+        #print(s)
+        dependency_infos=[]
+        for sentence in sentences:
+            dependency_info=[]
+            doc = nlp(sentence)
+            token_list = doc.to_dict()[0]
+            for token in token_list:
+                deprel=token['deprel']
+                father_idx=token['head'] - 1
+                child_idx=token['id']-1
+                dependency_info.append([deprel,child_idx,father_idx])
+            dependency_infos.append(dependency_info)
+            tree=DependencyTree()
+            tree.sentence2tree(sentence.split(' '),dependency_info)
+
+
+def split_sentence(text):
+    #seps = ['，',',','。','．','. ','；','？','！','!']
+    sentences=nltk.tokenize.sent_tokenize(text)
+    seps='，。(\. )．；？！!'
+    x=f"([{seps}])"
+    seps = "，。．.；？！!"
+    y=f"([{seps}])"
+    seps='，。(\. )．；？！!'
+    sep_pattern = re.compile(f"([{seps}])")
+    #sep_pattern = re.compile(r'，|。|(\. )|．|；|？|！|!',re.S)
+    spans = re.split(sep_pattern, text)
+    spans = [span.strip() for span in spans if span.strip() != '']
+    spans_post = []
+    for i, span in enumerate(spans):
+        if span in seps:
+            if i > 0 and spans[i - 1] not in seps:
+                spans_post[-1] += ' ' + span
+        else:
+            spans_post.append(span)
+    return spans_post
 
 def operator_mask(expression):
     template = []

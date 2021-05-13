@@ -329,6 +329,7 @@ class SingleEquationTrainer(Trainer):
         val_acc = []
         equ_acc = []
         for idx in range(batch_size):
+            #val_ac, equ_ac, _, _ = self.evaluator.result(target[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
             val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
@@ -510,6 +511,7 @@ class MultiEquationTrainer(Trainer):
         val_acc = []
         equ_acc = []
         for idx in range(batch_size):
+            #val_ac, equ_ac, _, _ = self.evaluator.result_multi(target[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
             val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx], batch["num list"][idx], batch["num stack"][idx])
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)

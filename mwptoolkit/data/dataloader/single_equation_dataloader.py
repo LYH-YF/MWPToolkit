@@ -4,6 +4,7 @@ import torch
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 
+
 def get_num_mask(num_size_batch, generate_nums):
     num_mask = []
     max_num_size = max(num_size_batch) + len(generate_nums)
@@ -12,27 +13,28 @@ def get_num_mask(num_size_batch, generate_nums):
         num_mask.append([0] * d + [1] * (max_num_size - d))
     return num_mask
 
+
 class SingleEquationDataLoader(AbstractDataLoader):
     def __init__(self, config, dataset):
         super().__init__(config, dataset)
-        self.trainset_nums=len(dataset.trainset)
-        self.validset_nums=len(dataset.validset)
-        self.testset_nums=len(dataset.testset)
-    
-    def load_data(self,type):
+        self.trainset_nums = len(dataset.trainset)
+        self.validset_nums = len(dataset.validset)
+        self.testset_nums = len(dataset.testset)
+
+    def load_data(self, type):
         if type == "train":
             datas = self.dataset.trainset
-            batch_size=self.train_batch_size
-        elif type =="valid":
+            batch_size = self.train_batch_size
+        elif type == "valid":
             datas = self.dataset.validset
-            batch_size=self.test_batch_size
-        elif type=="test":
-            datas=self.dataset.testset
-            batch_size=self.test_batch_size
+            batch_size = self.test_batch_size
+        elif type == "test":
+            datas = self.dataset.testset
+            batch_size = self.test_batch_size
         else:
             raise ValueError("{} type not in ['train', 'valid', 'test'].".format(type))
 
-        num_total=len(datas)
+        num_total = len(datas)
         batch_num = int(num_total / batch_size) + 1
         for batch_i in range(batch_num):
             start_idx = batch_i * batch_size
@@ -44,7 +46,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             if batch_data != []:
                 batch_data = self.load_batch(batch_data)
                 yield batch_data
-        
+
     def load_batch(self, batch_data):
         '''
         {"question":input_seq,"equation":out_seq,"num list":nums,"num pos":num_pos,
@@ -53,29 +55,29 @@ class SingleEquationDataLoader(AbstractDataLoader):
         ques_batch = []
         equ_batch = []
         temp_batch = []
-        ques_source_batch=[]
-        equ_source_batch=[]
-        temp_source_batch=[]
-        ques_source_1_batch=[]
-        infix_equ_batch=[]
+        ques_source_batch = []
+        equ_source_batch = []
+        temp_source_batch = []
+        ques_source_1_batch = []
+        infix_equ_batch = []
 
         num_list_batch = []
         num_pos_batch = []
-        
+
         id_batch = []
         ans_batch = []
-        
+
         ques_mask_batch = []
-        equ_mask_batch=[]
+        equ_mask_batch = []
         num_mask_batch = []
-        
+
         equ_len_batch = []
         ques_len_batch = []
-        
+
         num_size_batch = []
         num_stack_batch = []
 
-        group_nums_batch=[]
+        group_nums_batch = []
         for data in batch_data:
             ques_tensor = []
             equ_tensor = []
@@ -83,45 +85,16 @@ class SingleEquationDataLoader(AbstractDataLoader):
             sentence = data["question"]
             equation = data["equation"]
             template = data["template"]
-            ques_source=' '.join(sentence)
-            if self.equation_fix==FixType.MultiWayTree:
-                equ_source=' '
-                temp_source=' '
-            else:
-                equ_source=' '.join(equation)
-                temp_source=' '.join(template)
-            ques_source_batch.append(ques_source)
-            equ_source_batch.append(equ_source)
-            temp_source_batch.append(temp_source)
-            ques_source_1_batch.append(data["ques source 1"])
-            infix_equ_batch.append(data["infix equation"])
-            num_list_batch.append(data["number list"])
-            id_batch.append(data["id"])
-            ans_batch.append(data["ans"])
-            try:
-                group_nums_batch.append(data["group nums"])
-            except:
-                group_nums_batch.append([])
-            
-            num_stack_batch.append(
-                self._build_num_stack(equation, data["number list"]))
-            
+
             # question word to index
             ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
-            for word in sentence:
-                try:
-                    idx = self.dataset.in_word2idx[word]
-                except:
-                    idx = self.in_unk_token
-                ques_tensor.append(idx)
+            ques_tensor += self._word2idx(sentence)
             ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
-            num_pos=[pos+1 for pos in data["number position"]]
-            num_pos_batch.append(num_pos)
 
             # equation symbol to index
-            equ_tensor=self._equ_symbol2idx(equation)
-            temp_tensor=self._temp_symbol2idx(template)
-            if self.symbol_for_tree or self.equation_fix==FixType.MultiWayTree:
+            equ_tensor = self._equ_symbol2idx(equation)
+            temp_tensor = self._temp_symbol2idx(template)
+            if self.symbol_for_tree or self.equation_fix == FixType.MultiWayTree:
                 pass
             else:
                 if self.share_vocab:
@@ -130,65 +103,100 @@ class SingleEquationDataLoader(AbstractDataLoader):
                 else:
                     equ_tensor.append(self.dataset.out_symbol2idx["<EOS>"])
                     temp_tensor.append(self.dataset.temp_symbol2idx["<EOS>"])
-            
+
             equ_len_batch.append(len(equ_tensor))
             ques_len_batch.append(len(ques_tensor))
             ques_batch.append(ques_tensor)
             equ_batch.append(equ_tensor)
             temp_batch.append(temp_tensor)
-        ques_batch=self._pad_input_batch(ques_batch,ques_len_batch)
-        if self.equation_fix==FixType.MultiWayTree:
+
+            # question / equation to string
+            ques_source = ' '.join(sentence)
+            if self.equation_fix == FixType.MultiWayTree:
+                equ_source = ' '
+                temp_source = ' '
+            else:
+                equ_source = ' '.join(equation)
+                temp_source = ' '.join(template)
+            ques_source_batch.append(ques_source)
+            equ_source_batch.append(equ_source)
+            temp_source_batch.append(temp_source)
+            ques_source_1_batch.append(data["ques source 1"])
+            # infix equation
+            infix_equ_batch.append(data["infix equation"])
+            # quantity list
+            num_list_batch.append(data["number list"])
+            # quantity position
+            num_pos = [pos + 1 for pos in data["number position"]]  # pos plus one because of adding <SOS> at the head of sentence
+            num_pos_batch.append(num_pos)
+            # question id and answer
+            id_batch.append(data["id"])
+            ans_batch.append(data["ans"])
+            try:
+                group_nums_batch.append(data["group nums"])
+            except:
+                group_nums_batch.append([])
+
+            num_stack_batch.append(self._build_num_stack(equation, data["number list"]))
+
+        # padding batch question
+        ques_batch = self._pad_input_batch(ques_batch, ques_len_batch)
+        # padding batch equation
+        if self.equation_fix == FixType.MultiWayTree:
             pass
         else:
-            equ_batch=self._pad_output_batch(equ_batch,equ_len_batch)
-            temp_batch=self._pad_output_batch(temp_batch,equ_len_batch)
-        
-        ques_mask_batch=self._get_mask(ques_len_batch)
-        equ_mask_batch=self._get_mask(equ_len_batch)
+            equ_batch = self._pad_output_batch(equ_batch, equ_len_batch)
+            temp_batch = self._pad_output_batch(temp_batch, equ_len_batch)
+        # question mask
+        ques_mask_batch = self._get_mask(ques_len_batch)
+        # equation mask
+        equ_mask_batch = self._get_mask(equ_len_batch)
+        # quantity count
         num_size_batch = [len(num_pos) for num_pos in num_pos_batch]
+        # quantity mask
         num_mask_batch = get_num_mask(num_size_batch, self.dataset.generate_list)
-        
-        new_group_nums_batch=[]
+
+        new_group_nums_batch = []
         for group_nums in group_nums_batch:
-            new_group_nums=[]
+            new_group_nums = []
             for group_num in group_nums:
-                new_group_num=[]
+                new_group_num = []
                 for pos in group_num:
-                    new_group_num.append(pos+1)
+                    new_group_num.append(pos + 1)
                 new_group_nums.append(new_group_num)
             new_group_nums_batch.append(new_group_nums)
         # to tensor
         ques_tensor_batch = torch.tensor(ques_batch).to(self.device)
-        if self.equation_fix==FixType.MultiWayTree:
-            equ_tensor_batch=equ_batch
-            temp_tensor_batch=temp_batch
+        if self.equation_fix == FixType.MultiWayTree:
+            equ_tensor_batch = equ_batch
+            temp_tensor_batch = temp_batch
         else:
             equ_tensor_batch = torch.tensor(equ_batch).to(self.device)
             temp_tensor_batch = torch.tensor(temp_batch).to(self.device)
         ques_mask_batch = torch.tensor(ques_mask_batch).to(self.device).bool()
         num_mask_batch = torch.tensor(num_mask_batch).to(self.device).bool()
-        ques_len_batch=torch.tensor(ques_len_batch).long()
-        equ_mask_batch=torch.tensor(equ_mask_batch).to(self.device).bool()
-        
+        ques_len_batch = torch.tensor(ques_len_batch).long()
+        equ_mask_batch = torch.tensor(equ_mask_batch).to(self.device).bool()
+
         return {
             "question": ques_tensor_batch,
             "equation": equ_tensor_batch,
             "template": temp_tensor_batch,
-            "ques len":ques_len_batch,
+            "ques len": ques_len_batch,
             "equ len": equ_len_batch,
             "num list": num_list_batch,
             "num pos": num_pos_batch,
             "id": id_batch,
             "num mask": num_mask_batch,
             "ques mask": ques_mask_batch,
-            "equ mask":equ_mask_batch,
+            "equ mask": equ_mask_batch,
             "num stack": num_stack_batch,
             "ans": ans_batch,
-            "num size":num_size_batch,
-            "ques_source":ques_source_batch,
-            "equ_source":equ_source_batch,
-            "temp_source":temp_source_batch,
-            "ques source 1":ques_source_1_batch,
-            "group nums":new_group_nums_batch,
-            "infix equation":infix_equ_batch
+            "num size": num_size_batch,
+            "ques_source": ques_source_batch,
+            "equ_source": equ_source_batch,
+            "temp_source": temp_source_batch,
+            "ques source 1": ques_source_1_batch,
+            "group nums": new_group_nums_batch,
+            "infix equation": infix_equ_batch
         }

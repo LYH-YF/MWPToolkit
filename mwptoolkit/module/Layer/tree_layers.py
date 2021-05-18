@@ -8,6 +8,12 @@ class TreeNode:  # the class save the tree node
     def __init__(self, embedding, left_flag=False):
         self.embedding = embedding
         self.left_flag = left_flag
+class NodeEmbeddingNode:
+    def __init__(self, node_hidden, node_context=None, label_embedding=None):
+        self.node_hidden = node_hidden
+        self.node_context = node_context
+        self.label_embedding = label_embedding
+        return
 
 class Node():
     def __init__(self,node_value,isleaf=True):
@@ -20,7 +26,7 @@ class Node():
         self.left_node = node
     def set_right_node(self, node):
         self.right_node = node
-    
+
 class TreeEmbedding:  # the class save the tree
     def __init__(self, embedding, terminal=False):
         self.embedding = embedding
@@ -187,6 +193,24 @@ class Score(nn.Module):
             score = score.masked_fill_(num_mask, -1e12)
         return score
 
+class ScoreModel(nn.Module):
+    def __init__(self, hidden_size):
+        super(ScoreModel, self).__init__()
+        self.w = nn.Linear(hidden_size * 3, hidden_size)
+        self.score = nn.Linear(hidden_size, 1)
+    
+    def forward(self, hidden, context, token_embeddings):
+        # hidden/context: batch_size * hidden_size
+        # token_embeddings: batch_size * class_size * hidden_size
+        batch_size, class_size, _ = token_embeddings.size()
+        hc = torch.cat((hidden, context), dim=-1)
+        # (b, c, h)
+        hc = hc.unsqueeze(1).expand(-1, class_size, -1)
+        hidden = torch.cat((hc, token_embeddings), dim=-1)
+        hidden = F.leaky_relu(self.w(hidden))
+        score = self.score(hidden).view(batch_size, class_size)
+        return score
+
 
 class NodeGenerater(nn.Module):
     def __init__(self, hidden_size, op_nums, embedding_size, dropout=0.5):
@@ -229,6 +253,43 @@ class NodeGenerater(nn.Module):
         l_child = l_child * l_child_g
         r_child = r_child * r_child_g
         return l_child, r_child, node_label_
+class TreeEmbeddingModel(nn.Module):
+    def __init__(self, hidden_size, op_set, dropout=0.4):
+        super(TreeEmbeddingModel, self).__init__()
+        self.op_set = op_set
+        self.dropout = nn.Dropout(p=dropout)
+        self.combine = GateNN(hidden_size, hidden_size*2, dropout=dropout, single_layer=True)
+        return
+    
+    def merge(self, op_embedding, left_embedding, right_embedding):
+        te_input = torch.cat((left_embedding, right_embedding), dim=-1)
+        te_input = self.dropout(te_input)
+        op_embedding = self.dropout(op_embedding)
+        tree_embed = self.combine(op_embedding, te_input)
+        return tree_embed
+    
+    def forward(self, class_embedding, tree_stacks, embed_node_index):
+        # embed_node_index: batch_size
+        use_cuda = embed_node_index.is_cuda
+        batch_index = torch.arange(embed_node_index.size(0))
+        if use_cuda:
+            batch_index = batch_index.cuda()
+        labels_embedding = class_embedding[batch_index, embed_node_index]
+        for node_label, tree_stack, label_embedding in zip(embed_node_index.cpu().tolist(), tree_stacks, labels_embedding):
+            # operations
+            if node_label in self.op_set:
+                tree_node = TreeEmbedding(label_embedding, terminal=False)
+            # numbers
+            else:
+                right_embedding = label_embedding
+                # on right tree => merge
+                while len(tree_stack) >= 2 and tree_stack[-1].terminal and (not tree_stack[-2].terminal):
+                    left_embedding = tree_stack.pop().embedding
+                    op_embedding = tree_stack.pop().embedding
+                    right_embedding = self.merge(op_embedding, left_embedding, right_embedding)
+                tree_node = TreeEmbedding(right_embedding, terminal=True)
+            tree_stack.append(tree_node)
+        return labels_embedding
 
 
 class SubTreeMerger(nn.Module):
@@ -381,3 +442,81 @@ class DQN(nn.Module):
 
         return act,obv
 
+class GateNN(nn.Module):
+    def __init__(self, hidden_size, input1_size, input2_size=0, dropout=0.4, single_layer=False):
+        super(GateNN, self).__init__()
+        self.single_layer = single_layer
+        self.hidden_l1 = nn.Linear(input1_size+hidden_size, hidden_size)
+        self.gate_l1 = nn.Linear(input1_size+hidden_size, hidden_size)
+        if not single_layer:
+            self.dropout = nn.Dropout(p=dropout)
+            self.hidden_l2 = nn.Linear(input2_size+hidden_size, hidden_size)
+            self.gate_l2 = nn.Linear(input2_size+hidden_size, hidden_size)
+        return
+    
+    def forward(self, hidden, input1, input2=None):
+        input1 = torch.cat((hidden, input1), dim=-1)
+        h = torch.tanh(self.hidden_l1(input1))
+        g = torch.sigmoid(self.gate_l1(input1))
+        h = h * g
+        if not self.single_layer:
+            h1 = self.dropout(h)
+            if input2 is not None:
+                input2 = torch.cat((h1, input2), dim=-1)
+            else:
+                input2 = h1
+            h = torch.tanh(self.hidden_l2(input2))
+            g = torch.sigmoid(self.gate_l2(input2))
+            h = h * g
+        return h
+
+class DecomposeModel(nn.Module):
+    def __init__(self, hidden_size, dropout, device):
+        super(DecomposeModel, self).__init__()
+        self.pad_hidden = torch.zeros(hidden_size)
+        self.pad_hidden = self.pad_hidden.to(device)
+
+        self.dropout = nn.Dropout(p=dropout)
+        self.l_decompose = GateNN(hidden_size, hidden_size*2, 0, dropout=dropout, single_layer=False)
+        self.r_decompose = GateNN(hidden_size, hidden_size*2, hidden_size, dropout=dropout, single_layer=False)
+        return
+
+    def forward(self, node_stacks, tree_stacks, nodes_context, labels_embedding, pad_node=True):
+        children_hidden = []
+        for node_stack, tree_stack, node_context, label_embedding in zip(node_stacks, tree_stacks, nodes_context, labels_embedding):
+            # start from encoder_hidden
+            # len == 0 => finished decode
+            if len(node_stack) > 0:
+                # left
+                if not tree_stack[-1].terminal:
+                    node_hidden = node_stack[-1].node_hidden    # parent, still need for right
+                    node_stack[-1] = NodeEmbeddingNode(node_hidden, node_context, label_embedding)   # add context and label of parent for right child
+                    l_input = torch.cat((node_context, label_embedding), dim=-1)
+                    l_input = self.dropout(l_input)
+                    node_hidden = self.dropout(node_hidden)
+                    child_hidden = self.l_decompose(node_hidden, l_input, None)
+                    node_stack.append(NodeEmbeddingNode(child_hidden, None, None))  # only hidden for left child
+                # right
+                else:
+                    node_stack.pop()    # left child, no need
+                    if len(node_stack) > 0:
+                        parent_node = node_stack.pop()  # parent, no longer need
+                        node_hidden = parent_node.node_hidden
+                        node_context = parent_node.node_context
+                        label_embedding = parent_node.label_embedding
+                        left_embedding = tree_stack[-1].embedding   # left tree
+                        left_embedding = self.dropout(left_embedding)
+                        r_input = torch.cat((node_context, label_embedding), dim=-1)
+                        r_input = self.dropout(r_input)
+                        node_hidden = self.dropout(node_hidden)
+                        child_hidden = self.r_decompose(node_hidden, r_input, left_embedding)
+                        node_stack.append(NodeEmbeddingNode(child_hidden, None, None))  # only hidden for right child
+                    # else finished decode
+            # finished decode, pad
+            if len(node_stack) == 0:
+                child_hidden = self.pad_hidden
+                if pad_node:
+                    node_stack.append(NodeEmbeddingNode(child_hidden, None, None))
+            children_hidden.append(child_hidden)
+        children_hidden = torch.stack(children_hidden, dim=0)
+        return children_hidden

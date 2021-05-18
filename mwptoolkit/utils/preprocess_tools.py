@@ -529,8 +529,6 @@ def number_transfer_math23k(data, mask_type="number", min_generate_keep=0):
     copy_nums = 0
     processed_datas = []
     for d in data:
-        sent_idx = 0
-        equ_idx = 0
         #nums = []
         nums = OrderedDict()
         num_list = []
@@ -582,12 +580,19 @@ def number_transfer_math23k(data, mask_type="number", min_generate_keep=0):
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
 
         out_seq = seg_and_tag_math23k(equations, nums_fraction, nums)
-        for s in out_seq:  # tag the num which is generated
+        for idx,s in enumerate(out_seq):
+            # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
+
+            if mask_type==MaskSymbol.NUM:
+                if 'NUM' in s:
+                    number=num_list[int(s[4:])]
+                    if len(num_pos_dict[number])>1:
+                        out_seq[idx]=number
 
         source = deepcopy(input_seq)
         for pos in all_pos:
@@ -665,8 +670,8 @@ def number_transfer_ape200k(data, mask_type="number", min_generate_keep=0):
         equations = d["equation"]
         if "x=" == equations[:2] or "X=" == equations[:2]:
             equations = equations[2:]
-        if '千' in equations:
-            equations = equations[:equations.index('千')]
+        # if '千' in equations:
+        #     equations = equations[:equations.index('千')]
 
         # match and split number
         input_seq = []
@@ -1657,17 +1662,18 @@ def get_deprel_tree(datas, language):
     return new_datas, deprel_tokens
 
 
-def get_deprel_tree(datas,language):
+def get_span_level_deprel_tree(datas,language):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
     new_datas = []
-    deprel_tokens = []
+    max_span_size=0
     for idx, data in enumerate(datas):
-        group_nums = []
-        deprel_token = []
-        sentences=nltk.tokenize.sent_tokenize(data["ques source 1"])
-        #s=split_sentence(data["ques source 1"])
-        #print(s)
+        sentences=split_sentence(data["ques source 1"])
+        masked_sentences=split_sentence(' '.join(data['question']))
+        span_size=len(masked_sentences)
+        if span_size > max_span_size:
+            max_span_size=span_size 
         dependency_infos=[]
+        deprel_trees=[]
         for sentence in sentences:
             dependency_info=[]
             doc = nlp(sentence)
@@ -1677,30 +1683,39 @@ def get_deprel_tree(datas,language):
                 father_idx=token['head'] - 1
                 child_idx=token['id']-1
                 dependency_info.append([deprel,child_idx,father_idx])
-            dependency_infos.append(dependency_info)
             tree=DependencyTree()
             tree.sentence2tree(sentence.split(' '),dependency_info)
+            dependency_infos.append(dependency_info)
+            deprel_trees.append(tree)
+        data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
+        data['split sentences source']=sentences
+        data['deprel tree']=deprel_trees
+        data['dependency info']=dependency_infos
+        new_datas.append(data)
+    return new_datas,max_span_size
 
 
 def split_sentence(text):
     #seps = ['，',',','。','．','. ','；','？','！','!']
     sentences=nltk.tokenize.sent_tokenize(text)
-    seps='，。(\. )．；？！!'
-    x=f"([{seps}])"
-    seps = "，。．.；？！!"
-    y=f"([{seps}])"
-    seps='，。(\. )．；？！!'
+    #seps='，。(\. )．；？！!'
+    #x=f"([{seps}])"
+    #seps = "，。．.；？！!"
+    spans_posts = []
+    seps="，。．；？！!" 
     sep_pattern = re.compile(f"([{seps}])")
     #sep_pattern = re.compile(r'，|。|(\. )|．|；|？|！|!',re.S)
-    spans = re.split(sep_pattern, text)
-    spans = [span.strip() for span in spans if span.strip() != '']
-    spans_post = []
-    for i, span in enumerate(spans):
-        if span in seps:
-            if i > 0 and spans[i - 1] not in seps:
-                spans_post[-1] += ' ' + span
-        else:
-            spans_post.append(span)
+    for sentence in sentences:
+        spans = re.split(sep_pattern, sentence)
+        spans = [span.strip() for span in spans if span.strip() != '']
+        spans_post = []
+        for i, span in enumerate(spans):
+            if span in seps:
+                if i > 0 and spans[i - 1] not in seps:
+                    spans_post[-1] += ' ' + span
+            else:
+                spans_post.append(span)
+        spans_posts+=spans_post
     return spans_post
 
 def operator_mask(expression):

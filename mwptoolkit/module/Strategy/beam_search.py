@@ -10,6 +10,26 @@ class TreeBeam:  # the class save the beam node
         self.node_stack = copy_list(node_stack)
         self.left_childs = copy_list(left_childs)
         self.out = copy.deepcopy(out)
+class BeamNode:
+    def __init__(self, score, nodes_hidden, node_stacks, tree_stacks, decoder_outputs_list, sequence_symbols_list):
+        self.score = score
+        self.nodes_hidden = nodes_hidden
+        self.node_stacks = node_stacks
+        self.tree_stacks = tree_stacks
+        self.decoder_outputs_list = decoder_outputs_list
+        self.sequence_symbols_list = sequence_symbols_list
+        return
+    
+    def copy(self):
+        node = BeamNode(
+            self.score,
+            self.nodes_hidden,
+            copy_list(self.node_stacks),
+            copy_list(self.tree_stacks),
+            copy_list(self.decoder_outputs_list),
+            copy_list(self.sequence_symbols_list)
+        )
+        return node
 
 class Beam_Search_Hypothesis(object):
     r""" Class designed for beam search.

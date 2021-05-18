@@ -2,7 +2,7 @@ import random
 import copy
 from mwptoolkit.utils.utils import read_json_data,write_json_data
 from mwptoolkit.utils.preprocess_tools import operator_mask,EN_rule1_stat,EN_rule2_
-from mwptoolkit.utils.preprocess_tools import get_group_nums,get_deprel_tree
+from mwptoolkit.utils.preprocess_tools import get_group_nums,get_deprel_tree,get_span_level_deprel_tree
 
 class AbstractDataset(object):
     '''abstract dataset'''
@@ -22,6 +22,7 @@ class AbstractDataset(object):
         self.language=config["language"]
         self.single = config["single"]
         self.linear = config["linear"]
+        self.max_span_size = 1
 
     def _load_dataset(self):
         '''
@@ -30,9 +31,9 @@ class AbstractDataset(object):
         trainset_file = self.dataset_path + "/trainset.json"
         validset_file = self.dataset_path + "/validset.json"
         testset_file = self.dataset_path + "/testset.json"
-        self.trainset = read_json_data(trainset_file)
-        self.validset = read_json_data(validset_file)
-        self.testset = read_json_data(testset_file)
+        self.trainset = read_json_data(trainset_file)[:10]
+        self.validset = read_json_data(validset_file)[:10]
+        self.testset = read_json_data(testset_file)[:10]
     def _load_fold_dataset(self):
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
         testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
@@ -122,6 +123,12 @@ class AbstractDataset(object):
         self.testset,_=get_deprel_tree(self.testset,self.language)
 
         #self._update_vocab(tokens)
+    
+    def build_span_level_deprel_tree(self):
+        self.trainset,train_span_szie=get_span_level_deprel_tree(self.trainset,self.language)
+        self.validset,valid_span_size=get_span_level_deprel_tree(self.validset,self.language)
+        self.testset,test_span_size=get_span_level_deprel_tree(self.testset,self.language)
+        self.max_span_size=max([train_span_szie,valid_span_size,test_span_size])
     
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation

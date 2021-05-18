@@ -1,4 +1,4 @@
-from mwptoolkit.utils.enum_type import FixType
+from mwptoolkit.utils.enum_type import FixType, NumMask
 import random
 import torch
 
@@ -46,7 +46,59 @@ class SingleEquationDataLoader(AbstractDataLoader):
             if batch_data != []:
                 batch_data = self.load_batch(batch_data)
                 yield batch_data
-
+    def load_batch_spans(self,batch_data):
+        pad_num_pos = [-1] * len(self.dataset.out_idx2symbol)
+        max_span_nums=0
+        span_nums_batch=[]
+        spans_batch=[]
+        spans_length_batch=[]
+        trees_batch=[]
+        span_num_pos_batch=[]
+        word_num_poses_batch=[]
+        word_num_poses_pad_batch=[]
+        for data in batch_data:
+            span_nums = len(data['split sentences'])
+            span_nums_batch.append(span_nums)
+            span_num_pos = [-1] * len(self.dataset.out_idx2symbol)
+            word_num_poses = [[-1] * len(self.dataset.out_idx2symbol) for _ in range(span_nums)]
+            for i, span in enumerate(data['split sentences']):
+                for j, word in enumerate(span):
+                    if word in NumMask.number and word in self.dataset.out_idx2symbol:
+                        class_index = self.dataset.out_symbol2idx[word]
+                        span_num_pos[class_index] = i
+                        word_num_poses[i][class_index] = j
+            span_num_pos_batch.append(span_num_pos)
+            word_num_poses_batch.append(word_num_poses)
+        max_span_nums=max(span_nums_batch)
+        for span_idx in range(max_span_nums):
+            span_i_batch=[]
+            span_i_length_batch=[]
+            tree_i_batch=[]
+            word_num_poses_pad = []
+            for b_i,data in enumerate(batch_data):
+                if span_idx>=span_nums_batch[b_i]:
+                    span_i_batch.append([])
+                    span_i_length_batch.append(0)
+                    word_num_poses_pad.append(pad_num_pos)
+                else:
+                    sentence=data['split sentences'][span_idx]
+                    sentence_idx=self._word2idx(sentence)
+                    span_i_length=len(sentence_idx)
+                    span_i_batch.append(sentence_idx)
+                    span_i_length_batch.append(span_i_length)
+                    word_num_poses_pad.append(word_num_poses_batch[b_i][span_idx])
+                try:
+                    tree=data['deprel tree'][span_idx]
+                    tree_i_batch.append(tree)
+                except:
+                    tree_i_batch.append(None)
+            span_i_batch=self._pad_input_batch(span_i_batch,span_i_length_batch)
+            spans_batch.append(span_i_batch)
+            spans_length_batch.append(span_i_length_batch)
+            trees_batch.append(tree_i_batch)
+            word_num_poses_pad_batch.append(word_num_poses_pad)
+        
+        return spans_batch,spans_length_batch,span_nums_batch,trees_batch,span_num_pos_batch,word_num_poses_pad_batch
     def load_batch(self, batch_data):
         '''
         {"question":input_seq,"equation":out_seq,"num list":nums,"num pos":num_pos,
@@ -178,6 +230,44 @@ class SingleEquationDataLoader(AbstractDataLoader):
         ques_len_batch = torch.tensor(ques_len_batch).long()
         equ_mask_batch = torch.tensor(equ_mask_batch).to(self.device).bool()
 
+        if self.dataset.model.lower() in ['hms']:
+            spans_batch,spans_length_batch,span_nums_batch,trees_batch,\
+                span_num_pos_batch,word_num_poses_batch=self.load_batch_spans(batch_data)
+            # to tensor
+            spans_batch = [torch.tensor(span_i_batch).to(self.device) for span_i_batch in spans_batch]
+            spans_length_batch = torch.tensor(spans_length_batch).long()
+            span_nums_batch = torch.tensor(span_nums_batch).to(self.device)
+            span_num_pos_batch = torch.LongTensor(span_num_pos_batch).to(self.device)
+            word_num_poses_batch = [torch.LongTensor(word_num_pos).to(self.device) for word_num_pos in word_num_poses_batch]
+            return {
+                "spans":spans_batch,
+                "spans len":spans_length_batch,
+                "span nums":span_nums_batch,
+                "deprel tree":trees_batch,
+                "span num pos":span_num_pos_batch,
+                "word num poses":word_num_poses_batch,
+                "question": ques_tensor_batch,
+                "equation": equ_tensor_batch,
+                "template": temp_tensor_batch,
+                "ques len": ques_len_batch,
+                "equ len": equ_len_batch,
+                "num list": num_list_batch,
+                "num pos": num_pos_batch,
+                "id": id_batch,
+                "num mask": num_mask_batch,
+                "ques mask": ques_mask_batch,
+                "equ mask": equ_mask_batch,
+                "num stack": num_stack_batch,
+                "ans": ans_batch,
+                "num size": num_size_batch,
+                "ques_source": ques_source_batch,
+                "equ_source": equ_source_batch,
+                "temp_source": temp_source_batch,
+                "ques source 1": ques_source_1_batch,
+                "group nums": new_group_nums_batch,
+                "infix equation": infix_equ_batch,
+            }
+
         return {
             "question": ques_tensor_batch,
             "equation": equ_tensor_batch,
@@ -198,5 +288,5 @@ class SingleEquationDataLoader(AbstractDataLoader):
             "temp_source": temp_source_batch,
             "ques source 1": ques_source_1_batch,
             "group nums": new_group_nums_batch,
-            "infix equation": infix_equ_batch
+            "infix equation": infix_equ_batch,
         }

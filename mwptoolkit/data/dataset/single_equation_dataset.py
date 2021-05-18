@@ -66,6 +66,10 @@ class SingleEquationDataset(AbstractDataset):
             logger=getLogger()
             logger.info("build deprel tree...")
             self.build_deprel_tree()
+        if self.model.lower() in ['hms']:
+            logger=getLogger()
+            logger.info("build span-level deprel tree...")
+            self.build_span_level_deprel_tree()
         if self.model.lower() in ['graph2tree']:
             logger=getLogger()
             logger.info("build deprel tree...")
@@ -96,12 +100,17 @@ class SingleEquationDataset(AbstractDataset):
         else:
             self._build_symbol()
             self._build_template_symbol()
-        if self.share_vocab:
-            for symbol in self.out_idx2symbol:
-                if symbol in self.in_idx2word:
-                    continue
-                else:
-                    self.in_idx2word.append(symbol)
+        # if self.share_vocab:
+        #     for symbol in self.out_idx2symbol:
+        #         if symbol in self.in_idx2word:
+        #             continue
+        #         else:
+        #             self.in_idx2word.append(symbol)
+        for symbol in self.out_idx2symbol:
+            if symbol in self.in_idx2word:
+                continue
+            else:
+                self.in_idx2word.append(symbol)
 
         self.in_word2idx = {}
         self.out_symbol2idx = {}

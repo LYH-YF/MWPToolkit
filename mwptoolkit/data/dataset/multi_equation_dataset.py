@@ -76,6 +76,10 @@ class MultiEquationDataset(AbstractDataset):
             logger=getLogger()
             logger.info("build deprel tree...")
             self.build_deprel_tree()
+        if self.model.lower() in ['hms']:
+            logger=getLogger()
+            logger.info("build span-level deprel tree...")
+            self.build_span_level_deprel_tree()
         if self.model.lower() in ['graph2tree']:
             logger=getLogger()
             logger.info("build deprel tree...")

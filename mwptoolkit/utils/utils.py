@@ -53,12 +53,21 @@ def read_math23k_source(filename):
     return data_list
 
 
+# def copy_list(l):
+#     r = []
+#     if len(l) == 0:
+#         return r
+#     for i in l:
+#         if type(i) is list:
+#             r.append(copy_list(i))
+#         else:
+#             r.append(i)
+#     return r
+
 def copy_list(l):
     r = []
-    if len(l) == 0:
-        return r
     for i in l:
-        if type(i) is list:
+        if isinstance(i,list):
             r.append(copy_list(i))
         else:
             r.append(i)

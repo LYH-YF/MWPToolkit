@@ -78,6 +78,25 @@ class BinaryTree(AbstractTree):
         equation = left_equ + right_equ + [node.node_value]
         return equation
 
+class PrefixTree(BinaryTree):
+    def __init__(self, root_node):
+        super().__init__(root_node=root_node)
+
+    def prefix2tree(self,equ_list):
+        stack = []
+        for symbol in equ_list[::-1]:
+            if symbol in [SpecialTokens.EOS_TOKEN, SpecialTokens.PAD_TOKEN]:
+                break
+            if symbol in ['+', '-', '*', '/', '^', '=', SpecialTokens.BRG_TOKEN, SpecialTokens.OPT_TOKEN]:
+                node = Node(symbol, isleaf=False)
+                node.set_right_node(stack.pop())
+                node.set_left_node(stack.pop())
+                stack.append(node)
+            else:
+                node = Node(symbol, isleaf=True)
+                stack.append(node)
+        self.root = stack.pop()
+
 
 class GoldTree(AbstractTree):
     def __init__(self, root_node=None, gold_ans=None):

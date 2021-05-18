@@ -1,9 +1,8 @@
-from mwptoolkit.utils.enum_type import FixType, NumMask
 import random
 import torch
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
-
+from mwptoolkit.utils.enum_type import FixType, NumMask
 
 def get_num_mask(num_size_batch, generate_nums):
     num_mask = []
@@ -99,6 +98,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             word_num_poses_pad_batch.append(word_num_poses_pad)
         
         return spans_batch,spans_length_batch,span_nums_batch,trees_batch,span_num_pos_batch,word_num_poses_pad_batch
+    
     def load_batch(self, batch_data):
         '''
         {"question":input_seq,"equation":out_seq,"num list":nums,"num pos":num_pos,

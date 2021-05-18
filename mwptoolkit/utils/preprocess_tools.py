@@ -1716,7 +1716,7 @@ def split_sentence(text):
             else:
                 spans_post.append(span)
         spans_posts+=spans_post
-    return spans_post
+    return spans_posts
 
 def operator_mask(expression):
     template = []

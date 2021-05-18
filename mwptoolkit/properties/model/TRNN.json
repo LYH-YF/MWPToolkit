@@ -16,6 +16,7 @@
     "attention":false,
     "symbol_for_tree":false,
     "rule1":true,
-    "rule2":true
+    "rule2":true,
+    "equation_fix":"prefix"
 
 }

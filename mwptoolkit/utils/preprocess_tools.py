@@ -357,7 +357,7 @@ def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the 
             res.append(nums[st_num])
         except:
             try:
-                number = str(int(str2float(st_num)))
+                number = str(str2float(st_num))
                 if abs(eval(number) - eval(st_num)) < 1e-4:
                     res.append(nums[number])
                 else:
@@ -391,7 +391,7 @@ def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the 
             res.append(nums[st_num])
         except:
             try:
-                number = str(int(str2float(st_num)))
+                number = str(str2float(st_num))
                 if abs(eval(number) - eval(st_num)) < 1e-4:
                     res.append(nums[number])
                 else:
@@ -789,8 +789,8 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
     max_equ__len = {}
     unk_symbol = []
     for d in data:
-        if d["id"]==5580:
-            print(1)
+        # if d["id"]==5580:
+        #     print(1)
         sent_idx = 0
         equ_idx = 0
         #nums = []
@@ -952,7 +952,7 @@ def num_transfer_multi(data, mask_type="number", min_generate_keep=0, equ_split_
         for s in seg:
             pos = re.search(pattern, s)
             if pos and pos.start() == 0:
-                input_seq.append(s[pos.start():pos.end()])
+                input_seq.append(str(str2float(s[pos.start():pos.end()])))
                 if pos.end() < len(s):
                     input_seq.append(s[pos.end():])
             else:
@@ -989,7 +989,7 @@ def num_transfer_multi(data, mask_type="number", min_generate_keep=0, equ_split_
                 nums_fraction.append(num)
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
 
-        out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
+        out_seq = seg_and_tag_multi(equations, nums_fraction, nums)
 
         # tag the num which is generated
         for s in out_seq:
@@ -1063,7 +1063,8 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
         sent_mask_list = NumMask.number
         equ_mask_list = NumMask.number
 
-    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+    pattern = re.compile(r"\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+    pattern = re.compile(r"\d+\/\d+|\d+\.\d+%?|\d+%?|(-\d+)")
 
     generate_nums = []
     generate_nums_dict = {}
@@ -1072,8 +1073,6 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
     max_equ__len = {}
     unk_symbol = []
     for d in data:
-        # if d["id"]==2022:
-        #     print(1)
         sent_idx = 0
         equ_idx = 0
         #nums = []
@@ -1099,7 +1098,7 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
         for s in seg:
             pos = re.search(pattern, s)
             if pos and pos.start() == 0:
-                input_seq.append(s[pos.start():pos.end()])
+                input_seq.append(str(str2float(s[pos.start():pos.end()])))
                 if pos.end() < len(s):
                     input_seq.append(s[pos.end():])
             else:
@@ -1161,7 +1160,8 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
 
         # tag the num which is generated
         for s in out_seq:
-            if s[0].isdigit() and s not in generate_nums and s not in num_list:
+            if s[0].isdigit() and str(str2float(s)) not in generate_nums and s not in num_list:
+                s=str(str2float(s))
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if re.match(r"^-((\d+\.?\d*))", s) and s not in generate_nums and s not in num_list:
@@ -1267,8 +1267,8 @@ def num_transfer_hmwp(data, mask_type="number", min_generate_keep=0, equ_split_s
                     input_seq.append(s[pos.end():])
             else:
                 input_seq.append(s)
-        if d['id']==15538078:
-            print(1)
+        # if d['id']==15538078:
+        #     print(1)
         # find all num position
         num_list = []
         for word_pos, word in enumerate(input_seq):

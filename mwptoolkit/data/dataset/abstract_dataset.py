@@ -1,5 +1,6 @@
 import random
 import copy
+import torch
 from mwptoolkit.utils.utils import read_json_data,write_json_data
 from mwptoolkit.utils.preprocess_tools import operator_mask,EN_rule1_stat,EN_rule2_
 from mwptoolkit.utils.preprocess_tools import get_group_nums,get_deprel_tree,get_span_level_deprel_tree
@@ -22,6 +23,7 @@ class AbstractDataset(object):
         self.language=config["language"]
         self.single = config["single"]
         self.linear = config["linear"]
+        self.device = config["device"]
         self.max_span_size = 1
 
     def _load_dataset(self):
@@ -113,9 +115,10 @@ class AbstractDataset(object):
             self.testset[idx]["equation"] = EN_rule2_(data["equation"])
     
     def build_group_nums_for_graph(self):
-        self.trainset=get_group_nums(self.trainset,self.language)
-        self.validset=get_group_nums(self.validset,self.language)
-        self.testset=get_group_nums(self.testset,self.language)
+        use_gpu=True if self.device==torch.device('cuda') else False
+        self.trainset=get_group_nums(self.trainset,self.language,use_gpu)
+        self.validset=get_group_nums(self.validset,self.language,use_gpu)
+        self.testset=get_group_nums(self.testset,self.language,use_gpu)
     
     def build_deprel_tree(self):
         self.trainset,tokens=get_deprel_tree(self.trainset,self.language)

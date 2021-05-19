@@ -1567,8 +1567,8 @@ def EN_rule2_(equ_list):
     return new_list
 
 
-def get_group_nums(datas, language):
-    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
+def get_group_nums(datas, language,use_gpu):
+    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error',use_gpu=use_gpu)
     new_datas = []
     for idx, data in enumerate(datas):
         group_nums = []

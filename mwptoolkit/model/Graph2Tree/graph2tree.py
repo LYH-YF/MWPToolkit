@@ -4,6 +4,7 @@ import torch
 import stanza
 from torch import nn
 
+from mwptoolkit.utils.utils import str2float
 from mwptoolkit.module.Encoder.graph_based_encoder import GraphBasedEncoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
@@ -253,18 +254,20 @@ class Graph2Tree(nn.Module):
                     graph_attbet[pos,n_pos]=1
             for idx_i in range(len(num_pos[b_i])):
                 for idx_j in range(len(num_pos[b_i])):
-                    if '%' in num_list[b_i][idx_i]:
-                        num_i=eval(num_list[b_i][idx_i][:-1]+'/100')
-                    elif '(' in num_list[b_i][idx_i]:
-                        num_i=eval(num_list[b_i][idx_i][1:-1])
-                    else:
-                        num_i=float(num_list[b_i][idx_i])
-                    if '%' in num_list[b_i][idx_j]:
-                        num_j=eval(num_list[b_i][idx_j][:-1]+'/100')
-                    elif '(' in num_list[b_i][idx_j]:
-                        num_j=eval(num_list[b_i][idx_j][1:-1])
-                    else:
-                        num_j=float(num_list[b_i][idx_j])
+                    num_i=str2float(num_list[b_i][idx_i])
+                    num_j=str2float(num_list[b_i][idx_j])
+                    # if '%' in num_list[b_i][idx_i]:
+                    #     num_i=eval(num_list[b_i][idx_i][:-1]+'/100')
+                    # elif '(' in num_list[b_i][idx_i]:
+                    #     num_i=eval(num_list[b_i][idx_i][1:-1])
+                    # else:
+                    #     num_i=float(num_list[b_i][idx_i])
+                    # if '%' in num_list[b_i][idx_j]:
+                    #     num_j=eval(num_list[b_i][idx_j][:-1]+'/100')
+                    # elif '(' in num_list[b_i][idx_j]:
+                    #     num_j=eval(num_list[b_i][idx_j][1:-1])
+                    # else:
+                    #     num_j=float(num_list[b_i][idx_j])
                     if num_i > num_j:
                         graph_greater[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
                         graph_lower[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]]=1

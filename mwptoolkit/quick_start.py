@@ -37,6 +37,7 @@ def train_cross_validation(config):
                 config["temp_idx2symbol"] = dataset.temp_idx2symbol
                 config["out_idx2symbol"] = dataset.out_idx2symbol
                 config["in_word2idx"] = dataset.in_word2idx
+                config["in_idx2word"] = dataset.in_idx2word
             elif config["equation_fix"] == FixType.MultiWayTree:
                 config["out_symbol2idx"] = dataset.out_symbol2idx
                 config["out_idx2symbol"] = dataset.out_idx2symbol
@@ -44,6 +45,7 @@ def train_cross_validation(config):
                 config["temp_idx2symbol"] = dataset.temp_idx2symbol
                 config["out_idx2symbol"] = dataset.out_idx2symbol
                 config["in_word2idx"] = dataset.in_word2idx
+                config["in_idx2word"] = dataset.in_idx2word
             else:
                 config["out_symbol2idx"] = dataset.out_symbol2idx
                 config["out_idx2symbol"] = dataset.out_idx2symbol
@@ -54,6 +56,7 @@ def train_cross_validation(config):
                 config["out_pad_token"] = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
                 config["out_idx2symbol"] = dataset.out_idx2symbol
                 config["in_word2idx"] = dataset.in_word2idx
+                config["in_idx2word"] = dataset.in_idx2word
 
         config["vocab_size"] = len(dataset.in_idx2word)
         config["symbol_size"] = len(dataset.out_idx2symbol)
@@ -95,10 +98,11 @@ def train_cross_validation(config):
         logger.info("fold {}".format(fold_t))
         if config["test_only"]:
             trainer.test()
-            return
         else:
             trainer.fit()
             best_folds_accuracy.append({"fold_t": fold_t, "best_equ_accuracy": trainer.best_test_equ_accuracy, "best_value_accuracy": trainer.best_test_value_accuracy})
+    if config["test_only"]:
+        return
     best_folds_accuracy = sorted(best_folds_accuracy, key=lambda x: x["best_value_accuracy"], reverse=True)
     logger.info("{} fold cross validation finished.".format(config["k_fold"]))
     best_equ_accuracy = []

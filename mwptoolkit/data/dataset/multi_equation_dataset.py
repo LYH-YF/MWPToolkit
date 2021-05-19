@@ -111,12 +111,17 @@ class MultiEquationDataset(AbstractDataset):
             self._build_symbol()
             self._build_template_symbol()
 
-        if self.share_vocab:
-            for symbol in self.out_idx2symbol:
-                if symbol in self.in_idx2word:
-                    continue
-                else:
-                    self.in_idx2word.append(symbol)
+        # if self.share_vocab:
+        #     for symbol in self.out_idx2symbol:
+        #         if symbol in self.in_idx2word:
+        #             continue
+        #         else:
+        #             self.in_idx2word.append(symbol)
+        for symbol in self.out_idx2symbol:
+            if symbol in self.in_idx2word:
+                continue
+            else:
+                self.in_idx2word.append(symbol)
 
         self.in_word2idx = {}
         self.out_symbol2idx = {}

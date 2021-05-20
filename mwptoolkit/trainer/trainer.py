@@ -1579,11 +1579,11 @@ class TRNNTrainer(AbstractTrainer):
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
-            self.model.train()
-            loss_total_seq2seq,loss_total_ans_module, train_time_cost = self._train_epoch()
+            # self.model.train()
+            # loss_total_seq2seq,loss_total_ans_module, train_time_cost = self._train_epoch()
 
-            self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
-                                %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
+            # self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
+            #                     %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
@@ -1629,7 +1629,7 @@ class TRNNTrainer(AbstractTrainer):
 
         for batch in self.dataloader.load_data(eval_set):
             #batch_equ_ac = self._eval_batch_seq2seq(batch)
-            #batch_val_ac = self._eval_batch_answer_module(batch)
+            batch_val_ac = self._eval_batch_answer_module(batch)
             #batch_equ_ac = []
             batch_val_ac,batch_equ_ac=self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)

@@ -20,6 +20,9 @@
     "share_vocab":true,
     "mask_symbol":"number",
     "attention":true,
+    "equation_fix":"postfix",
     "self_attention":true,
-    "symbol_for_tree":false
+    "symbol_for_tree":false,
+    "add_sos":false,
+    "add_eos":false
 }

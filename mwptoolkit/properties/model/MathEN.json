@@ -19,5 +19,8 @@
     "mask_symbol":"number",
     "attention":true,
     "self_attention":true,
-    "symbol_for_tree":false
+    "equation_fix":"postfix",
+    "symbol_for_tree":false,
+    "add_sos":true,
+    "add_eos":true
 }

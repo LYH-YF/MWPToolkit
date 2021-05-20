@@ -17,6 +17,8 @@
     "symbol_for_tree":false,
     "rule1":true,
     "rule2":true,
-    "equation_fix":"prefix"
+    "equation_fix":"postfix",
+    "add_sos":true,
+    "add_eos":true
 
 }

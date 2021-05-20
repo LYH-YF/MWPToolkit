@@ -20,5 +20,7 @@
     "share_vocab":false,
     "mask_symbol":"number",
     "symbol_for_tree":false,
-    "equation_fix":"multi_way_tree"
+    "equation_fix":"multi_way_tree",
+    "add_sos":true,
+    "add_eos":true
 }

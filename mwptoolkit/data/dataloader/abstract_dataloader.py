@@ -16,6 +16,8 @@ class AbstractDataLoader(object):
         self.test_batch_size = config["test_batch_size"]
         self.max_len = config["max_len"]
         self.max_equ_len = config["max_equ_len"]
+        self.add_sos = config["add_sos"]
+        self.add_eos = config["add_eos"]
 
         self.dataset = dataset
         self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]

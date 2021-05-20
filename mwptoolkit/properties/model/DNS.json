@@ -15,5 +15,7 @@
     "share_vocab":true,
     "mask_symbol":"number",
     "attention":false,
-    "symbol_for_tree":false
+    "symbol_for_tree":false,
+    "add_sos":true,
+    "add_eos":true
 }

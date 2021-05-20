@@ -854,7 +854,8 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
 
         # tag the num which is generated
         for s in out_seq:
-            if s[0].isdigit() and s not in generate_nums and s not in num_list:
+            if s[0].isdigit() and str(str2float(s)) not in generate_nums and s not in num_list:
+                s=str(str2float(s))
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:

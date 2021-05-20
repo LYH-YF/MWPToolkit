@@ -139,9 +139,11 @@ class SingleEquationDataLoader(AbstractDataLoader):
             template = data["template"]
 
             # question word to index
-            ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
+            if self.add_sos:
+                ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
             ques_tensor += self._word2idx(sentence)
-            ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
+            if self.add_eos:
+                ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
 
             # equation symbol to index
             equ_tensor = self._equ_symbol2idx(equation)
@@ -179,7 +181,10 @@ class SingleEquationDataLoader(AbstractDataLoader):
             # quantity list
             num_list_batch.append(data["number list"])
             # quantity position
-            num_pos = [pos + 1 for pos in data["number position"]]  # pos plus one because of adding <SOS> at the head of sentence
+            if self.add_sos:
+                num_pos = [pos + 1 for pos in data["number position"]]  # pos plus one because of adding <SOS> at the head of sentence
+            else:
+                num_pos = [pos for pos in data["number position"]]
             num_pos_batch.append(num_pos)
             # question id and answer
             id_batch.append(data["id"])
@@ -214,7 +219,10 @@ class SingleEquationDataLoader(AbstractDataLoader):
             for group_num in group_nums:
                 new_group_num = []
                 for pos in group_num:
-                    new_group_num.append(pos + 1)
+                    if self.add_sos:
+                        new_group_num.append(pos + 1)
+                    else:
+                        new_group_num.append(pos)
                 new_group_nums.append(new_group_num)
             new_group_nums_batch.append(new_group_nums)
         # to tensor

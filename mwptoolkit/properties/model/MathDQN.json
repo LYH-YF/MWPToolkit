@@ -15,6 +15,8 @@
     "attention":false,
     "symbol_for_tree":false,
     "rule1":false,
-    "rule2":false
+    "rule2":false,
+    "add_sos":true,
+    "add_eos":true
 
 }

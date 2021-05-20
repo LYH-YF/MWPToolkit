@@ -9,5 +9,7 @@
     "share_vocab":true,
     "mask_symbol":"NUM",
     "symbol_for_tree":false,
-    "equation_fix":"prefix"
+    "equation_fix":"prefix",
+    "add_sos":false,
+    "add_eos":false
 }

@@ -14,5 +14,7 @@
     "share_vocab":false,
     "mask_symbol":"NUM",
     "symbol_for_tree":true,
-    "equation_fix":"prefix"
+    "equation_fix":"prefix",
+    "add_sos":true,
+    "add_eos":true
 }

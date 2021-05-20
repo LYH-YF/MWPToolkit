@@ -52,17 +52,17 @@ class GroupATTEncoder(nn.Module):
                 d_model,
                 dropout_ratio,
                 ffn_size,
-                num_encoder_layers,
-                in_word2idx):
+                num_encoder_layers):
         super(GroupATTEncoder, self).__init__()
         #self.layers = clones(layer, N)
         #self.norm = LayerNorm(layer.size)
         self.layers = nn.ModuleList()
         for _ in range(num_encoder_layers):
             self.layers.append(
-                GAEncoderLayer(size,num_heads,d_model,dropout_ratio,ffn_size,in_word2idx)
+                GAEncoderLayer(size,num_heads,d_model,dropout_ratio,ffn_size)
             )
-        self.norm = LayerNorm(size)
+        #self.norm = LayerNorm(size)
+        self.norm = nn.LayerNorm(size)
 
     def forward(self, x, mask):
         "Pass the input (and mask) through each layer in turn."

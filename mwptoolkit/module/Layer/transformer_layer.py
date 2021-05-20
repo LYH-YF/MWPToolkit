@@ -7,6 +7,7 @@ from mwptoolkit.module.Attention.multi_head_attention import MultiHeadAttention
 from mwptoolkit.module.Attention.group_attention import GroupAttention
 from mwptoolkit.utils.utils import clones
 
+
 class TransformerLayer(nn.Module):
     r"""Transformer Layer, including
         a multi-head self-attention,
@@ -22,8 +23,7 @@ class TransformerLayer(nn.Module):
     Returns:
         feedforward_output (torch.Tensor): the output of the point-wise feed-forward sublayer, is the output of the transformer layer
     """
-    def __init__(self, embedding_size, ffn_size, num_heads, attn_dropout_ratio=0.0, attn_weight_dropout_ratio=0.0,
-                 ffn_dropout_ratio=0.0, with_external=False):
+    def __init__(self, embedding_size, ffn_size, num_heads, attn_dropout_ratio=0.0, attn_weight_dropout_ratio=0.0, ffn_dropout_ratio=0.0, with_external=False):
         super(TransformerLayer, self).__init__()
         self.multi_head_attention = MultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
         self.feed_forward_1 = nn.Linear(embedding_size, ffn_size)
@@ -52,27 +52,18 @@ class TransformerLayer(nn.Module):
     def gelu(self, x):
         return x * 0.5 * (1.0 + torch.erf(x / math.sqrt(2.0)))
 
-    def forward(self, x, kv=None,
-                self_padding_mask=None, self_attn_mask=None,
-                external_states=None, external_padding_mask=None):
+    def forward(self, x, kv=None, self_padding_mask=None, self_attn_mask=None, external_states=None, external_padding_mask=None):
         residual = x
         if kv is None:
-            x, self_attn_weights = self.multi_head_attention(query=x, key=x, value=x,
-                                                             key_padding_mask=self_padding_mask,
-                                                             attn_mask=self_attn_mask)
+            x, self_attn_weights = self.multi_head_attention(query=x, key=x, value=x, key_padding_mask=self_padding_mask, attn_mask=self_attn_mask)
         else:
-            x, self_attn_weights = self.multi_head_attention(query=x, key=kv, value=kv,
-                                                             key_padding_mask=self_padding_mask,
-                                                             attn_mask=self_attn_mask)
+            x, self_attn_weights = self.multi_head_attention(query=x, key=kv, value=kv, key_padding_mask=self_padding_mask, attn_mask=self_attn_mask)
         x = self.attn_dropout(x)
         x = self.attn_layer_norm(residual + x)
 
         if self.with_external:
             residual = x
-            x, external_attn_weights = self.external_multi_head_attention(query=x,
-                                                                          key=external_states,
-                                                                          value=external_states,
-                                                                          key_padding_mask=external_padding_mask)
+            x, external_attn_weights = self.external_multi_head_attention(query=x, key=external_states, value=external_states, key_padding_mask=external_padding_mask)
             x = self.attn_dropout(x)
             x = self.external_layer_norm(residual + x)
         else:
@@ -84,6 +75,7 @@ class TransformerLayer(nn.Module):
         x = self.ffn_layer_norm(residual + x)
 
         return x, self_attn_weights, external_attn_weights
+
 
 # class Encoder(nn.Module):
 #     "Core encoder is a stack of N layers"
@@ -99,13 +91,15 @@ class TransformerLayer(nn.Module):
 #             x = layer(x, mask)
 #         return self.norm(x)
 
+
 class GAEncoderLayer(nn.Module):
     "Group attention based encoder layer"
-    def __init__(self, size, h, d_model,dropout_ratio,d_ff,in_word2idx):
+
+    def __init__(self, size, h, d_model, dropout_ratio, d_ff, in_word2idx):
         super(GAEncoderLayer, self).__init__()
-        self.self_attn = GroupAttention(h,d_model,dropout_ratio,in_word2idx)
-        self.feed_forward = PositionwiseFeedForward(d_model,d_ff,dropout_ratio)
-        
+        self.self_attn = GroupAttention(h, d_model, dropout_ratio, in_word2idx)
+        self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout_ratio)
+
         self.sublayer = clones(SublayerConnection(size, dropout_ratio), 2)
         self.size = size
 
@@ -114,13 +108,41 @@ class GAEncoderLayer(nn.Module):
         x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
         return self.sublayer[1](x, self.feed_forward)
 
+
+class GAEncoderLayer(nn.Module):
+    "Group attention based encoder layer"
+
+    def __init__(self, size, h, d_model, dropout_ratio, d_ff):
+        super(GAEncoderLayer, self).__init__()
+        self.self_attn = GroupAttention(h, d_model, dropout_ratio)
+        self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout_ratio)
+
+        #self.sublayer = clones(SublayerConnection(size, dropout_ratio), 2)
+        self.attn_layer_norm = nn.LayerNorm(size)
+        self.attn_dropout = nn.Dropout(dropout_ratio)
+
+        self.ff_layer_norm = nn.LayerNorm(size)
+        self.ff_dropout = nn.Dropout(dropout_ratio)
+
+        self.size = size
+
+    def forward(self, x, mask):
+        x = self.attn_layer_norm(x)
+        x = x + self.attn_dropout(self.self_attn(x, x, x, mask))
+
+        x = self.ff_layer_norm(x)
+        x = x + self.ff_dropout(self.feed_forward(x))
+
+        return x
+
+
 # class EncoderLayer(nn.Module):
 #     "Encoder is made up of self-attn and feed forward (defined below)"
 #     def __init__(self, size, self_attn, feed_forward, dropout):
 #         super(EncoderLayer, self).__init__()
 #         self.self_attn = self_attn
 #         self.feed_forward = feed_forward
-        
+
 #         self.sublayer = clones(SublayerConnection(size, dropout), 2)
 #         self.size = size
 
@@ -128,6 +150,7 @@ class GAEncoderLayer(nn.Module):
 #         "Follow Figure 1 (left) for connections."
 #         x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
 #         return self.sublayer[1](x, self.feed_forward)
+
 
 class SublayerConnection(nn.Module):
     """
@@ -137,15 +160,21 @@ class SublayerConnection(nn.Module):
     def __init__(self, size, dropout):
         super(SublayerConnection, self).__init__()
         #self.norm = LayerNorm(size)
-        self.norm = nn.LayerNorm(size,eps=1e-6)
+        self.norm = nn.LayerNorm(size, eps=1e-6)
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, sublayer):
         "Apply residual connection to any sublayer with the same size."
-        return x + self.dropout(sublayer(self.norm(x)))
+        y = self.norm(x)
+        y_1 = sublayer(y)
+        y_2 = self.dropout(y_1)
+        return x + y_2
+        #return x + self.dropout(sublayer(self.norm(x)))
+
 
 class LayerNorm(nn.Module):
     "Construct a layernorm module (See citation for details)."
+
     def __init__(self, features, eps=1e-6):
         super(LayerNorm, self).__init__()
         self.a_2 = nn.Parameter(torch.ones(features))
@@ -157,8 +186,10 @@ class LayerNorm(nn.Module):
         std = x.std(-1, keepdim=True)
         return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
 
+
 class PositionwiseFeedForward(nn.Module):
     "Implements FFN equation."
+
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
         self.w_1 = nn.Linear(d_model, d_ff)

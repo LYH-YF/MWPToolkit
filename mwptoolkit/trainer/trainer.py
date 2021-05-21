@@ -2103,7 +2103,11 @@ class HMSTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        test_out = self.model(batch["question"], batch["ques len"])
+        """input_variable, input_lengths,span_num_pos,word_num_poses, span_length=None,tree=None,
+                target_variable=None, max_length=None, beam_width=None"""
+        outputs, _, symbols_list = self.model(batch["spans"], batch["spans len"],batch["span num pos"],batch["word num poses"],batch["span nums"],batch["deprel tree"], \
+                                target_variable=None, max_length=self.config['max_output_len'], beam_width=self.config['beam_size'])
+        test_out = torch.cat(symbols_list, dim=1)
         if self.config["share_vocab"]:
             target = self._idx2word_2idx(batch["equation"])
         else:
@@ -2199,7 +2203,7 @@ class HMSTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
-        self._load_model()
+        #self._load_model()
         self.model.eval()
         value_ac = 0
         equation_ac = 0

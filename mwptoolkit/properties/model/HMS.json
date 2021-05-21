@@ -5,7 +5,7 @@
     "learning_rate":0.001,
     "step_size":20,
     "scheduler_gamma":0.5,
-    "beam_size":5,
+    "beam_size":1,
     "share_vocab":true,
     "mask_symbol":"NUM",
     "symbol_for_tree":false,

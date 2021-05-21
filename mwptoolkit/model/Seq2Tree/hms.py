@@ -8,12 +8,17 @@ from mwptoolkit.module.Decoder.tree_decoder import HMSDecoder
 class HMS(nn.Module):
     def __init__(self,config):
         super(HMS,self).__init__()
+        self.beam_size = config['beam_size']
+        self.output_length = config['max_output_len']
         self.embedder=BaiscEmbedder(config['vocab_size'],config['embedding_size'],config['dropout_ratio'])
         self.encoder=HWCPEncoder(self.embedder,config['embedding_size'],config['hidden_size'],config['span_size'],config['dropout_ratio'])
         self.decoder=HMSDecoder(self.embedder,config['hidden_size'],config['dropout_ratio'],config['operator_list'],config['in_word2idx'],config['out_idx2symbol'],config["device"])
     def forward(self, input_variable, input_lengths,span_num_pos,word_num_poses, span_length=None,tree=None,
                 target_variable=None, max_length=None, beam_width=None):
         num_pos=(span_num_pos,word_num_poses)
+        if beam_width != None:
+            beam_width = self.beam_size
+            max_length = self.output_length
         encoder_outputs, encoder_hidden = self.encoder(
             input_var=input_variable,
             input_lengths=input_lengths,

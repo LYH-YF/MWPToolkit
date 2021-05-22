@@ -13,7 +13,7 @@
     "step_size":20,
     "beam_size":5,
     "share_vocab":false,
-    "mask_symbol":"number",
+    "mask_symbol":"NUM",
     "symbol_for_tree":true,
     "equation_fix":"prefix",
     "add_sos":true,

@@ -128,7 +128,11 @@ class PredictModel(nn.Module):
     def score_pn(self, hidden, context, embedding_masks):
         # embedding: batch_size * pointer_size * hidden_size
         # mask: batch_size * pointer_size
+        device = hidden.device
         (pointer_embedding, pointer_mask), generator_embedding, _ = embedding_masks
+        pointer_embedding = pointer_embedding.to(device)
+        pointer_mask = pointer_mask.to(device)
+        generator_embedding = generator_embedding.to(device)
         hidden = self.dropout(hidden)
         context = self.dropout(context)
         pointer_embedding = self.dropout(pointer_embedding)
@@ -151,6 +155,9 @@ class PredictModel(nn.Module):
         node_hidden_dropout = self.dropout(node_hidden).unsqueeze(1)
         span_output, word_outputs = encoder_outputs
         span_mask, word_masks = masks
+        if use_cuda:
+            span_mask = span_mask.cuda()
+            word_masks = [mask.cuda() for mask in word_masks]
         output_attn = self.attn(node_hidden_dropout, span_output, word_outputs, span_mask, word_masks)
         context = output_attn.squeeze(1)
 

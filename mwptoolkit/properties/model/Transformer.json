@@ -1,5 +1,5 @@
 {
-    "embedding_size": 512,
+    "embedding_size": 128,
     "ffn_size": 1024,
     "num_encoder_layers": 4,
     "num_decoder_layers": 4,

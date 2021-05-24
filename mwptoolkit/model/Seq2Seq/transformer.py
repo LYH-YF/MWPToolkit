@@ -37,7 +37,8 @@ class Transformer(nn.Module):
         else:
             self.out_embedder=BaiscEmbedder(config["symbol_size"],config["embedding_size"],config["embedding_dropout_ratio"])
         
-        self.pos_embedder=PositionEmbedder(config["embedding_size"],config["device"],config["embedding_dropout_ratio"],config["max_len"])
+        #self.pos_embedder=PositionEmbedder(config["embedding_size"],config["device"],config["embedding_dropout_ratio"],config["max_len"])
+        self.pos_embedder=PositionEmbedder(config["embedding_size"],config["max_len"])
         self.self_attentioner=SelfAttentionMask()
         self.encoder=TransformerEncoder(config["embedding_size"],config["ffn_size"],config["num_encoder_layers"],\
                                             config["num_heads"],config["attn_dropout_ratio"],\

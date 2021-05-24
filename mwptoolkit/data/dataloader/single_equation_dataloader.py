@@ -45,6 +45,7 @@ class SingleEquationDataLoader(AbstractDataLoader):
             if batch_data != []:
                 batch_data = self.load_batch(batch_data)
                 yield batch_data
+    
     def load_batch_spans(self,batch_data):
         pad_num_pos = [-1] * len(self.dataset.out_idx2symbol)
         max_span_nums=0

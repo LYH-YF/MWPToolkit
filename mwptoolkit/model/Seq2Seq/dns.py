@@ -10,7 +10,7 @@ from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 
 class DNS(nn.Module):
     def __init__(self,config):
-        super().__init__()
+        super(DNS,self).__init__()
         self.device=config["device"]
         self.bidirectional=config["bidirectional"]
         self.hidden_size=config["hidden_size"]
@@ -19,7 +19,7 @@ class DNS(nn.Module):
         self.attention=config["attention"]
         self.share_vocab=config["share_vocab"]
         self.max_gen_len=config["max_output_len"]
-        self.teacher_force_ratio=0.9
+        self.teacher_force_ratio=config['teacher_force_ratio']
         self.num_start=config["num_start"]
         if config["share_vocab"]:
             self.out_symbol2idx=config["out_symbol2idx"]

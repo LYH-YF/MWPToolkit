@@ -310,6 +310,8 @@ class SingleEquationTrainer(Trainer):
 
     def _train_batch(self, batch):
         outputs = self.model(batch["question"], batch["ques len"], batch["equation"])
+        #outputs = self.model(batch)
+
         #outputs=torch.nn.functional.log_softmax(outputs,dim=1)
         if self.config["share_vocab"]:
             batch_equation = self._idx2word_2idx(batch["equation"])
@@ -1419,6 +1421,7 @@ class TRNNTrainer(AbstractTrainer):
         weight = torch.ones(symbol_size).to(self.config["device"])
         pad = out_pad_token
         self.seq2seq_loss = NLLLoss(weight, pad)
+        
         weight2=torch.ones(operator_num).to(self.config["device"])
         self.ans_module_loss=NLLLoss(weight2)
 

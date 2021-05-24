@@ -50,7 +50,8 @@ class Transformer(nn.Module):
     
     def forward(self,src,target=None):
         #source_embeddings = self.pos_embedder(self.in_embedder(src))
-        source_embeddings = self.in_embedder(src)+self.pos_embedder(src)
+        device = src.device
+        source_embeddings = self.in_embedder(src)+self.pos_embedder(src).to(device)
         source_padding_mask = torch.eq(src, self.in_pad_idx)
         encoder_outputs = self.encoder(source_embeddings,
                                        self_padding_mask=source_padding_mask)
@@ -72,7 +73,7 @@ class Transformer(nn.Module):
             target=torch.cat((input_seq,target),dim=1)[:,:-1]
 
             #decoder_inputs = self.pos_embedder(self.out_embedder(target))
-            decoder_inputs = self.out_embedder(target) + self.pos_embedder(target)
+            decoder_inputs = self.out_embedder(target) + self.pos_embedder(target).to(device)
             self_padding_mask = torch.eq(target, self.out_pad_idx)
             self_attn_mask = self.self_attentioner(target.size(-1)).bool()
             decoder_outputs = self.decoder(decoder_inputs,
@@ -89,7 +90,7 @@ class Transformer(nn.Module):
             for idx in range(seq_len):
                 self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
                 #decoder_input = self.pos_embedder(self.out_embedder(input_seq))
-                decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq)
+                decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq).to(device)
                 decoder_outputs = self.decoder(decoder_input, 
                                                 self_attn_mask=self_attn_mask,
                                                 external_states=encoder_outputs, 
@@ -98,7 +99,7 @@ class Transformer(nn.Module):
                 token_logit = self.out(decoder_outputs[:, -1, :].unsqueeze(1))
                 token_logits.append(token_logit)
                 #output=greedy_search(token_logit)
-                output = torch.topk(token_logit,1,dim=1)[1]
+                output = torch.topk(token_logit.squeeze(),1,dim=-1)[1]
                 if self.share_vocab:
                     pre_tokens.append(self.decode(output))
                 else:
@@ -115,7 +116,7 @@ class Transformer(nn.Module):
         all_outputs=[]
         for gen_idx in range(self.max_output_len):
             self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
-            decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq)
+            decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq).to(device)
             #decoder_input = self.pos_embedder(self.out_embedder(input_seq))
             decoder_outputs = self.decoder(decoder_input, 
                                             self_attn_mask=self_attn_mask,
@@ -140,12 +141,15 @@ class Transformer(nn.Module):
     def decode(self,output):
         device=output.device
 
-        batch_size=output.size(0)
+        batch_size, seq_len = output.size()
         decoded_output=[]
-        for idx in range(batch_size):
-            decoded_output.append(self.in_word2idx[self.out_idx2symbol[output[idx]]])
+        for b_i in range(batch_size):
+            b_output=[]
+            for idx in range(seq_len): 
+                b_output.append(self.in_word2idx[self.out_idx2symbol[output[b_i,idx]]])
+            decoded_output.append(b_output)
         decoded_output=torch.tensor(decoded_output).to(device).view(batch_size,-1)
-        return output
+        return decoded_output
     def __str__(self) -> str:
         info=super().__str__()
         total=sum(p.numel() for p in self.parameters())

@@ -24,6 +24,7 @@ class AbstractDataset(object):
         self.single = config["single"]
         self.linear = config["linear"]
         self.device = config["device"]
+        self.equation_fix = config["equation_fix"]
         self.max_span_size = 1
 
     def _load_dataset(self):

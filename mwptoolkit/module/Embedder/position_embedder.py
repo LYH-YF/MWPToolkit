@@ -44,7 +44,7 @@ class PositionEmbedder(nn.Module):
             embedding_size
         )
 
-    def get_embedding(max_length, embedding_size):
+    def get_embedding(self,max_length, embedding_size):
         r"""Build sinusoidal embeddings.
         This matches the implementation in tensor2tensor, but differs slightly
         from the description in Section 3.5 of "Attention Is All You Need".

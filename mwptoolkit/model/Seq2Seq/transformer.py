@@ -49,7 +49,8 @@ class Transformer(nn.Module):
         self.out=nn.Linear(config["embedding_size"],config["symbol_size"])
     
     def forward(self,src,target=None):
-        source_embeddings = self.pos_embedder(self.in_embedder(src))
+        #source_embeddings = self.pos_embedder(self.in_embedder(src))
+        source_embeddings = self.in_embedder(src)+self.pos_embedder(src)
         source_padding_mask = torch.eq(src, self.in_pad_idx)
         encoder_outputs = self.encoder(source_embeddings,
                                        self_padding_mask=source_padding_mask)
@@ -70,7 +71,8 @@ class Transformer(nn.Module):
             input_seq = torch.LongTensor([self.out_sos_idx]*batch_size).view(batch_size,-1).to(device)
             target=torch.cat((input_seq,target),dim=1)[:,:-1]
 
-            decoder_inputs = self.pos_embedder(self.out_embedder(target))
+            #decoder_inputs = self.pos_embedder(self.out_embedder(target))
+            decoder_inputs = self.out_embedder(target) + self.pos_embedder(target)
             self_padding_mask = torch.eq(target, self.out_pad_idx)
             self_attn_mask = self.self_attentioner(target.size(-1)).bool()
             decoder_outputs = self.decoder(decoder_inputs,
@@ -86,7 +88,8 @@ class Transformer(nn.Module):
             pre_tokens=[input_seq]
             for idx in range(seq_len):
                 self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
-                decoder_input = self.pos_embedder(self.out_embedder(input_seq))
+                #decoder_input = self.pos_embedder(self.out_embedder(input_seq))
+                decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq)
                 decoder_outputs = self.decoder(decoder_input, 
                                                 self_attn_mask=self_attn_mask,
                                                 external_states=encoder_outputs, 
@@ -94,12 +97,8 @@ class Transformer(nn.Module):
 
                 token_logit = self.out(decoder_outputs[:, -1, :].unsqueeze(1))
                 token_logits.append(token_logit)
-                if self.decoding_strategy=="topk_sampling":
-                    output=topk_sampling(token_logit,top_k=5)
-                elif self.decoding_strategy=="greedy_search":
-                    output=greedy_search(token_logit)
-                else:
-                    raise NotImplementedError
+                #output=greedy_search(token_logit)
+                output = torch.topk(token_logit,1,dim=1)[1]
                 if self.share_vocab:
                     pre_tokens.append(self.decode(output))
                 else:
@@ -116,8 +115,8 @@ class Transformer(nn.Module):
         all_outputs=[]
         for gen_idx in range(self.max_output_len):
             self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
-            #decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq)
-            decoder_input = self.pos_embedder(self.out_embedder(input_seq))
+            decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq)
+            #decoder_input = self.pos_embedder(self.out_embedder(input_seq))
             decoder_outputs = self.decoder(decoder_input, 
                                             self_attn_mask=self_attn_mask,
                                             external_states=encoder_outputs, 

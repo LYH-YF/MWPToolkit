@@ -37,7 +37,8 @@ class LSTM(nn.Module):
                                         config["hidden_size"],\
                                         config["num_layers"],\
                                         rnn_cell_type='lstm',\
-                                        dropout_ratio=config["dropout_ratio"])
+                                        dropout_ratio=config["dropout_ratio"],\
+                                        bidirectional=config["bidirectional"])
         if self.attention:
             self.decoder=AttentionalRNNDecoder(config["embedding_size"],\
                                                 config["decode_hidden_size"],\

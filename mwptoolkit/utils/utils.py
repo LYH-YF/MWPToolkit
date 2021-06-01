@@ -106,10 +106,10 @@ def get_model(model_name):
 
 
 def get_trainer(task_type, model_name):
-    r"""Automatically select trainer class based on model type and model name
+    r"""Automatically select trainer class based on task type and model name
 
     Args:
-        model_type (~mwptoolkit.utils.enum_type.TaskType): model type
+        task_type (~mwptoolkit.utils.enum_type.TaskType): task type
         model_name (str): model name
 
     Returns:

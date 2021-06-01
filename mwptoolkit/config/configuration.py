@@ -84,6 +84,8 @@ class Config(object):
         if "ipykernel_launcher" not in sys.argv[0]:
             for arg in sys.argv[1:]:
                 if not arg.startswith("--") or len(arg[2:].split("=")) != 2:
+                    if arg.startswith("--search_parameter"):
+                        continue
                     unrecognized_args.append(arg)
                     continue
                 cmd_arg_name, cmd_arg_value = arg[2:].split("=")
@@ -218,6 +220,7 @@ class Config(object):
         os.environ["CUDA_VISIBLE_DEVICES"] = str(self.final_config_dict["gpu_id"])
         self.final_config_dict['device'] = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.final_config_dict["map_location"] = "cuda" if torch.cuda.is_available() else "cpu"
+        self.final_config_dict['gpu_nums'] = torch.cuda.device_count()
 
     def __setitem__(self, key, value):
         if not isinstance(key, str):

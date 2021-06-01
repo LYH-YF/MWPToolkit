@@ -29,9 +29,6 @@ class TRNN(nn.Module):
         self.embedder = BaiscEmbedder(temp_config["vocab_size"], temp_config["embedding_size"], temp_config["dropout_ratio"])
         self.attn_encoder=SelfAttentionRNNEncoder(temp_config["embedding_size"],temp_config["hidden_size"],temp_config["embedding_size"],temp_config["num_layers"],\
                                                     temp_config["rnn_cell_type"],temp_config["dropout_ratio"],temp_config["bidirectional"])
-        # self.encoder=BasicRNNEncoder(temp_config["embedding_size"],temp_config["hidden_size"],temp_config["num_layers"],\
-        #                                             temp_config["rnn_cell_type"],temp_config["dropout_ratio"],temp_config["bidirectional"])
-        #self.self_attn = SeqAttention(temp_config["hidden_size"], temp_config["embedding_size"])
         self.recursivenn = RecursiveNN(temp_config["embedding_size"], temp_config["operator_nums"], temp_config["operator_list"])
 
     def forward(self, seq, seq_length, num_pos, target=None):
@@ -81,6 +78,7 @@ class TRNN(nn.Module):
         return batch_prob, batch_target
 
     def test_ans_module(self, seq, seq_length, num_pos, template):
+        self.wrong=0
         device = seq.device
         seq_emb = self.embedder(seq)
         encoder_output, encoder_hidden = self.attn_encoder(seq_emb, seq_length)
@@ -100,6 +98,7 @@ class TRNN(nn.Module):
                 tree_i = self.template2tree(template[b_i])
             except:
                 equations.append([])
+                self.wrong+=1
                 continue
             nodes_pred = self.recursivenn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
             tree_i.root = nodes_pred

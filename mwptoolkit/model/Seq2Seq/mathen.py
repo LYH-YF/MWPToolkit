@@ -164,6 +164,7 @@ class MathEN(nn.Module):
             decoder_inputs=pad_var
         decoder_inputs=self.out_embedder(decoder_inputs)
         return decoder_inputs
+    
     def decode(self,output):
         device=output.device
 
@@ -173,6 +174,7 @@ class MathEN(nn.Module):
             decoded_output.append(self.in_word2idx[self.out_idx2symbol[output[idx]]])
         decoded_output=torch.tensor(decoded_output).to(device).view(batch_size,-1)
         return output
+    
     def __str__(self) -> str:
         info=super().__str__()
         total=sum(p.numel() for p in self.parameters())

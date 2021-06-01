@@ -66,6 +66,8 @@ class BinaryTree(AbstractTree):
             else:
                 node = Node(symbol, isleaf=True)
                 stack.append(node)
+        if len(stack)>1:
+            raise IndexError
         self.root = stack.pop()
 
     def tree2equ(self, node):
@@ -217,7 +219,7 @@ class DependencyTree():
             for child in right_list:
                 node.add_right_node(child)
         else:
-            node = DependencyNode(sentence[root_idx], root_idx)
+            node = DependencyNode(sentence[root_idx], root_idx, relation)
         self.root = node
 
     def _build_sub_node(self, father_idx, child_list, node_dict, sentence):

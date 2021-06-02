@@ -1,12 +1,14 @@
 import torch
 from torch import nn
 import copy
-
+import random
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
+from mwptoolkit.module.Strategy.weakly_supervising import Weakly_Supervising, out_expression_list
+from mwptoolkit.utils.utils import get_weakly_supervised
 
 
 class GTS(nn.Module):
@@ -35,9 +37,9 @@ class GTS(nn.Module):
         seq_mask=torch.BoolTensor(seq_mask).to(self.device)
 
         num_mask = []
-        max_num_size = max(num_size) + len(generate_nums)
+        max_num_size = max(num_size) + 2#len(generate_nums)
         for i in num_size:
-            d = i + len(generate_nums)
+            d = i + 2#len(generate_nums)
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
@@ -47,16 +49,18 @@ class GTS(nn.Module):
         pade_outputs, _ = self.encoder(seq_emb, seq_length)
         problem_output = pade_outputs[:, -1, :self.hidden_size] +pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
+        #print("encoder_outputs", encoder_outputs.size())
+        #print("problem_output", problem_output.size())
 
         if target != None:
-            all_node_outputs=self.generate_node(encoder_outputs,problem_output,target,target_length,\
+            all_node_outputs, target=self.generate_node(encoder_outputs,problem_output,target,target_length,\
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
         else:
             all_node_outputs=self.generate_node_(encoder_outputs,problem_output,padding_hidden,seq_mask,num_mask,num_pos,num_start,beam_size,max_length)
             return all_node_outputs
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)  # B x S x N
-        return all_node_outputs
+        return all_node_outputs, target
     def generate_node(self,encoder_outputs,problem_output,target,target_length,\
                         num_pos,nums_stack,padding_hidden,seq_mask,num_mask,unk,num_start):
         batch_size=encoder_outputs.size(0)
@@ -71,8 +75,9 @@ class GTS(nn.Module):
         num_size = max(copy_num_len)
         all_nums_encoder_outputs = self.get_all_number_encoder_outputs(
             encoder_outputs, num_pos, num_size,self.hidden_size)
-        left_childs = [None for _ in range(batch_size)]
-        embeddings_stacks = [[] for _ in range(batch_size)]
+        #print("all_nums_encoder_outputs", all_nums_encoder_outputs.size())
+        left_childs = [None for _ in range(batch_size)]   #
+        embeddings_stacks = [[] for _ in range(batch_size)]   #
         for t in range(max_target_length):
             num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(
                 node_stacks, left_childs, encoder_outputs,
@@ -87,7 +92,12 @@ class GTS(nn.Module):
             generate_input = generate_input.to(self.device)
             left_child, right_child, node_label = self.node_generater(
                 current_embeddings, generate_input, current_context)
+            #print("left_child", left_child.size())
+            #print("right_child", right_child.size())
+            #print("node_label", node_label.size())
             left_childs = []
+            #print("target", target.size())
+            #print("target[:,t]", target[:,t].size())
             for idx, l, r, node_stack, i, o in zip(range(batch_size),
                                                    left_child.split(1),
                                                    right_child.split(1),
@@ -119,7 +129,7 @@ class GTS(nn.Module):
                     left_childs.append(o[-1].embedding)
                 else:
                     left_childs.append(None)
-        return all_node_outputs
+        return all_node_outputs, target
     
     def generate_node_(self,encoder_outputs,problem_output,padding_hidden,seq_mask,num_mask,num_pos,\
                         num_start,beam_size,max_length):
@@ -245,6 +255,7 @@ class GTS(nn.Module):
     def generate_tree_input(self,target, decoder_output, nums_stack_batch, num_start, unk):
         target_input = copy.deepcopy(target)
         for i in range(len(target)):
+            '''
             if target[i] == unk:
                 num_stack = nums_stack_batch[i].pop()
                 max_score = -float("1e12")
@@ -252,6 +263,225 @@ class GTS(nn.Module):
                     if decoder_output[i, num_start + num] > max_score:
                         target[i] = num + num_start
                         max_score = decoder_output[i, num_start + num]
+            '''
+            if target_input[i] >= num_start:
+                target_input[i] = 0
+        return torch.LongTensor(target), torch.LongTensor(target_input)
+
+    def weakly_train(self, seq, seq_length, num_ans, nums_stack, num_size, generate_nums, num_pos, \
+                     num_start, target, target_length, epoch, \
+                     mask_flag, UNK_TOKEN, supervising_mode, \
+                     buffer_batch, buffer_batch_exp, Lang=None, n_step=50):
+        # print("Lang", Lang.dataset.out_idx2symbol)
+        '''
+        print("@"*89)
+        print("seq", seq.size())
+        print("seq_length", seq_length)
+        print("num_ans", num_ans)
+        print("nums_stack", nums_stack)
+        print("num_pos", num_pos)
+        print("num_start", num_start)
+        print("mask_flag", mask_flag)
+        print("epoch", epoch)
+        print("buffer_batch", buffer_batch)
+        print("buffer_batch_exp", buffer_batch_exp)
+        print("num_size", num_size)
+        print("*"*89)
+        '''
+        seq_mask = []
+        max_len = max(seq_length)
+        # print("nums_stack", nums_stack)
+        for i in seq_length:
+            seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)]) #
+        seq_mask = torch.BoolTensor(seq_mask).to(self.device)
+        gen_length1 = [2 * len(i) - 1 for i in nums_stack]
+        gen_length2 = [2 * len(i) + 1 for i in nums_stack]
+        gen_length3 = [2 * len(i) + 3 for i in nums_stack]
+        # gen_length4 = [2*len(i)+5 for i in num_list]
+        # gen_length5 = [max(2*len(i)-3, 1) for i in num_list]
+        gen_lengths = [gen_length1, gen_length2, gen_length3]
+        # print("gen_length1", gen_length1)
+        # print("gen_length3", gen_length3)
+
+        num_mask = []
+        max_num_size = max(num_size) + 2
+        for i in num_size:
+            d = i + 2
+            num_mask.append([0] * d + [1] * (max_num_size - d))
+        num_mask = torch.BoolTensor(num_mask).to(self.device)
+
+        padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
+        batch_size = len(seq_length)
+
+        seq_emb = self.embedder(seq)
+
+        pade_outputs, _ = self.encoder(seq_emb, seq_length)
+
+        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
+
+        copy_num_len = [len(_) for _ in num_pos]
+        num_size = max(copy_num_len)
+        #print("encoder_outputs",encoder_outputs.size())
+        #print("num_pos", num_pos)
+        #print("num_size", num_size)
+
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(
+            encoder_outputs, num_pos, num_size, self.hidden_size)
+        #print("all_nums_encoder_outputs", all_nums_encoder_outputs.size())
+
+        fix_target_list = []  #
+        fix_index = []   #
+        fix_target_length = []  #
+        fix_input_length = []   #
+        fix_found = [False for _ in range(batch_size)]   #
+        for gen_length in gen_lengths:
+            target_length = gen_length
+            max_target_length = max(target_length)
+            embeddings_stacks = [[] for _ in range(batch_size)]
+            left_childs = [None for _ in range(batch_size)]
+            # print("problem_output", problem_output.size())
+            node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
+
+            generate_exps = torch.zeros((max_target_length, batch_size), dtype=torch.int)
+
+            generated = [[] for j in range(batch_size)]
+            num_flags = [False for j in range(batch_size)]
+            generated_ops = [0 for j in range(batch_size)]
+            generated_nums = [0 for j in range(batch_size)]
+            all_node_outputs_mask = []
+
+            for t in range(max_target_length):
+                # print("encoder_outputs", encoder_outputs.size())
+                # print("all_nums_encoder_outputs", all_nums_encoder_outputs.size())
+                # print("num_mask", num_mask.size())
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(
+                    node_stacks, left_childs, encoder_outputs,
+                    all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
+                #print("num_score", num_score.size())
+                #print("op", op.size())
+                #print("current_embeddings",current_embeddings.size())
+                #print("current_context", current_context.size())
+                #print("current_nums_embeddings", current_nums_embeddings.size())
+
+                num_score2 = num_score
+                op2 = op
+
+                for i in range(batch_size):
+                    if t >= target_length[i]:
+                        op2[i, 1:] = -1e10
+                        num_score2[i, :] = -1e10  # fix_length
+                    else:
+                        if generated_ops[i] >= (target_length[i] - 1) / 2:
+                            op2[i, :] = -1e10  # number of ops cannot be greater than (target_length-1)/2
+                        if generated_nums[i] == generated_ops[i] and t < target_length[i] - 1:
+                            num_score2[i,
+                            :] = -1e10  # except the last postion, number of nums cannot be greater than number of ops
+                        if t == 0 and target_length[i] > 2:
+                            num_score2[i, :] = -1e10  # first cannot be number unless target_length equals to 1
+                        if t == target_length[i] - 1:
+                            op2[i, :] = -1e10  # last is a number
+                        if mask_flag:
+                            num_score2[i][:2] = -1e10  # for the first iterations, do not generate 1 and 3.14
+                        if t == 1 and target_length[i] == 5 and epoch < 5:
+                            if random.random() > 0.7:
+                                num_score2[i, :] = -1e2
+                            else:
+                                op2[i, :] = -1e2
+                        if epoch < 5 and supervising_mode in ['reinforce', 'mapo']:
+                            for gen in generated[i]:
+                                num_score2[i, gen] = -1e10
+                #  (num_score2)
+
+                outputs = torch.cat((op2, num_score2), 1)
+                out_score = nn.functional.log_softmax(torch.cat((op2, num_score2), dim=1), dim=1)
+
+                all_node_outputs_mask.append(outputs)
+
+                topv, topi = out_score.topk(1)
+                topi = topi.squeeze()
+                generate_exps[t] = topi
+
+                topi_t, generate_input = self.generate_weak_tree_input(topi.tolist(), outputs, num_start)
+
+                # print("topi_t", topi_t.size())
+                # print("generate_input", generate_input.size())
+
+                generate_input = generate_input.to(self.device)
+
+                left_child, right_child, node_label = self.node_generater(current_embeddings, generate_input,
+                                                                          current_context)
+
+                del generate_input
+
+                left_childs = []
+
+                for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
+                                                       node_stacks, topi_t.tolist(), embeddings_stacks):
+                    if len(node_stack) != 0:
+                        node = node_stack.pop()
+                    else:
+                        left_childs.append(None)
+                        continue
+
+                    if i < num_start:
+                        node_stack.append(TreeNode(r))
+                        node_stack.append(TreeNode(l, left_flag=True))
+                        o.append(TreeEmbedding(node_label[idx].unsqueeze(0), False))
+                        generated_ops[idx] += 1
+                    else:
+                        current_num = current_nums_embeddings[idx, i - num_start].unsqueeze(0)
+                        while len(o) > 0 and o[-1].terminal:
+                            sub_stree = o.pop()
+                            op = o.pop()
+                            current_num = self.merge(op.embedding, sub_stree.embedding, current_num)
+                        o.append(TreeEmbedding(current_num, True))
+                        generated[idx].append(i - num_start)
+                        num_flags[idx] = True
+                        generated_nums[idx] += 1
+                    if len(o) > 0 and o[-1].terminal:
+                        left_childs.append(o[-1].embedding)
+                    else:
+                        left_childs.append(None)
+
+            generate_exps = generate_exps.transpose(0, 1)
+            all_node_outputs_mask = torch.stack(all_node_outputs_mask, dim=1)  # B x S x N
+            buffer_batch_new = buffer_batch.copy()  #
+            buffer_batch_new_exp = buffer_batch_exp.copy()
+            for idx, exp, num in zip(range(batch_size), generate_exps, nums_stack):
+                if fix_found[idx] == True:
+                    continue
+                generate_exp = out_expression_list(exp, Lang, num)  #
+                all_list = Lang.dataset.out_idx2symbol[: num_start + 2] + num  #
+                probs = all_node_outputs_mask[idx].detach().cpu().numpy()  #
+                probs = probs[:target_length[idx]]  #
+                probs = probs[:, :num_start + 2 + len(num)]
+
+                fix_input_length, fix_target_list, \
+                fix_index, fix_target_length, \
+                fix_found, buffer_batch_new, buffer_batch_new_exp = get_weakly_supervised(supervising_mode)(idx, exp, num, generate_exp, target_length, num_ans, all_list,
+                                                        probs, num_start, n_step, fix_input_length,
+                                                        fix_target_list, fix_index, fix_target_length, fix_found,
+                                                        buffer_batch_new, buffer_batch_new_exp,
+                                                        seq_length, Lang)
+                #print("fix_input_length", fix_input_length)
+                #print("fix_index", fix_index)
+                #print("fix_found", fix_found)
+                #print("~" * 89)
+
+            # print("generate_exps", generate_exps.size())
+            # print("all_node_outputs_mask", all_node_outputs_mask.size())
+
+            # fix_input_length, fix_target_list, fix_index, fix_target_length, buffer_batch_new, buffer_batch_new_exp = Weakly_Supervising(
+            #    generate_exps, all_node_outputs_mask, buffer_batch, buffer_batch_exp, nums_stack, batch_size, num_start,
+            #    target_length, \
+            #    fix_input_length, fix_target_list, fix_index, fix_target_length, fix_found, \
+            #    supervising_mode, Lang, seq_length, num_ans, n_step)
+        return fix_input_length, fix_target_list, fix_index, fix_target_length, buffer_batch_new, buffer_batch_new_exp
+
+    def generate_weak_tree_input(self, target, decoder_output, num_start):
+        target_input = copy.deepcopy(target)
+        for i in range(len(target)):
             if target_input[i] >= num_start:
                 target_input[i] = 0
         return torch.LongTensor(target), torch.LongTensor(target_input)

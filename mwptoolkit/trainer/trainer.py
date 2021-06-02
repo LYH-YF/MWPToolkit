@@ -2,6 +2,7 @@ import torch
 import time
 from logging import getLogger
 from torch import nn
+import numpy as np
 from mwptoolkit.utils.utils import time_since
 from mwptoolkit.utils.enum_type import PAD_TOKEN, DatasetType,TaskType,SpecialTokens
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
@@ -310,8 +311,6 @@ class SingleEquationTrainer(Trainer):
 
     def _train_batch(self, batch):
         outputs = self.model(batch["question"], batch["ques len"], batch["equation"])
-        #outputs = self.model(batch)
-
         #outputs=torch.nn.functional.log_softmax(outputs,dim=1)
         if self.config["share_vocab"]:
             batch_equation = self._idx2word_2idx(batch["equation"])
@@ -744,6 +743,7 @@ class GTSTrainer(AbstractTrainer):
         generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
         test_out=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
                                 generate_nums,batch["num pos"],num_start)
+
         if self.config["task_type"]==TaskType.SingleEquation:
             val_ac, equ_ac, _, _ = self.evaluator.result(test_out, batch["equation"].tolist()[0], batch["num list"][0], batch["num stack"][0])
         elif self.config["task_type"]==TaskType.MultiEquation:
@@ -852,6 +852,221 @@ class GTSTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+
+class GTSWeakTrainer(GTSTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+        self._build_optimizer()
+        if config["resume"]:
+            self._load_checkpoint()
+        self.loss = MaskedCrossEntropyLoss()
+
+    def _build_buffer_batch(self):
+        self._buffer_batches = [[] for i in range(self.dataloader.trainset_nums)]
+        self._buffer_batches_exp = [[] for i in range(self.dataloader.trainset_nums)]
+
+    def _train_batch(self, batch):
+        '''
+        seq, seq_length, nums_stack, num_size, generate_nums, num_pos,\
+                UNK_TOKEN,num_start,target=None, target_length=None,max_length=30,beam_size=5
+        '''
+        unk = self.dataloader.out_unk_token
+        num_start = self.dataloader.dataset.num_start
+        generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
+
+        outputs=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
+                                generate_nums,batch["num pos"],num_start,batch["equation"],batch["equ len"],UNK_TOKEN=unk)
+        self.loss.eval_batch(outputs, batch["equation"], batch["equ mask"])
+        batch_loss = self.loss.get_loss()
+        return batch_loss
+
+    def _train_epoch(self):
+        epoch_start_time = time.time() #
+        loss_total = 0.  #
+        #self._model_train()
+        self.mask_flag = False #
+        self._pos = 0 #
+        self.epo_iteration = 0
+        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+            self.batch_idx = batch_idx + 1
+            self._model_train()
+            self._model_zero_grad()
+            if self.epoch_i == 1 and self.batch_idx <= 2: #
+                self.mask_flag = True
+            buffer_batches_train = self._buffer_batches[self._pos: self._pos + len(batch["ques len"])]
+            buffer_batches_train_exp = self._buffer_batches_exp[self._pos: self._pos + len(batch["ques len"])]
+            iterations, buffer_batch_new, buffer_batch_exp, batch_loss = self._weakly_train_batch(batch, buffer_batches_train, buffer_batches_train_exp)
+            loss_total += batch_loss
+            self.epo_iteration += iterations
+            self._buffer_batches[self._pos: self._pos + len(batch["ques len"])] = buffer_batch_new
+            self._buffer_batches_exp[self._pos: self._pos + len(batch["ques len"])] = buffer_batch_exp
+            self._pos += len(batch["ques len"])
+        epoch_time_cost = time_since(time.time() - epoch_start_time)
+        loss_total = loss_total if self.epo_iteration == 0 else loss_total/self.epo_iteration
+        return loss_total, epoch_time_cost
+
+    def _weakly_train_batch(self, batch, buffer_batches_train, buffer_batches_train_exp):
+        batch_size = len(batch["ques len"])
+
+        unk = self.dataloader.out_unk_token
+        num_start = self.dataloader.dataset.num_start
+        generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in
+                         self.dataloader.dataset.generate_list]
+        input_var = batch["question"]  # [batch_size, max_len]
+
+        input_var = input_var.transpose(0, 1)
+        fix_input_length, fix_target_list, \
+        fix_index, fix_target_length, \
+        buffer_batch_new, buffer_batch_exp = self.model.weakly_train(batch["question"], batch["ques len"], batch['ans'],
+                                                                     batch["num list"], batch["num size"], \
+                                                                     generate_nums, batch["num pos"], num_start,
+                                                                     batch["equation"], batch["equ len"],
+                                                                     self.epoch_i - 1, self.mask_flag, unk, \
+                                                                     self.config['supervising_mode'],
+                                                                     buffer_batches_train, buffer_batches_train_exp,
+                                                                     Lang=self.dataloader, n_step=50)
+        # buffer_batch_new, buffer_batch_exp = Weakly_Supervising(generate_exps_list, all_node_outputs_mask_list,buffer_batches_train, buffer_batches_train_exp)
+
+        # print("fix_input_length", fix_input_length)
+        # print("fix_target_list", fix_target_list)
+
+        fix_input_length = np.array(fix_input_length)
+        fix_target_list = np.array(fix_target_list)
+        fix_index = np.array(fix_index)
+        fix_target_length = np.array(fix_target_length)
+
+        inds = np.argsort(-fix_input_length)
+        # print("inds", inds)
+        fix_target_list = fix_target_list[inds].tolist()
+        # print("fix_target_list", fix_target_list)
+        fix_index = fix_index[inds].tolist()
+        # print("fix_index", fix_index)
+        fix_target_length = fix_target_length[inds].tolist()
+        # print("fix_target_length", fix_target_length)
+        # print(batch_size)
+        mapo_batch_size = 64
+        if not len(fix_target_list) % mapo_batch_size == 0:
+            num_iteration = int(len(fix_target_list) / mapo_batch_size) + 1
+        else:
+            num_iteration = int(len(fix_target_list) / mapo_batch_size)
+        # print("num_iteration", num_iteration)
+        batch_loss = torch.FloatTensor([[0.0]]).to(self.config["device"])
+        for j in range(num_iteration):
+            if not j * mapo_batch_size + mapo_batch_size - 1 < len(fix_target_list):
+                mapo_batch_size = len(fix_target_list) - ((j - 1) * mapo_batch_size + mapo_batch_size)
+            target_length_mapo = fix_target_length[j * mapo_batch_size: (j * mapo_batch_size + mapo_batch_size)]
+            idx_list = fix_index[j * mapo_batch_size: (j * mapo_batch_size + mapo_batch_size)]
+            target_list = fix_target_list[j * mapo_batch_size: (j * mapo_batch_size + mapo_batch_size)]
+            input_length_mapo = []
+            num_pos_mapo = []
+            num_size_mapo_batch = []
+            # print("input_length", batch["ques len"])
+
+            for k in range(mapo_batch_size):
+                idx = idx_list[k]
+                input_length_mapo.append(batch["ques len"][idx])
+                num_pos_mapo.append(batch["num pos"][idx])
+                num_size_mapo_batch.append(batch["num size"][idx])
+            # print("input_length_mapo", input_length_mapo)
+
+            input_var_mapo = torch.zeros((max(input_length_mapo), mapo_batch_size), dtype=torch.long)
+            # print("input_var_mapo", input_var_mapo.size())
+            target = torch.zeros((mapo_batch_size, max(target_length_mapo)), dtype=torch.long).to(self.config["device"])
+
+            for k in range(mapo_batch_size):
+                idx = idx_list[k]
+                input_var_mapo[:, k] = input_var[:, idx][:max(input_length_mapo)]
+                target[k][:target_length_mapo[k]] = torch.LongTensor(target_list[k])
+
+            # print("target", target.size())
+            self._model_train()
+            self._model_zero_grad()
+            input_var_mapo = input_var_mapo.to(self.config["device"])
+            input_var_mapo = input_var_mapo.transpose(0, 1)
+
+            output, target = self.model(input_var_mapo, input_length_mapo, batch["num stack"], num_size_mapo_batch,
+                                generate_nums, num_pos_mapo, \
+                                num_start, target=target, target_length=target_length_mapo, UNK_TOKEN=unk)
+            target_length_mapo = torch.LongTensor(target_length_mapo).to(self.config["device"])
+            target_mask_mapo = self.sequence_mask(target_length_mapo)
+            self.loss.eval_batch(output, target, target_mask_mapo)
+            batch_loss += self.loss.get_loss()
+            self.loss.backward()
+            self._optimizer_step()
+            self.loss.reset()
+        # self._buffer_batches[self._pos: self._pos + len(batch["ques len"])] = buffer_batch_new
+        # self._buffer_batches_exp[self._pos: self._pos + len(batch["ques len"])] = buffer_batch_exp
+
+        # self._pos += len(batch["ques len"])
+        batch_loss = batch_loss if num_iteration == 0 else batch_loss / num_iteration
+        return num_iteration, buffer_batch_new, buffer_batch_exp, batch_loss
+
+    def fit(self):
+        print("weak?")
+        train_batch_size = self.config["train_batch_size"]
+        epoch_nums = self.config["epoch_nums"]
+        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+
+        self.logger.info("start training...")
+        self._build_buffer_batch()
+        for epo in range(self.start_epoch, epoch_nums): #
+            self.epoch_i = epo + 1
+            self.model.train()
+            loss_total, train_time_cost = self._train_epoch()
+            self._scheduler_step()  #
+
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s" \
+                             % (self.epoch_i, loss_total / self.train_batch_nums, train_time_cost))
+
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info(
+                        "---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s" \
+                        % (test_total, test_equ_ac, test_val_ac, test_time_cost))
+
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+
+                    self.logger.info(
+                        "---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s" \
+                        % (valid_total, valid_equ_ac, valid_val_ac, valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info(
+                        "---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s" \
+                        % (test_total, test_equ_ac, test_val_ac, test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+            if epo % 5 == 0:
+                self._save_checkpoint()
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]''' \
+                         % (self.best_valid_equ_accuracy, self.best_valid_value_accuracy, \
+                            self.best_test_equ_accuracy, self.best_test_value_accuracy))
+
+    def sequence_mask(self, sequence_length, max_len=None):
+        if max_len is None:
+            max_len = sequence_length.data.max()
+        batch_size = sequence_length.size(0)
+        seq_range = torch.arange(0, max_len).long()
+        seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_len)
+        if sequence_length.is_cuda:
+            seq_range_expand = seq_range_expand.cuda()
+        seq_length_expand = (sequence_length.unsqueeze(1).expand_as(seq_range_expand))
+        return seq_range_expand < seq_length_expand
+
 
 class TransformerTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):
@@ -1421,7 +1636,6 @@ class TRNNTrainer(AbstractTrainer):
         weight = torch.ones(symbol_size).to(self.config["device"])
         pad = out_pad_token
         self.seq2seq_loss = NLLLoss(weight, pad)
-        
         weight2=torch.ones(operator_num).to(self.config["device"])
         self.ans_module_loss=NLLLoss(weight2)
 
@@ -1582,11 +1796,11 @@ class TRNNTrainer(AbstractTrainer):
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
-            # self.model.train()
-            # loss_total_seq2seq,loss_total_ans_module, train_time_cost = self._train_epoch()
+            self.model.train()
+            loss_total_seq2seq,loss_total_ans_module, train_time_cost = self._train_epoch()
 
-            # self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
+            self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
+                                %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
@@ -2106,11 +2320,7 @@ class HMSTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        """input_variable, input_lengths,span_num_pos,word_num_poses, span_length=None,tree=None,
-                target_variable=None, max_length=None, beam_width=None"""
-        outputs, _, symbols_list = self.model(batch["spans"], batch["spans len"],batch["span num pos"],batch["word num poses"],batch["span nums"],batch["deprel tree"], \
-                                target_variable=None, max_length=self.config['max_output_len'], beam_width=self.config['beam_size'])
-        test_out = torch.cat(symbols_list, dim=1)
+        test_out = self.model(batch["question"], batch["ques len"])
         if self.config["share_vocab"]:
             target = self._idx2word_2idx(batch["equation"])
         else:
@@ -2206,7 +2416,7 @@ class HMSTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
-        #self._load_model()
+        self._load_model()
         self.model.eval()
         value_ac = 0
         equation_ac = 0

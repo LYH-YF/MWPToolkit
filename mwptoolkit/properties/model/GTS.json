@@ -15,6 +15,5 @@
     "mask_symbol":"NUM",
     "symbol_for_tree":true,
     "equation_fix":"prefix",
-    "add_sos":true,
-    "add_eos":true
+    "supervising_mode": "fully_supervising"
 }

@@ -105,19 +105,23 @@ def get_model(model_name):
     return model_class
 
 
-def get_trainer(task_type, model_name):
-    r"""Automatically select trainer class based on task type and model name
+def get_trainer(task_type, model_name, sup_mode):
+    r"""Automatically select trainer class based on model type and model name
 
     Args:
-        task_type (~mwptoolkit.utils.enum_type.TaskType): task type
+        model_type (~mwptoolkit.utils.enum_type.TaskType): model type
         model_name (str): model name
 
     Returns:
         ~mwptoolkit.trainer.trainer.Trainer: trainer class
     """
     try:
-        return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
+        if sup_mode == "fully_supervising":
+            return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
                        model_name + 'Trainer')
+        else:
+            return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
+                       model_name + 'WeakTrainer')
     except AttributeError:
         if task_type == TaskType.SingleEquation:
             return getattr(
@@ -181,8 +185,6 @@ def str2float(v):
                     b = v[l-idx:]
                     return eval(a)+eval(b)
             return float(v)
-        elif '/' in v: # match number like 3/4
-            return eval(v)
         else:
             if v == '<UNK>':
                 return float('inf')
@@ -197,3 +199,7 @@ def lists2dict(list1,list2):
     for i,j in zip(list1,list2):
         the_dict[i]=j
     return the_dict
+
+def get_weakly_supervised(supervising_mode):
+    return getattr(importlib.import_module('mwptoolkit.module.Strategy.weakly_supervising'),
+                   supervising_mode + 'Strategy')

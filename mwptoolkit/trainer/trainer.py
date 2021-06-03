@@ -2251,6 +2251,7 @@ class HMSTrainer(AbstractTrainer):
         if config["resume"]:
             self._load_checkpoint()
         self._build_loss(config["symbol_size"],self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN])
+        self.out_pad_idx=self.dataloader.dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
 
     def _build_optimizer(self):
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"])
@@ -2317,6 +2318,8 @@ class HMSTrainer(AbstractTrainer):
         for step,output in enumerate(outputs):
             self.loss.eval_batch(output.contiguous().view(batch_size, -1), batch_equation[:, step].view(-1))
         batch_loss = self.loss.get_loss()
+        total_target_length = (batch_equation != self.out_pad_idx).sum().item()
+        batch_loss = batch_loss / total_target_length
         return batch_loss
 
     def _eval_batch(self, batch):

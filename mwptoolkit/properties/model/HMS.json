@@ -6,7 +6,7 @@
     "step_size":20,
     "scheduler_gamma":0.5,
     "beam_size":1,
-    "share_vocab":true,
+    "share_vocab":false,
     "mask_symbol":"NUM",
     "test_batch_size":1,
     "symbol_for_tree":false,

@@ -34,9 +34,9 @@ class AbstractDataset(object):
         trainset_file = self.dataset_path + "/trainset.json"
         validset_file = self.dataset_path + "/validset.json"
         testset_file = self.dataset_path + "/testset.json"
-        self.trainset = read_json_data(trainset_file)[:10]
-        self.validset = read_json_data(validset_file)[:10]
-        self.testset = read_json_data(testset_file)[:10]
+        self.trainset = read_json_data(trainset_file)[:]
+        self.validset = read_json_data(validset_file)[:]
+        self.testset = read_json_data(testset_file)[:]
     def _load_fold_dataset(self):
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
         testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
@@ -107,6 +107,7 @@ class AbstractDataset(object):
                     break
                 if flag:
                     break
+    
     def en_rule2_process(self):
         for idx, data in enumerate(self.trainset):
             self.trainset[idx]["equation"] = EN_rule2_(data["equation"])

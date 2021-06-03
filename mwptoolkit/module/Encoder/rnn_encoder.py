@@ -407,7 +407,7 @@ class HWCPEncoder(nn.Module):
         dim0 = torch.arange(span_output.size(0)).to(device)
         span_hidden = span_output[dim0, span_length - 1].unsqueeze(0)
 
-        return (span_output, word_outputs), span_hidden
+        return (span_output, word_outputs), span_hidden #【4，5,512】5*【4，length,512】【1,4,512】
 
     def word_level_forward(self, embedding_inputs, input_length, bi_word_hidden=None):
         # at least 1 word in some full padding span

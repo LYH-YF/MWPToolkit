@@ -49,7 +49,10 @@ def train_cross_validation(config):
                 config["out_idx2symbol"] = dataset.out_idx2symbol
                 config["temp_symbol2idx"] = dataset.temp_symbol2idx
                 config["temp_idx2symbol"] = dataset.temp_idx2symbol
-                config["out_sos_token"] = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+                try:
+                    config["out_sos_token"] = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+                except:
+                    pass
                 config["out_eos_token"] = dataset.out_symbol2idx[SpecialTokens.EOS_TOKEN]
                 config["out_pad_token"] = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
                 config["out_idx2symbol"] = dataset.out_idx2symbol
@@ -71,14 +74,14 @@ def train_cross_validation(config):
         dataloader = create_dataloader(config)(config, dataset)
 
         model = get_model(config["model"])(config).to(config["device"])
-        if config["pretrained_model_path"]:
-            config["vocab_size"] = len(model.tokenizer)
-            config["symbol_size"] = len(model.tokenizer)
-            config["embedding_size"] = len(model.tokenizer)
-            config["in_word2idx"] = model.tokenizer.get_vocab()
-            config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
-            config["out_symbol2idx"] = model.tokenizer.get_vocab()
-            config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
+        # if config["pretrained_model_path"]:
+        #     config["vocab_size"] = len(model.tokenizer)
+        #     config["symbol_size"] = len(model.tokenizer)
+        #     config["embedding_size"] = len(model.tokenizer)
+        #     config["in_word2idx"] = model.tokenizer.get_vocab()
+        #     config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
+        #     config["out_symbol2idx"] = model.tokenizer.get_vocab()
+        #     config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
 
         if config["equation_fix"] == FixType.Prefix:
             evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
@@ -91,7 +94,7 @@ def train_cross_validation(config):
         else:
             raise NotImplementedError
 
-        trainer = get_trainer(config["task_type"], config["model"])(config, model, dataloader, evaluator)
+        trainer = get_trainer(config["task_type"], config["model"],'fully_supervising')(config, model, dataloader, evaluator)
         logger.info("fold {}".format(fold_t))
         if config["test_only"]:
             trainer.test()

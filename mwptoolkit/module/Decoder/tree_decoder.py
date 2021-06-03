@@ -8,7 +8,7 @@ from mwptoolkit.module.Layer.tree_layers import Score,Dec_LSTM
 from mwptoolkit.module.Layer.tree_layers import ScoreModel,GateNN,TreeEmbeddingModel,DecomposeModel,NodeEmbeddingNode
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Strategy.beam_search import BeamNode
-from mwptoolkit.utils.enum_type import NumMask
+from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 class TreeDecoder(nn.Module):
     r'''
@@ -198,7 +198,7 @@ class HMSDecoder(nn.Module):
     def get_predict_meta(self, class_list, vocab_dict, device):
         # embed order: generator + pointer, with original order
         # used in predict_model, tree_embedding
-        pointer_list = [token for token in class_list if token in NumMask.number]
+        pointer_list = [token for token in class_list if (token in NumMask.number) or (token == SpecialTokens.UNK_TOKEN)]
         generator_list = [token for token in class_list if token not in pointer_list]
         embed_list = generator_list + pointer_list
 

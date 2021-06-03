@@ -54,8 +54,9 @@ class BERTGen(nn.Module):
         self.out_embedder = BaiscEmbedder(config["symbol_size"], config["embedding_size"],
                                               config["embedding_dropout_ratio"])
 
-        self.pos_embedder = PositionEmbedder(config["embedding_size"], config["device"],
-                                             config["embedding_dropout_ratio"], config["max_len"])
+        # self.pos_embedder = PositionEmbedder(config["embedding_size"], config["device"],
+        #                                      config["embedding_dropout_ratio"], config["max_len"])
+        self.pos_embedder = PositionEmbedder(config["embedding_size"], config["max_len"])
         self.self_attentioner = SelfAttentionMask()
 
         self.decoder = TransformerDecoder(config["embedding_size"], config["ffn_size"], config["num_decoder_layers"], \

@@ -5,6 +5,16 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operator
 
 
 class TemplateDataset(AbstractDataset):
+    """
+    you need implement:
+
+    TemplateDataset._preprocess
+
+    TemplateDataset._build_symbol
+
+    TemplateDataset._build_template_symbol
+    
+    """
     def __init__(self, config):
         super().__init__(config)
         self.generate_list = []

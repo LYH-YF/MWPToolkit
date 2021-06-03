@@ -13,6 +13,7 @@ class MultiEquationDataset(AbstractDataset):
         self.equation_fix = config["equation_fix"]
         self.rule1 = config["rule1"]
         self.rule2 = config["rule2"]
+        self.model = config['model']
     
     def _preprocess(self):
         if self.dataset==DatasetName.alg514:
@@ -212,7 +213,8 @@ class MultiEquationDataset(AbstractDataset):
             self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
         else:
             self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
-        
+        if self.model.lower() in ['hms']:
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Multi
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
         

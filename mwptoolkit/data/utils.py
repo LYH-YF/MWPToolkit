@@ -1,6 +1,7 @@
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.data.dataset.single_equation_dataset import SingleEquationDataset
 from mwptoolkit.data.dataset.multi_equation_dataset import MultiEquationDataset
+from mwptoolkit.data.dataset.dataset_multiead import DatasetMultiEAD
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 from mwptoolkit.data.dataloader.single_equation_dataloader import SingleEquationDataLoader
@@ -15,6 +16,8 @@ def create_dataset(config):
     Returns:
         Dataset: Constructed dataset.
     """
+    if config['model'].lower() in ['multiead']:
+        return DatasetMultiEAD(config)
     task_type = config['task_type'].lower()
     if task_type == TaskType.SingleEquation:
         return SingleEquationDataset(config)

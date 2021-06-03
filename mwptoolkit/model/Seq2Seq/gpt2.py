@@ -32,6 +32,14 @@ class GPT2(nn.Module):
         self.init_tokenizer_and_resize(config["generate_list"],NumMask.number[:config["copy_nums"]],config["operator_list"])
         #self.padding_token_idx = self.tokenizer.pad_token_id
         self.max_out_len = config['max_output_len']
+
+        config["vocab_size"] = len(self.tokenizer)
+        config["symbol_size"] = len(self.tokenizer)
+        config["embedding_size"] = len(self.tokenizer)
+        config["in_word2idx"] = self.tokenizer.get_vocab()
+        config["in_idx2word"] = list(self.tokenizer.get_vocab().keys())
+        config["out_symbol2idx"] = self.tokenizer.get_vocab()
+        config["out_idx2symbol"] = list(self.tokenizer.get_vocab().keys())
     
     def init_tokenizer_and_resize(self,generate_list,mask_number_list,operator_list):
         _ = self.tokenizer.add_tokens(operator_list)

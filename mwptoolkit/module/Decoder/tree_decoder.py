@@ -198,11 +198,7 @@ class HMSDecoder(nn.Module):
     def get_predict_meta(self, class_list, vocab_dict, device):
         # embed order: generator + pointer, with original order
         # used in predict_model, tree_embedding
-<<<<<<< Updated upstream
         pointer_list = [token for token in class_list if (token in NumMask.number) or (token == SpecialTokens.UNK_TOKEN)]
-=======
-        pointer_list = [token for token in class_list if token in NumMask.number or token==SpecialTokens.UNK_TOKEN]
->>>>>>> Stashed changes
         generator_list = [token for token in class_list if token not in pointer_list]
         embed_list = generator_list + pointer_list
 

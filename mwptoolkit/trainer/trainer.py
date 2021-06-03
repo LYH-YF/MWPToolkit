@@ -728,7 +728,7 @@ class GTSTrainer(AbstractTrainer):
         num_start = self.dataloader.dataset.num_start
         generate_nums = [self.dataloader.dataset.out_symbol2idx[symbol] for symbol in self.dataloader.dataset.generate_list]
 
-        outputs=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
+        outputs, _=self.model(batch["question"],batch["ques len"],batch["num stack"],batch["num size"],\
                                 generate_nums,batch["num pos"],num_start,batch["equation"],batch["equ len"],UNK_TOKEN=unk)
         self.loss.eval_batch(outputs, batch["equation"], batch["equ mask"])
         batch_loss = self.loss.get_loss()

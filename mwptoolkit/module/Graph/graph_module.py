@@ -130,3 +130,77 @@ class Graph_Module(nn.Module):
         graph_encode_features = self.feed_foward(g_feature) + g_feature
         
         return adj, graph_encode_features
+
+class Parse_Graph_Module(nn.Module):
+    def __init__(self, hidden_size):
+        super(Parse_Graph_Module, self).__init__()
+        
+        self.hidden_size = hidden_size
+        self.node_fc1 = nn.Linear(hidden_size, hidden_size)
+        self.node_fc2 = nn.Linear(hidden_size, hidden_size)
+        self.node_out = nn.Linear(hidden_size * 2, hidden_size)
+    
+    def normalize(self, graph, symmetric=True):
+        d = graph.sum(1)
+        if symmetric:
+            D = torch.diag(torch.pow(d, -0.5))
+            return D.mm(graph).mm(D)
+        else :
+            D = torch.diag(torch.pow(d,-1))
+            return D.mm(graph)
+        
+    def forward(self, node, graph):
+        graph = graph.float()
+        batch_size = node.size(0)
+        for i in range(batch_size):
+            graph[i] = self.normalize(graph[i])
+        
+        node_info = torch.relu(self.node_fc1(torch.matmul(graph, node)))
+        node_info = torch.relu(self.node_fc2(torch.matmul(graph, node_info)))
+        
+        agg_node_info = torch.cat((node, node_info), dim=2)
+        agg_node_info = torch.relu(self.node_out(agg_node_info))
+        
+        return agg_node_info
+
+class Num_Graph_Module(nn.Module):
+    def __init__(self, node_dim):
+        super(Num_Graph_Module, self).__init__()
+        
+        self.node_dim = node_dim
+        self.node1_fc1 = nn.Linear(node_dim, node_dim)
+        self.node1_fc2 = nn.Linear(node_dim, node_dim)
+        self.node2_fc1 = nn.Linear(node_dim, node_dim)
+        self.node2_fc2 = nn.Linear(node_dim, node_dim)
+        self.graph_weight = nn.Linear(node_dim * 4, node_dim)
+        self.node_out = nn.Linear(node_dim * 2, node_dim)
+    
+    def normalize(self, graph, symmetric=True):
+        d = graph.sum(1)
+        if symmetric:
+            D = torch.diag(torch.pow(d, -0.5))
+            return D.mm(graph).mm(D)
+        else :
+            D = torch.diag(torch.pow(d,-1))
+            return D.mm(graph)
+
+    def forward(self, node, graph1, graph2):
+        graph1 = graph1.float()
+        graph2 = graph2.float()
+        batch_size = node.size(0)
+        
+        for i in range(batch_size):
+            graph1[i] = self.normalize(graph1[i], False)
+            graph2[i] = self.normalize(graph2[i], False)
+        
+        node_info1 = torch.relu(self.node1_fc1(torch.matmul(graph1, node)))
+        node_info1 = torch.relu(self.node1_fc2(torch.matmul(graph1, node_info1)))
+        node_info2 = torch.relu(self.node2_fc1(torch.matmul(graph2, node)))
+        node_info2 = torch.relu(self.node2_fc2(torch.matmul(graph2, node_info2)))
+        gate = torch.cat((node_info1, node_info2, node_info1+node_info2, node_info1-node_info2), dim=2)
+        gate = torch.sigmoid(self.graph_weight(gate))
+        node_info = gate * node_info1 + (1-gate) * node_info2
+        agg_node_info = torch.cat((node, node_info), dim=2)
+        agg_node_info = torch.relu(self.node_out(agg_node_info))
+        
+        return agg_node_info

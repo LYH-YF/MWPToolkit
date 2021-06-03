@@ -37,9 +37,9 @@ class GTS(nn.Module):
         seq_mask=torch.BoolTensor(seq_mask).to(self.device)
 
         num_mask = []
-        max_num_size = max(num_size) + 2#len(generate_nums)
+        max_num_size = max(num_size) + len(generate_nums)
         for i in num_size:
-            d = i + 2#len(generate_nums)
+            d = i + len(generate_nums)
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
@@ -86,7 +86,7 @@ class GTS(nn.Module):
             outputs = torch.cat((op, num_score), 1)
             all_node_outputs.append(outputs)
 
-            target_t, generate_input = self.generate_tree_input(
+            target_t, generate_input = self.generate_tree_input_(
                 target[:,t].tolist(), outputs, nums_stack, num_start, unk)
             target[:,t] = target_t
             generate_input = generate_input.to(self.device)
@@ -276,6 +276,20 @@ class GTS(nn.Module):
             if target_input[i] >= num_start:
                 target_input[i] = 0
         return torch.LongTensor(target), torch.LongTensor(target_input)
+    def generate_tree_input_(self,target, decoder_output, nums_stack_batch, num_start, unk):
+        target_input = copy.deepcopy(target)
+        for i in range(len(target)):
+            if target[i] == unk:
+                num_stack = nums_stack_batch[i].pop()
+                max_score = -float("1e12")
+                for num in num_stack:
+                    if decoder_output[i, num_start + num] > max_score:
+                        target[i] = num + num_start
+                        max_score = decoder_output[i, num_start + num]
+            if target_input[i] >= num_start:
+                target_input[i] = 0
+        return torch.LongTensor(target), torch.LongTensor(target_input)
+
 
     def weakly_train(self, seq, seq_length, num_ans, nums_stack, num_size, generate_nums, num_pos, \
                      num_start, target, target_length, epoch, \

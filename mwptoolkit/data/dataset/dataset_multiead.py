@@ -49,6 +49,120 @@ class DatasetMultiEAD(TemplateDataset):
             raise NotImplementedError
         self.build_pos()
     
+    def _build_vocab(self):
+        words_count_1 = {}
+        for data in self.trainset:
+            words_list = data["question"]
+            for word in words_list:
+                try:
+                    words_count_1[word] += 1
+                except:
+                    words_count_1[word] = 1
+        self.in_idx2word_1=[SpecialTokens.PAD_TOKEN,SpecialTokens.SOS_TOKEN,SpecialTokens.EOS_TOKEN,SpecialTokens.UNK_TOKEN]
+        for key, value in words_count_1.items():
+            if value > self.min_word_keep or "NUM" in key:
+                self.in_idx2word_1.append(key)
+        words_count_2={}
+        for data in self.trainset:
+            words_list = data["pos"]
+            for word in words_list:
+                try:
+                    words_count_2[word] += 1
+                except:
+                    words_count_2[word] = 1
+        self.in_idx2word_2=[SpecialTokens.UNK_TOKEN]
+        for key, value in words_count_2.items():
+            if value > self.min_word_keep:
+                self.in_idx2word_2.append(key)
+        self._build_symbol()
+        self._build_symbol_for_tree()
+
+        self.in_word2idx_1 = {}
+        self.in_word2idx_2 = {}
+        self.out_symbol2idx_1 = {}
+        self.out_symbol2idx_2 = {}
+        for idx, word in enumerate(self.in_idx2word_1):
+            self.in_word2idx_1[word] = idx
+        for idx, word in enumerate(self.in_idx2word_2):
+            self.in_word2idx_2[word] = idx
+        for idx, symbol in enumerate(self.out_idx2symbol_1):
+            self.out_symbol2idx_1[symbol] = idx
+        for idx, symbol in enumerate(self.out_idx2symbol_2):
+            self.out_symbol2idx_2[symbol] = idx
+
+        
+        return super()._build_vocab()
+    
+    def _build_symbol(self):
+        if self.share_vocab:
+            self.out_idx2symbol_1 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
+        else:
+            self.out_idx2symbol_1 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
+        self.num_start = len(self.out_idx2symbol_1)
+        self.out_idx2symbol_1 += self.generate_list
+        if self.mask_symbol == MaskSymbol.NUM:
+            mask_list = NumMask.number
+            try:
+                self.out_idx2symbol_1 += [mask_list[i] for i in range(self.copy_nums)]
+            except IndexError:
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
+        elif self.mask_symbol == MaskSymbol.alphabet:
+            mask_list = NumMask.alphabet
+            try:
+                self.out_idx2symbol_1 += [mask_list[i] for i in range(self.copy_nums)]
+            except IndexError:
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
+        elif self.mask_symbol == MaskSymbol.number:
+            mask_list = NumMask.number
+            try:
+                self.out_idx2symbol_1 += [mask_list[i] for i in range(self.copy_nums)]
+            except IndexError:
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
+        else:
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
+        for data in self.trainset:
+            words_list = data["equation"]
+            for word in words_list:
+                if word in self.out_idx2symbol_1:
+                    continue
+                elif word[0].isdigit():
+                    continue
+                elif (word[0].isalpha() or word[0].isdigit()) is not True:
+                    self.out_idx2symbol_1.insert(self.num_start, word)
+                    self.num_start += 1
+                    continue
+                else:
+                    self.out_idx2symbol_1.append(word)
+        self.out_idx2symbol_1 += [SpecialTokens.UNK_TOKEN]
+    
+    def _build_symbol_for_tree(self):
+        self.out_idx2symbol_2 = copy.deepcopy(Operators.Single)
+        self.num_start = len(self.out_idx2symbol_2)
+        self.out_idx2symbol_2 += self.generate_list
+
+        if self.mask_symbol == MaskSymbol.NUM:
+            mask_list = NumMask.number
+            try:
+                self.out_idx2symbol_2 += [mask_list[i] for i in range(self.copy_nums)]
+            except IndexError:
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
+        elif self.mask_symbol == MaskSymbol.alphabet:
+            mask_list = NumMask.alphabet
+            try:
+                self.out_idx2symbol_2 += [mask_list[i] for i in range(self.copy_nums)]
+            except IndexError:
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
+        elif self.mask_symbol == MaskSymbol.number:
+            mask_list = NumMask.number
+            try:
+                self.out_idx2symbol_2 += [mask_list[i] for i in range(self.copy_nums)]
+            except IndexError:
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
+        else:
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
+
+        self.out_idx2symbol_2 += [SpecialTokens.UNK_TOKEN]
+    
     def build_pos(self):
         nlp=stanza.Pipeline(self.language,processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
         for data in self.trainset:

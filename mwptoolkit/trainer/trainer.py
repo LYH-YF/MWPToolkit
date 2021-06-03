@@ -2323,7 +2323,7 @@ class HMSTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        test_out = self.model(batch["question"], batch["ques len"])
+        test_out = self.model(batch["question"], batch["spans len"],batch["span num pos"],batch["word num poses"],batch["span nums"],batch["deprel tree"])
         if self.config["share_vocab"]:
             target = self._idx2word_2idx(batch["equation"])
         else:

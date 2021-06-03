@@ -188,6 +188,8 @@ class SingleEquationDataset(AbstractDataset):
             self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
+        if self.model.lower() in ['hms']:
+            self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
@@ -221,6 +223,8 @@ class SingleEquationDataset(AbstractDataset):
                     continue
                 else:
                     self.out_idx2symbol.append(word)
+        if self.model.lower() in ['hms']:
+            return
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
     
     def _build_template_symbol(self):

@@ -3,6 +3,13 @@ import torch
 from torch.nn import functional as F
 from mwptoolkit.utils.utils import copy_list
 
+class Beam:  # the class save the beam node
+    def __init__(self, score, input_var, hidden, all_output):
+        self.score = score
+        self.input_var = input_var
+        self.hidden = hidden
+        self.all_output = all_output
+        
 class TreeBeam:  # the class save the beam node
     def __init__(self, score, node_stack, embedding_stack, left_childs, out):
         self.score = score

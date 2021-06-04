@@ -117,7 +117,7 @@ def get_trainer(task_type, model_name, sup_mode):
     """
     try:
         if sup_mode == "fully_supervising":
-            return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
+            return getattr(importlib.import_module('mwptoolkit.trainer'),
                        model_name + 'Trainer')
         else:
             return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
@@ -125,12 +125,12 @@ def get_trainer(task_type, model_name, sup_mode):
     except AttributeError:
         if task_type == TaskType.SingleEquation:
             return getattr(
-                importlib.import_module('mwptoolkit.trainer.trainer'),
-                'SingleEquationTrainer')
+                importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                'SupervisedTrainer')
         elif task_type == TaskType.MultiEquation:
             return getattr(
-                importlib.import_module('mwptoolkit.trainer.trainer'),
-                'MultiEquationTrainer')
+                importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                'SupervisedTrainer')
         else:
             return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
                            'Trainer')

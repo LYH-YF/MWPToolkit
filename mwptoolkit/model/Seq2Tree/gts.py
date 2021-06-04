@@ -8,7 +8,8 @@ from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
 from mwptoolkit.module.Strategy.weakly_supervising import Weakly_Supervising, out_expression_list
-from mwptoolkit.utils.utils import get_weakly_supervised
+from mwptoolkit.utils.utils import copy_list, get_weakly_supervised
+from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
 class GTS(nn.Module):
@@ -18,6 +19,27 @@ class GTS(nn.Module):
         self.hidden_size=config["hidden_size"]
         self.device=config["device"]
         self.beam_size=config['beam_size']
+        self.num_start = config['num_start']
+        self.max_out_len = config['max_output_len']
+        generate_list=config['generate_list']
+        self.generate_nums = [self.out_symbol2idx[symbol] for symbol in generate_list]
+        self.mask_list=NumMask.number
+        
+        self.out_symbol2idx=config["out_symbol2idx"]
+        self.out_idx2symbol=config["out_idx2symbol"]
+        self.unk_token=config["in_symbol2idx"][SpecialTokens.UNK_TOKEN]
+        try:
+            self.out_sos_token=self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+        except:
+            pass
+        try:
+            self.out_eos_token=self.out_symbol2idx[SpecialTokens.EOS_TOKEN]
+        except:
+            pass
+        try:
+            self.out_pad_token=self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            pass
         #module
         self.embedder=BaiscEmbedder(config["vocab_size"],config["embedding_size"],config["dropout_ratio"])
         self.encoder=BasicRNNEncoder(config["embedding_size"],config["hidden_size"],config["num_layers"],\
@@ -61,6 +83,87 @@ class GTS(nn.Module):
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)  # B x S x N
         return all_node_outputs, target
+    def calculate_loss(self,batch_data):
+        seq=batch_data["question"]
+        seq_length=batch_data["ques len"]
+        nums_stack=batch_data["num stack"]
+        num_size=batch_data["num size"]
+        num_pos=batch_data["num pos"]
+        target=batch_data["equation"],
+        target_length=batch_data["equ len"]
+        generate_nums=self.generate_nums
+        num_start=self.num_start
+        # sequence mask for attention
+        beam_size=self.beam_size
+        seq_mask = []
+        max_len = max(seq_length)
+        for i in seq_length:
+            seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
+        seq_mask=torch.BoolTensor(seq_mask).to(self.device)
+
+        num_mask = []
+        max_num_size = max(num_size) + len(generate_nums)
+        for i in num_size:
+            d = i + len(generate_nums)
+            num_mask.append([0] * d + [1] * (max_num_size - d))
+        num_mask = torch.BoolTensor(num_mask).to(self.device)
+
+        padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
+        batch_size = len(seq_length)
+        seq_emb=self.embedder(seq)
+        pade_outputs, _ = self.encoder(seq_emb, seq_length)
+        problem_output = pade_outputs[:, -1, :self.hidden_size] +pade_outputs[:, 0, self.hidden_size:]
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
+        #print("encoder_outputs", encoder_outputs.size())
+        #print("problem_output", problem_output.size())
+        UNK_TOKEN=self.unk_token
+
+        all_node_outputs, target=self.generate_node(encoder_outputs,problem_output,target,target_length,\
+                                num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
+        return all_node_outputs,target
+    def predict(self,batch_data):
+        seq=batch_data["question"]
+        seq_length=batch_data["ques len"]
+        nums_stack=batch_data["num stack"]
+        num_size=batch_data["num size"]
+        num_pos=batch_data["num pos"]
+        target=batch_data["equation"]
+        num_list=batch_data['num list']
+        #target_length=batch_data["equ len"]
+        generate_nums=self.generate_nums
+        num_start=self.num_start
+
+        # sequence mask for attention
+        beam_size=self.beam_size
+        max_length=self.max_out_len
+        seq_mask = []
+        max_len = max(seq_length)
+        for i in seq_length:
+            seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
+        seq_mask=torch.BoolTensor(seq_mask).to(self.device)
+
+        num_mask = []
+        max_num_size = max(num_size) + len(generate_nums)
+        for i in num_size:
+            d = i + len(generate_nums)
+            num_mask.append([0] * d + [1] * (max_num_size - d))
+        num_mask = torch.BoolTensor(num_mask).to(self.device)
+
+        padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
+        batch_size = len(seq_length)
+        seq_emb=self.embedder(seq)
+        pade_outputs, _ = self.encoder(seq_emb, seq_length)
+        problem_output = pade_outputs[:, -1, :self.hidden_size] +pade_outputs[:, 0, self.hidden_size:]
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
+        #print("encoder_outputs", encoder_outputs.size())
+        #print("problem_output", problem_output.size())
+
+        all_node_outputs=self.generate_node_(encoder_outputs,problem_output,padding_hidden,seq_mask,num_mask,num_pos,num_start,beam_size,max_length)
+        all_outputs=self.convert_idx2symbol(all_node_outputs,num_list,copy_list(nums_stack))
+        targets=self.convert_idx2symbol(target[0],num_list,copy_list(nums_stack))
+        
+        return all_outputs,targets
+
     def generate_node(self,encoder_outputs,problem_output,target,target_length,\
                         num_pos,nums_stack,padding_hidden,seq_mask,num_mask,unk,num_start):
         batch_size=encoder_outputs.size(0)
@@ -519,6 +622,36 @@ class GTS(nn.Module):
             else:
                 r.append(i)
         return r
+    
+    def convert_idx2symbol(self,output,num_list,num_stack):
+        #batch_size=output.size(0)
+        '''batch_size=1'''
+        seq_len=output.size(1)
+        num_len=len(num_list)
+        output_list=[]
+        res = []
+        for s_i in range(seq_len):
+            idx = output[s_i]
+            if idx in [self.out_sos_token,self.out_eos_token,self.out_pad_token]:
+                break
+            symbol = self.out_idx2symbol[idx]
+            if "NUM" in symbol:
+                num_idx = self.mask_list.index(symbol)
+                if num_idx >= num_len:
+                    res = []
+                    break
+                res.append(num_list[num_idx])
+            elif symbol == SpecialTokens.UNK_TOKEN:
+                try:
+                    pos_list = num_stack.pop()
+                    c = num_list[pos_list[0]]
+                    res.append(c)
+                except:
+                    return None
+            else:
+                res.append(symbol)
+        output_list.append(res)
+        return output_list
     
     def __str__(self) -> str:
         info=super().__str__()

@@ -1,5 +1,5 @@
 {
-    "pretrained_model_path":"gpt2",
+    "pretrained_model_path":"pretrain/gpt2_cn",
     "learner": "schedule",
     "learning_rate": 1e-4,
     "symbol_for_tree":false,

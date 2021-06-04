@@ -10,6 +10,7 @@ from mwptoolkit.module.Attention.self_attention import SelfAttentionMask
 from mwptoolkit.module.Strategy.beam_search import Beam_Search_Hypothesis
 from mwptoolkit.module.Strategy.sampling import topk_sampling
 from mwptoolkit.module.Strategy.greedy import greedy_search
+from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 class Transformer(nn.Module):
     def __init__(self,config):
@@ -19,6 +20,7 @@ class Transformer(nn.Module):
         self.decoding_strategy=config["decoding_strategy"]
         self.teacher_force_ratio=config["teacher_force_ratio"]
         
+        self.mask_list=NumMask.number
         self.in_pad_idx=config["in_word2idx"]["<PAD>"]
         if config["share_vocab"]:
             self.out_symbol2idx=config["out_symbol2idx"]
@@ -30,6 +32,19 @@ class Transformer(nn.Module):
         else:
             self.out_pad_idx=config["out_symbol2idx"]["<PAD>"]
             self.out_sos_idx=config["out_symbol2idx"]["<SOS>"]
+
+        try:
+            self.out_sos_token=self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+        except:
+            pass
+        try:
+            self.out_eos_token=self.out_symbol2idx[SpecialTokens.EOS_TOKEN]
+        except:
+            pass
+        try:
+            self.out_pad_token=self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            pass
 
         self.in_embedder=BaiscEmbedder(config["vocab_size"],config["embedding_size"],config["embedding_dropout_ratio"])
         if config["share_vocab"]:
@@ -63,6 +78,34 @@ class Transformer(nn.Module):
             all_outputs=self.generate_without_t(encoder_outputs,source_padding_mask)
             return all_outputs
     
+    def calculate_loss(self,batch_data):
+        src=batch_data['question']
+        target=batch_data['equation']
+        device = src.device
+        source_embeddings = self.in_embedder(src)+self.pos_embedder(src).to(device)
+        source_padding_mask = torch.eq(src, self.in_pad_idx)
+        encoder_outputs = self.encoder(source_embeddings,
+                                       self_padding_mask=source_padding_mask)
+
+        token_logits=self.generate_t(target,encoder_outputs,source_padding_mask)
+        return token_logits
+    
+    def predict(self,batch_data):
+        src=batch_data['question']
+        target=batch_data['equation']
+        num_list=batch_data['num list']
+
+        device = src.device
+        source_embeddings = self.in_embedder(src)+self.pos_embedder(src).to(device)
+        source_padding_mask = torch.eq(src, self.in_pad_idx)
+        encoder_outputs = self.encoder(source_embeddings,
+                                       self_padding_mask=source_padding_mask)
+        
+        all_outputs=self.generate_without_t(encoder_outputs,source_padding_mask)
+        all_outputs=self.convert_idx2symbol(all_outputs,num_list)
+        targets=self.convert_idx2symbol(target,num_list)
+        return all_outputs,targets
+
     def generate_t(self,target,encoder_outputs,source_padding_mask):
         with_t=random.random()
         seq_len=target.size(1)
@@ -150,6 +193,29 @@ class Transformer(nn.Module):
             decoded_output.append(b_output)
         decoded_output=torch.tensor(decoded_output).to(device).view(batch_size,-1)
         return decoded_output
+    
+    def convert_idx2symbol(self,output,num_list):
+        batch_size=output.size(0)
+        seq_len=output.size(1)
+        num_len=len(num_list)
+        output_list=[]
+        for b_i in range(batch_size):
+            res = []
+            for s_i in range(seq_len):
+                idx = output[b_i][s_i]
+                if idx in [self.out_sos_token,self.out_eos_token,self.out_pad_token]:
+                    break
+                symbol = self.out_idx2symbol[idx]
+                if "NUM" in symbol:
+                    num_idx = self.mask_list.index(symbol)
+                    if num_idx >= num_len:
+                        res = []
+                        break
+                    res.append(num_list[num_idx])
+                else:
+                    res.append(symbol)
+            output_list.append(res)
+
     def __str__(self) -> str:
         info=super().__str__()
         total=sum(p.numel() for p in self.parameters())

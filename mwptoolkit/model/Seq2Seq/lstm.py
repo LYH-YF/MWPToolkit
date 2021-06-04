@@ -6,6 +6,7 @@ from torch.nn import functional as F
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder,AttentionalRNNDecoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 class LSTM(nn.Module):
     def __init__(self,config):
@@ -18,14 +19,27 @@ class LSTM(nn.Module):
         self.teacher_force_ratio=config["teacher_force_ratio"]
         self.encoder_rnn_cell_type='lstm'
         self.decoder_rnn_cell_type='lstm'
+        self.mask_list=NumMask.number
         if config["share_vocab"]:
             self.out_symbol2idx=config["out_symbol2idx"]
             self.out_idx2symbol=config["out_idx2symbol"]
             self.in_word2idx=config["in_word2idx"]
             self.in_idx2word=config["in_idx2word"]
-            self.out_sos_token=config["out_sos_token"]
         else:
-            self.out_sos_token=config["out_sos_token"]
+            self.out_symbol2idx=config["out_symbol2idx"]
+            self.out_idx2symbol=config["out_idx2symbol"]
+        try:
+            self.out_sos_token=self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+        except:
+            pass
+        try:
+            self.out_eos_token=self.out_symbol2idx[SpecialTokens.EOS_TOKEN]
+        except:
+            pass
+        try:
+            self.out_pad_token=self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            pass
 
         self.in_embedder=BaiscEmbedder(config["vocab_size"],config["embedding_size"],config["dropout_ratio"])
         if config["share_vocab"]:
@@ -74,7 +88,47 @@ class LSTM(nn.Module):
         else:
             all_outputs=self.generate_without_t(encoder_outputs,encoder_hidden,decoder_inputs)
             return all_outputs
+    
+    def calculate_loss(self,batch_data):
+        seq = batch_data['question']
+        seq_length = batch_data['ques len']
+        target = batch_data['equation']
 
+        batch_size=seq.size(0)
+        device=seq.device
+
+        seq_emb=self.in_embedder(seq)
+        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
+
+        if self.bidirectional:
+            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+            encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
+        
+        decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
+        token_logits=self.generate_t(encoder_outputs,encoder_hidden,decoder_inputs)
+        return token_logits
+    
+    def predict(self,batch_data):
+        seq = batch_data['question']
+        seq_length = batch_data['ques len']
+        num_list = batch_data['num list']
+        target = batch_data['equation']
+
+        batch_size=seq.size(0)
+        device=seq.device
+
+        seq_emb=self.in_embedder(seq)
+        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
+
+        if self.bidirectional:
+            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+            encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
+        
+        decoder_inputs=self.init_decoder_inputs(target=None,device=device,batch_size=batch_size)
+        all_outputs=self.generate_without_t(encoder_outputs,encoder_hidden,decoder_inputs)
+        all_outputs=self.convert_idx2symbol(all_outputs,num_list)
+        targets=self.convert_idx2symbol(target,num_list)
+        return all_outputs,targets
     def generate_t(self,encoder_outputs,encoder_hidden,decoder_inputs):
         with_t=random.random()
         if with_t<self.teacher_force_ratio:
@@ -154,6 +208,29 @@ class LSTM(nn.Module):
             decoded_output.append(self.in_word2idx[self.out_idx2symbol[output[idx]]])
         decoded_output=torch.tensor(decoded_output).to(device).view(batch_size,-1)
         return output
+    
+    def convert_idx2symbol(self,output,num_list):
+        batch_size=output.size(0)
+        seq_len=output.size(1)
+        num_len=len(num_list)
+        output_list=[]
+        for b_i in range(batch_size):
+            res = []
+            for s_i in range(seq_len):
+                idx = output[b_i][s_i]
+                if idx in [self.out_sos_token,self.out_eos_token,self.out_pad_token]:
+                    break
+                symbol = self.out_idx2symbol[idx]
+                if "NUM" in symbol:
+                    num_idx = self.mask_list.index(symbol)
+                    if num_idx >= num_len:
+                        res = []
+                        break
+                    res.append(num_list[num_idx])
+                else:
+                    res.append(symbol)
+            output_list.append(res)
+
     def __str__(self) -> str:
         info=super().__str__()
         total=sum(p.numel() for p in self.parameters())

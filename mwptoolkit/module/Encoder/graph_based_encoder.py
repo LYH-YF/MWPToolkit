@@ -332,9 +332,9 @@ class NumEncoder(nn.Module):
         for i in range(self.hop_size):
             num_embedding = self.num_gnn[i](num_embedding, graph_greater, graph_lower)
         
-#        gnn_info_vec = torch.zeros((batch_size, 1, encoder_outputs.size(-1)),
-#                                   dtype=torch.float, device=num_embedding.device)
-#        gnn_info_vec = torch.cat((encoder_outputs.transpose(0, 1), gnn_info_vec), dim=1)
+        #        gnn_info_vec = torch.zeros((batch_size, 1, encoder_outputs.size(-1)),
+        #                                   dtype=torch.float, device=num_embedding.device)
+        #        gnn_info_vec = torch.cat((encoder_outputs.transpose(0, 1), gnn_info_vec), dim=1)
         gnn_info_vec = torch.zeros((batch_size, encoder_outputs.size(0)+1, encoder_outputs.size(-1)),
                                    dtype=torch.float, device=num_embedding.device)
         clamped_number_indices = replace_masked_values(num_pos_pad, num_mask, gnn_info_vec.size(1)-1)

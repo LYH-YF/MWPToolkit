@@ -1,7 +1,7 @@
 import random
 import torch
 
-from mwptoolkit.utils.enum_type import FixType, NumMask
+from mwptoolkit.utils.enum_type import FixType, NumMask,SpecialTokens
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 
 
@@ -20,6 +20,26 @@ class MultiEquationDataLoader(AbstractDataLoader):
         self.trainset_nums = len(dataset.trainset)
         self.validset_nums = len(dataset.validset)
         self.testset_nums = len(dataset.testset)
+
+        self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
+        self.in_unk_token = dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
+
+        if self.symbol_for_tree or self.equation_fix == FixType.MultiWayTree:
+            self.out_pad_token = self.in_pad_token
+            self.out_unk_token = dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
+            self.temp_unk_token = dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
+        else:
+            if self.share_vocab:
+                self.out_pad_token = self.in_pad_token
+                self.out_unk_token = self.in_unk_token
+                self.temp_pad_token = self.in_pad_token
+                self.temp_unk_token = self.in_unk_token
+            else:
+                self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+                self.out_unk_token = dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
+                self.temp_pad_token = dataset.temp_symbol2idx[SpecialTokens.PAD_TOKEN]
+                self.temp_unk_token = dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
+
 
     def _get_number_position(self, seq, num_list):
         num_pos = []

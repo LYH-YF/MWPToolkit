@@ -66,3 +66,7 @@ class NumMask:
         "NUM_v", "NUM_w", "NUM_x", "NUM_y", "NUM_z"
     ]
     number = ["NUM_" + str(i) for i in range(100)]
+
+class SupervisingMode:
+    fully_supervised="fully_supervised"
+    weakly_supervised="weakly_supervised"

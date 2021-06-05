@@ -1,8 +1,9 @@
+import numpy as np
 import torch
 
 from mwptoolkit.data.dataloader.template_dataloader import TemplateDataLoader
 from mwptoolkit.data.dataset.dataset_multiead import DatasetMultiEAD
-
+from mwptoolkit.utils.utils import str2float
 
 class DataLoaderMultiEAD(TemplateDataLoader):
     def __init__(self, config, dataset):
@@ -22,6 +23,7 @@ class DataLoaderMultiEAD(TemplateDataLoader):
         num_list_batch = []
         num_stack_batch = []
         num_pos_batch = []
+        num_order_batch = []
         parse_graph_batch = []
 
         id_batch=[]
@@ -56,7 +58,10 @@ class DataLoaderMultiEAD(TemplateDataLoader):
             output1_batch.append(prefix_equ_tensor)
             output2_batch.append(postfix_equ_tensor)
 
-            num_list_batch.append(data["number list"])
+            num_list=[str2float(n) for n in data['num list']]
+            num_list_batch.append(num_list)
+            num_order=self.num_order_processed(num_list)
+            num_order_batch.append(num_order)
             num_stack_batch.append(self._build_num_stack(prefix_equ, data["number list"]))
             parse_graph_batch.append(self.get_parse_graph_batch(data['parse tree']))
 
@@ -144,7 +149,14 @@ class DataLoaderMultiEAD(TemplateDataLoader):
                 num_stack.append([_ for _ in range(len(num_list))])
         num_stack.reverse()
         return num_stack
-
+    
+    def num_order_processed(self,num_list):
+        num_order = []
+        num_array = np.asarray(num_list)
+        for num in num_array:
+            num_order.append(sum(num>num_array)+1)
+        
+        return num_order
     def get_parse_graph_batch(input_length, parse_tree_batch):
         batch_graph = []
         max_len = max(input_length)

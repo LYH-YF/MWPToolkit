@@ -6,6 +6,7 @@ from mwptoolkit.data.dataset.dataset_multiead import DatasetMultiEAD
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 from mwptoolkit.data.dataloader.single_equation_dataloader import SingleEquationDataLoader
 from mwptoolkit.data.dataloader.multi_equation_dataloader import MultiEquationDataLoader
+from mwptoolkit.data.dataloader.dataloader_multiead import DataLoaderMultiEAD
 from mwptoolkit.utils.enum_type import TaskType
 def create_dataset(config):
     """Create dataset according to :attr:`config['model']` and :attr:`config['MODEL_TYPE']`.
@@ -27,6 +28,8 @@ def create_dataset(config):
         return AbstractDataset(config)
 
 def create_dataloader(config):
+    if config['model'].lower() in ['multiead']:
+        return DataLoaderMultiEAD
     task_type = config['task_type'].lower()
     if task_type == TaskType.SingleEquation:
         return SingleEquationDataLoader

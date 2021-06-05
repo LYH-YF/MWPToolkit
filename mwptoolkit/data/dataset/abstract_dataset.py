@@ -1,9 +1,10 @@
 import random
 import copy
 import torch
-from mwptoolkit.utils.utils import read_json_data,write_json_data
-from mwptoolkit.utils.preprocess_tools import operator_mask,EN_rule1_stat,EN_rule2_
-from mwptoolkit.utils.preprocess_tools import get_group_nums,get_deprel_tree,get_span_level_deprel_tree
+from mwptoolkit.utils.utils import read_json_data, write_json_data
+from mwptoolkit.utils.preprocess_tools import operator_mask, EN_rule1_stat, EN_rule2_
+from mwptoolkit.utils.preprocess_tools import get_group_nums, get_deprel_tree, get_span_level_deprel_tree
+
 
 class AbstractDataset(object):
     '''abstract dataset'''
@@ -20,7 +21,7 @@ class AbstractDataset(object):
         self.dataset = config["dataset"]
         self.model = config["model"]
         self.read_local_folds = config["read_local_folds"]
-        self.language=config["language"]
+        self.language = config["language"]
         self.single = config["single"]
         self.linear = config["linear"]
         self.device = config["device"]
@@ -37,12 +38,14 @@ class AbstractDataset(object):
         self.trainset = read_json_data(trainset_file)[:]
         self.validset = read_json_data(validset_file)[:]
         self.testset = read_json_data(testset_file)[:]
+
     def _load_fold_dataset(self):
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
         testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
         self.trainset = read_json_data(trainset_file)
         self.testset = read_json_data(testset_file)
         self.validset = []
+
     def fix_process(self, fix):
         r"""equation process
 
@@ -66,7 +69,7 @@ class AbstractDataset(object):
                 self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
             for idx, data in enumerate(self.testset):
                 self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
-                
+
     def operator_mask_process(self):
         for idx, data in enumerate(self.trainset):
             self.trainset[idx]["template"] = operator_mask(data["equation"])
@@ -74,40 +77,40 @@ class AbstractDataset(object):
             self.validset[idx]["template"] = operator_mask(data["equation"])
         for idx, data in enumerate(self.testset):
             self.testset[idx]["template"] = operator_mask(data["equation"])
-    
-    def en_rule1_process(self,k):
-        rule1_list=EN_rule1_stat(self.trainset,k)
+
+    def en_rule1_process(self, k):
+        rule1_list = EN_rule1_stat(self.trainset, k)
         for idx, data in enumerate(self.trainset):
-            flag=False
-            equ_list=data["equation"]
+            flag = False
+            equ_list = data["equation"]
             for equ_lists in rule1_list:
                 if equ_list in equ_lists:
                     self.trainset[idx]["equation"] = equ_lists[0]
-                    flag=True
+                    flag = True
                     break
                 if flag:
                     break
         for idx, data in enumerate(self.validset):
-            flag=False
-            equ_list=data["equation"]
+            flag = False
+            equ_list = data["equation"]
             for equ_lists in rule1_list:
                 if equ_list in equ_lists:
                     self.validset[idx]["equation"] = equ_lists[0]
-                    flag=True
+                    flag = True
                     break
                 if flag:
                     break
         for idx, data in enumerate(self.testset):
-            flag=False
-            equ_list=data["equation"]
+            flag = False
+            equ_list = data["equation"]
             for equ_lists in rule1_list:
                 if equ_list in equ_lists:
                     self.testset[idx]["equation"] = equ_lists[0]
-                    flag=True
+                    flag = True
                     break
                 if flag:
                     break
-    
+
     def en_rule2_process(self):
         for idx, data in enumerate(self.trainset):
             self.trainset[idx]["equation"] = EN_rule2_(data["equation"])
@@ -115,26 +118,26 @@ class AbstractDataset(object):
             self.validset[idx]["equation"] = EN_rule2_(data["equation"])
         for idx, data in enumerate(self.testset):
             self.testset[idx]["equation"] = EN_rule2_(data["equation"])
-    
+
     def build_group_nums_for_graph(self):
-        use_gpu=True if self.device==torch.device('cuda') else False
-        self.trainset=get_group_nums(self.trainset,self.language,use_gpu)
-        self.validset=get_group_nums(self.validset,self.language,use_gpu)
-        self.testset=get_group_nums(self.testset,self.language,use_gpu)
-    
+        use_gpu = True if self.device == torch.device('cuda') else False
+        self.trainset = get_group_nums(self.trainset, self.language, use_gpu)
+        self.validset = get_group_nums(self.validset, self.language, use_gpu)
+        self.testset = get_group_nums(self.testset, self.language, use_gpu)
+
     def build_deprel_tree(self):
-        self.trainset,tokens=get_deprel_tree(self.trainset,self.language)
-        self.validset,_=get_deprel_tree(self.validset,self.language)
-        self.testset,_=get_deprel_tree(self.testset,self.language)
+        self.trainset, tokens = get_deprel_tree(self.trainset, self.language)
+        self.validset, _ = get_deprel_tree(self.validset, self.language)
+        self.testset, _ = get_deprel_tree(self.testset, self.language)
 
         #self._update_vocab(tokens)
-    
+
     def build_span_level_deprel_tree(self):
-        self.trainset,train_span_szie=get_span_level_deprel_tree(self.trainset,self.language)
-        self.validset,valid_span_size=get_span_level_deprel_tree(self.validset,self.language)
-        self.testset,test_span_size=get_span_level_deprel_tree(self.testset,self.language)
-        self.max_span_size=max([train_span_szie,valid_span_size,test_span_size])
-    
+        self.trainset, train_span_szie = get_span_level_deprel_tree(self.trainset, self.language)
+        self.validset, valid_span_size = get_span_level_deprel_tree(self.validset, self.language)
+        self.testset, test_span_size = get_span_level_deprel_tree(self.testset, self.language)
+        self.max_span_size = max([train_span_szie, valid_span_size, test_span_size])
+
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation
 
@@ -148,7 +151,7 @@ class AbstractDataset(object):
         """
         if k_fold == 0 or k_fold == 1:
             raise ValueError("the cross validation parameter k shouldn't be zero or one, it should be greater than one")
-        if self.read_local_folds !=True:
+        if self.read_local_folds != True:
             self._load_dataset()
             self.datas = self.trainset + self.validset + self.testset
             random.shuffle(self.datas)
@@ -161,7 +164,7 @@ class AbstractDataset(object):
             folds.append(self.datas[(step_size * (k_fold - 1)):])
         self.start_fold_t = start_fold_t
         for k in range(self.start_fold_t, k_fold):
-            self.fold_t=k
+            self.fold_t = k
             self.trainset = []
             self.validset = []
             self.testset = []
@@ -189,7 +192,6 @@ class AbstractDataset(object):
 
     def _build_vocab(self):
         raise NotImplementedError
-    
-    def _update_vocab(self,vocab_list):
-        raise NotImplementedError
 
+    def _update_vocab(self, vocab_list):
+        raise NotImplementedError

@@ -21,59 +21,13 @@ def train_cross_validation(config):
     dataset = create_dataset(config)
     logger.info("start training with {} fold cross validation.".format(config["k_fold"]))
     for fold_t in dataset.cross_validation_load(config["k_fold"], start_fold_t):
-        if config["share_vocab"]:
-            config["out_symbol2idx"] = dataset.out_symbol2idx
-            config["out_idx2symbol"] = dataset.out_idx2symbol
-            config["in_word2idx"] = dataset.in_word2idx
-            config["in_idx2word"] = dataset.in_idx2word
-            config["out_sos_token"] = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
-            config["temp_symbol2idx"] = dataset.temp_symbol2idx
-            config["temp_idx2symbol"] = dataset.temp_idx2symbol
-        else:
-            if config["symbol_for_tree"]:
-                config["out_symbol2idx"] = dataset.out_symbol2idx
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["temp_symbol2idx"] = dataset.temp_symbol2idx
-                config["temp_idx2symbol"] = dataset.temp_idx2symbol
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["in_word2idx"] = dataset.in_word2idx
-            elif config["equation_fix"] == FixType.MultiWayTree:
-                config["out_symbol2idx"] = dataset.out_symbol2idx
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["temp_symbol2idx"] = dataset.temp_symbol2idx
-                config["temp_idx2symbol"] = dataset.temp_idx2symbol
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["in_word2idx"] = dataset.in_word2idx
-            else:
-                config["out_symbol2idx"] = dataset.out_symbol2idx
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["temp_symbol2idx"] = dataset.temp_symbol2idx
-                config["temp_idx2symbol"] = dataset.temp_idx2symbol
-                try:
-                    config["out_sos_token"] = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
-                except:
-                    pass
-                config["out_eos_token"] = dataset.out_symbol2idx[SpecialTokens.EOS_TOKEN]
-                config["out_pad_token"] = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["in_word2idx"] = dataset.in_word2idx
-
-        config["vocab_size"] = len(dataset.in_idx2word)
-        config["symbol_size"] = len(dataset.out_idx2symbol)
-        config['span_size'] = dataset.max_span_size
-        config["temp_symbol_size"] = len(dataset.temp_idx2symbol)
-        config["operator_nums"] = dataset.operator_nums
-        config["copy_nums"] = dataset.copy_nums
-        config["generate_size"] = len(dataset.generate_list)
-        config["generate_list"] = dataset.generate_list
-        config["operator_list"] = dataset.operator_list
-        config["num_start"] = dataset.num_start
+        
         config["fold_t"] = fold_t
         config["best_folds_accuracy"] = best_folds_accuracy
 
         dataloader = create_dataloader(config)(config, dataset)
 
-        model = get_model(config["model"])(config).to(config["device"])
+        model = get_model(config["model"])(config,dataset).to(config["device"])
         # if config["pretrained_model_path"]:
         #     config["vocab_size"] = len(model.tokenizer)
         #     config["symbol_size"] = len(model.tokenizer)
@@ -94,7 +48,7 @@ def train_cross_validation(config):
         else:
             raise NotImplementedError
 
-        trainer = get_trainer(config["task_type"], config["model"],'fully_supervising')(config, model, dataloader, evaluator)
+        trainer = get_trainer(config["task_type"], config["model"],config["supervising_mode"])(config, model, dataloader, evaluator)
         logger.info("fold {}".format(fold_t))
         if config["test_only"]:
             trainer.test()
@@ -131,48 +85,18 @@ def run_toolkit(model_name, dataset_name, task_type, config_dict={}):
         train_cross_validation(config)
     else:
         dataset.dataset_load()
-        if config["share_vocab"]:
-            config["out_symbol2idx"] = dataset.out_symbol2idx
-            config["out_idx2symbol"] = dataset.out_idx2symbol
-            config["in_word2idx"] = dataset.in_word2idx
-            config["in_idx2word"] = dataset.in_idx2word
-            config["out_sos_token"] = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
-        else:
-            if config["symbol_for_tree"]:
-                config["out_symbol2idx"] = dataset.out_symbol2idx
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["in_word2idx"] = dataset.in_word2idx
-                config["in_idx2word"] = dataset.in_idx2word
-            else:
-                config["out_symbol2idx"] = dataset.out_symbol2idx
-                config["out_idx2symbol"] = dataset.out_idx2symbol
-                config["out_sos_token"] = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
-                config["out_eos_token"] = dataset.out_symbol2idx[SpecialTokens.EOS_TOKEN]
-                config["out_pad_token"] = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
-                config["in_word2idx"] = dataset.in_word2idx
-                config["in_idx2word"] = dataset.in_idx2word
-
-        config["vocab_size"] = len(dataset.in_idx2word)
-        config["symbol_size"] = len(dataset.out_idx2symbol)
-        config['span_size'] = dataset.max_span_size
-        config["operator_nums"] = dataset.operator_nums
-        config["copy_nums"] = dataset.copy_nums
-        config["generate_size"] = len(dataset.generate_list)
-        config["generate_list"] = dataset.generate_list
-        config["operator_list"] = dataset.operator_list
-        config["num_start"] = dataset.num_start
-
+        
         dataloader = create_dataloader(config)(config, dataset)
 
         model = get_model(config["model"])(config).to(config["device"])
-        if config["pretrained_model_path"]:
-            config["vocab_size"] = len(model.tokenizer)
-            config["symbol_size"] = len(model.tokenizer)
-            config["embedding_size"] = len(model.tokenizer)
-            config["in_word2idx"] = model.tokenizer.get_vocab()
-            config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
-            config["out_symbol2idx"] = model.tokenizer.get_vocab()
-            config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
+        # if config["pretrained_model_path"]:
+        #     config["vocab_size"] = len(model.tokenizer)
+        #     config["symbol_size"] = len(model.tokenizer)
+        #     config["embedding_size"] = len(model.tokenizer)
+        #     config["in_word2idx"] = model.tokenizer.get_vocab()
+        #     config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
+        #     config["out_symbol2idx"] = model.tokenizer.get_vocab()
+        #     config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
 
         if config["equation_fix"] == FixType.Prefix:
             evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)

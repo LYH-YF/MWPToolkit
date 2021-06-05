@@ -1119,6 +1119,156 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
                 return False, False, new_test_res, new_test_tar
 
 
+class MultiEADEvaluator(PostEvaluator,PreEvaluator):
+    def __init__(self, symbol2idx, idx2symbol, config):
+        super().__init__(symbol2idx, idx2symbol, config)
+
+    def prefix_result(self,test,tar):
+        if (self.single and self.linear) != True:  # single but non-linear
+            return self.prefix_result_multi(test,tar)
+        
+        if test is []:
+            return False, False, test, tar
+        if test == tar:
+            return True, True, test, tar
+        try:
+            if abs(self.compute_prefix_expression(test) - self.compute_prefix_expression(tar)) < 1e-4:
+                return True, False, test, tar
+            else:
+                return False, False, test, tar
+        except:
+            return False, False, test, tar
+    def prefix_result_multi(self,test,tar):
+        if test is []:
+            return False, False, test, tar
+        if test == tar:
+            return True, True, test, tar
+        try:
+            test_solves, test_unk = self.compute_prefix_expression_multi(test)
+            tar_solves, tar_unk = self.compute_prefix_expression_multi(tar)
+            if len(test_unk) != len(tar_unk):
+                return False, False, test, tar
+            flag = False
+            if len(tar_unk) == 1:
+                if len(tar_solves) == 1:
+                    test_ans = test_solves[list(test_unk.values())[0]]
+                    tar_ans = tar_solves[list(tar_unk.values())[0]]
+                    if abs(test_ans - tar_ans) < 1e-4:
+                        flag = True
+                else:
+                    flag = True
+                    for test_ans, tar_ans in zip(test_solves, tar_solves):
+                        if abs(test_ans[0] - tar_ans[0]) > 1e-4:
+                            flag = False
+                            break
+
+            else:
+                if len(tar_solves) == len(tar_unk):
+                    flag = True
+                    for tar_x in list(tar_unk.values()):
+                        test_ans = test_solves[tar_x]
+                        tar_ans = tar_solves[tar_x]
+                        if abs(test_ans - tar_ans) > 1e-4:
+                            flag = False
+                            break
+                else:
+                    for test_ans, tar_ans in zip(test_solves, tar_solves):
+                        try:
+                            te_ans = float(test_ans[0])
+                        except:
+                            te_ans = float(test_ans[1])
+                        try:
+                            ta_ans = float(tar_ans[0])
+                        except:
+                            ta_ans = float(tar_ans[1])
+                        if abs(te_ans - ta_ans) > 1e-4:
+                            flag = False
+                            break
+            if flag == True:
+                return True, False, test, tar
+            else:
+                return False, False, test, tar
+        except:
+            return False, False, test, tar
+        return False, False, test, tar
+    
+    def postfix_result(self,test,tar):
+        if (self.single and self.linear) != True:  # single but non-linear
+            return self.postfix_result_multi(test,tar)
+        #test = self.out_expression_list(test_res, num_list, copy.deepcopy(num_stack))
+        #tar = self.out_expression_list(test_tar, num_list, copy.deepcopy(num_stack))
+        # print(test, tar)
+        if test is []:
+            return False, False, test, tar
+        if test == tar:
+            return True, True, test, tar
+        try:
+            if abs(self.compute_postfix_expression(test) - self.compute_postfix_expression(tar)) < 1e-4:
+                return True, False, test, tar
+            else:
+                return False, False, test, tar
+        except:
+            return False, False, test, tar
+    
+    def postfix_result_multi(self,test,tar):
+        if test is []:
+            return False, False, test, tar
+        if test == tar:
+            return True, True, test, tar
+        try:
+            test_solves, test_unk = self.compute_postfix_expression_multi(test)
+            tar_solves, tar_unk = self.compute_postfix_expression_multi(tar)
+            if len(test_unk) != len(tar_unk):
+                return False, False, test, tar
+            flag = False
+            if len(tar_unk) == 1:
+                if len(tar_solves) == 1:
+                    test_ans = test_solves[list(test_unk.values())[0]]
+                    tar_ans = tar_solves[list(tar_unk.values())[0]]
+                    if abs(test_ans - tar_ans) < 1e-4:
+                        flag = True
+                else:
+                    flag = True
+                    for test_ans, tar_ans in zip(test_solves, tar_solves):
+                        if abs(test_ans[0] - tar_ans[0]) > 1e-4:
+                            flag = False
+                            break
+
+            else:
+                if len(tar_solves) == len(tar_unk):
+                    flag = True
+                    for tar_x in list(tar_unk.values()):
+                        test_ans = test_solves[tar_x]
+                        tar_ans = tar_solves[tar_x]
+                        if abs(test_ans - tar_ans) > 1e-4:
+                            flag = False
+                            break
+                else:
+                    for test_ans, tar_ans in zip(test_solves, tar_solves):
+                        try:
+                            te_ans = float(test_ans[0])
+
+                        except:
+                            te_ans = float(test_ans[1])
+                        try:
+                            ta_ans = float(tar_ans[0])
+                        except:
+                            ta_ans = float(tar_ans[1])
+                        if abs(te_ans - ta_ans) > 1e-4:
+                            flag = False
+                            break
+            if flag == True:
+                return True, False, test, tar
+            else:
+                return False, False, test, tar
+        except:
+            return False, False, test, tar
+        return False, False, test, tar
+
+    def result(self,test,tar):
+        raise NotImplementedError
+    def result_multi(self, test, tar):
+        raise NotImplementedError
 # class SeqEvaluator(AbstractEvaluator):
 #     r"""evaluator for normal equation sequnence.
 #     """

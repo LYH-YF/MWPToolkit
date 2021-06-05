@@ -20,24 +20,13 @@ class AbstractDataLoader(object):
         self.add_eos = config["add_eos"]
 
         self.dataset = dataset
-        self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
-        self.in_unk_token = dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
+        self.in_pad_token = None
+        self.in_unk_token = None
 
-        if self.symbol_for_tree or self.equation_fix == FixType.MultiWayTree:
-            self.out_pad_token = self.in_pad_token
-            self.out_unk_token = dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
-            self.temp_unk_token = dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
-        else:
-            if self.share_vocab:
-                self.out_pad_token = self.in_pad_token
-                self.out_unk_token = self.in_unk_token
-                self.temp_pad_token = self.in_pad_token
-                self.temp_unk_token = self.in_unk_token
-            else:
-                self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
-                self.out_unk_token = dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
-                self.temp_pad_token = dataset.temp_symbol2idx[SpecialTokens.PAD_TOKEN]
-                self.temp_unk_token = dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
+        self.out_pad_token = None
+        self.out_unk_token = None
+        self.temp_unk_token = None
+        self.temp_pad_token = None
 
     def _pad_input_batch(self, batch_seq, batch_seq_len):
         if self.max_len != None:

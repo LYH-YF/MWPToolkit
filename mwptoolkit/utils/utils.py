@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from collections import OrderedDict
 
-from mwptoolkit.utils.enum_type import TaskType
+from mwptoolkit.utils.enum_type import TaskType,SupervisingMode
 
 
 def write_json_data(data, filename):
@@ -105,7 +105,7 @@ def get_model(model_name):
     return model_class
 
 
-def get_trainer(task_type, model_name, sup_mode):
+def get_trainer_(task_type, model_name, sup_mode):
     r"""Automatically select trainer class based on model type and model name
 
     Args:
@@ -134,6 +134,45 @@ def get_trainer(task_type, model_name, sup_mode):
         else:
             return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
                            'Trainer')
+def get_trainer(task_type, model_name, sup_mode):
+    r"""Automatically select trainer class based on task type and model name
+
+    Args:
+        task_type (~mwptoolkit.utils.enum_type.TaskType): task type.
+        model_name (str): model name.
+        sup_mode (~mwptoolkit.utils.enum_type.SupervisingMode): supervising mode.
+
+    Returns:
+        ~mwptoolkit.trainer.SupervisedTrainer: trainer class | ~mwptoolkit.trainer.WeaklySupervisedTrainer
+    """
+    if sup_mode == SupervisingMode.fully_supervised:
+        try:
+            return getattr(
+                importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                model_name + 'Trainer'
+            )
+        except AttributeError:
+            return getattr(
+                importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                'SupervisedTrainer'
+            )
+
+    elif sup_mode == SupervisingMode.weakly_supervised:
+        try:
+            return getattr(
+                importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
+                model_name + 'Trainer'
+            )
+        except AttributeError:
+            return getattr(
+                importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
+                'WeaklySupervisedTrainer'
+            )
+    else:
+        return getattr(
+            importlib.import_module('mwptoolkit.trainer.abstract_trainer'),
+            'AbstractTrainer'
+        )
 
 
 def init_seed(seed, reproducibility):

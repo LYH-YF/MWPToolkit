@@ -5,13 +5,24 @@ from mwptoolkit.utils.enum_type import DatasetType
 from mwptoolkit.utils.utils import time_since
 
 class TemplateTrainer(AbstractTrainer):
+    r"""template trainer.
+    
+    you need implement:
+
+    TemplateTrainer._build_optimizer()
+
+    TemplateTrainer._save_checkpoint()
+
+    TemplateTrainer._load_checkpoint()
+
+    TemplateTrainer._train_batch()
+
+    TemplateTrainer._eval_batch()
+    """
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)
     
     def _build_optimizer(self):
-        raise NotImplementedError
-
-    def _build_loss(self):
         raise NotImplementedError
 
     def _save_checkpoint(self):

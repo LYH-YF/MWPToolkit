@@ -9,6 +9,7 @@
     "test_batch_size":1,
     "max_output_len":30,
     "dropout_ratio":0.5,
+    "hop_size":3,
     "step_size":20,
     "beam_size":5,
     "share_vocab":false,

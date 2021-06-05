@@ -1,4 +1,5 @@
 import copy
+from mwptoolkit.loss.nll_loss import NLLLoss
 import torch
 from torch import nn
 
@@ -31,13 +32,64 @@ class TRNN(nn.Module):
                                                     temp_config["rnn_cell_type"],temp_config["dropout_ratio"],temp_config["bidirectional"])
         self.recursivenn = RecursiveNN(temp_config["embedding_size"], temp_config["operator_nums"], temp_config["operator_list"])
 
+        weight2=torch.ones(temp_config["operator_nums"]).to(self.config["device"])
+        self.ans_module_loss=NLLLoss(weight2)
+
     def forward(self, seq, seq_length, num_pos, target=None):
         if target != None:
             return self.generate_t()
         else:
             templates, equations = self.generate_without_t(seq, seq_length, num_pos)
             return templates, equations
+    def calculate_loss_seq2seq(self,batch_data):
+        #batch_data["question"], batch_data["ques len"], batch_data["template"]
+        new_batch_data={}
+        new_batch_data["question"]=batch_data["question"]
+        new_batch_data["ques len"]=batch_data['ques len']
+        new_batch_data['equation']=batch_data['template']
+        return self.seq2seq.calculate_loss(new_batch_data)
+    def calculate_loss_ans_module(self,batch_data):
+        seq=batch_data["question"]
+        seq_length=batch_data["ques len"]
+        num_pos=batch_data["num pos"]
+        template=batch_data["equ_source"]
 
+        device = seq.device
+        seq_emb = self.embedder(seq)
+        encoder_output, encoder_hidden = self.attn_encoder(seq_emb, seq_length)
+        batch_size = encoder_output.size(0)
+        generate_num = [self.in_idx2word.index(SpecialTokens.UNK_TOKEN)] + [self.in_idx2word.index(num) for num in self.generate_list]
+        generate_num = torch.tensor(generate_num).to(device)
+        generate_emb = self.embedder(generate_num)
+
+        batch_prob = []
+        batch_target = []
+        for b_i in range(batch_size):
+            look_up = [SpecialTokens.UNK_TOKEN] + self.generate_list + NumMask.number[:len(num_pos[b_i])]
+            num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
+            #tree_i=tree[b_i]
+            try:
+                tree_i = self.template2tree(template[b_i])
+            except IndexError:
+                continue
+            prob, target = self.recursivenn.forward(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
+            if prob != []:
+                batch_prob.append(prob)
+                batch_target.append(target)
+        
+        self.ans_module_loss.reset()
+        for b_i in range(len(target)):
+            output=torch.nn.functional.log_softmax(batch_prob[b_i],dim=1)
+            self.ans_module_loss.eval_batch(output, target[b_i].view(-1))
+        self.ans_module_loss.backward()
+        return self.ans_module_loss.get_loss()
+    def model_test(self,batch_data):
+        new_batch_data={}
+        new_batch_data["question"]=batch_data["question"]
+        new_batch_data["ques len"]=batch_data['ques len']
+        new_batch_data['equation']=batch_data['template']
+        outputs,_ = self.seq2seq.model_test(batch_data)
+        templates = self.idx2symbol(outputs)
     def generate_t(self):
         raise NotImplementedError("use model.seq2seq_forward() to train seq2seq module, use model.answer_module_forward() to train answer module.")
 
@@ -51,6 +103,7 @@ class TRNN(nn.Module):
         return self.seq2seq(seq, seq_length, target)
 
     def answer_module_forward(self, seq, seq_length, num_pos, template):
+        seq, seq_length, num_pos, template=0
         device = seq.device
         seq_emb = self.embedder(seq)
         encoder_output, encoder_hidden = self.attn_encoder(seq_emb, seq_length)

@@ -88,7 +88,7 @@ def run_toolkit(model_name, dataset_name, task_type, config_dict={}):
         
         dataloader = create_dataloader(config)(config, dataset)
 
-        model = get_model(config["model"])(config).to(config["device"])
+        model = get_model(config["model"])(config,dataset).to(config["device"])
         # if config["pretrained_model_path"]:
         #     config["vocab_size"] = len(model.tokenizer)
         #     config["symbol_size"] = len(model.tokenizer)

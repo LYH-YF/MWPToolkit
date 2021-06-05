@@ -131,8 +131,13 @@ class MathEN(nn.Module):
         seq_emb = self.in_embedder(seq)
         encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
 
+        if self.self_attention:
+            pass
+        else:
+            if self.bidirectional:
+                encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+
         if self.bidirectional:
-            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
             if (self.encoder_rnn_cell_type == 'lstm'):
                 encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:

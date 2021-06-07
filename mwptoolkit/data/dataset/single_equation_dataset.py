@@ -17,6 +17,9 @@ class SingleEquationDataset(AbstractDataset):
         self.rule2 = config["rule2"]
         self.model = config['model']
         super().__init__(config)
+        self.parse_tree_path = config['parse_tree_file_name']
+        if self.parse_tree_path != None:
+            self.parse_tree_path = self.dataset_path+'/'+self.parse_tree_path+'.json'
 
     def _preprocess(self):
         if self.dataset == DatasetName.math23k:
@@ -74,13 +77,14 @@ class SingleEquationDataset(AbstractDataset):
             logger.info("build span-level deprel tree...")
             self.build_span_level_deprel_tree()
         if self.model.lower() in ['graph2tree']:
-            if os.path.exists('dataset/math23k/graph2tree_deprel_info.json'):
-                get_group_nums_(self.trainset,self.validset,self.testset,'dataset/math23k/graph2tree_deprel_info.json')
-            logger=getLogger()
-            logger.info("build deprel tree...")
-            #self.build_group_nums_for_graph()
-            deprel_tree_to_file(self.trainset,self.validset,self.testset,'dataset/math23k/graph2tree_deprel_info.json',self.language,False)
-
+            if os.path.exists(self.parse_tree_path):
+                get_group_nums_(self.trainset,self.validset,self.testset,self.parse_tree_path)
+            else:
+                logger=getLogger()
+                logger.info("build deprel tree...")
+                #self.build_group_nums_for_graph()
+                deprel_tree_to_file(self.trainset,self.validset,self.testset,self.parse_tree_path,self.language,False)
+                get_group_nums_(self.trainset,self.validset,self.testset,self.parse_tree_path)
     def _build_vocab(self):
         words_count = {}
         for data in self.trainset:

@@ -5,6 +5,8 @@ __pycache__
 /dataset/mawps/dataprocess.py
 /dataset/mawps/MAWPS_.json
 /dataset/hmwp/process.py
+/dataset/math23k/graph2tree_deprel_info.json
+pos_info.json
 *.pth
 /pretrain/gpt2_cn
 /pretrain/gpt2_en

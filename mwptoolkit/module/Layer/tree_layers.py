@@ -262,6 +262,20 @@ class NodeGenerater(nn.Module):
         r_child = r_child * r_child_g
         return l_child, r_child, node_label_
 
+class NodeEmbeddingLayer(nn.Module):
+    def __init__(self, op_nums, embedding_size):
+        super(NodeEmbeddingLayer, self).__init__()
+
+        self.embedding_size = embedding_size
+        self.op_nums = op_nums
+
+        self.embeddings = nn.Embedding(op_nums, embedding_size)
+
+    def forward(self, node_embedding, node_label, current_context):
+        node_label_ = self.embeddings(node_label)
+
+        return node_embedding, node_embedding, node_label_
+
 
 class TreeEmbeddingModel(nn.Module):
     def __init__(self, hidden_size, op_set, dropout=0.4):

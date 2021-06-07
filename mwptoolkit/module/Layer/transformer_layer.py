@@ -92,64 +92,64 @@ class TransformerLayer(nn.Module):
 #         return self.norm(x)
 
 
-class GAEncoderLayer(nn.Module):
-    "Group attention based encoder layer"
+# class GAEncoderLayer(nn.Module):
+#     "Group attention based encoder layer"
 
-    def __init__(self, size, h, d_model, dropout_ratio, d_ff, in_word2idx):
-        super(GAEncoderLayer, self).__init__()
-        self.self_attn = GroupAttention(h, d_model, dropout_ratio, in_word2idx)
-        self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout_ratio)
+#     def __init__(self, size, h, d_model, dropout_ratio, d_ff, in_word2idx):
+#         super(GAEncoderLayer, self).__init__()
+#         self.self_attn = GroupAttention(h, d_model, dropout_ratio, in_word2idx)
+#         self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout_ratio)
 
-        self.sublayer = clones(SublayerConnection(size, dropout_ratio), 2)
-        self.size = size
-
-    def forward(self, x, mask):
-        "Follow Figure 1 (left) for connections."
-        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
-        return self.sublayer[1](x, self.feed_forward)
-
-
-class GAEncoderLayer(nn.Module):
-    "Group attention based encoder layer"
-
-    def __init__(self, size, h, d_model, dropout_ratio, d_ff):
-        super(GAEncoderLayer, self).__init__()
-        self.self_attn = GroupAttention(h, d_model, dropout_ratio)
-        self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout_ratio)
-
-        #self.sublayer = clones(SublayerConnection(size, dropout_ratio), 2)
-        self.attn_layer_norm = nn.LayerNorm(size)
-        self.attn_dropout = nn.Dropout(dropout_ratio)
-
-        self.ff_layer_norm = nn.LayerNorm(size)
-        self.ff_dropout = nn.Dropout(dropout_ratio)
-
-        self.size = size
-
-    def forward(self, x, mask):
-        x = self.attn_layer_norm(x)
-        x = x + self.attn_dropout(self.self_attn(x, x, x, mask))
-
-        x = self.ff_layer_norm(x)
-        x = x + self.ff_dropout(self.feed_forward(x))
-
-        return x
-
-
-# class EncoderLayer(nn.Module):
-#     "Encoder is made up of self-attn and feed forward (defined below)"
-#     def __init__(self, size, self_attn, feed_forward, dropout):
-#         super(EncoderLayer, self).__init__()
-#         self.self_attn = self_attn
-#         self.feed_forward = feed_forward
-
-#         self.sublayer = clones(SublayerConnection(size, dropout), 2)
+#         self.sublayer = clones(SublayerConnection(size, dropout_ratio), 2)
 #         self.size = size
 
 #     def forward(self, x, mask):
 #         "Follow Figure 1 (left) for connections."
 #         x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
 #         return self.sublayer[1](x, self.feed_forward)
+
+
+# class GAEncoderLayer(nn.Module):
+#     "Group attention based encoder layer"
+
+#     def __init__(self, size, h, d_model, dropout_ratio, d_ff):
+#         super(GAEncoderLayer, self).__init__()
+#         self.self_attn = GroupAttention(h, d_model, dropout_ratio)
+#         self.feed_forward = PositionwiseFeedForward(d_model, d_ff, dropout_ratio)
+
+#         #self.sublayer = clones(SublayerConnection(size, dropout_ratio), 2)
+#         self.attn_layer_norm = nn.LayerNorm(size)
+#         self.attn_dropout = nn.Dropout(dropout_ratio)
+
+#         self.ff_layer_norm = nn.LayerNorm(size)
+#         self.ff_dropout = nn.Dropout(dropout_ratio)
+
+#         self.size = size
+
+#     def forward(self, x, mask):
+#         x = self.attn_layer_norm(x)
+#         x = x + self.attn_dropout(self.self_attn(x, x, x, mask))
+
+#         x = self.ff_layer_norm(x)
+#         x = x + self.ff_dropout(self.feed_forward(x))
+
+#         return x
+
+
+class GAEncoderLayer(nn.Module):
+    "Encoder is made up of self-attn and feed forward (defined below)"
+    def __init__(self, size, self_attn, feed_forward, dropout):
+        super(GAEncoderLayer, self).__init__()
+        self.self_attn = self_attn
+        self.feed_forward = feed_forward
+
+        self.sublayer = clones(SublayerConnection(size, dropout), 2)
+        self.size = size
+
+    def forward(self, x, mask):
+        "Follow Figure 1 (left) for connections."
+        x = self.sublayer[0](x, lambda x: self.self_attn(x, x, x, mask))
+        return self.sublayer[1](x, self.feed_forward)
 
 
 class SublayerConnection(nn.Module):
@@ -165,11 +165,7 @@ class SublayerConnection(nn.Module):
 
     def forward(self, x, sublayer):
         "Apply residual connection to any sublayer with the same size."
-        y = self.norm(x)
-        y_1 = sublayer(y)
-        y_2 = self.dropout(y_1)
-        return x + y_2
-        #return x + self.dropout(sublayer(self.norm(x)))
+        return x + self.dropout(sublayer(self.norm(x)))
 
 
 class LayerNorm(nn.Module):
@@ -187,9 +183,20 @@ class LayerNorm(nn.Module):
         return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
 
 
+# class PositionwiseFeedForward(nn.Module):
+#     "Implements FFN equation."
+
+#     def __init__(self, d_model, d_ff, dropout=0.1):
+#         super(PositionwiseFeedForward, self).__init__()
+#         self.w_1 = nn.Linear(d_model, d_ff)
+#         self.w_2 = nn.Linear(d_ff, d_model)
+#         self.dropout = nn.Dropout(dropout)
+
+#     def forward(self, x):
+#         return self.w_2(self.dropout(F.relu(self.w_1(x))))
+
 class PositionwiseFeedForward(nn.Module):
     "Implements FFN equation."
-
     def __init__(self, d_model, d_ff, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
         self.w_1 = nn.Linear(d_model, d_ff)

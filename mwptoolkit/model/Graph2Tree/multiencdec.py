@@ -16,9 +16,10 @@ from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
 from mwptoolkit.utils.utils import copy_list
 
 
-class MultiEAD(nn.Module):
+class MultiEncDec(nn.Module):
     def __init__(self, config, dataset):
-        super().__init__()
+        super(MultiEncDec,self).__init__()
+        self.device = config['device']
         self.rnn_cell_type = config['rnn_cell_type']
         self.embedding_size = config['embedding_size']
         self.hidden_size = config['hidden_size']
@@ -75,6 +76,8 @@ class MultiEAD(nn.Module):
             self.out_pad_token2 = None
         # Initialize models
         self.embedder = BaiscEmbedder(self.input1_size, self.embedding_size, self.dropout_ratio)
+
+        self.out_embedder = BaiscEmbedder(self.output2_size,self.embedding_size,self.dropout_ratio)
 
         self.encoder = GraphBasedMultiEncoder(input1_size=self.input1_size,
                                               input2_size=self.input2_size,
@@ -178,31 +181,32 @@ class MultiEAD(nn.Module):
     def calculate_loss(self, batch_data):
         input1_var = batch_data['input1']
         input2_var = batch_data['input2']
-        input_length = batch_data['input1 length']
+        input_length = batch_data['input1 len']
         target1 = batch_data['output1']
-        target1_length = batch_data['output1 length']
+        target1_length = batch_data['output1 len']
         target2 = batch_data['output2']
-        target2_length = batch_data['output2 length']
+        target2_length = batch_data['output2 len']
         num_stack_batch = batch_data['num stack']
         num_size_batch = batch_data['num size']
         generate_list = self.generate_list
         num_pos_batch = batch_data['num pos']
         num_order_batch = batch_data['num order']
-        parse_graph = batch_data['parse tree']
-        equ_mask = batch_data["equ mask"]
+        parse_graph = batch_data['parse graph']
+        equ_mask1 = batch_data['equ mask1']
+        equ_mask2 = batch_data['equ mask2']
         # sequence mask for attention
         seq_mask = []
         max_len = max(input_length)
         for i in input_length:
             seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
-        seq_mask = torch.ByteTensor(seq_mask)
+        seq_mask = torch.BoolTensor(seq_mask)
 
         num_mask = []
         max_num_size = max(num_size_batch) + len(generate_list)
         for i in num_size_batch:
             d = i + len(generate_list)
             num_mask.append([0] * d + [1] * (max_num_size - d))
-        num_mask = torch.ByteTensor(num_mask)
+        num_mask = torch.BoolTensor(num_mask)
 
         num_pos_pad = []
         max_num_pos_size = max(num_size_batch)
@@ -229,10 +233,10 @@ class MultiEAD(nn.Module):
         # input2_var = torch.LongTensor(input2_batch).transpose(0, 1)
         # target1 = torch.LongTensor(target1_batch).transpose(0, 1)
         # target2 = torch.LongTensor(target2_batch).transpose(0, 1)
-        input1_var = input1_var.transpose(0, 1)
-        input2_var = input2_var.transpose(0, 1)
-        target1 = target1.transpose(0, 1)
-        target2 = target2.transpose(0, 1)
+        # input1_var = input1_var.transpose(0, 1)
+        # input2_var = input2_var.transpose(0, 1)
+        # target1 = target1.transpose(0, 1)
+        # target2 = target2.transpose(0, 1)
         parse_graph_pad = torch.LongTensor(parse_graph)
 
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0)
@@ -245,32 +249,31 @@ class MultiEAD(nn.Module):
         encoder_outputs, num_outputs, problem_output = self.numencoder(encoder_outputs, num_encoder_outputs, num_pos_pad, num_order_pad)
         num_outputs = num_outputs.masked_fill_(masked_index.bool(), 0.0)
 
-        decoder_hidden = encoder_hidden[self.n_layers]  # Use last (forward) hidden state from encoder
+        decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
         all_output1 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos_batch, num_order_pad,
                                              num_stack1_batch)
 
         all_output2 = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, batch_size, seq_mask, num_stack2_batch)
         self.loss.reset()
-        self.loss.eval_batch(all_output1, target1, equ_mask)
-        self.loss.eval_batch(all_output2, target2, equ_mask)
+        self.loss.eval_batch(all_output1, target1, equ_mask1)
+        self.loss.eval_batch(all_output2, target2, equ_mask2)
         self.loss.backward()
         return self.loss.get_loss()
 
     def model_test(self, batch_data):
         input1_var = batch_data['input1']
         input2_var = batch_data['input2']
-        input_length = batch_data['input1 length']
+        input_length = batch_data['input1 len']
         target1 = batch_data['output1']
-        target1_length = batch_data['output1 length']
+        target1_length = batch_data['output1 len']
         target2 = batch_data['output2']
-        target2_length = batch_data['output2 length']
+        target2_length = batch_data['output2 len']
         num_stack_batch = batch_data['num stack']
         num_size_batch = batch_data['num size']
         generate_list = self.generate_list
         num_pos_batch = batch_data['num pos']
         num_order_batch = batch_data['num order']
-        parse_graph = batch_data['parse tree']
-        equ_mask = batch_data["equ mask"]
+        parse_graph = batch_data['parse graph']
         # sequence mask for attention
         seq_mask = []
         max_len = max(input_length)
@@ -362,14 +365,14 @@ class MultiEAD(nn.Module):
             outputs = torch.cat((op, num_score), 1)
             all_node_outputs.append(outputs)
 
-            target_t, generate_input = self.generate_tree_input(target[t].tolist(), outputs, nums_stack_batch)
-            target[t] = target_t
+            target_t, generate_input = self.generate_tree_input(target[:,t].tolist(), outputs, nums_stack_batch)
+            target[:,t] = target_t
             # if USE_CUDA:
             #     generate_input = generate_input.cuda()
             generate_input = generate_input.to(self.device)
             left_child, right_child, node_label = self.generate(current_embeddings, generate_input, current_context)
             left_childs = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[t].tolist(), embeddings_stacks):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:,t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -394,6 +397,7 @@ class MultiEAD(nn.Module):
 
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
+        #all_node_outputs = all_node_outputs.view(-1,all_node_outputs.size(-1))
 
         # target = target.transpose(0, 1).contiguous()
         # if USE_CUDA:
@@ -408,11 +412,11 @@ class MultiEAD(nn.Module):
         return all_node_outputs  # , loss_0.item(), loss_1.item()
 
     def train_attn_double(self, encoder_outputs, decoder_hidden, target, target_length, batch_size, seq_mask, nums_stack_batch):
-        # Prepare input and output variables
-        decoder_input = torch.LongTensor([self.sos] * batch_size).to(self.device)
-
         max_target_length = max(target_length)
-        all_decoder_outputs = torch.zeros(max_target_length, batch_size, self.output_size).to(self.device)
+        all_decoder_outputs = torch.zeros(batch_size, max_target_length, self.output2_size).to(self.device)
+        #all_decoder_outputs = []
+
+        seq_mask = torch.unsqueeze(seq_mask,dim=1)
 
         # Move new Variables to CUDA
         # if USE_CUDA:
@@ -420,16 +424,29 @@ class MultiEAD(nn.Module):
 
         if random.random() < self.teacher_force_ratio:
             # Run through decoder one time step at a time
+            # Prepare input and output variables
+            decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device).view(batch_size,1)
+            decoder_inputs = torch.cat([decoder_input,target],dim=1)[:,:-1]
             for t in range(max_target_length):
                 # if USE_CUDA:
                 #     decoder_input = decoder_input.cuda()
+                decoder_input = decoder_inputs[:,t]
+                decoder_input_emb=self.out_embedder(decoder_input)
+                decoder_input_emb=torch.unsqueeze(decoder_input_emb,dim=1)
 
-                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask)
-                all_decoder_outputs[t] = decoder_output
+                decoder_output, decoder_hidden = self.decoder(decoder_input_emb, decoder_hidden, encoder_outputs, seq_mask)
                 decoder_output = self.out(decoder_output)
-                decoder_input = self.generate_decoder_input(target[t], decoder_output, nums_stack_batch)
-                target[t] = decoder_input
+                # if t==2:
+                #     self.loss.reset()
+                #     self.loss.eval_batch(decoder_output,target[:,t],target[:,t]!=0)
+                #     self.loss.backward()
+
+                all_decoder_outputs[:,t,:] = decoder_output
+                #all_decoder_outputs.append(decoder_output)
+                decoder_input = self.generate_decoder_input(target[:,t], decoder_output, nums_stack_batch)
+                target[:,t] = decoder_input
         else:
+            decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device)
             beam_list = list()
             score = torch.zeros(batch_size).to(self.device)
             # if USE_CUDA:
@@ -440,7 +457,7 @@ class MultiEAD(nn.Module):
                 beam_len = len(beam_list)
                 beam_scores = torch.zeros(batch_size, self.output2_size * beam_len).to(self.device)
                 all_hidden = torch.zeros(decoder_hidden.size(0), batch_size * beam_len, decoder_hidden.size(2)).to(self.device)
-                all_outputs = torch.zeros(max_target_length, batch_size * beam_len, self.output2_size).to(self.device)
+                all_outputs = torch.zeros(batch_size * beam_len, max_target_length, self.output2_size).to(self.device)
                 # if USE_CUDA:
                 #     beam_scores = beam_scores.cuda()
                 #     all_hidden = all_hidden.cuda()
@@ -455,9 +472,11 @@ class MultiEAD(nn.Module):
                     # if USE_CUDA:
                     #                    rule_mask = rule_mask.cuda()
                     decoder_input = decoder_input.to(self.device)
+                    decoder_input_emb=self.out_embedder(decoder_input)
+                    decoder_input_emb=torch.unsqueeze(decoder_input_emb,dim=1)
 
-                    decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask)
-                    decoder_output = self.out(decoder_output)
+                    decoder_output, decoder_hidden = self.decoder(decoder_input_emb, decoder_hidden, encoder_outputs, seq_mask)
+                    decoder_output = self.out(decoder_output).squeeze()
                     #                score = f.log_softmax(decoder_output, dim=1) + rule_mask
                     score = F.log_softmax(decoder_output, dim=1)
                     beam_score = beam_list[b_idx].score
@@ -469,8 +488,9 @@ class MultiEAD(nn.Module):
                     beam_scores[:, b_idx * self.output2_size:(b_idx + 1) * self.output2_size] = score
                     all_hidden[:, b_idx * batch_size:(b_idx + 1) * batch_size, :] = decoder_hidden
 
-                    beam_list[b_idx].all_output[t] = decoder_output
-                    all_outputs[:, batch_size * b_idx: batch_size * (b_idx + 1), :] = \
+                    beam_list[b_idx].all_output[:,t,:] = decoder_output
+                    
+                    all_outputs[batch_size * b_idx: batch_size * (b_idx + 1),:, :] = \
                         beam_list[b_idx].all_output
                 topv, topi = beam_scores.topk(self.beam_size, dim=1)
                 beam_list = list()
@@ -481,21 +501,21 @@ class MultiEAD(nn.Module):
                     temp_input = temp_input.data
                     # if USE_CUDA:
                     #     temp_input = temp_input.cpu()
-                    temp_beam_pos = temp_topk / self.decoder.output2_size
+                    temp_beam_pos = temp_topk / self.output2_size
 
                     indices = torch.LongTensor(range(batch_size)).to(self.device)
                     # if USE_CUDA:
                     #     indices = indices.cuda()
                     indices += temp_beam_pos * batch_size
 
-                    temp_hidden = all_hidden.index_select(1, indices)
-                    temp_output = all_outputs.index_select(1, indices)
+                    temp_hidden = all_hidden.index_select(dim=1, index=indices)
+                    temp_output = all_outputs.index_select(dim=0, index=indices)
 
                     beam_list.append(Beam(topv[:, k], temp_input, temp_hidden, temp_output))
             all_decoder_outputs = beam_list[0].all_output
 
             for t in range(max_target_length):
-                target[t] = self.generate_decoder_input(target[t], all_decoder_outputs[t], nums_stack_batch)
+                target[:,t] = self.generate_decoder_input(target[:,t], all_decoder_outputs[t], nums_stack_batch)
         # Loss calculation and backpropagation
 
         # if USE_CUDA:
@@ -506,6 +526,8 @@ class MultiEAD(nn.Module):
         #     target.transpose(0, 1).contiguous(),  # -> batch x seq
         #     target_length
         # )
+        #all_decoder_outputs = all_decoder_outputs.view(-1,all_decoder_outputs.size(-1))
+        #all_decoder_outputs = torch.stack(all_decoder_outputs,dim=1)
 
         return all_decoder_outputs
 
@@ -651,7 +673,7 @@ class MultiEAD(nn.Module):
 
     def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, num_size, hidden_size):
         indices = list()
-        sen_len = encoder_outputs.size(0)
+        sen_len = encoder_outputs.size(1)
         batch_size = encoder_outputs.size(0)
         masked_index = []
         temp_1 = [1 for _ in range(hidden_size)]

@@ -289,16 +289,16 @@ class GraphBasedMultiEncoder(nn.Module):
         embedded2 = self.embedding2(input2_var)
         embedded = torch.cat((embedded1, embedded2), dim=2)
         embedded = self.em_dropout(embedded)
-        packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length)
+        packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length, batch_first=True, enforce_sorted=False)
         pade_hidden = hidden
         pade_outputs, pade_hidden = self.gru(packed, pade_hidden)
-        pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs)
+        pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs,batch_first=True)
 
         pade_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
-        pade_outputs = pade_outputs.transpose(0, 1)
+        #pade_outputs = pade_outputs.transpose(0, 1)
         for i in range(self.hop_size):
             pade_outputs = self.parse_gnn[i](pade_outputs, parse_graph[:,2])
-        pade_outputs = pade_outputs.transpose(0, 1)
+        #pade_outputs = pade_outputs.transpose(0, 1)
         #problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         
         return pade_outputs, pade_hidden
@@ -335,12 +335,12 @@ class NumEncoder(nn.Module):
         #        gnn_info_vec = torch.zeros((batch_size, 1, encoder_outputs.size(-1)),
         #                                   dtype=torch.float, device=num_embedding.device)
         #        gnn_info_vec = torch.cat((encoder_outputs.transpose(0, 1), gnn_info_vec), dim=1)
-        gnn_info_vec = torch.zeros((batch_size, encoder_outputs.size(0)+1, encoder_outputs.size(-1)),
+        gnn_info_vec = torch.zeros((batch_size, encoder_outputs.size(1)+1, encoder_outputs.size(-1)),
                                    dtype=torch.float, device=num_embedding.device)
         clamped_number_indices = replace_masked_values(num_pos_pad, num_mask, gnn_info_vec.size(1)-1)
         gnn_info_vec.scatter_(1, clamped_number_indices.unsqueeze(-1).expand(-1, -1, num_embedding.size(-1)), num_embedding)
         gnn_info_vec = gnn_info_vec[:, :-1, :]
-        gnn_info_vec = gnn_info_vec.transpose(0, 1)
+        #gnn_info_vec = gnn_info_vec.transpose(0, 1)
         gnn_info_vec = encoder_outputs + gnn_info_vec
         num_embedding = num_encoder_outputs + num_embedding
         problem_output = torch.max(gnn_info_vec, 0).values

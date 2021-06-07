@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import torch
 from torch import nn
 
@@ -7,7 +9,7 @@ from mwptoolkit.module.Attention.hierarchical_attention import Attention
 from mwptoolkit.module.Embedder.position_embedder import PositionalEncoding
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Encoder.transformer_encoder import GroupATTEncoder
-#from mwptoolkit.module.Layer.transformer_layer import Encoder,EncoderLayer,PositionwiseFeedForward
+from mwptoolkit.module.Layer.transformer_layer import PositionwiseFeedForward,GAEncoderLayer
 
 
 class BasicRNNEncoder(nn.Module):
@@ -157,200 +159,46 @@ class SelfAttentionRNNEncoder(nn.Module):
 
 
 class GroupAttentionRNNEncoder(nn.Module):
-    def __init__(self, embedding_size, hidden_size, num_layers, bidirectional, rnn_cell_type, dropout_ratio, in_word2idx, d_ff=2048, N=1):
+    def __init__(self, emb_size=100, hidden_size=128, n_layers=1, bidirectional=False, \
+                 rnn_cell=None, rnn_cell_name='gru', variable_lengths=True, \
+                 d_ff=2048, dropout=0.3, N=1):
         super(GroupAttentionRNNEncoder, self).__init__()
-        self.hidden_size = hidden_size
+        self.variable_lengths = variable_lengths
         self.bidirectional = bidirectional
-        self.rnn_cell_type = rnn_cell_type
-        self.num_layers = num_layers
-        self.num_directions = 2 if self.bidirectional else 1
+        self.dropout = dropout
+
         if bidirectional:
-            self.d_model = 2 * hidden_size
+            self.d_model = 2*hidden_size
         else:
             self.d_model = hidden_size
-        if rnn_cell_type == 'lstm':
-            self.encoder = nn.LSTM(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
-        elif rnn_cell_type == 'gru':
-            self.encoder = nn.GRU(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
-        elif rnn_cell_type == 'rnn':
-            self.encoder = nn.RNN(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+        ff = PositionwiseFeedForward(self.d_model, d_ff, dropout)
+
+        if rnn_cell_name.lower() == 'lstm':
+            self.rnn_cell = nn.LSTM
+        elif rnn_cell_name.lower() == 'gru':
+            self.rnn_cell = nn.GRU
+
+        if rnn_cell is None:
+            self.rnn = self.rnn_cell(emb_size, hidden_size, n_layers, batch_first=True,
+                                     bidirectional=bidirectional, dropout=self.dropout)
         else:
-            raise ValueError("The RNN type of encoder must be in ['lstm', 'gru', 'rnn'].")
-        #self.group_attention = GroupAttention(8, self.d_model, dropout_ratio, in_word2idx)
-        self.onelayer = GroupATTEncoder(self.d_model, 8, self.d_model, dropout_ratio, d_ff, N)
-        self.separate_list=[]
-        # chinese dataset
-        try:
-            self.separate_list.append(in_word2idx['．'])
-        except:
-            pass
-        try:
-            self.separate_list.append(in_word2idx["，"])
-        except:
-            pass
-        # english dataset
-        try:
-            self.separate_list.append(in_word2idx["."])
-        except:
-            pass
-        try:
-            self.separate_list.append(in_word2idx[","])
-        except:
-            pass
+            self.rnn = rnn_cell
+        self.group_attention = GroupAttention(8, self.d_model)
+        self.onelayer = GroupATTEncoder(GAEncoderLayer(self.d_model, deepcopy(self.group_attention), deepcopy(ff), dropout), N)
 
-    def init_hidden(self, input_embeddings):
-        r""" Initialize initial hidden states of RNN.
-
-        Args:
-            input_embeddings (Torch.Tensor): input sequence embedding, shape: [batch_size, sequence_length, embedding_size].
-
-        Returns:
-            Torch.Tensor: the initial hidden states.
-        """
-        batch_size = input_embeddings.size(0)
-        device = input_embeddings.device
-        if self.rnn_cell_type == 'lstm':
-            h_0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size).to(device)
-            c_0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size).to(device)
-            hidden_states = (h_0, c_0)
-            return hidden_states
-        elif self.rnn_cell_type == 'gru' or self.rnn_cell_type == 'rnn':
-            tp_vec = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
-            return tp_vec.to(device)
+    def forward(self, embedded, input_var, vocab_dict, input_lengths=None):
+        if self.variable_lengths:
+            embedded = nn.utils.rnn.pack_padded_sequence(embedded, input_lengths, batch_first=True,\
+                                                        enforce_sorted=True)
         else:
-            raise NotImplementedError("No such rnn type {} for initializing encoder states.".format(self.rnn_type))
+            embedded = nn.utils.rnn.pack_padded_sequence(embedded, input_lengths, batch_first=True,\
+                                                        enforce_sorted=False)
+        output, hidden = self.rnn(embedded)
+        output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
+        src_mask = self.group_attention.get_mask(input_var, vocab_dict)
+        output = self.onelayer(output, src_mask)
+        return output, hidden
 
-    def forward(self, input_seq, input_embeddings, input_length, hidden_states=None):
-        if hidden_states is None:
-            hidden_states = self.init_hidden(input_embeddings)
-
-        packed_input_embeddings = torch.nn.utils.rnn.pack_padded_sequence(input_embeddings, input_length, batch_first=True, enforce_sorted=False)
-        outputs, hidden_states = self.encoder(packed_input_embeddings, hidden_states)
-
-        outputs, outputs_length = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
-        #src_mask = self.group_attention.get_mask(input_seq)
-        src_mask = self.get_mask(input_seq)
-        outputs = self.onelayer(outputs, src_mask)
-        return outputs, hidden_states
-    
-    def src_to_mask(self,src):
-        src = src.cpu().numpy()
-        batch_data_mask_tok = []
-        for encode_sen_idx in src:
-
-            token = 1
-            mask = [0] * len(encode_sen_idx)
-            for num in range(len(encode_sen_idx)):
-                mask[num] = token
-                # if (encode_sen_idx[num] == self.in_word2idx['．'] or encode_sen_idx[num] == self.in_word2idx["，"]) \
-                #         and num != len(encode_sen_idx) - 1:
-                if (encode_sen_idx[num] in self.separate_list) and num != len(encode_sen_idx) - 1:
-                    token += 1
-                if encode_sen_idx[num]==0:mask[num] = 0
-            for num in range(len(encode_sen_idx)):
-                if mask[num] == token and token != 1:
-                    mask[num] = 1000
-            batch_data_mask_tok.append(mask)
-        return torch.tensor(batch_data_mask_tok)
-
-    def get_mask(self,src,pad=0):
-        device=src.device
-        mask = self.src_to_mask(src)
-        self.src_mask_self = self.group_mask(mask,"self",pad).bool().unsqueeze(1)
-        self.src_mask_between = self.group_mask(mask,"between",pad).bool().unsqueeze(1)
-        self.src_mask_question = self.group_mask(mask, "question", pad).bool().unsqueeze(1)
-        self.src_mask_global = (src != pad).unsqueeze(-2).unsqueeze(1)
-        self.src_mask_global = self.src_mask_global.expand(self.src_mask_self.shape)
-        self.final = torch.cat((self.src_mask_between.to(device),self.src_mask_self.to(device),self.src_mask_global.to(device),self.src_mask_question.to(device)),1)
-        return self.final.to(device)
-    
-    def group_mask(self,batch,type="self",pad=0):
-        length = batch.shape[1]
-        lis = []
-        if type=="self":
-            for tok in batch:
-                mask = torch.zeros(tok.shape)
-                mask = torch.unsqueeze(mask,-1)
-                for ele in tok:
-                    if ele == pad:
-                        copy = torch.zeros(length)
-                    else:
-                        copy = torch.clone(tok)
-                        if ele != 1000:copy[copy == 1000] = 0
-                        copy[copy != ele] = 0
-                        copy[copy == ele] = 1
-                        #print("self copy",copy)
-                    copy = torch.unsqueeze(copy,-1)
-                    mask = torch.cat([mask,copy.float()],dim=1)
-                mask = mask[:,1:]
-                mask = mask.transpose(0,1)
-                #mask = np.expand_dims(mask,0)
-                mask = torch.unsqueeze(mask,0)
-                lis.append(mask)
-            #res = np.concatenate(tuple(lis))
-            res = torch.cat(lis)
-        elif type=="between":
-            for tok in batch:
-                # mask = np.zeros(tok.shape)
-                # mask = np.expand_dims(mask,-1)
-                mask = torch.zeros(tok.shape)
-                mask = torch.unsqueeze(mask,-1)
-                for ele in tok:
-                    if ele == pad:
-                        copy = torch.zeros(length)
-                        #copy = np.zeros(length)
-                    else:
-                        copy = torch.clone(tok)
-                        copy[copy==1000] = 0
-                        copy[copy ==ele] = 0
-                        copy[copy!= 0] = 1
-                        '''
-                        copy[copy != ele and copy != 1000] = 1
-                        copy[copy == ele or copy == 1000] = 0
-                        '''
-                    # copy = np.expand_dims(copy,-1)
-                    # mask = np.concatenate((mask,copy),axis=1)
-                    copy = torch.unsqueeze(copy,-1)
-                    mask = torch.cat([mask,copy.float()],dim=1)
-                mask = mask[:,1:]
-                mask = mask.transpose(0,1)
-                #mask = np.expand_dims(mask,0)
-                mask = torch.unsqueeze(mask,0)
-                lis.append(mask)
-            #res = np.concatenate(tuple(lis))
-            res = torch.cat(lis)
-        elif type == "question":
-            for tok in batch:
-                # mask = np.zeros(tok.shape)
-                # mask = np.expand_dims(mask,-1)
-                mask = torch.zeros(tok.shape)
-                mask = torch.unsqueeze(mask,-1)
-                for ele in tok:
-                    if ele == pad:
-                        #copy = np.zeros(length)
-                        copy = torch.zeros(length)
-                    else:
-                        copy = torch.clone(tok)
-                        copy[copy != 1000] = 0
-                        copy[copy == 1000] = 1
-                    if ele==1000:
-                        copy[copy==0] = -1
-                        copy[copy==1] = 0
-                        copy[copy==-1] = 1
-                    # copy = np.expand_dims(copy,-1)
-                    # mask = np.concatenate((mask,copy),axis=1)
-                    copy = torch.unsqueeze(copy,-1)
-                    mask = torch.cat([mask,copy.float()],dim=1)
-                mask = mask[:,1:]
-                mask = mask.transpose(0,1)
-                #mask = np.expand_dims(mask,0)
-                mask = torch.unsqueeze(mask,0)
-                lis.append(mask)
-            #res = np.concatenate(tuple(lis))
-            res = torch.cat(lis)
-        else:
-            return "error"
-        return res
 
 
 class HWCPEncoder(nn.Module):
@@ -469,3 +317,199 @@ class HWCPEncoder(nn.Module):
         # invalid value in full padding span will be ignored in span level attention
         mask[mask.sum(dim=-1) == pad_length, 0] = 0
         return mask
+
+# class GroupAttentionRNNEncoder(nn.Module):
+#     def __init__(self, embedding_size, hidden_size, num_layers, bidirectional, rnn_cell_type, dropout_ratio, in_word2idx, d_ff=2048, N=1):
+#         super(GroupAttentionRNNEncoder, self).__init__()
+#         self.hidden_size = hidden_size
+#         self.bidirectional = bidirectional
+#         self.rnn_cell_type = rnn_cell_type
+#         self.num_layers = num_layers
+#         self.num_directions = 2 if self.bidirectional else 1
+#         if bidirectional:
+#             self.d_model = 2 * hidden_size
+#         else:
+#             self.d_model = hidden_size
+#         if rnn_cell_type == 'lstm':
+#             self.encoder = nn.LSTM(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+#         elif rnn_cell_type == 'gru':
+#             self.encoder = nn.GRU(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+#         elif rnn_cell_type == 'rnn':
+#             self.encoder = nn.RNN(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+#         else:
+#             raise ValueError("The RNN type of encoder must be in ['lstm', 'gru', 'rnn'].")
+#         #self.group_attention = GroupAttention(8, self.d_model, dropout_ratio, in_word2idx)
+#         self.onelayer = GroupATTEncoder(self.d_model, 8, self.d_model, dropout_ratio, d_ff, N)
+#         self.separate_list=[]
+#         # chinese dataset
+#         try:
+#             self.separate_list.append(in_word2idx['．'])
+#         except:
+#             pass
+#         try:
+#             self.separate_list.append(in_word2idx["，"])
+#         except:
+#             pass
+#         # english dataset
+#         try:
+#             self.separate_list.append(in_word2idx["."])
+#         except:
+#             pass
+#         try:
+#             self.separate_list.append(in_word2idx[","])
+#         except:
+#             pass
+
+#     def init_hidden(self, input_embeddings):
+#         r""" Initialize initial hidden states of RNN.
+
+#         Args:
+#             input_embeddings (Torch.Tensor): input sequence embedding, shape: [batch_size, sequence_length, embedding_size].
+
+#         Returns:
+#             Torch.Tensor: the initial hidden states.
+#         """
+#         batch_size = input_embeddings.size(0)
+#         device = input_embeddings.device
+#         if self.rnn_cell_type == 'lstm':
+#             h_0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size).to(device)
+#             c_0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size).to(device)
+#             hidden_states = (h_0, c_0)
+#             return hidden_states
+#         elif self.rnn_cell_type == 'gru' or self.rnn_cell_type == 'rnn':
+#             tp_vec = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size)
+#             return tp_vec.to(device)
+#         else:
+#             raise NotImplementedError("No such rnn type {} for initializing encoder states.".format(self.rnn_type))
+
+#     def forward(self, input_seq, input_embeddings, input_length, hidden_states=None):
+#         if hidden_states is None:
+#             hidden_states = self.init_hidden(input_embeddings)
+
+#         packed_input_embeddings = torch.nn.utils.rnn.pack_padded_sequence(input_embeddings, input_length, batch_first=True, enforce_sorted=False)
+#         outputs, hidden_states = self.encoder(packed_input_embeddings, hidden_states)
+
+#         outputs, outputs_length = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
+#         #src_mask = self.group_attention.get_mask(input_seq)
+#         src_mask = self.get_mask(input_seq)
+#         outputs = self.onelayer(outputs, src_mask)
+#         return outputs, hidden_states
+    
+#     def src_to_mask(self,src):
+#         src = src.cpu().numpy()
+#         batch_data_mask_tok = []
+#         for encode_sen_idx in src:
+
+#             token = 1
+#             mask = [0] * len(encode_sen_idx)
+#             for num in range(len(encode_sen_idx)):
+#                 mask[num] = token
+#                 # if (encode_sen_idx[num] == self.in_word2idx['．'] or encode_sen_idx[num] == self.in_word2idx["，"]) \
+#                 #         and num != len(encode_sen_idx) - 1:
+#                 if (encode_sen_idx[num] in self.separate_list) and num != len(encode_sen_idx) - 1:
+#                     token += 1
+#                 if encode_sen_idx[num]==0:mask[num] = 0
+#             for num in range(len(encode_sen_idx)):
+#                 if mask[num] == token and token != 1:
+#                     mask[num] = 1000
+#             batch_data_mask_tok.append(mask)
+#         return torch.tensor(batch_data_mask_tok)
+
+#     def get_mask(self,src,pad=0):
+#         device=src.device
+#         mask = self.src_to_mask(src)
+#         self.src_mask_self = self.group_mask(mask,"self",pad).bool().unsqueeze(1)
+#         self.src_mask_between = self.group_mask(mask,"between",pad).bool().unsqueeze(1)
+#         self.src_mask_question = self.group_mask(mask, "question", pad).bool().unsqueeze(1)
+#         self.src_mask_global = (src != pad).unsqueeze(-2).unsqueeze(1)
+#         self.src_mask_global = self.src_mask_global.expand(self.src_mask_self.shape)
+#         self.final = torch.cat((self.src_mask_between.to(device),self.src_mask_self.to(device),self.src_mask_global.to(device),self.src_mask_question.to(device)),1)
+#         return self.final.to(device)
+    
+#     def group_mask(self,batch,type="self",pad=0):
+#         length = batch.shape[1]
+#         lis = []
+#         if type=="self":
+#             for tok in batch:
+#                 mask = torch.zeros(tok.shape)
+#                 mask = torch.unsqueeze(mask,-1)
+#                 for ele in tok:
+#                     if ele == pad:
+#                         copy = torch.zeros(length)
+#                     else:
+#                         copy = torch.clone(tok)
+#                         if ele != 1000:copy[copy == 1000] = 0
+#                         copy[copy != ele] = 0
+#                         copy[copy == ele] = 1
+#                         #print("self copy",copy)
+#                     copy = torch.unsqueeze(copy,-1)
+#                     mask = torch.cat([mask,copy.float()],dim=1)
+#                 mask = mask[:,1:]
+#                 mask = mask.transpose(0,1)
+#                 #mask = np.expand_dims(mask,0)
+#                 mask = torch.unsqueeze(mask,0)
+#                 lis.append(mask)
+#             #res = np.concatenate(tuple(lis))
+#             res = torch.cat(lis)
+#         elif type=="between":
+#             for tok in batch:
+#                 # mask = np.zeros(tok.shape)
+#                 # mask = np.expand_dims(mask,-1)
+#                 mask = torch.zeros(tok.shape)
+#                 mask = torch.unsqueeze(mask,-1)
+#                 for ele in tok:
+#                     if ele == pad:
+#                         copy = torch.zeros(length)
+#                         #copy = np.zeros(length)
+#                     else:
+#                         copy = torch.clone(tok)
+#                         copy[copy==1000] = 0
+#                         copy[copy ==ele] = 0
+#                         copy[copy!= 0] = 1
+#                         '''
+#                         copy[copy != ele and copy != 1000] = 1
+#                         copy[copy == ele or copy == 1000] = 0
+#                         '''
+#                     # copy = np.expand_dims(copy,-1)
+#                     # mask = np.concatenate((mask,copy),axis=1)
+#                     copy = torch.unsqueeze(copy,-1)
+#                     mask = torch.cat([mask,copy.float()],dim=1)
+#                 mask = mask[:,1:]
+#                 mask = mask.transpose(0,1)
+#                 #mask = np.expand_dims(mask,0)
+#                 mask = torch.unsqueeze(mask,0)
+#                 lis.append(mask)
+#             #res = np.concatenate(tuple(lis))
+#             res = torch.cat(lis)
+#         elif type == "question":
+#             for tok in batch:
+#                 # mask = np.zeros(tok.shape)
+#                 # mask = np.expand_dims(mask,-1)
+#                 mask = torch.zeros(tok.shape)
+#                 mask = torch.unsqueeze(mask,-1)
+#                 for ele in tok:
+#                     if ele == pad:
+#                         #copy = np.zeros(length)
+#                         copy = torch.zeros(length)
+#                     else:
+#                         copy = torch.clone(tok)
+#                         copy[copy != 1000] = 0
+#                         copy[copy == 1000] = 1
+#                     if ele==1000:
+#                         copy[copy==0] = -1
+#                         copy[copy==1] = 0
+#                         copy[copy==-1] = 1
+#                     # copy = np.expand_dims(copy,-1)
+#                     # mask = np.concatenate((mask,copy),axis=1)
+#                     copy = torch.unsqueeze(copy,-1)
+#                     mask = torch.cat([mask,copy.float()],dim=1)
+#                 mask = mask[:,1:]
+#                 mask = mask.transpose(0,1)
+#                 #mask = np.expand_dims(mask,0)
+#                 mask = torch.unsqueeze(mask,0)
+#                 lis.append(mask)
+#             #res = np.concatenate(tuple(lis))
+#             res = torch.cat(lis)
+#         else:
+#             return "error"
+#         return res

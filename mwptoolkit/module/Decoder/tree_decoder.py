@@ -401,3 +401,78 @@ class HMSDecoder(nn.Module):
             return self.forward_beam(decoder_init_hidden, encoder_outputs, masks, embedding_masks, max_length, beam_width)
         else:
             return self.forward_teacher(targets, decoder_init_hidden, encoder_outputs, masks, embedding_masks, max_length)
+
+
+class LSTMBasedTreeDecoder(nn.Module):
+    r'''
+    '''
+    def __init__(self, embedding_size, hidden_size, op_nums, generate_size, dropout=0.5):
+        super(LSTMBasedTreeDecoder, self).__init__()
+
+        # Keep for reference
+        self.hidden_size = hidden_size
+        self.generate_size = generate_size
+        self.op_nums = op_nums
+
+        # Define layers
+        self.dropout = nn.Dropout(dropout)
+
+        self.embedding_weight = nn.Parameter(torch.randn(1, generate_size, embedding_size))
+
+        
+        self.rnn = nn.LSTMCell(embedding_size*2+hidden_size, hidden_size) #
+        self.tree_rnn = nn.LSTMCell(embedding_size*2+hidden_size, hidden_size)
+        self.linear = nn.Linear(hidden_size * 2, hidden_size)
+
+        self.ops = nn.Linear(hidden_size, op_nums)
+        self.trans = nn.Linear(hidden_size, embedding_size)
+
+        self.attention = TreeAttention(hidden_size, hidden_size)
+        self.score = Score(hidden_size, embedding_size)
+
+        self.p_z = nn.Linear(hidden_size, 1)
+        self.copy_attention = TreeAttention(hidden_size, hidden_size)
+
+    def forward(self, parent_embed, left_embed, prev_embed, encoder_outputs, num_pades, padding_hidden,
+                seq_mask, nums_mask, hidden, tree_hidden):
+
+        parent_embed = torch.cat(parent_embed, dim=0)
+        left_embed = torch.cat(left_embed, dim=0)
+        prev_embed = torch.cat(prev_embed, dim=0)
+        batch_size = parent_embed.size(0)
+
+        embedded = torch.cat([parent_embed, left_embed, prev_embed], dim=1)
+        #print('embedded', embedded.size(), len(hidden), hidden[0].size())
+        if hidden[0].size(0) != batch_size:
+            hidden = (hidden[0].repeat(batch_size, 1), hidden[1].repeat(batch_size, 1))
+        #print(hidden[0].size(), batch_size, embedded.size())
+        hidden_h, hidden_c = self.rnn(embedded, hidden) #self.rnn(embedded, hidden)
+        hidden = (hidden_h, hidden_c)
+
+        if tree_hidden[0].size(0) != batch_size:
+            tree_hidden = (tree_hidden[0].repeat(batch_size, 1), tree_hidden[1].repeat(batch_size, 1))
+        tree_hidden_h, tree_hidden_c = self.tree_rnn(embedded, tree_hidden)
+        tree_hidden = (tree_hidden_h, tree_hidden_c)
+        output = self.linear(torch.cat((hidden_h, tree_hidden_h), dim=-1)).unsqueeze(1)
+        #output = hidden_h.unsqueeze(1)
+
+        #print('output', output.size(), encoder_outputs.size())
+        if encoder_outputs.size(0) != batch_size:
+            repeat_dims = [1] * encoder_outputs.dim()
+            repeat_dims[0] = batch_size
+            encoder_outputs = encoder_outputs.repeat(*repeat_dims)
+        current_attn = self.attention(output, encoder_outputs, seq_mask)
+        output = current_attn.bmm(encoder_outputs)
+
+        repeat_dims = [1] * self.embedding_weight.dim()
+        repeat_dims[0] = batch_size
+        embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
+        #print('embedding_weight', embedding_weight.size(), num_pades.size(), self.generate_size, self.op_nums)
+        embedding_weight = torch.cat((embedding_weight, self.trans(num_pades)), dim=1)  # B x O x N
+
+        embedding_weight_ = self.dropout(embedding_weight)
+        #print('output', output.size(), embedding_weight_.size())
+        num_score = self.score(output, embedding_weight_, nums_mask)
+        op = self.ops(output.squeeze(1))
+
+        return num_score, op, output, output, embedding_weight, hidden, tree_hidden

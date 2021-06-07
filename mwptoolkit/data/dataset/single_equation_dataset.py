@@ -1,3 +1,4 @@
+import os
 import copy
 import warnings
 from logging import getLogger
@@ -5,6 +6,7 @@ from logging import getLogger
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
 from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k
+from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file,get_group_nums_
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, FixType, Operators, DatasetName
 from mwptoolkit.utils.enum_type import OPERATORS, SPECIAL_TOKENS
 
@@ -72,9 +74,12 @@ class SingleEquationDataset(AbstractDataset):
             logger.info("build span-level deprel tree...")
             self.build_span_level_deprel_tree()
         if self.model.lower() in ['graph2tree']:
+            if os.path.exists('dataset/math23k/graph2tree_deprel_info.json'):
+                get_group_nums_(self.trainset,self.validset,self.testset,'dataset/math23k/graph2tree_deprel_info.json')
             logger=getLogger()
             logger.info("build deprel tree...")
-            self.build_group_nums_for_graph()
+            #self.build_group_nums_for_graph()
+            deprel_tree_to_file(self.trainset,self.validset,self.testset,'dataset/math23k/graph2tree_deprel_info.json',self.language,False)
 
     def _build_vocab(self):
         words_count = {}

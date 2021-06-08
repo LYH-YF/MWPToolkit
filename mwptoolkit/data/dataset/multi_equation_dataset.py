@@ -1,11 +1,16 @@
+import os
 import copy
 import warnings
 from logging import getLogger
 
+import torch
+
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
-from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514,num_transfer_hmwp
+from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
+from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName
+
 
 class MultiEquationDataset(AbstractDataset):
     def __init__(self, config):
@@ -14,23 +19,22 @@ class MultiEquationDataset(AbstractDataset):
         self.rule1 = config["rule1"]
         self.rule2 = config["rule2"]
         self.model = config['model']
-    
+        self.parse_tree_path = config['parse_tree_file_name']
+        if self.parse_tree_path != None:
+            self.parse_tree_path = self.dataset_path + '/' + self.parse_tree_path + '.json'
+
     def _preprocess(self):
-        if self.dataset==DatasetName.alg514:
-            transfer=num_transfer_alg514
-        elif self.dataset==DatasetName.draw:
-            transfer=num_transfer_draw
-        elif self.dataset==DatasetName.hmwp:
-            transfer=num_transfer_hmwp
+        if self.dataset == DatasetName.alg514:
+            transfer = num_transfer_alg514
+        elif self.dataset == DatasetName.draw:
+            transfer = num_transfer_draw
+        elif self.dataset == DatasetName.hmwp:
+            transfer = num_transfer_hmwp
         else:
-            transfer=num_transfer_multi
-        self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(
-            self.trainset, self.mask_symbol, self.min_generate_keep,";")
-        self.validset, _g, valid_copy_nums, _u = transfer(self.validset,
-                                                    self.mask_symbol,
-                                                    self.min_generate_keep,";")
-        self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol,
-                                                    self.min_generate_keep,";")
+            transfer = num_transfer_multi
+        self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.mask_symbol, self.min_generate_keep, ";")
+        self.validset, _g, valid_copy_nums, _u = transfer(self.validset, self.mask_symbol, self.min_generate_keep, ";")
+        self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol, self.min_generate_keep, ";")
 
         if self.rule1:
             if self.linear and self.single:
@@ -46,7 +50,6 @@ class MultiEquationDataset(AbstractDataset):
                 warnings.warn("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
                 #raise UserWarning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
 
-
         if self.equation_fix == FixType.Prefix:
             fix = from_infix_to_prefix
         elif self.equation_fix == FixType.Postfix:
@@ -56,34 +59,62 @@ class MultiEquationDataset(AbstractDataset):
         elif self.equation_fix == FixType.MultiWayTree:
             fix = from_infix_to_multi_way_tree
         else:
-            raise NotImplementedError(
-                "the type of equation fix ({}) is not implemented.".format(
-                    self.equation_fix))
+            raise NotImplementedError("the type of equation fix ({}) is not implemented.".format(self.equation_fix))
 
         self.fix_process(fix)
         self.operator_mask_process()
 
-        self.generate_list = unk_symbol+generate_list
+        self.generate_list = unk_symbol + generate_list
         if self.symbol_for_tree:
-            self.copy_nums=max([train_copy_nums,valid_copy_nums,test_copy_nums])
+            self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         else:
             self.copy_nums = train_copy_nums
         self.operator_nums = len(Operators.Multi)
         self.operator_list = copy.deepcopy(Operators.Multi)
-        self.unk_symbol=unk_symbol
+        self.unk_symbol = unk_symbol
 
+        # graph preprocess
+        use_gpu = True if self.device == torch.device('cuda') else False
         if self.model.lower() in ['graph2treeibm']:
-            logger=getLogger()
-            logger.info("build deprel tree...")
-            self.build_deprel_tree()
+            if os.path.exists(self.parse_tree_path):
+                logger = getLogger()
+                logger.info("read deprel tree infomation from {} ...".format(self.parse_tree_path))
+                self.trainset, self.validset, self.testset, token_list =\
+                    get_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+            else:
+                logger = getLogger()
+                logger.info("build deprel tree infomation to {} ...".format(self.parse_tree_path))
+                deprel_tree_to_file(self.trainset, self.validset, self.testset, \
+                                        self.parse_tree_path, self.language, use_gpu)
+                self.trainset, self.validset, self.testset, token_list =\
+                    get_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
         if self.model.lower() in ['hms']:
-            logger=getLogger()
-            logger.info("build span-level deprel tree...")
-            self.build_span_level_deprel_tree()
+            if os.path.exists(self.parse_tree_path):
+                logger = getLogger()
+                logger.info("read span-level deprel tree infomation from {} ...".format(self.parse_tree_path))
+                self.trainset, self.validset, self.testset, self.max_span_size =\
+                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+            else:
+                logger = getLogger()
+                logger.info("build span-level deprel tree infomation to {} ...".format(self.parse_tree_path))
+                span_level_deprel_tree_to_file(self.trainset, self.validset, self.testset, \
+                                                self.parse_tree_path, self.language, use_gpu)
+                self.trainset, self.validset, self.testset, self.max_span_size =\
+                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
         if self.model.lower() in ['graph2tree']:
-            logger=getLogger()
-            logger.info("build deprel tree...")
-            self.build_group_nums_for_graph()
+            if os.path.exists(self.parse_tree_path):
+                logger = getLogger()
+                logger.info("read deprel tree infomation from {} ...".format(self.parse_tree_path))
+                self.trainset, self.validset, self.testset =\
+                    get_group_nums_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+            else:
+                logger = getLogger()
+                logger.info("build deprel tree infomation to {} ...".format(self.parse_tree_path))
+                deprel_tree_to_file(self.trainset, self.validset, self.testset, \
+                                        self.parse_tree_path, self.language, use_gpu)
+                self.trainset, self.validset, self.testset =\
+                    get_group_nums_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+
 
     def _build_vocab(self):
         words_count = {}
@@ -104,7 +135,7 @@ class MultiEquationDataset(AbstractDataset):
         if self.symbol_for_tree:
             self._build_symbol_for_tree()
             self._build_template_symbol_for_tree()
-        elif self.equation_fix==FixType.MultiWayTree:
+        elif self.equation_fix == FixType.MultiWayTree:
             self._build_symbol_for_multi_way_tree()
             self._build_template_symbol_for_multi_way_tree()
         else:
@@ -141,47 +172,28 @@ class MultiEquationDataset(AbstractDataset):
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
-    
+
     def _build_symbol_for_multi_way_tree(self):
-        self.out_idx2symbol = [
-            SpecialTokens.PAD_TOKEN,
-            SpecialTokens.SOS_TOKEN,
-            SpecialTokens.EOS_TOKEN,
-            SpecialTokens.NON_TOKEN
-        ]
+        self.out_idx2symbol = [SpecialTokens.PAD_TOKEN, SpecialTokens.SOS_TOKEN, SpecialTokens.EOS_TOKEN, SpecialTokens.NON_TOKEN]
         self.out_idx2symbol += Operators.Multi
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
@@ -218,41 +230,27 @@ class MultiEquationDataset(AbstractDataset):
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
         if self.model.lower() in ['hms']:
-            self.out_idx2symbol +=[SpecialTokens.UNK_TOKEN]
+            self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.out_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.out_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.generate_list))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         for data in self.trainset:
             words_list = data["equation"]
@@ -262,107 +260,72 @@ class MultiEquationDataset(AbstractDataset):
                 elif word[0].isdigit():
                     continue
                 elif (word[0].isalpha() or word[0].isdigit()) is not True:
-                    self.out_idx2symbol.insert(self.num_start,word)
-                    self.num_start+=1
+                    self.out_idx2symbol.insert(self.num_start, word)
+                    self.num_start += 1
                     continue
                 else:
                     self.out_idx2symbol.append(word)
         if self.model.lower() in ['hms']:
             return
-        self.out_idx2symbol +=[SpecialTokens.UNK_TOKEN]
+        self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
 
-    
     def _build_template_symbol_for_multi_way_tree(self):
-        self.temp_idx2symbol = [
-            SpecialTokens.PAD_TOKEN,
-            SpecialTokens.SOS_TOKEN,
-            SpecialTokens.EOS_TOKEN,
-            SpecialTokens.NON_TOKEN,
-            SpecialTokens.OPT_TOKEN
-        ]
+        self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN, SpecialTokens.SOS_TOKEN, SpecialTokens.EOS_TOKEN, SpecialTokens.NON_TOKEN, SpecialTokens.OPT_TOKEN]
         self.temp_num_start = len(self.temp_idx2symbol)
         self.temp_idx2symbol += self.generate_list
-        
+
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
-        
-        self.temp_idx2symbol +=[SpecialTokens.UNK_TOKEN]
-    
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
+
+        self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
+
     def _build_template_symbol(self):
         if self.share_vocab:
             self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
         else:
             self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
-        
+
         self.temp_num_start = len(self.temp_idx2symbol)
         self.temp_idx2symbol += self.generate_list
-        
+
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         for data in self.trainset:
             words_list = data["template"]
@@ -372,13 +335,13 @@ class MultiEquationDataset(AbstractDataset):
                 elif word[0].isdigit():
                     continue
                 elif (word[0].isalpha() or word[0].isdigit()) is not True:
-                    self.temp_idx2symbol.insert(self.temp_num_start,word)
-                    self.temp_num_start+=1
+                    self.temp_idx2symbol.insert(self.temp_num_start, word)
+                    self.temp_num_start += 1
                     continue
                 else:
                     self.temp_idx2symbol.append(word)
-        self.temp_idx2symbol +=[SpecialTokens.UNK_TOKEN]
-    
+        self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
+
     def _build_template_symbol_for_tree(self):
         self.temp_idx2symbol = [SpecialTokens.OPT_TOKEN]
         self.temp_num_start = len(self.temp_idx2symbol)
@@ -406,15 +369,14 @@ class MultiEquationDataset(AbstractDataset):
             raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
-    
 
     def _update_vocab(self, vocab_list):
-        index=len(self.in_idx2word)
+        index = len(self.in_idx2word)
         for word in vocab_list:
             if word not in self.in_idx2word:
                 self.in_idx2word.append(word)
-                self.in_word2idx[word]=index
-                index+=1
-    
+                self.in_word2idx[word] = index
+                index += 1
+
     def get_vocab_size(self):
         return len(self.in_idx2word), len(self.out_idx2symbol)

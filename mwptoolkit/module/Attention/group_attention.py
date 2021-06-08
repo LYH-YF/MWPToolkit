@@ -209,10 +209,11 @@ class GroupAttention(nn.Module):
         self.linears = clones(nn.Linear(d_model, d_model), 3)
         self.attn = None
         self.dropout = nn.Dropout(p=dropout)
+        #self.split_list=split_list
 
-    def get_mask(self, src, vocab_dict, pad=0):
+    def get_mask(self, src, split_list, pad=0):
         device = src.device
-        mask = src_to_mask(src, vocab_dict)
+        mask = self.src_to_mask(src, split_list)
         self.src_mask_self = torch.from_numpy(group_mask(mask,"self",pad).astype('uint8')).unsqueeze(1)
         self.src_mask_between = torch.from_numpy(group_mask(mask,"between",pad).astype('uint8')).unsqueeze(1)
         self.src_mask_question = torch.from_numpy(group_mask(mask, "question", pad).astype('uint8')).unsqueeze(1)
@@ -248,6 +249,24 @@ class GroupAttention(nn.Module):
         x = x.transpose(1, 2).contiguous() \
             .view(nbatches, -1, self.h * self.d_k)
         return self.linears[-1](x)
+    
+    def src_to_mask(self, src, split_list):
+        src = src.cpu().numpy()
+        batch_data_mask_tok = []
+        for encode_sen_idx in src:
+
+            token = 1
+            mask = [0] * len(encode_sen_idx)
+            for num in range(len(encode_sen_idx)):
+                mask[num] = token
+                if encode_sen_idx[num] in split_list and num != len(encode_sen_idx) - 1:
+                    token += 1
+                if encode_sen_idx[num]==0: mask[num] = 0
+            for num in range(len(encode_sen_idx)):
+                if mask[num] == token and token != 1:
+                    mask[num] = 1000
+            batch_data_mask_tok.append(mask)
+        return np.array(batch_data_mask_tok)
 
 
 

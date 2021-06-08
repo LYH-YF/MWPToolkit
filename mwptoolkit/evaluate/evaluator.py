@@ -1119,7 +1119,7 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
                 return False, False, new_test_res, new_test_tar
 
 
-class MultiEADEvaluator(PostEvaluator,PreEvaluator):
+class MultiEncDecEvaluator(PostEvaluator,PreEvaluator):
     def __init__(self, symbol2idx, idx2symbol, config):
         super().__init__(symbol2idx, idx2symbol, config)
 

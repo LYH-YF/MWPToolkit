@@ -22,5 +22,6 @@
     "symbol_for_tree":false,
     "equation_fix":"multi_way_tree",
     "add_sos":true,
-    "add_eos":true
+    "add_eos":true,
+    "parse_tree_file_name":"deprel_tree_info"
 }

@@ -3,6 +3,7 @@ import torch
 
 from mwptoolkit.config.configuration import Config
 from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator
+from mwptoolkit.evaluate.evaluator import MultiEncDecEvaluator
 from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
@@ -47,6 +48,10 @@ def train_cross_validation(config):
             evaluator = MultiWayTreeEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
         else:
             raise NotImplementedError
+        
+        if config['model'].lower() in ['multiencdec']:
+            evaluator = MultiEncDecEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+
 
         trainer = get_trainer(config["task_type"], config["model"],config["supervising_mode"])(config, model, dataloader, evaluator)
         logger.info("fold {}".format(fold_t))

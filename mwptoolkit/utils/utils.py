@@ -224,6 +224,8 @@ def str2float(v):
                     b = v[l-idx:]
                     return eval(a)+eval(b)
             return float(v)
+        elif '/' in v: # match number like 3/4
+            return eval(v)
         else:
             if v == '<UNK>':
                 return float('inf')

@@ -1,13 +1,13 @@
-from mwptoolkit.utils.utils import read_json_data
 import os
 import copy
+from logging import getLogger
 import stanza
 
 from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operators, MaskSymbol, SPECIAL_TOKENS, DatasetName, TaskType
 from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k, write_json_data
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
-
+from mwptoolkit.utils.utils import read_json_data
 
 class DatasetMultiEncDec(TemplateDataset):
     def __init__(self, config):
@@ -54,8 +54,12 @@ class DatasetMultiEncDec(TemplateDataset):
         else:
             raise NotImplementedError
         if os.path.exists(self.parse_tree_path):
+            logger = getLogger()
+            logger.info('read pos infomation from {} ...'.format(self.parse_tree_path))
             self.read_pos_from_file(self.parse_tree_path)
         else:
+            logger = getLogger()
+            logger.info('build pos infomation to {} ...'.format(self.parse_tree_path))
             self.build_pos_to_file(self.parse_tree_path)
             self.read_pos_from_file(self.parse_tree_path)
 

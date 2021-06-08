@@ -50,7 +50,25 @@ class GroupATT(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-        
+        self.split_list=[]
+        # chinese dataset
+        try:
+            self.split_list.append(self.in_word2idx['．'])
+        except:
+            pass
+        try:
+            self.split_list.append(self.in_word2idx["，"])
+        except:
+            pass
+        # english dataset
+        try:
+            self.split_list.append(self.in_word2idx["."])
+        except:
+            pass
+        try:
+            self.split_list.append(self.in_word2idx[","])
+        except:
+            pass
         self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
             self.out_embedder = self.in_embedder
@@ -133,7 +151,7 @@ class GroupATT(nn.Module):
         device = seq.device
 
         seq_emb = self.in_embedder(seq)
-        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq, self.in_word2idx, seq_length)
+        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq, self.split_list, seq_length)
         encoder_hidden = self.process_gap_encoder_decoder(encoder_hidden)
 
         decoder_inputs = self.init_decoder_inputs(target, device, batch_size)
@@ -156,7 +174,7 @@ class GroupATT(nn.Module):
         device = seq.device
 
         seq_emb = self.in_embedder(seq)
-        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq, self.in_word2idx, seq_length)
+        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq, self.split_list, seq_length)
         encoder_hidden = self.process_gap_encoder_decoder(encoder_hidden)
 
         decoder_inputs = self.init_decoder_inputs(None, device, batch_size)

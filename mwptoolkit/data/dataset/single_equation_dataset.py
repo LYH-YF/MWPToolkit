@@ -3,23 +3,26 @@ import copy
 import warnings
 from logging import getLogger
 
+import torch
+
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
 from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k
-from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file,get_group_nums_
+from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, FixType, Operators, DatasetName
 from mwptoolkit.utils.enum_type import OPERATORS, SPECIAL_TOKENS
 
+
 class SingleEquationDataset(AbstractDataset):
     def __init__(self, config):
+        super().__init__(config)
         self.equation_fix = config["equation_fix"]
         self.rule1 = config["rule1"]
         self.rule2 = config["rule2"]
         self.model = config['model']
-        super().__init__(config)
         self.parse_tree_path = config['parse_tree_file_name']
         if self.parse_tree_path != None:
-            self.parse_tree_path = self.dataset_path+'/'+self.parse_tree_path+'.json'
+            self.parse_tree_path = self.dataset_path + '/' + self.parse_tree_path + '.json'
 
     def _preprocess(self):
         if self.dataset == DatasetName.math23k:
@@ -34,7 +37,7 @@ class SingleEquationDataset(AbstractDataset):
 
         if self.rule1:
             if self.linear and self.single:
-                self.en_rule1_process(k=max([train_copy_nums,valid_copy_nums,test_copy_nums]))
+                self.en_rule1_process(k=max([train_copy_nums, valid_copy_nums, test_copy_nums]))
             else:
                 warnings.warn("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
                 #raise Warning("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
@@ -62,29 +65,54 @@ class SingleEquationDataset(AbstractDataset):
 
         self.generate_list = generate_list
         if self.symbol_for_tree:
-            self.copy_nums=max([train_copy_nums,valid_copy_nums,test_copy_nums])
+            self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         else:
             self.copy_nums = train_copy_nums
         self.operator_nums = len(Operators.Single)
         self.operator_list = copy.deepcopy(Operators.Single)
 
+        # graph preprocess
+        use_gpu = True if self.device == torch.device('cuda') else False
         if self.model.lower() in ['graph2treeibm']:
-            logger=getLogger()
-            logger.info("build deprel tree...")
-            self.build_deprel_tree()
+            if os.path.exists(self.parse_tree_path):
+                logger = getLogger()
+                logger.info("read deprel tree infomation from {} ...".format(self.parse_tree_path))
+                self.trainset, self.validset, self.testset, token_list =\
+                    get_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+            else:
+                logger = getLogger()
+                logger.info("build deprel tree infomation to {} ...".format(self.parse_tree_path))
+                deprel_tree_to_file(self.trainset, self.validset, self.testset, \
+                                        self.parse_tree_path, self.language, use_gpu)
+                self.trainset, self.validset, self.testset, token_list =\
+                    get_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
         if self.model.lower() in ['hms']:
-            logger=getLogger()
-            logger.info("build span-level deprel tree...")
-            self.build_span_level_deprel_tree()
+            if os.path.exists(self.parse_tree_path):
+                logger = getLogger()
+                logger.info("read span-level deprel tree infomation from {} ...".format(self.parse_tree_path))
+                self.trainset, self.validset, self.testset, self.max_span_size =\
+                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+            else:
+                logger = getLogger()
+                logger.info("build span-level deprel tree infomation to {} ...".format(self.parse_tree_path))
+                span_level_deprel_tree_to_file(self.trainset, self.validset, self.testset, \
+                                                self.parse_tree_path, self.language, use_gpu)
+                self.trainset, self.validset, self.testset, self.max_span_size =\
+                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
         if self.model.lower() in ['graph2tree']:
             if os.path.exists(self.parse_tree_path):
-                get_group_nums_(self.trainset,self.validset,self.testset,self.parse_tree_path)
+                logger = getLogger()
+                logger.info("read deprel tree infomation from {} ...".format(self.parse_tree_path))
+                self.trainset, self.validset, self.testset =\
+                    get_group_nums_(self.trainset, self.validset, self.testset, self.parse_tree_path)
             else:
-                logger=getLogger()
-                logger.info("build deprel tree...")
-                #self.build_group_nums_for_graph()
-                deprel_tree_to_file(self.trainset,self.validset,self.testset,self.parse_tree_path,self.language,False)
-                get_group_nums_(self.trainset,self.validset,self.testset,self.parse_tree_path)
+                logger = getLogger()
+                logger.info("build deprel tree infomation to {} ...".format(self.parse_tree_path))
+                deprel_tree_to_file(self.trainset, self.validset, self.testset, \
+                                        self.parse_tree_path, self.language, use_gpu)
+                self.trainset, self.validset, self.testset =\
+                    get_group_nums_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+
     def _build_vocab(self):
         words_count = {}
         for data in self.trainset:
@@ -104,7 +132,7 @@ class SingleEquationDataset(AbstractDataset):
         if self.symbol_for_tree:
             self._build_symbol_for_tree()
             self._build_template_symbol_for_tree()
-        elif self.equation_fix==FixType.MultiWayTree:
+        elif self.equation_fix == FixType.MultiWayTree:
             self._build_symbol_for_multi_way_tree()
             self._build_template_symbol_for_multi_way_tree()
         else:
@@ -153,13 +181,9 @@ class SingleEquationDataset(AbstractDataset):
             raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
+
     def _build_symbol_for_multi_way_tree(self):
-        self.out_idx2symbol = [
-            SpecialTokens.PAD_TOKEN,
-            SpecialTokens.SOS_TOKEN,
-            SpecialTokens.EOS_TOKEN,
-            SpecialTokens.NON_TOKEN
-        ]
+        self.out_idx2symbol = [SpecialTokens.PAD_TOKEN, SpecialTokens.SOS_TOKEN, SpecialTokens.EOS_TOKEN, SpecialTokens.NON_TOKEN]
         self.out_idx2symbol += Operators.Single
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
@@ -188,6 +212,7 @@ class SingleEquationDataset(AbstractDataset):
         #     tree = data["equation"]
         #     _traverse_tree(tree)
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
+
     def _build_symbol(self):
         if self.share_vocab:
             self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
@@ -235,50 +260,36 @@ class SingleEquationDataset(AbstractDataset):
         if self.model.lower() in ['hms']:
             return
         self.out_idx2symbol += [SpecialTokens.UNK_TOKEN]
-    
+
     def _build_template_symbol(self):
         if self.share_vocab:
             self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
         else:
             self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
-        
+
         self.temp_num_start = len(self.temp_idx2symbol)
         self.temp_idx2symbol += self.generate_list
-        
+
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         for data in self.trainset:
             words_list = data["template"]
@@ -288,59 +299,42 @@ class SingleEquationDataset(AbstractDataset):
                 elif word[0].isdigit():
                     continue
                 elif (word[0].isalpha() or word[0].isdigit()) is not True:
-                    self.temp_idx2symbol.insert(self.temp_num_start,word)
-                    self.temp_num_start+=1
+                    self.temp_idx2symbol.insert(self.temp_num_start, word)
+                    self.temp_num_start += 1
                     continue
                 else:
                     self.temp_idx2symbol.append(word)
-        self.temp_idx2symbol +=[SpecialTokens.UNK_TOKEN]
+        self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
+
     def _build_template_symbol_for_multi_way_tree(self):
-        self.temp_idx2symbol = [
-            SpecialTokens.PAD_TOKEN,
-            SpecialTokens.SOS_TOKEN,
-            SpecialTokens.EOS_TOKEN,
-            SpecialTokens.NON_TOKEN
-        ]
+        self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN, SpecialTokens.SOS_TOKEN, SpecialTokens.EOS_TOKEN, SpecialTokens.NON_TOKEN]
         self.temp_idx2symbol += [SpecialTokens.OPT_TOKEN]
         self.temp_num_start = len(self.temp_idx2symbol)
         self.temp_idx2symbol += self.generate_list
-        
+
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem."
-                    .format(self.copy_nums))
+                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [
-                    mask_list[i] for i in range(self.copy_nums)
-                ]
+                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError(
-                    "{} numbers is not enough to mask {} numbers ".format(
-                        len(mask_list), self.copy_nums))
+                raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         else:
-            raise NotImplementedError(
-                "the type of masking number ({}) is not implemented".format(
-                    self.mask_symbol))
-        
-        self.temp_idx2symbol +=[SpecialTokens.UNK_TOKEN]
+            raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
+
+        self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
+
     def _build_template_symbol_for_tree(self):
         self.temp_idx2symbol = [SpecialTokens.OPT_TOKEN]
         self.temp_num_start = len(self.temp_idx2symbol)
@@ -368,14 +362,14 @@ class SingleEquationDataset(AbstractDataset):
             raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
-    
+
     def _update_vocab(self, vocab_list):
-        index=len(self.in_idx2word)
+        index = len(self.in_idx2word)
         for word in vocab_list:
             if word not in self.in_idx2word:
                 self.in_idx2word.append(word)
-                self.in_word2idx[word]=index
-                index+=1
-    
+                self.in_word2idx[word] = index
+                index += 1
+
     def get_vocab_size(self):
         return len(self.in_idx2word), len(self.out_idx2symbol)

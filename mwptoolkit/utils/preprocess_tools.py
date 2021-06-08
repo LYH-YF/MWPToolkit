@@ -1752,7 +1752,7 @@ def get_group_nums_(train_datas,valid_datas,test_datas,path):
                 break
         data["group nums"] = group_nums
         
-    return new_datas
+    return train_datas,valid_datas,test_datas
 
 def span_level_deprel_tree_to_file(train_datas,valid_datas,test_datas,path,language,use_gpu):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
@@ -1772,7 +1772,7 @@ def span_level_deprel_tree_to_file(train_datas,valid_datas,test_datas,path,langu
                 child_idx=token['id']-1
                 dependency_info.append([deprel,child_idx,father_idx])
             dependency_infos.append(dependency_info)
-        new_datas.append({'id':data['id'],'split sentences source':sentences,'split sentences source':dependency_infos})
+        new_datas.append({'id':data['id'],'split sentences source':sentences,'dependency info':dependency_infos})
     for idx, data in enumerate(valid_datas):
         sentences=split_sentence(data["ques source 1"])
         dependency_infos=[]
@@ -1787,7 +1787,7 @@ def span_level_deprel_tree_to_file(train_datas,valid_datas,test_datas,path,langu
                 child_idx=token['id']-1
                 dependency_info.append([deprel,child_idx,father_idx])
             dependency_infos.append(dependency_info)
-        new_datas.append({'id':data['id'],'split sentences source':sentences,'split sentences source':dependency_infos})
+        new_datas.append({'id':data['id'],'split sentences source':sentences,'dependency info':dependency_infos})
     for idx, data in enumerate(test_datas):
         sentences=split_sentence(data["ques source 1"])
         dependency_infos=[]
@@ -1802,8 +1802,149 @@ def span_level_deprel_tree_to_file(train_datas,valid_datas,test_datas,path,langu
                 child_idx=token['id']-1
                 dependency_info.append([deprel,child_idx,father_idx])
             dependency_infos.append(dependency_info)
-        new_datas.append({'id':data['id'],'split sentences source':sentences,'split sentences source':dependency_infos})
+        new_datas.append({'id':data['id'],'split sentences source':sentences,'dependency info':dependency_infos})
     write_json_data(new_datas,path)
+
+def get_span_level_deprel_tree_(train_datas,valid_datas,test_datas,path):
+    deprel_datas=read_json_data(path)
+    max_span_size=0
+    for idx, data in enumerate(train_datas):
+        for deprel_data in deprel_datas:
+            if data['id']!=deprel_data['id']:
+                continue
+            else:
+                masked_sentences=split_sentence(' '.join(data['question']))
+                span_size=len(masked_sentences)
+                if span_size > max_span_size:
+                    max_span_size=span_size 
+                deprel_trees=[]
+                for sentence,dependency_info in zip(deprel_data['split sentences source'],deprel_data['dependency info']):
+                    tree=DependencyTree()
+                    tree.sentence2tree(sentence.split(' '),dependency_info)
+                    deprel_trees.append(tree)
+                data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
+                data['split sentences source']=deprel_data['split sentences source']
+                data['dependency info']=deprel_data['dependency info']
+                data['deprel tree']=deprel_trees
+                deprel_datas.remove(deprel_data)
+                break
+    for idx, data in enumerate(valid_datas):
+        for deprel_data in deprel_datas:
+            if data['id']!=deprel_data['id']:
+                continue
+            else:
+                masked_sentences=split_sentence(' '.join(data['question']))
+                span_size=len(masked_sentences)
+                if span_size > max_span_size:
+                    max_span_size=span_size 
+                deprel_trees=[]
+                for sentence,dependency_info in zip(deprel_data['split sentences source'],deprel_data['dependency info']):
+                    tree=DependencyTree()
+                    tree.sentence2tree(sentence.split(' '),dependency_info)
+                    deprel_trees.append(tree)
+                data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
+                data['split sentences source']=deprel_data['split sentences source']
+                data['dependency info']=deprel_data['dependency info']
+                data['deprel tree']=deprel_trees
+                deprel_datas.remove(deprel_data)
+                break
+    for idx, data in enumerate(test_datas):
+        for deprel_data in deprel_datas:
+            if data['id']!=deprel_data['id']:
+                continue
+            else:
+                masked_sentences=split_sentence(' '.join(data['question']))
+                span_size=len(masked_sentences)
+                if span_size > max_span_size:
+                    max_span_size=span_size 
+                deprel_trees=[]
+                for sentence,dependency_info in zip(deprel_data['split sentences source'],deprel_data['dependency info']):
+                    tree=DependencyTree()
+                    tree.sentence2tree(sentence.split(' '),dependency_info)
+                    deprel_trees.append(tree)
+                data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
+                data['split sentences source']=deprel_data['split sentences source']
+                data['dependency info']=deprel_data['dependency info']
+                data['deprel tree']=deprel_trees
+                deprel_datas.remove(deprel_data)
+                break
+    return train_datas,valid_datas,test_datas,max_span_size
+
+                #token_list=deprel_data['deprel']
+
+def get_deprel_tree_(train_datas,valid_datas,test_datas,path):
+    deprel_datas=read_json_data(path)
+    deprel_tokens=[]
+    for idx, data in enumerate(train_datas):
+        group_nums = []
+        deprel_token = []
+        length = len(data["question"])
+        for deprel_data in deprel_datas:
+            if data['id']!=deprel_data['id']:
+                continue
+            else:
+                token_list=deprel_data['deprel']
+                for idx, x in enumerate(token_list):
+                    token = x['deprel']
+                    if token in deprel_token:
+                        deprel_idx = deprel_token.index(token) + length
+                    else:
+                        deprel_token.append(token)
+                        deprel_idx = deprel_token.index(token) + length
+                    group_nums.append([x['head'] - 1, deprel_idx])
+                    group_nums.append([deprel_idx, idx])
+                data["group nums"] = group_nums
+                data["question"] = data["question"] + deprel_token
+                for token in deprel_token:
+                    if token not in deprel_tokens:
+                        deprel_tokens.append(token)
+                deprel_datas.remove(deprel_data)
+                break
+    for idx, data in enumerate(valid_datas):
+        group_nums = []
+        deprel_token = []
+        length = len(data["question"])
+        for deprel_data in deprel_datas:
+            if data['id']!=deprel_data['id']:
+                continue
+            else:
+                token_list=deprel_data['deprel']
+                for idx, x in enumerate(token_list):
+                    token = x['deprel']
+                    if token in deprel_token:
+                        deprel_idx = deprel_token.index(token) + length
+                    else:
+                        deprel_token.append(token)
+                        deprel_idx = deprel_token.index(token) + length
+                    group_nums.append([x['head'] - 1, deprel_idx])
+                    group_nums.append([deprel_idx, idx])
+                data["group nums"] = group_nums
+                data["question"] = data["question"] + deprel_token
+                deprel_datas.remove(deprel_data)
+                break
+    for idx, data in enumerate(test_datas):
+        group_nums = []
+        deprel_token = []
+        length = len(data["question"])
+        for deprel_data in deprel_datas:
+            if data['id']!=deprel_data['id']:
+                continue
+            else:
+                token_list=deprel_data['deprel']
+                for idx, x in enumerate(token_list):
+                    token = x['deprel']
+                    if token in deprel_token:
+                        deprel_idx = deprel_token.index(token) + length
+                    else:
+                        deprel_token.append(token)
+                        deprel_idx = deprel_token.index(token) + length
+                    group_nums.append([x['head'] - 1, deprel_idx])
+                    group_nums.append([deprel_idx, idx])
+                data["group nums"] = group_nums
+                data["question"] = data["question"] + deprel_token
+                deprel_datas.remove(deprel_data)
+                break
+    return train_datas,valid_datas,test_datas,deprel_tokens
 
 def get_group_nums(datas, language,use_gpu):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error',use_gpu=use_gpu)

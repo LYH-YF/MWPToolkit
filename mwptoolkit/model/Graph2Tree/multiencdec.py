@@ -274,19 +274,20 @@ class MultiEncDec(nn.Module):
         num_pos_batch = batch_data['num pos']
         num_order_batch = batch_data['num order']
         parse_graph = batch_data['parse graph']
+        num_list = batch_data['num list']
         # sequence mask for attention
         seq_mask = []
         max_len = max(input_length)
         for i in input_length:
             seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
-        seq_mask = torch.ByteTensor(seq_mask)
+        seq_mask = torch.BoolTensor(seq_mask)
 
         num_mask = []
         max_num_size = max(num_size_batch) + len(generate_list)
         for i in num_size_batch:
             d = i + len(generate_list)
             num_mask.append([0] * d + [1] * (max_num_size - d))
-        num_mask = torch.ByteTensor(num_mask)
+        num_mask = torch.BoolTensor(num_mask)
 
         num_pos_pad = []
         max_num_pos_size = max(num_size_batch)
@@ -313,10 +314,10 @@ class MultiEncDec(nn.Module):
         # input2_var = torch.LongTensor(input2_batch).transpose(0, 1)
         # target1 = torch.LongTensor(target1_batch).transpose(0, 1)
         # target2 = torch.LongTensor(target2_batch).transpose(0, 1)
-        input1_var = input1_var.transpose(0, 1)
-        input2_var = input2_var.transpose(0, 1)
-        target1 = target1.transpose(0, 1)
-        target2 = target2.transpose(0, 1)
+        # input1_var = input1_var.transpose(0, 1)
+        # input2_var = input2_var.transpose(0, 1)
+        # target1 = target1.transpose(0, 1)
+        # target2 = target2.transpose(0, 1)
         parse_graph_pad = torch.LongTensor(parse_graph)
 
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0)
@@ -329,13 +330,17 @@ class MultiEncDec(nn.Module):
         encoder_outputs, num_outputs, problem_output = self.numencoder(encoder_outputs, num_encoder_outputs, num_pos_pad, num_order_pad)
         num_outputs = num_outputs.masked_fill_(masked_index.bool(), 0.0)
 
-        decoder_hidden = encoder_hidden[self.n_layers]  # Use last (forward) hidden state from encoder
+        decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
         all_output1 = self.evaluate_tree_double(encoder_outputs, problem_output, num_outputs, batch_size, padding_hidden, seq_mask, num_mask)
         all_output2 = self.evaluate_attn_double(encoder_outputs, decoder_hidden, batch_size, seq_mask)
         if all_output1.score >= all_output2.score:
-            return "tree", all_output1.out, all_output1.score
+            output1=self.convert_idx2symbol1(all_output1.out,num_list,num_stack1_batch)
+            targets1=self.convert_idx2symbol1(target1,num_list,num_stack1_batch)
+            return "tree", output1, targets1
         else:
-            return "attn", all_output2.all_output, all_output2.score
+            output2=self.convert_idx2symbol2(all_output2.all_output,num_list)
+            targets2=self.convert_idx2symbol2(target2,num_list)
+            return "attn", output2, targets2
 
     def train_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, target, target_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos, num_order_pad,
                           nums_stack_batch):
@@ -606,7 +611,9 @@ class MultiEncDec(nn.Module):
 
     def evaluate_attn_double(self, encoder_outputs, decoder_hidden, batch_size, seq_mask):
         # Create starting vectors for decoder
-        decoder_input = torch.LongTensor([self.sos])  # SOS
+        decoder_input = torch.LongTensor([self.sos2])  # SOS
+
+        seq_mask = torch.unsqueeze(seq_mask,dim=1)
         beam_list = list()
         score = 0
         beam_list.append(Beam(score, decoder_input, decoder_hidden, []))
@@ -643,9 +650,12 @@ class MultiEncDec(nn.Module):
                 #if USE_CUDA:
                 # rule_mask = rule_mask.cuda()
                 decoder_input = decoder_input.to(self.device)
+                decoder_input_emb = self.out_embedder(decoder_input)
+                decoder_input_emb=torch.unsqueeze(decoder_input_emb,dim=1)
 
-                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+                decoder_output, decoder_hidden = self.decoder(decoder_input_emb, decoder_hidden, encoder_outputs, seq_mask)
                 # score = f.log_softmax(decoder_output, dim=1) + rule_mask.squeeze()
+                decoder_output = self.out(decoder_output).squeeze(dim=1)
                 score = F.log_softmax(decoder_output, dim=1)
                 score += beam_list[b_idx].score
                 beam_scores[current_idx * self.output2_size:(current_idx + 1) * self.output2_size] = score

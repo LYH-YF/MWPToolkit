@@ -186,7 +186,7 @@ class GroupAttentionRNNEncoder(nn.Module):
         self.group_attention = GroupAttention(8, self.d_model)
         self.onelayer = GroupATTEncoder(GAEncoderLayer(self.d_model, deepcopy(self.group_attention), deepcopy(ff), dropout), N)
 
-    def forward(self, embedded, input_var, vocab_dict, input_lengths=None):
+    def forward(self, embedded, input_var, split_list, input_lengths=None):
         if self.variable_lengths:
             embedded = nn.utils.rnn.pack_padded_sequence(embedded, input_lengths, batch_first=True,\
                                                         enforce_sorted=True)
@@ -195,7 +195,7 @@ class GroupAttentionRNNEncoder(nn.Module):
                                                         enforce_sorted=False)
         output, hidden = self.rnn(embedded)
         output, _ = nn.utils.rnn.pad_packed_sequence(output, batch_first=True)
-        src_mask = self.group_attention.get_mask(input_var, vocab_dict)
+        src_mask = self.group_attention.get_mask(input_var, split_list)
         output = self.onelayer(output, src_mask)
         return output, hidden
 

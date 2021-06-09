@@ -1,0 +1,12 @@
+{
+    "min_word_keep":5,
+    "min_generate_keep":5,
+    "validset_divide":false,
+    "mask_symbol":"number",
+    "max_output_len":10,
+    "single":true,
+    "linear":true,
+    "language":"en",
+    "train_batch_size":32,
+    "test_batch_size":32
+}

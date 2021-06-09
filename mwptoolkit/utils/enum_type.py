@@ -27,6 +27,7 @@ class DatasetName:
     ape200k = "ape200k"
     alg514 = "alg514"
     draw = "draw"
+    SVAMP = "SVAMP"
 
 
 class DatasetType:

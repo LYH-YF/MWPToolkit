@@ -7,7 +7,7 @@
     "scheduler_gamma":0.5,
     "beam_size":1,
     "epoch_nums":80,
-    "share_vocab":false,
+    "share_vocab":true,
     "mask_symbol":"NUM",
     "test_batch_size":1,
     "symbol_for_tree":false,

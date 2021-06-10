@@ -237,7 +237,7 @@ class MultiEncDec(nn.Module):
         # input2_var = input2_var.transpose(0, 1)
         # target1 = target1.transpose(0, 1)
         # target2 = target2.transpose(0, 1)
-        parse_graph_pad = torch.LongTensor(parse_graph)
+        parse_graph_pad = parse_graph.long()
 
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0)
         batch_size = len(input_length)
@@ -318,7 +318,7 @@ class MultiEncDec(nn.Module):
         # input2_var = input2_var.transpose(0, 1)
         # target1 = target1.transpose(0, 1)
         # target2 = target2.transpose(0, 1)
-        parse_graph_pad = torch.LongTensor(parse_graph)
+        parse_graph_pad = parse_graph.long()
 
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0)
         batch_size = len(input_length)

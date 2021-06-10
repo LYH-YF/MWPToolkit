@@ -929,7 +929,6 @@ def number_transfer_svamp(data, mask_type="number", min_generate_keep=0):
     return processed_datas, generate_number, copy_nums
 
 
-
 def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):
     '''transfer num process
 

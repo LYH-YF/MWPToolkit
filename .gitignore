@@ -8,6 +8,7 @@ __pycache__
 /dataset/math23k/graph2tree_deprel_info.json
 preprocess.py
 pos_info.json
+span_level_deprel_tree_info.json
 *.pth
 /pretrain/gpt2_cn
 /pretrain/gpt2_en

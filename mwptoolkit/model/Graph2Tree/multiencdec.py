@@ -199,28 +199,28 @@ class MultiEncDec(nn.Module):
         max_len = max(input_length)
         for i in input_length:
             seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
-        seq_mask = torch.BoolTensor(seq_mask)
+        seq_mask = torch.BoolTensor(seq_mask).to(self.device)
 
         num_mask = []
         max_num_size = max(num_size_batch) + len(generate_list)
         for i in num_size_batch:
             d = i + len(generate_list)
             num_mask.append([0] * d + [1] * (max_num_size - d))
-        num_mask = torch.BoolTensor(num_mask)
+        num_mask = torch.BoolTensor(num_mask).to(self.device)
 
         num_pos_pad = []
         max_num_pos_size = max(num_size_batch)
         for i in range(len(num_pos_batch)):
             temp = num_pos_batch[i] + [-1] * (max_num_pos_size - len(num_pos_batch[i]))
             num_pos_pad.append(temp)
-        num_pos_pad = torch.LongTensor(num_pos_pad)
+        num_pos_pad = torch.LongTensor(num_pos_pad).to(self.device)
 
         num_order_pad = []
         max_num_order_size = max(num_size_batch)
         for i in range(len(num_order_batch)):
             temp = num_order_batch[i] + [0] * (max_num_order_size - len(num_order_batch[i]))
             num_order_pad.append(temp)
-        num_order_pad = torch.LongTensor(num_order_pad)
+        num_order_pad = torch.LongTensor(num_order_pad).to(self.device)
 
         num_stack1_batch = copy.deepcopy(num_stack_batch)
         num_stack2_batch = copy.deepcopy(num_stack_batch)
@@ -239,7 +239,7 @@ class MultiEncDec(nn.Module):
         # target2 = target2.transpose(0, 1)
         parse_graph_pad = parse_graph.long()
 
-        padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0)
+        padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(input_length)
 
         encoder_outputs, encoder_hidden = self.encoder(input1_var, input2_var, input_length, parse_graph_pad)
@@ -280,28 +280,28 @@ class MultiEncDec(nn.Module):
         max_len = max(input_length)
         for i in input_length:
             seq_mask.append([0 for _ in range(i)] + [1 for _ in range(i, max_len)])
-        seq_mask = torch.BoolTensor(seq_mask)
+        seq_mask = torch.BoolTensor(seq_mask).to(self.device)
 
         num_mask = []
         max_num_size = max(num_size_batch) + len(generate_list)
         for i in num_size_batch:
             d = i + len(generate_list)
             num_mask.append([0] * d + [1] * (max_num_size - d))
-        num_mask = torch.BoolTensor(num_mask)
+        num_mask = torch.BoolTensor(num_mask).to(self.device)
 
         num_pos_pad = []
         max_num_pos_size = max(num_size_batch)
         for i in range(len(num_pos_batch)):
             temp = num_pos_batch[i] + [-1] * (max_num_pos_size - len(num_pos_batch[i]))
             num_pos_pad.append(temp)
-        num_pos_pad = torch.LongTensor(num_pos_pad)
+        num_pos_pad = torch.LongTensor(num_pos_pad).to(self.device)
 
         num_order_pad = []
         max_num_order_size = max(num_size_batch)
         for i in range(len(num_order_batch)):
             temp = num_order_batch[i] + [0] * (max_num_order_size - len(num_order_batch[i]))
             num_order_pad.append(temp)
-        num_order_pad = torch.LongTensor(num_order_pad)
+        num_order_pad = torch.LongTensor(num_order_pad).to(self.device)
 
         num_stack1_batch = copy.deepcopy(num_stack_batch)
         num_stack2_batch = copy.deepcopy(num_stack_batch)
@@ -320,7 +320,7 @@ class MultiEncDec(nn.Module):
         # target2 = target2.transpose(0, 1)
         parse_graph_pad = parse_graph.long()
 
-        padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0)
+        padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(input_length)
 
         encoder_outputs, encoder_hidden = self.encoder(input1_var, input2_var, input_length, parse_graph_pad)
@@ -446,7 +446,7 @@ class MultiEncDec(nn.Module):
                 #     self.loss.eval_batch(decoder_output,target[:,t],target[:,t]!=0)
                 #     self.loss.backward()
 
-                all_decoder_outputs[:,t,:] = decoder_output
+                all_decoder_outputs[:,t,:] = decoder_output.squeeze(dim=1)
                 #all_decoder_outputs.append(decoder_output)
                 decoder_input = self.generate_decoder_input(target[:,t], decoder_output, nums_stack_batch)
                 target[:,t] = decoder_input

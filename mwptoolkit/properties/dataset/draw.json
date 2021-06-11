@@ -1,5 +1,4 @@
 {
-    "equation_fix":"prefix",
     "min_word_keep":5,
     "min_generate_keep":5,
     "mask_symbol":"number",

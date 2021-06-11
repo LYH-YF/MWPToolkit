@@ -7,7 +7,7 @@ import torch
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
-from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp
+from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp,number_transfer_asdiv_a
 from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, FixType, Operators, DatasetName
 from mwptoolkit.utils.enum_type import OPERATORS, SPECIAL_TOKENS
@@ -31,6 +31,8 @@ class SingleEquationDataset(AbstractDataset):
             transfer = number_transfer_ape200k
         elif self.dataset == DatasetName.SVAMP:
             transfer = number_transfer_svamp
+        elif self.dataset == DatasetName.asdiv_a:
+            transfer = number_transfer_asdiv_a
         else:
             NotImplementedError
         self.trainset, generate_list, train_copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)

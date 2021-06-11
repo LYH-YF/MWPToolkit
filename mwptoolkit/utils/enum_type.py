@@ -28,6 +28,7 @@ class DatasetName:
     alg514 = "alg514"
     draw = "draw"
     SVAMP = "SVAMP"
+    asdiv_a = "asdiv-a"
 
 
 class DatasetType:

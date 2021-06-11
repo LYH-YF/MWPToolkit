@@ -338,7 +338,7 @@ class MultiEncDec(nn.Module):
             targets1=self.convert_idx2symbol1(target1,num_list,num_stack1_batch)
             return "tree", output1, targets1
         else:
-            output2=self.convert_idx2symbol2(all_output2.all_output,num_list)
+            output2=self.convert_idx2symbol2(torch.tensor(all_output2.all_output).view(1,-1),num_list)
             targets2=self.convert_idx2symbol2(target2,num_list)
             return "attn", output2, targets2
 
@@ -506,7 +506,7 @@ class MultiEncDec(nn.Module):
                     temp_input = temp_input.data
                     # if USE_CUDA:
                     #     temp_input = temp_input.cpu()
-                    temp_beam_pos = temp_topk / self.output2_size
+                    temp_beam_pos = temp_topk // self.output2_size
 
                     indices = torch.LongTensor(range(batch_size)).to(self.device)
                     # if USE_CUDA:

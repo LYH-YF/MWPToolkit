@@ -1,0 +1,2463 @@
+[
+    {
+        "@ID": "nluds-0153",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt has 50 cents. A pencil costs 5 cents.",
+        "Question": "How many pencils can she buy with the money she has?",
+        "Solution-Type": "Common-Division",
+        "Answer": "10 (pencils)",
+        "Formula": "50/5=10"
+    },
+    {
+        "@ID": "nluds-2291",
+        "@Grade": "4",
+        "@Source": "http://www.dadsworksheets.com",
+        "Body": "Dennis has 4028 pencils stored in boxes. If the are 53 boxes,",
+        "Question": "how many pencils must go in each box?",
+        "Solution-Type": "Common-Division",
+        "Answer": "76 (pencils)",
+        "Formula": "4028/53=76"
+    },
+    {
+        "@ID": "nluds-0158",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt bought carnival tickets. The tickets cost $1 for 4 tickets. If Mrs. Hilt bought 12 tickets,",
+        "Question": "how much did she pay?",
+        "Solution-Type": "Common-Division",
+        "Answer": "3 (dollars)",
+        "Formula": "12/4=3"
+    },
+    {
+        "@ID": "nluds-1756",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Jerry is helping to put away books. If he has twelve books to put away and each shelf can hold four books,",
+        "Question": "how many shelves will he need?",
+        "Solution-Type": "Common-Division",
+        "Answer": "3 (shelves)",
+        "Formula": "12/4=3"
+    },
+    {
+        "@ID": "nluds-0168",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "A quarter equals $0.25.",
+        "Question": "How many quarters equal $2.25?",
+        "Solution-Type": "Common-Division",
+        "Answer": "9 (quarters)",
+        "Formula": "2.25/0.25=9"
+    },
+    {
+        "@ID": "nluds-1593",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A school ordered 195 new pencils for the state tests. If they gave each student 3 pencils,",
+        "Question": "how many students are in the school?",
+        "Solution-Type": "Common-Division",
+        "Answer": "65 (students)",
+        "Formula": "195/3=65"
+    },
+    {
+        "@ID": "nluds-0461",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Lexie has a lot of art materials. She needs to organize all these materials into containers. She counted her crayons and found out that she has 80 crayons which she will place in crayon boxes. Every crayon box can contain 8 crayons.",
+        "Question": "How many crayon boxes does she need?",
+        "Solution-Type": "Common-Division",
+        "Answer": "10 (crayon boxes)",
+        "Formula": "80/8=10"
+    },
+    {
+        "@ID": "nluds-1835",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A pet store had 4 snakes. They had the snakes in cages with 2 snakes in each cage.",
+        "Question": "How many cages did the pet store have?",
+        "Solution-Type": "Common-Division",
+        "Answer": "2 (cages)",
+        "Formula": "4/2=2"
+    },
+    {
+        "@ID": "nluds-0462",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "A pile of clean white paper was stacked in the corner of her room. She decided to place these papers in paper envelopes which can contain 10 white papers.",
+        "Question": "How many paper envelopes does she need if she has 120 clean white papers?",
+        "Solution-Type": "Common-Division",
+        "Answer": "12 (paper envelopes)",
+        "Formula": "120/10=12"
+    },
+    {
+        "@ID": "nluds-1585",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "An industrial machine made 196 shirts. If it made one minute to make 7 shirts,",
+        "Question": "how many minutes was it working?",
+        "Solution-Type": "Common-Division",
+        "Answer": "28 (minutes)",
+        "Formula": "196/7=28"
+    },
+    {
+        "@ID": "nluds-0463",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Beside the pile of clean white paper was a stack of 700 sheets of used paper. She wants to place it in boxes for recycling. If every box can contain 100 sheets,",
+        "Question": "how many boxes does she need?",
+        "Solution-Type": "Common-Division",
+        "Answer": "7 (boxes)",
+        "Formula": "700/100=7"
+    },
+    {
+        "@ID": "nluds-1601",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A farmer had 225 seeds to plant. He planted the same number of seeds each day and it took him 5 days to plant them all.",
+        "Question": "How many seeds did he plant per day?",
+        "Solution-Type": "Common-Division",
+        "Answer": "45 (seeds)",
+        "Formula": "225/5=45"
+    },
+    {
+        "@ID": "nluds-0465",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Lexie's younger brother helped pick up all the paper clips in Lexie's room. He was able to collect 81 paper clips. If he wants to distribute the paper clips in 9 boxes,",
+        "Question": "how many paper clips will each box contain?",
+        "Solution-Type": "Common-Division",
+        "Answer": "9 (paper clips)",
+        "Formula": "81/9=9"
+    },
+    {
+        "@ID": "nluds-1787",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Cody made 12 dollars mowing lawns over the summer. If he charged 4 bucks for each lawn,",
+        "Question": "how many lawns did he mow?",
+        "Solution-Type": "Common-Division",
+        "Answer": "3 (lawns)",
+        "Formula": "12/4=3"
+    },
+    {
+        "@ID": "nluds-0466",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Christian and his parents went to Mt. Falton National Park for the weekend. They were welcomed warmly by the rangers who invite volunteers and call them \"earth keepers\". The junior ranger asked Christian to help him place 420 seedlings in packets. If every packet needs to contain 7 seeds,",
+        "Question": "how many packets do they need?",
+        "Solution-Type": "Common-Division",
+        "Answer": "60 (packets)",
+        "Formula": "420/7=60"
+    },
+    {
+        "@ID": "nluds-2282",
+        "@Grade": "3",
+        "@Source": "http://www.dadsworksheets.com",
+        "Body": "The school is planning a field trip. There are 60 students and 10 seats on each school bus.",
+        "Question": "How many buses are needed to take the trip?",
+        "Solution-Type": "Common-Division",
+        "Answer": "6 (buses)",
+        "Formula": "60/10=6"
+    },
+    {
+        "@ID": "nluds-0467",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Christian's mother prepared lemonade. Every pitcher of lemonade can serve 5 glasses. If she was able to serve 30 glasses of lemonade,",
+        "Question": "how many pitchers of lemonade did she prepare?",
+        "Solution-Type": "Common-Division",
+        "Answer": "6 (pitchers)",
+        "Formula": "30/5=6"
+    },
+    {
+        "@ID": "nluds-2300",
+        "@Grade": "4",
+        "@Source": "http://www.dadsworksheets.com",
+        "Body": "There are 5929 Skittles in Steven's Skittle collection. Steven also has 11 erasers. If the Skittles are organized into 77 groups,",
+        "Question": "how big is each group?",
+        "Solution-Type": "Common-Division",
+        "Answer": "77 (Skittles)",
+        "Formula": "5929/77=77"
+    },
+    {
+        "@ID": "nluds-0468",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Christian's father and the senior ranger gathered firewood as they walked towards the lake in the park and brought with them sacks. If every sack can contain around 20 pieces of wood,",
+        "Question": "how many sacks were they able to fill if they gathered 80 pieces of wood?",
+        "Solution-Type": "Common-Division",
+        "Answer": "4 (sacks)",
+        "Formula": "80/20=4"
+    },
+    {
+        "@ID": "nluds-1589",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Zoe's school sold 620 dollars in raffle tickets. If each ticket cost 4 dollars,",
+        "Question": "how many tickets did they sell?",
+        "Solution-Type": "Common-Division",
+        "Answer": "155 (tickets)",
+        "Formula": "620/4=155"
+    },
+    {
+        "@ID": "nluds-0469",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Christian and the junior ranger brought a bag of 140 nails as they visited every station assigned to the junior ranger. If they left exactly 7 nails in every station they visited,",
+        "Question": "how many stations did Joline and the junior ranger visit?",
+        "Solution-Type": "Common-Division",
+        "Answer": "20 (stations)",
+        "Formula": "140/7=20"
+    },
+    {
+        "@ID": "nluds-1597",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "There are 336 students in a school. If the school has 7 grades and each grade had the same number of students,",
+        "Question": "how many students were in each grade?",
+        "Solution-Type": "Common-Division",
+        "Answer": "48 (students)",
+        "Formula": "336/7=48"
+    },
+    {
+        "@ID": "nluds-0470",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Sunday morning was spent for making wood carvings which can be sold as souvenir for tourists. They were placed in shelves that can contain 8 wood carvings at a time. If 56 wood carvings were displayed,",
+        "Question": "how many shelves were filled with carvings?",
+        "Solution-Type": "Common-Division",
+        "Answer": "7 (shelves)",
+        "Formula": "56/8=7"
+    },
+    {
+        "@ID": "nluds-1735",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Frank had forty-two pieces of candy. If he put them into bags with seven pieces in each bag,",
+        "Question": "how many bags would he have?",
+        "Solution-Type": "Common-Division",
+        "Answer": "6 (bags)",
+        "Formula": "42/7=6"
+    },
+    {
+        "@ID": "nluds-0471",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Shiela has started writing a list of gifts that she plans to give to her family and friends this Christmas. For her classmates, she made colorful paper stars which will be placed in small clear bottles. She was able to prepare 45 paper stars.",
+        "Question": "How many stars will be placed in each bottle if Shiela has 9 classmates?",
+        "Solution-Type": "Common-Division",
+        "Answer": "5 (stars)",
+        "Formula": "45/9=5"
+    },
+    {
+        "@ID": "nluds-1772",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Mike has 64 action figures he wants to display. If each shelf in his room can hold 8 figures,",
+        "Question": "how many shelves does he need?",
+        "Solution-Type": "Common-Division",
+        "Answer": "8 (shelves)",
+        "Formula": "64/8=8"
+    },
+    {
+        "@ID": "nluds-0472",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Shiela has 6 neighbors who like to collect animal drawings. Shiela has a talent for drawing and so she drew 54 animals on small pieces of paper. If she plans to give the same number of animal drawings to her neighbors,",
+        "Question": "how many will each of them receive?",
+        "Solution-Type": "Common-Division",
+        "Answer": "9 (animals)",
+        "Formula": "54/6=9"
+    },
+    {
+        "@ID": "nluds-1822",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A vase can hold 5 flowers. If you had 25 flowers,",
+        "Question": "how many vases would you need?",
+        "Solution-Type": "Common-Division",
+        "Answer": "5 (vases)",
+        "Formula": "25/5=5"
+    },
+    {
+        "@ID": "nluds-0754",
+        "@Grade": "4",
+        "@Source": "http://www.ck12.org",
+        "Body": "A washing machine can wash 28 pounds of clothes per day. If there are 200 pounds of clothes to be washed per day,",
+        "Question": "how many washing machines are needed?",
+        "Solution-Type": "Ceil-Division",
+        "Answer": "8 (washing machines)",
+        "Formula": "200/28=7 r4"
+    },
+    {
+        "@ID": "nluds-0118",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Cindy had 41 pieces of candy. She ate six pieces in the morning, and twelve more pieces in the afternoon.",
+        "Question": "How many pieces of candy does she have left?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "23 (pieces of candy)",
+        "Formula": "41-6-12=23"
+    },
+    {
+        "@ID": "nluds-1957",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "On Monday Debby jogged 2 kilometers. On Tuesday she jogged 5 kilometers and on Wednesday she jogged 9.",
+        "Question": "How many kilometers did she jog total?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "16 (kilometers)",
+        "Formula": "2+5+9=16"
+    },
+    {
+        "@ID": "nluds-0119",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Robert wants to practice goal kicks for soccer. He decides to have 98 kicks before going home from the park. He takes 43 kicks before taking a break to get a drink of water. He then takes another 36 kicks.",
+        "Question": "How many more kicks does he need to make before he goes home?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "19 (kicks)",
+        "Formula": "98-43-36=19"
+    },
+    {
+        "@ID": "nluds-2174",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Adam had 33 books. If he sold 11 of them and used the money he earned to buy 23 new books,",
+        "Question": "how many books would Adam have?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "45 (books)",
+        "Formula": "33-11+23=45"
+    },
+    {
+        "@ID": "nluds-0120",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Cindy has 105 stickers. She uses 23 stickers. She buys 45 more stickers.",
+        "Question": "How many stickers does Cindy have now?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "127 (stickers)",
+        "Formula": "105-23+45=127"
+    },
+    {
+        "@ID": "nluds-2011",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "At the arcade, Jerry won 29 tickets playing 'whack a mole' and 17 tickets playing 'skee ball'. If he spent 12 of his tickets on a hat,",
+        "Question": "how many tickets does Jerry have left?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "34 (tickets)",
+        "Formula": "29+17-12=34"
+    },
+    {
+        "@ID": "nluds-0121",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Brian has 39 pencils. He gives 18 pencils to a friend. He buys 22 more pencils.",
+        "Question": "How many pencils does Brian have now?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "43 (pencils)",
+        "Formula": "39-18+22=43"
+    },
+    {
+        "@ID": "nluds-2184",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "At the arcade Dave won 11 tickets. If he spent 5 tickets on a beanie and later won 10 more tickets,",
+        "Question": "how many would he have?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "16 (tickets)",
+        "Formula": "11-5+10=16"
+    },
+    {
+        "@ID": "nluds-0122",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Karen has 252 markers. Her mother gives her 34 more markers. Karen loses 11 markers.",
+        "Question": "How many markers does she have now?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "275 (markers)",
+        "Formula": "252+34-11=275"
+    },
+    {
+        "@ID": "nluds-1993",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "For Halloween Debby and her sister combined the candy they received. Debby had 32 pieces of candy while her sister had 42. If they ate 35 pieces the first night,",
+        "Question": "how many pieces do they have left?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "39 (pieces)",
+        "Formula": "32+42-35=39"
+    },
+    {
+        "@ID": "nluds-0156",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt had 43 cents. She bought a pencil for 20 cents and a piece of candy for 5 cents.",
+        "Question": "How much money did she have left?",
+        "Solution-Type": "TVQ-Final",
+        "Answer": "18 (cents)",
+        "Formula": "43-20-5=18"
+    },
+    {
+        "@ID": "nluds-0001",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Seven red apples and two green apples are in the basket.",
+        "Question": "How many apples are in the basket?",
+        "Solution-Type": "Addition",
+        "Answer": "9 (apples)",
+        "Formula": "7+2=9"
+    },
+    {
+        "@ID": "nluds-2160",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "At the fair Haley went on six rides in the day and three at night.",
+        "Question": "How many rides did Haley go on total?",
+        "Solution-Type": "Addition",
+        "Answer": "9 (rides)",
+        "Formula": "6+3=9"
+    },
+    {
+        "@ID": "nluds-0002",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Ellen has six more balls than Marin. Marin has nine balls.",
+        "Question": "How many balls does Ellen have?",
+        "Solution-Type": "Addition",
+        "Answer": "15 (balls)",
+        "Formula": "6+9=15"
+    },
+    {
+        "@ID": "nluds-1832",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "An architect was building his two story house. On the first floor the house had 6 bedrooms and the second floor had 4 bedrooms.",
+        "Question": "How many bedrooms does the house have totaled?",
+        "Solution-Type": "Addition",
+        "Answer": "10 (bedrooms)",
+        "Formula": "6+4=10"
+    },
+    {
+        "@ID": "nluds-0003",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Janet has nine oranges and Sharon has seven oranges.",
+        "Question": "How many oranges do Janet and Sharon have together?",
+        "Solution-Type": "Addition",
+        "Answer": "16 (oranges)",
+        "Formula": "9+7=16"
+    },
+    {
+        "@ID": "nluds-1091",
+        "@Grade": "4",
+        "@Source": "http://www.ixl.com",
+        "Body": "There is a snail problem in Centerville. People work together to get rid 3,482 snails, but 8,278 of them remain.",
+        "Question": "About how many snails were originally in Centerville?",
+        "Solution-Type": "Addition",
+        "Answer": "11760 (snails)",
+        "Formula": "3482+8278=11760"
+    },
+    {
+        "@ID": "nluds-0004",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Allan brought two balloons and Jake brought four balloons to the park.",
+        "Question": "How many balloons did Allan and Jake have in the park?",
+        "Solution-Type": "Addition",
+        "Answer": "6 (balloons)",
+        "Formula": "2+4=6"
+    },
+    {
+        "@ID": "nluds-2125",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "There were sixty-one people in line at lunch when twenty-two more got in line.",
+        "Question": "How many people were there total in line?",
+        "Solution-Type": "Addition",
+        "Answer": "83 (people)",
+        "Formula": "61+22=83"
+    },
+    {
+        "@ID": "nluds-0005",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Adam has five more apples than Jackie. Jackie has nine apples.",
+        "Question": "How many apples does Adam have?",
+        "Solution-Type": "Addition",
+        "Answer": "14 (apples)",
+        "Formula": "5+9=14"
+    },
+    {
+        "@ID": "nluds-0966",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Mikayla has a huge collection of music CDs. She gave 15 CDs to her friend. Now she has 78 CDs left.",
+        "Question": "How many CDs were in Mikayla's collection at first?",
+        "Solution-Type": "Addition",
+        "Answer": "93 (CDs)",
+        "Formula": "15+78=93"
+    },
+    {
+        "@ID": "nluds-0006",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Brian has four more plums than Paul. Paul has seven plums.",
+        "Question": "How many plums does Brian have?",
+        "Solution-Type": "Addition",
+        "Answer": "11 (plums)",
+        "Formula": "4+7=11"
+    },
+    {
+        "@ID": "nluds-1785",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Emily owned 6 songs by her favorite artists. Later on she bought 7 more songs.",
+        "Question": "How many songs did she have totaled?",
+        "Solution-Type": "Addition",
+        "Answer": "13 (songs)",
+        "Formula": "6+7=13"
+    },
+    {
+        "@ID": "nluds-0007",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Sandra took six cups of coffee and Marcie took two cups of coffee.",
+        "Question": "How many cups of coffee did Sandra and Marcie take in total?",
+        "Solution-Type": "Addition",
+        "Answer": "8 (cups)",
+        "Formula": "2+6=8"
+    },
+    {
+        "@ID": "nluds-1904",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "At the arcade Dave spent forty-three tickets on stuffed tiger. Then he had fifty-five left.",
+        "Question": "How many tickets did Dave have to start with?",
+        "Solution-Type": "Addition",
+        "Answer": "98 (tickets)",
+        "Formula": "43+55=98"
+    },
+    {
+        "@ID": "nluds-0009",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "14 red plums and four green plums are in the basket.",
+        "Question": "How many plums are in the basket?",
+        "Solution-Type": "Addition",
+        "Answer": "18 (plums)",
+        "Formula": "4+14=18"
+    },
+    {
+        "@ID": "nluds-2141",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Sam was playing basketball with his friend. Sam scored seventy-five points and his friend scored twelve points.",
+        "Question": "How many points did they score total?",
+        "Solution-Type": "Addition",
+        "Answer": "87 (points)",
+        "Formula": "75+12=87"
+    },
+    {
+        "@ID": "nluds-0010",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Marin has nine apples and Donald has two apples.",
+        "Question": "How many apples do Marin and Donald have together?",
+        "Solution-Type": "Addition",
+        "Answer": "11 (apples)",
+        "Formula": "9+2=11"
+    },
+    {
+        "@ID": "nluds-0934",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Zoe is on vacation. She has already taken 28 pictures. She has enough film left to take 32 more pictures. Zoe took 16 more pictures at the dolphin show.",
+        "Question": "How many pictures has Zoe taken altogether?",
+        "Solution-Type": "Addition",
+        "Answer": "44 (pictures)",
+        "Formula": "28+16=44"
+    },
+    {
+        "@ID": "nluds-0012",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Five red peaches and 14 green peaches are in the basket.",
+        "Question": "How many peaches are in the basket?",
+        "Solution-Type": "Addition",
+        "Answer": "19 (peaches)",
+        "Formula": "5+14=19"
+    },
+    {
+        "@ID": "nluds-1028",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Paul and Vinnie deliver newspapers. Paul made $14 in tips. Vinnie made $16 more than Paul.",
+        "Question": "How much did Vinnie make?",
+        "Solution-Type": "Addition",
+        "Answer": "30 (dollars)",
+        "Formula": "14+16=30"
+    },
+    {
+        "@ID": "nluds-0013",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "20 peaches are in the basket. 25 more peaches are put in the basket.",
+        "Question": "How many peaches are in the basket now?",
+        "Solution-Type": "Addition",
+        "Answer": "45 (peaches)",
+        "Formula": "20+25=45"
+    },
+    {
+        "@ID": "nluds-1745",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A chef used five potatoes to make fries for the lunch crowd. Later he used another two potatoes for the dinner crowd.",
+        "Question": "How many potatoes did he use total?",
+        "Solution-Type": "Addition",
+        "Answer": "7 (potatoes)",
+        "Formula": "5+2=7"
+    },
+    {
+        "@ID": "nluds-0016",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Some oranges were in the basket. Five oranges were taken from the basket. Now there are three oranges.",
+        "Question": "How many oranges were in the basket before some of the oranges were taken?",
+        "Solution-Type": "Addition",
+        "Answer": "8 (oranges)",
+        "Formula": "5+3=8"
+    },
+    {
+        "@ID": "nluds-1811",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Jerry had 8 action figures on a shelf in his room. Later he added 2 more figures to the shelf.",
+        "Question": "How many action figures were on his shelf total?",
+        "Solution-Type": "Addition",
+        "Answer": "10 (action figures)",
+        "Formula": "8+2=10"
+    },
+    {
+        "@ID": "nluds-0021",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "2 birds were sitting on the fence. 4 more birds came to join them.",
+        "Question": "How many birds are sitting on the fence?",
+        "Solution-Type": "Addition",
+        "Answer": "6 (birds)",
+        "Formula": "2+4=6"
+    },
+    {
+        "@ID": "nluds-1862",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Cody had a bag of marbles. Later he gave five to his brother. Now Cody has seven marbles.",
+        "Question": "How many marbles did Cody have to start with?",
+        "Solution-Type": "Addition",
+        "Answer": "12 (marbles)",
+        "Formula": "5+7=12"
+    },
+    {
+        "@ID": "nluds-0027",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "3 owls were sitting on the fence. 2 more owls joined them.",
+        "Question": "How many owls are on the fence now?",
+        "Solution-Type": "Addition",
+        "Answer": "5 (owls)",
+        "Formula": "3+2=5"
+    },
+    {
+        "@ID": "nluds-1943",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Olivia gave her cat two cheese cubes. Now Olivia has ninety-eight cheese cubes left.",
+        "Question": "How many cheese cubes did Olivia have originally?",
+        "Solution-Type": "Addition",
+        "Answer": "100 (cheese cubes)",
+        "Formula": "2+98=100"
+    },
+    {
+        "@ID": "nluds-0029",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "2 toucans are sitting on a tree limb. 1 more toucan joins them.",
+        "Question": "How many toucans in all?",
+        "Solution-Type": "Addition",
+        "Answer": "3 (toucans)",
+        "Formula": "2+1=3"
+    },
+    {
+        "@ID": "nluds-2133",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Debby received twenty-one text messages before noon and another eighteen after noon.",
+        "Question": "How many text messages did Debby receive total?",
+        "Solution-Type": "Addition",
+        "Answer": "39 (text messages)",
+        "Formula": "21+18=39"
+    },
+    {
+        "@ID": "nluds-0034",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt bought a yoyo for 24 cents and a whistle for 14 cents.",
+        "Question": "How much did she spend in all for the two toys?",
+        "Solution-Type": "Addition",
+        "Answer": "38 (cents)",
+        "Formula": "24+14=38"
+    },
+    {
+        "@ID": "nluds-2151",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A pet store had six kittens. If they got another three kittens,",
+        "Question": "how many would they have total?",
+        "Solution-Type": "Addition",
+        "Answer": "9 (kittens)",
+        "Formula": "6+3=9"
+    },
+    {
+        "@ID": "nluds-0035",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt made 5 Rice Krispie Treats. She used 8 large marshmallows and 10 mini marshmallows.",
+        "Question": "How many marshmallows did she use altogether?",
+        "Solution-Type": "Addition",
+        "Answer": "18 (marshmallows)",
+        "Formula": "8+10=18"
+    },
+    {
+        "@ID": "nluds-0923",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "One zoo guide spoke to a group of 19 children. Another guide spoke to a group of 25 children. There are 22 guides at the zoo.",
+        "Question": "How many children did the zoo guides speak to?",
+        "Solution-Type": "Addition",
+        "Answer": "44 (children)",
+        "Formula": "19+25=44"
+    },
+    {
+        "@ID": "nluds-0051",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mary's mom is getting ready for Mary's birthday party. She blew up 6 balloons this morning and 5 balloons this afternoon.",
+        "Question": "How many balloons did she blow up in all?",
+        "Solution-Type": "Addition",
+        "Answer": "11 (balloons)",
+        "Formula": "6+5=11"
+    },
+    {
+        "@ID": "nluds-0957",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Elizabeth studied 25 minutes for her science test. She studied 35 minutes for her math test.",
+        "Question": "How long did Elizabeth study altogether?",
+        "Solution-Type": "Addition",
+        "Answer": "60 (minutes)",
+        "Formula": "25+35=60"
+    },
+    {
+        "@ID": "nluds-0052",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Shelby's teacher gives out gold stars for great math work. Yesterday, Shelby earned 4 gold stars. Today, she earned 3 more.",
+        "Question": "How many gold stars did Shelby earn in all?",
+        "Solution-Type": "Addition",
+        "Answer": "7 (gold stars)",
+        "Formula": "4+3=7"
+    },
+    {
+        "@ID": "nluds-1019",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "The Book Nook sold 27 computer books last week. The sold 15 more cook books than computer books.",
+        "Question": "How many cook books did the Book Nook sell?",
+        "Solution-Type": "Addition",
+        "Answer": "42 (cook books)",
+        "Formula": "27+15=42"
+    },
+    {
+        "@ID": "nluds-0053",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "The Litter Patrol picked up 10 glass bottles and 8 aluminum cans on Saturday.",
+        "Question": "How many pieces of litter did they pick up altogether?",
+        "Solution-Type": "Addition",
+        "Answer": "18 (pieces)",
+        "Formula": "10+8=18"
+    },
+    {
+        "@ID": "nluds-1041",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "A book has two chapters. The first chapter is 48 pages long. The second chapter is 46 pages long.",
+        "Question": "How many pages does the book have altogether?",
+        "Solution-Type": "Addition",
+        "Answer": "94 (pages)",
+        "Formula": "48+46=94"
+    },
+    {
+        "@ID": "nluds-0058",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Lucy went to the grocery store. She bought 12 packs of cookies and 16 packs of noodles.",
+        "Question": "How many packs of groceries did she buy in all?",
+        "Solution-Type": "Addition",
+        "Answer": "28 (packs)",
+        "Formula": "12+16=28"
+    },
+    {
+        "@ID": "nluds-1730",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Will was drawing super heroes on a sheet of scrap paper. He drew two heroes on the front and seven heroes on the back.",
+        "Question": "How many heroes did he draw total?",
+        "Solution-Type": "Addition",
+        "Answer": "9 (heroes)",
+        "Formula": "2+7=9"
+    },
+    {
+        "@ID": "nluds-0059",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Roden went to a pet shop. He bought 15 gold fish and 7 blue fish.",
+        "Question": "How many fish did he buy?",
+        "Solution-Type": "Addition",
+        "Answer": "22 (fish)",
+        "Formula": "15+7=22"
+    },
+    {
+        "@ID": "nluds-1760",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "For a potluck lunch Bianca brought nine bottles of soda. If someone else had already brought eight sodas,",
+        "Question": "how many were there total?",
+        "Solution-Type": "Addition",
+        "Answer": "17 (sodas)",
+        "Formula": "9+8=17"
+    },
+    {
+        "@ID": "nluds-0060",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "I read 21 pages of my English book yesterday. Today, I read 17 pages.",
+        "Question": "What is the total number of pages did I read?",
+        "Solution-Type": "Addition",
+        "Answer": "38 (pages)",
+        "Formula": "21+17=38"
+    },
+    {
+        "@ID": "nluds-1802",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A group of 4 friends were playing video games. Later 3 more friends came over.",
+        "Question": "How many people were there total?",
+        "Solution-Type": "Addition",
+        "Answer": "7 (people)",
+        "Formula": "4+3=7"
+    },
+    {
+        "@ID": "nluds-0061",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "In a school, there are 542 girls and 387 boys.",
+        "Question": "How many pupils are there in that school?",
+        "Solution-Type": "Addition",
+        "Answer": "929 (pupils)",
+        "Formula": "542+387=929"
+    },
+    {
+        "@ID": "nluds-1818",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Rachel had to complete 9 pages of math homework and 2 pages of reading homework.",
+        "Question": "How many pages did she have to complete total?",
+        "Solution-Type": "Addition",
+        "Answer": "11 (pages)",
+        "Formula": "9+2=11"
+    },
+    {
+        "@ID": "nluds-0062",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Linda has 34 candies. Chloe has 28.",
+        "Question": "How many candies do they have in all?",
+        "Solution-Type": "Addition",
+        "Answer": "62 (candies)",
+        "Formula": "34+28=62"
+    },
+    {
+        "@ID": "nluds-1850",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "The book fair sold four posters. Now they have two posters left.",
+        "Question": "How many posters did they have to begin with?",
+        "Solution-Type": "Addition",
+        "Answer": "6 (posters)",
+        "Formula": "4+2=6"
+    },
+    {
+        "@ID": "nluds-0063",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Jose has 28 chickens and 18 ducks.",
+        "Question": "How many fowls does he have?",
+        "Solution-Type": "Addition",
+        "Answer": "46 (fowls)",
+        "Formula": "28+18=46"
+    },
+    {
+        "@ID": "nluds-1875",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Rachel took two dollars from her piggy bank. Now she has three dollars in her piggy bank.",
+        "Question": "How much money was originally in there?",
+        "Solution-Type": "Addition",
+        "Answer": "5 (dollars)",
+        "Formula": "2+3=5"
+    },
+    {
+        "@ID": "nluds-0033",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt's favorite first grade classes are baking muffins. Mrs. Brier's class bakes 18 muffins, Mrs. MacAdams's class bakes 20 muffins, and Mrs. Flannery's class bakes 17 muffins.",
+        "Question": "How many muffins does first grade bake in all?",
+        "Solution-Type": "Sum",
+        "Answer": "55 (muffins)",
+        "Formula": "18+20+17=55"
+    },
+    {
+        "@ID": "nluds-0752",
+        "@Grade": "4",
+        "@Source": "http://www.ck12.org",
+        "Body": "A chef served 3 different foods for a banquet: 25 plates lobster rolls, 14 plates of spicy hot noodles and 16 plates of seafood noodles.",
+        "Question": "How many plates of food did the chef make altogether?",
+        "Solution-Type": "Sum",
+        "Answer": "55 (plates)",
+        "Formula": "25+14+16=55"
+    },
+    {
+        "@ID": "nluds-0042",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt ran 3 miles on Monday, 2 miles on Wednesday, and 7 miles on Friday.",
+        "Question": "How many total miles did she run that week?",
+        "Solution-Type": "Sum",
+        "Answer": "12 (miles)",
+        "Formula": "3+2+7=12"
+    },
+    {
+        "@ID": "nluds-1979",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "During a sale, a shoe store sold 2 pairs of sneakers, 4 pairs of sandals and 11 pairs of boots.",
+        "Question": "How many pairs of shoes did the store sell?",
+        "Solution-Type": "Sum",
+        "Answer": "17 (pairs of shoes)",
+        "Formula": "2+4+11=17"
+    },
+    {
+        "@ID": "nluds-0082",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Jovana filled her bucket with 5 pounds of shells. If a friend comes to add 15 pounds of shells, and another friend comes to add 17 pounds of shells,",
+        "Question": "how many pounds does she have altogether?",
+        "Solution-Type": "Sum",
+        "Answer": "37 (pounds)",
+        "Formula": "5+15+17=37"
+    },
+    {
+        "@ID": "nluds-1961",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A farmer planted 2 tomato seeds, 10 cucumber seeds and 3 pumpkin seeds.",
+        "Question": "How many seeds did he plant all together?",
+        "Solution-Type": "Sum",
+        "Answer": "15 (seeds)",
+        "Formula": "2+10+3=15"
+    },
+    {
+        "@ID": "nluds-0135",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Maria had twenty-five pieces of gum. Tommy gave her sixteen more pieces. Luis gave her twenty more pieces.",
+        "Question": "How many pieces of gum does Maria have now?",
+        "Solution-Type": "Sum",
+        "Answer": "61 (pieces of gum)",
+        "Formula": "25+16+20=61"
+    },
+    {
+        "@ID": "nluds-0248",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "During recess, Buddy went to the cafeteria where he met other students from different grades. If he met 14 second grade students, 10 fourth grade students and 16 fifth grade students,",
+        "Question": "how many more students did Buddy meet during recess?",
+        "Solution-Type": "Sum",
+        "Answer": "40 (students)",
+        "Formula": "14+10+16=40"
+    },
+    {
+        "@ID": "nluds-0182",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "There are 43 dogs, 72 fish, and 34 cats at my farm.",
+        "Question": "How many pets do I have at my farm?",
+        "Solution-Type": "Sum",
+        "Answer": "149 (pets)",
+        "Formula": "43+72+34=149"
+    },
+    {
+        "@ID": "nluds-1950",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Amy had 2 dollars. If she got 13 more dollars for doing chores and 3 more for her birthday,",
+        "Question": "how much money does she have now?",
+        "Solution-Type": "Sum",
+        "Answer": "18 (dollars)",
+        "Formula": "2+13+3=18"
+    },
+    {
+        "@ID": "nluds-0694",
+        "@Grade": "2",
+        "@Source": "http://www.ck12.org",
+        "Body": "There are some children at a bakery. As they were deciding what to buy, 24 girls came in and 31 boys left. If there are 78 children in the bakery in the end,",
+        "Question": "how many children were there at first?",
+        "Solution-Type": "TVQ-Initial",
+        "Answer": "85 (children)",
+        "Formula": "78+31-24=85"
+    },
+    {
+        "@ID": "nluds-0941",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "The book store is very busy today. There are 25 children listening to a story. 36 people are shopping for books. 17 people are at the checkout counter.",
+        "Question": "How many people are at the bookstore?",
+        "Solution-Type": "Sum",
+        "Answer": "78 (people)",
+        "Formula": "25+36+17=78"
+    },
+    {
+        "@ID": "nluds-0695",
+        "@Grade": "2",
+        "@Source": "http://www.ck12.org",
+        "Body": "Blithe has a lot of toys. He lost 6 of them and found 9 in his closet. If he had 43 after that,",
+        "Question": "how many toys did Blithe have at first?",
+        "Solution-Type": "TVQ-Initial",
+        "Answer": "40 (toys)",
+        "Formula": "43-9+6=40"
+    },
+    {
+        "@ID": "nluds-0037",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt has $10. She spends $3 on a toy truck and $2 on a pencil case.",
+        "Question": "How much money does she have left?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "5 (dollars)",
+        "Formula": "10-(3+2)=5"
+    },
+    {
+        "@ID": "nluds-2247",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Kaleb bought 14 boxes of chocolate candy and gave 5 to his little brother. If each box has 6 pieces inside it,",
+        "Question": "how many pieces did Kaleb still have?",
+        "Solution-Type": {
+            "@Subgoal-1": "Subtraction",
+            "#text": "Multiplication"
+        },
+        "Answer": "54 (pieces)",
+        "Formula": "(14-5)*6=54"
+    },
+    {
+        "@ID": "nluds-0341",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Janine owns a catering service company. She was hired to cater for the mayor's 50th birthday. For the appetizers, she needs to make 750 mini meat pies. She divided her crew into 3 teams. If the first team made 235, and the second made 275,",
+        "Question": "how many pies should the third team make?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "240 (pies)",
+        "Formula": "750-(235+275)=240"
+    },
+    {
+        "@ID": "nluds-2202",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "For Halloween Isabel received sixteen pieces of candy from neighbors and five pieces from her older sister. If she only ate three pieces a day,",
+        "Question": "how long would the candy last her?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Common-Division"
+        },
+        "Answer": "7 (days)",
+        "Formula": "(16+5)/3=7"
+    },
+    {
+        "@ID": "nluds-0342",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Next food item she has to prepare is soup. She needs 280 cups of mushroom soup. If the first team made 90 cups, and the third team made 70 cups,",
+        "Question": "how any cups should the second team prepare in order to meet the required amount of soup?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "120 (cups)",
+        "Formula": "280-(90+70)=120"
+    },
+    {
+        "@ID": "nluds-2112",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Edward spent $2 on a board game and then he bought 4 action figures for $7 each.",
+        "Question": "How much money did he spend on the game and figures?",
+        "Solution-Type": {
+            "@Subgoal-1": "Multiplication",
+            "#text": "Addition"
+        },
+        "Answer": "30 (dollars)",
+        "Formula": "4*7+2=30"
+    },
+    {
+        "@ID": "nluds-0344",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "For the second main course, they were asked to make 500 pieces of fish fillets. If the first team made 189 pieces and the second team made 131 pieces,",
+        "Question": "how many pieces should the third team make?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "180 (pieces)",
+        "Formula": "500-(189+131)=180"
+    },
+    {
+        "@ID": "nluds-2227",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Nancy had forty-three files on her computer. She deleted thirty-one of them and put the rest into folders with six files in each one.",
+        "Question": "How many folders did Nancy end up with?",
+        "Solution-Type": {
+            "@Subgoal-1": "Subtraction",
+            "#text": "Common-Division"
+        },
+        "Answer": "2 (folders)",
+        "Formula": "(43-31)/6=2"
+    },
+    {
+        "@ID": "nluds-0345",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "They served a total of 179 adults and 141 children, if 156 of all the people they served are male,",
+        "Question": "how many are female?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "164 (people)",
+        "Formula": "(179+141)-156=164"
+    },
+    {
+        "@ID": "nluds-2101",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A lawn care company bought 4 lawnmower blade for $8 each. They also bought a spool of weed eater string for $7.",
+        "Question": "How much money did they spend on supplies?",
+        "Solution-Type": {
+            "@Subgoal-1": "Multiplication",
+            "#text": "Addition"
+        },
+        "Answer": "39 (dollars)",
+        "Formula": "4*8+7=39"
+    },
+    {
+        "@ID": "nluds-0347",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "He also needed some nails. If he already has 247 nails with him and he found another 144 in his toolshed,",
+        "Question": "how many more nails does he need to buy if he needs a total of 500 nails?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "109 (nails)",
+        "Formula": "500-(247+144)=109"
+    },
+    {
+        "@ID": "nluds-2193",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A group of nine friends went into a restaurant. The chef already had two chicken wings cooked but cooked twenty-five more for the group. If they each got the same amount,",
+        "Question": "how many would each person get?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Common-Division"
+        },
+        "Answer": "3 (chicken wings)",
+        "Formula": "(2+25)/9=3"
+    },
+    {
+        "@ID": "nluds-0348",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "To add support on the house's connections, he decided to tie the wood joints with rope. He needs 185 feet of rope. If he has 46 feet of rope with him and at the moment he only needed 57 feet,",
+        "Question": "how many feet of rope did his friends give to him?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "82 (feet of rope)",
+        "Formula": "185-(57+46)=82"
+    },
+    {
+        "@ID": "nluds-2212",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Victor and his friend were buying trick decks from the magic shop for eight dollars each.",
+        "Question": "How much did they spend if Victor bought six decks and his friend bought two decks?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Multiplication"
+        },
+        "Answer": "64 (dollars)",
+        "Formula": "(6+2)*8=64"
+    },
+    {
+        "@ID": "nluds-0349",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "He wanted to make sure that he is protected from the cold evenings in the forest so he decided to build a fireplace made of cement. If he bought 215 lbs of cement and his son brought another 137 lbs,",
+        "Question": "how much cement did he have originally if he now has 450 lbs?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "98 (lbs)",
+        "Formula": "450-(215+137)=98"
+    },
+    {
+        "@ID": "nluds-2238",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A company invited sixty-eight people to a luncheon, but fifty of them didn't show up. If the tables they had held three people each,",
+        "Question": "how many tables do they need?",
+        "Solution-Type": {
+            "@Subgoal-1": "Subtraction",
+            "#text": "Common-Division"
+        },
+        "Answer": "6 (tables)",
+        "Formula": "(68-50)/3=6"
+    },
+    {
+        "@ID": "nluds-0352",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "After the cleaning the rivers they went on to tidy up the farmlands. If Lizzie's group covered 250 square feet of land and the other group covered 265,",
+        "Question": "how many more square feet of land remains to be cleaned if there is total of 900 square feet of land?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "385 (square feet)",
+        "Formula": "900-(250+265)=385"
+    },
+    {
+        "@ID": "nluds-2260",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A trivia team had 9 members total, but during a game 3 members didn't show up. If each member that did show up scored 2 points,",
+        "Question": "how many points were scored total?",
+        "Solution-Type": {
+            "@Subgoal-1": "Subtraction",
+            "#text": "Multiplication"
+        },
+        "Answer": "12 (points)",
+        "Formula": "(9-3)*2=12"
+    },
+    {
+        "@ID": "nluds-0353",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "The two groups will also collect garbage from all the 453 houses in the city. If Lizzie's group covered 238 houses while the other group covered 190,",
+        "Question": "how many more houses remain?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "25 (houses)",
+        "Formula": "453-(238+190)=25"
+    },
+    {
+        "@ID": "nluds-2106",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A florist needed to use 2 pounds of fertilizer for 9 days and then on the final day use the normal amount plus another 4 pounds.",
+        "Question": "How many pounds of fertilizer will she use all together?",
+        "Solution-Type": {
+            "@Subgoal-1": "Multiplication",
+            "#text": "Addition"
+        },
+        "Answer": "22 (pounds of fertilizer)",
+        "Formula": "2*9+4=22"
+    },
+    {
+        "@ID": "nluds-0355",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Finally, they had to roam around 169 factories to make sure they are throwing their wastes properly. If their group went to 69 factories and the second went to 52,",
+        "Question": "how many factories remain unchecked?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "48 (factories)",
+        "Formula": "169-(69+52)=48"
+    },
+    {
+        "@ID": "nluds-2187",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "For a birthday party Cody bought thirty regular sodas and five diet sodas. If his fridge would only hold seven on each shelf,",
+        "Question": "how many shelves would he fill up?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Common-Division"
+        },
+        "Answer": "5 (shelves)",
+        "Formula": "(30+5)/7=5"
+    },
+    {
+        "@ID": "nluds-0356",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Kevin and his family just moved to a new neighborhood so they are holding a party to be able to meet their new neighbors. For the party, they prepared a few snacks for everyone. If his sister prepared 25 mini cupcakes and his mother prepared 30,",
+        "Question": "how many did his grandmother prepare if they have a total of 100 cupcakes?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "45 (cupcakes)",
+        "Formula": "100-(25+30)=45"
+    },
+    {
+        "@ID": "nluds-2197",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Ned was helping the cafeteria workers pick up lunch trays, but he could only carry eight trays at a time. If he had to pick up twenty-seven trays from one table and five trays from another,",
+        "Question": "how many trips will he make?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Common-Division"
+        },
+        "Answer": "4 (trips)",
+        "Formula": "(5+27)/8=4"
+    },
+    {
+        "@ID": "nluds-0357",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "They also prepared some chips. If he prepared 350 grams of chips and his father prepared 268 grams,",
+        "Question": "how much chips should his brother prepare if they are to have 800 grams of chips?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "182 (grams)",
+        "Formula": "800-(350+268)=182"
+    },
+    {
+        "@ID": "nluds-2206",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Wendy was playing a video game where she scores five points for each treasure she finds. If she found four treasures on the first level and three on the second,",
+        "Question": "what would her score be?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Multiplication"
+        },
+        "Answer": "35 (points)",
+        "Formula": "(4+3)*5=35"
+    },
+    {
+        "@ID": "nluds-0360",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "After the party, Kevin estimated that the total money they spent on food, drinks, and utensils sums up to $560.00. If they spent $268.00 on food and $118.00 on utensils and other stuff,",
+        "Question": "how much did they spend on drinks?",
+        "Solution-Type": {
+            "@Subgoal-1": "Addition",
+            "#text": "Subtraction"
+        },
+        "Answer": "174 (dollars)",
+        "Formula": "560-(268+118)=174"
+    },
+    {
+        "@ID": "nluds-0346",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Alvin is trying to build a small house in the forest so that he has a place to stay whenever he goes hunting. He started by gathering some wood. According to his blueprint, he will need 376 pieces of wood. If his friend gave him 123 pieces and his brother gave him 136 pieces,",
+        "Question": "how many more wood does he need to gather?",
+        "Solution-Type": "TVQ-Change",
+        "Answer": "117 (pieces of wood)",
+        "Formula": "376-123-136=117"
+    },
+    {
+        "@ID": "nluds-0991",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Bridget wants to win the giant stuffed panda bear. She needs a total of 75 points to get it. Bridget already scored 35 points at the penny pitch booth. She scored 18 more points on her next try.",
+        "Question": "How many more points does Bridget need?",
+        "Solution-Type": "TVQ-Change",
+        "Answer": "22 (points)",
+        "Formula": "75-35-18=22"
+    },
+    {
+        "@ID": "nluds-0008",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "17 plums were in the basket. More plums were added to the basket. Now there are 21 plums.",
+        "Question": "How many plums were added to the basket?",
+        "Solution-Type": "Subtraction",
+        "Answer": "4 (plums)",
+        "Formula": "21-17=4"
+    },
+    {
+        "@ID": "nluds-1874",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A furniture store had fifteen chairs. After selling some, there was three left.",
+        "Question": "How many chairs did they sell?",
+        "Solution-Type": "Subtraction",
+        "Answer": "12 (chairs)",
+        "Formula": "15-3=12"
+    },
+    {
+        "@ID": "nluds-0011",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "46 apples were in the basket. 22 are red and the rest are green.",
+        "Question": "How many apples are green?",
+        "Solution-Type": "Subtraction",
+        "Answer": "24 (apples)",
+        "Formula": "46-22=24"
+    },
+    {
+        "@ID": "nluds-1368",
+        "@Grade": "2",
+        "@Source": "http://www.math-aids.com",
+        "Body": "There were six roses in the vase. Jessica cut some more roses from her flower garden. There are now eighteen roses in the vase.",
+        "Question": "How many roses did she cut ?",
+        "Solution-Type": "Subtraction",
+        "Answer": "12 (roses)",
+        "Formula": "18-6=12"
+    },
+    {
+        "@ID": "nluds-0015",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Eight balls were in the basket. Some of the balls were removed from the basket. Now there are six balls.",
+        "Question": "How many balls were removed from the basket?",
+        "Solution-Type": "Subtraction",
+        "Answer": "2 (balls)",
+        "Formula": "8-6=2"
+    },
+    {
+        "@ID": "nluds-0968",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "There are 28 students in Mrs. Riley's class but she only has 19 pencils.",
+        "Question": "How many more pencils does Mrs. Riley need?",
+        "Solution-Type": "Subtraction",
+        "Answer": "9 (pencils)",
+        "Formula": "28-19=9"
+    },
+    {
+        "@ID": "nluds-0017",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Jake has six fewer peaches than Steven. Steven has 13 peaches.",
+        "Question": "How many peaches does Jake have?",
+        "Solution-Type": "Subtraction",
+        "Answer": "7 (peaches)",
+        "Formula": "13-6=7"
+    },
+    {
+        "@ID": "nluds-1803",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Oliver won 11 tickets playing games at the arcade. If he spent 5 tickets buying a water gun,",
+        "Question": "how many tickets did he still have?",
+        "Solution-Type": "Subtraction",
+        "Answer": "6 (tickets)",
+        "Formula": "11-5=6"
+    },
+    {
+        "@ID": "nluds-0018",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "David has zero fewer apples than Marin. Marin has three apples.",
+        "Question": "How many apples does David have?",
+        "Solution-Type": "Subtraction",
+        "Answer": "3 (apples)",
+        "Formula": "3-0=3"
+    },
+    {
+        "@ID": "nluds-1916",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A fast food restaurant had ninety-nine hotdogs. After selling some they had ninety-seven left.",
+        "Question": "How many hotdogs did they sell?",
+        "Solution-Type": "Subtraction",
+        "Answer": "2 (hotdogs)",
+        "Formula": "99-97=2"
+    },
+    {
+        "@ID": "nluds-0019",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Jake has 34 fewer balls than Audrey. Audrey has 41 balls.",
+        "Question": "How many balls does Jake have?",
+        "Solution-Type": "Subtraction",
+        "Answer": "7 (balls)",
+        "Formula": "41-34=7"
+    },
+    {
+        "@ID": "nluds-1035",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Brian ran around the school track in 96 seconds. Todd ran around it in 88 seconds.",
+        "Question": "How many fewer seconds did it take Todd to run around the tracl?",
+        "Solution-Type": "Subtraction",
+        "Answer": "8 (seconds)",
+        "Formula": "96-88=8"
+    },
+    {
+        "@ID": "nluds-0020",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Brian has zero fewer oranges than Marcie. Marcie has 12 oranges.",
+        "Question": "How many oranges does Brian have?",
+        "Solution-Type": "Subtraction",
+        "Answer": "12 (oranges)",
+        "Formula": "12-0=12"
+    },
+    {
+        "@ID": "nluds-1737",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Emily was helping her mom pick apples from the tree in their front yard. Together they picked fourteen totals. If six of the apples weren't ripe yet,",
+        "Question": "how many good apples did they pick?",
+        "Solution-Type": "Subtraction",
+        "Answer": "8 (good apples)",
+        "Formula": "14-6=8"
+    },
+    {
+        "@ID": "nluds-0022",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "You have 7 cookies and you ate 2 of them.",
+        "Question": "How many cookies do you have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "5 (cookies)",
+        "Formula": "7-2=5"
+    },
+    {
+        "@ID": "nluds-1848",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "There were nine kinds of sandwiches on the menu. Unfortunately, five of them had been sold out,",
+        "Question": "how many kinds of sandwiches do they actually provide now?",
+        "Solution-Type": "Subtraction",
+        "Answer": "4 (sandwiches)",
+        "Formula": "9-5=4"
+    },
+    {
+        "@ID": "nluds-0023",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "You have collected 7 crickets.",
+        "Question": "How many more crickets do you need to collect to have 11 crickets?",
+        "Solution-Type": "Subtraction",
+        "Answer": "4 (crickets)",
+        "Formula": "11-7=4"
+    },
+    {
+        "@ID": "nluds-1895",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Kaleb had sixty-seven cherries. After eating some, he had forty-two left.",
+        "Question": "How many cherries did Kaleb eat?",
+        "Solution-Type": "Subtraction",
+        "Answer": "25 (cherries)",
+        "Formula": "67-42=25"
+    },
+    {
+        "@ID": "nluds-0024",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "4 birds are sitting on a branch. 1 flies away.",
+        "Question": "How many birds are left on the branch?",
+        "Solution-Type": "Subtraction",
+        "Answer": "3 (birds)",
+        "Formula": "4-1=3"
+    },
+    {
+        "@ID": "nluds-1939",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Gwen's hair was twenty-eight centimeters long. After a haircut it was seventeen centimeters long.",
+        "Question": "How much did she cut off?",
+        "Solution-Type": "Subtraction",
+        "Answer": "11 (centimeters)",
+        "Formula": "28-17=11"
+    },
+    {
+        "@ID": "nluds-0025",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "3 raccoons are playing in the woods. 2 go home to eat dinner.",
+        "Question": "How many raccoons are left in the woods?",
+        "Solution-Type": "Subtraction",
+        "Answer": "1 (raccoons)",
+        "Formula": "3-2=1"
+    },
+    {
+        "@ID": "nluds-1023",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Angela won a contest. She gets $90 to spend at Puzzle Palace. She bought many wonderful puzzles. She had $12 left.",
+        "Question": "How much did she spend?",
+        "Solution-Type": "Subtraction",
+        "Answer": "78 (dollars)",
+        "Formula": "90-12=78"
+    },
+    {
+        "@ID": "nluds-0028",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "2 beavers were working on their home. 1 went for a swim.",
+        "Question": "How many beavers are still working on their home?",
+        "Solution-Type": "Subtraction",
+        "Answer": "1 (beavers)",
+        "Formula": "2-1=1"
+    },
+    {
+        "@ID": "nluds-1360",
+        "@Grade": "3",
+        "@Source": "http://www.moomoomath.com",
+        "Body": "Last Thursday Drew had $30. Over the weekend he received some money for cutting the grass. He now has $61.",
+        "Question": "How much money did he get paid for cutting the grass?",
+        "Solution-Type": "Subtraction",
+        "Answer": "31 (dollars)",
+        "Formula": "61-30=31"
+    },
+    {
+        "@ID": "nluds-0036",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "At Mrs. Hilt's house, there was 29 inches of snow, and Brecknock Elementary School received 17 inches of snow.",
+        "Question": "How much more snow did Mrs. Hilt's house have?",
+        "Solution-Type": "Subtraction",
+        "Answer": "12 (inches of snow)",
+        "Formula": "29-17=12"
+    },
+    {
+        "@ID": "nluds-1381",
+        "@Grade": "3",
+        "@Source": "http://www.math-aids.com",
+        "Body": "There are thirty-three rose bushes and thirty-seven oak trees currently in the park. Park workers will plant more rose bushes today. When the workers are finished there will be ninety-eight rose bushes in the park.",
+        "Question": "How many rose bushes did the workers plant today ?",
+        "Solution-Type": "Subtraction",
+        "Answer": "65 (rose bushes)",
+        "Formula": "98-33=65"
+    },
+    {
+        "@ID": "nluds-0041",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt has 15 friends. She can only take 8 of her friends to the movies.",
+        "Question": "How many friends can't go to the movies?",
+        "Solution-Type": "Subtraction",
+        "Answer": "7 (friends)",
+        "Formula": "15-8=7"
+    },
+    {
+        "@ID": "nluds-1777",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Katie had 9 math problems for homework. If she finished 5 of them on the bus ride home,",
+        "Question": "how many more did she have to do?",
+        "Solution-Type": "Subtraction",
+        "Answer": "4 (math problems)",
+        "Formula": "9-5=4"
+    },
+    {
+        "@ID": "nluds-0043",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt picked up a book that has 17 pages in it. She read 11 of the pages.",
+        "Question": "How many pages did she have left to read?",
+        "Solution-Type": "Subtraction",
+        "Answer": "6 (pages)",
+        "Formula": "17-11=6"
+    },
+    {
+        "@ID": "nluds-1838",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Oliver was yard sale shopping. He ended up buying 11 video games, but only 6 of them worked.",
+        "Question": "How many bad games did he buy?",
+        "Solution-Type": "Subtraction",
+        "Answer": "5 (bad games)",
+        "Formula": "11-6=5"
+    },
+    {
+        "@ID": "nluds-0044",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt had 15 cents. She bought a pencil for 11 cents.",
+        "Question": "How much money did she have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "4 (cents)",
+        "Formula": "15-11=4"
+    },
+    {
+        "@ID": "nluds-1860",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "A waiter had fourteen customers. After some left he still had three customers.",
+        "Question": "How many customers left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "11 (customers)",
+        "Formula": "14-3=11"
+    },
+    {
+        "@ID": "nluds-0045",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt met 15 friends. Nine of the friends were carrying pears. The rest were carrying oranges.",
+        "Question": "How many friends were carrying oranges?",
+        "Solution-Type": "Subtraction",
+        "Answer": "6 (friends)",
+        "Formula": "15-9=6"
+    },
+    {
+        "@ID": "nluds-1887",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Haley grew sixteen trees in her backyard. After a typhoon five died.",
+        "Question": "How many trees does she have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "11 (trees)",
+        "Formula": "16-5=11"
+    },
+    {
+        "@ID": "nluds-0054",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Millie had 9 bracelets. She lost 2 of them.",
+        "Question": "How many bracelets does Millie have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "7 (bracelets)",
+        "Formula": "9-2=7"
+    },
+    {
+        "@ID": "nluds-1905",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Gwen had ninety-eight DS games. After she gave some to her friends she had ninety-one left.",
+        "Question": "How many games did she give away?",
+        "Solution-Type": "Subtraction",
+        "Answer": "7 (games)",
+        "Formula": "98-91=7"
+    },
+    {
+        "@ID": "nluds-0055",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Sammy has 9 math problems to do for homework. He has already finished 2 of them.",
+        "Question": "How many math problems does Sammy have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "7 (math problems)",
+        "Formula": "9-2=7"
+    },
+    {
+        "@ID": "nluds-1928",
+        "@Grade": "2",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Winnie completed eighty-six consecutive repetitions for rope jumping yesterday. Today she completed only seventy-three.",
+        "Question": "How many repetitions did she fell behind?",
+        "Solution-Type": "Subtraction",
+        "Answer": "13 (repetitions)",
+        "Formula": "86-73=13"
+    },
+    {
+        "@ID": "nluds-0056",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "There were 10 students riding on the school bus. At the first stop, 3 students got off of the bus.",
+        "Question": "How many students are left on the bus?",
+        "Solution-Type": "Subtraction",
+        "Answer": "7 (students)",
+        "Formula": "10-3=7"
+    },
+    {
+        "@ID": "nluds-0961",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Danny collects bottle caps. He found 18 bottle caps at the park. Now he has 55 bottle caps in his collection.",
+        "Question": "How many bottle caps did Danny have at first?",
+        "Solution-Type": "Subtraction",
+        "Answer": "37 (bottle caps)",
+        "Formula": "55-18=37"
+    },
+    {
+        "@ID": "nluds-0057",
+        "@Grade": "1",
+        "@Source": "http://www.k5learning.com",
+        "Body": "There were 8 ducks swimming in the pond. 3 ducks flew away.",
+        "Question": "How many ducks are still swimming in the pond?",
+        "Solution-Type": "Subtraction",
+        "Answer": "5 (ducks)",
+        "Formula": "8-3=5"
+    },
+    {
+        "@ID": "nluds-1017",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Frankie and Max went trick-or-treating. Frankie got 74 pieces of candy. Max got 92 pieces of candy.",
+        "Question": "How many more pieces of candy did Max get?",
+        "Solution-Type": "Subtraction",
+        "Answer": "18 (pieces of candy)",
+        "Formula": "92-74=18"
+    },
+    {
+        "@ID": "nluds-0090",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Cade had 87 marbles. He gave 8 to Dylan.",
+        "Question": "How many does he have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "79 (marbles)",
+        "Formula": "87-8=79"
+    },
+    {
+        "@ID": "nluds-1030",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Matthew and Billie went apple picking. Matthew found 46 big, red apples. Billie found some as well. Together they found 80 apples.",
+        "Question": "How many apples did Billie find?",
+        "Solution-Type": "Subtraction",
+        "Answer": "34 (apples)",
+        "Formula": "80-46=34"
+    },
+    {
+        "@ID": "nluds-0091",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Michael has some fish in his fish tank. Ben gave him 18 more fish. Now he has 49.",
+        "Question": "How many fish did he have to begin with?",
+        "Solution-Type": "Subtraction",
+        "Answer": "31 (fish)",
+        "Formula": "49-18=31"
+    },
+    {
+        "@ID": "nluds-1042",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Ted and Fred measured their height. Their total height is 98 inches. Ted is 39 inches tall.",
+        "Question": "How tall is Fred?",
+        "Solution-Type": "Subtraction",
+        "Answer": "59 (inches)",
+        "Formula": "98-39=59"
+    },
+    {
+        "@ID": "nluds-0093",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Hayley had 25 meatballs on her plate. Kirsten stole some of her meatballs. Now she has 11 meatballs on her plate.",
+        "Question": "How many meatballs did Kirsten steal?",
+        "Solution-Type": "Subtraction",
+        "Answer": "14 (meatballs)",
+        "Formula": "25-11=14"
+    },
+    {
+        "@ID": "nluds-1364",
+        "@Grade": "3",
+        "@Source": "http://www.math-aids.com",
+        "Body": "There were 22 bales of hay in the barn. Keith stacked more bales in the barn today. There are now 89 bales of hay in the barn.",
+        "Question": "How many bales did he store in the barn ?",
+        "Solution-Type": "Subtraction",
+        "Answer": "67 (bales)",
+        "Formula": "89-22=67"
+    },
+    {
+        "@ID": "nluds-0094",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Isabella's hair is 18 inches long. If she gets a haircut and now her hair is 9 inches long,",
+        "Question": "how much of Isabella's hair got cut off?",
+        "Solution-Type": "Subtraction",
+        "Answer": "9 (inches)",
+        "Formula": "18-9=9"
+    },
+    {
+        "@ID": "nluds-1374",
+        "@Grade": "3",
+        "@Source": "http://www.math-aids.com",
+        "Body": "Mike found sixty-two seashells on the beach, he gave Tom some of his seashells. He has thirteen seashell left.",
+        "Question": "How many seashells did he give to Tom ?",
+        "Solution-Type": "Subtraction",
+        "Answer": "49 (seashells)",
+        "Formula": "62-13=49"
+    },
+    {
+        "@ID": "nluds-0095",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Isabella's hair is 18 inches long. By the end of the year her hair is 24 inches long.",
+        "Question": "How much hair did she grow?",
+        "Solution-Type": "Subtraction",
+        "Answer": "6 (inches)",
+        "Formula": "24-18=6"
+    },
+    {
+        "@ID": "nluds-1723",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Adam had to wash fourteen loads of clothes. By noon he had only washed eight loads.",
+        "Question": "How many does he still need to wash?",
+        "Solution-Type": "Subtraction",
+        "Answer": "6 (loads of clothes)",
+        "Formula": "14-8=6"
+    },
+    {
+        "@ID": "nluds-0096",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Jovana had 5 pounds of shells in her bucket. She added some shells and now has 28 pounds of shells.",
+        "Question": "How many pounds did she add?",
+        "Solution-Type": "Subtraction",
+        "Answer": "23 (pounds)",
+        "Formula": "28-5=23"
+    },
+    {
+        "@ID": "nluds-1753",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Will went to the state fair and rode the Ferris wheel thirteen times. If he rode it seven times during the day,",
+        "Question": "how many times did he ride it at night?",
+        "Solution-Type": "Subtraction",
+        "Answer": "6 (times)",
+        "Formula": "13-7=6"
+    },
+    {
+        "@ID": "nluds-0097",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Isha's pencil is 31 inches long. If she sharpens it, now her pencil is 14 inches long.",
+        "Question": "How much did she sharpen off of her pencil?",
+        "Solution-Type": "Subtraction",
+        "Answer": "17 (inches)",
+        "Formula": "31-14=17"
+    },
+    {
+        "@ID": "nluds-1784",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "For a potluck lunch Debby brought 10 bottles of soda. If everyone only drank 8 of the sodas,",
+        "Question": "how many did she have to take back home?",
+        "Solution-Type": "Subtraction",
+        "Answer": "2 (sodas)",
+        "Formula": "10-8=2"
+    },
+    {
+        "@ID": "nluds-0099",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Sheridan has 11 cats.",
+        "Question": "How many more cats does Mrs. Sheridan need to have 43 cats?",
+        "Solution-Type": "Subtraction",
+        "Answer": "32 (cats)",
+        "Formula": "43-11=32"
+    },
+    {
+        "@ID": "nluds-1820",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Haley collected 9 cans for recycling. If she put 7 cans in one bag,",
+        "Question": "how many cans did she have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "2 (cans)",
+        "Formula": "9-7=2"
+    },
+    {
+        "@ID": "nluds-0100",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Wong had 30 Valentines. She gave 8 Valentines to her children.",
+        "Question": "How many does she have left?",
+        "Solution-Type": "Subtraction",
+        "Answer": "22 (Valentines)",
+        "Formula": "30-8=22"
+    },
+    {
+        "@ID": "nluds-1844",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Debby had twelve pieces of candy. After eating some, she had three pieces.",
+        "Question": "How many pieces did Debby eat?",
+        "Solution-Type": "Subtraction",
+        "Answer": "9 (pieces)",
+        "Formula": "12-3=9"
+    },
+    {
+        "@ID": "nluds-0101",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Franklin had 58 Valentines. Mrs. Franklin gave some to her students. Now she has 16.",
+        "Question": "How many Valentines did Mrs. Franklin give to her students?",
+        "Solution-Type": "Subtraction",
+        "Answer": "42 (Valentines)",
+        "Formula": "58-16=42"
+    },
+    {
+        "@ID": "nluds-1855",
+        "@Grade": "1",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Isabel had sixteen bottles of water. After a week she had seven left.",
+        "Question": "How many did she drink?",
+        "Solution-Type": "Subtraction",
+        "Answer": "9 (bottles of water)",
+        "Formula": "16-7=9"
+    },
+    {
+        "@ID": "nluds-0774",
+        "@Grade": "3",
+        "@Source": "http://www.ck12.org",
+        "Body": "Mrs. Smith gave 53 strawberries to 8 girls equally.",
+        "Question": "How many strawberries did each girl get?",
+        "Solution-Type": "Floor-Division",
+        "Answer": "6 (strawberries)",
+        "Formula": "53/8=6 r5"
+    },
+    {
+        "@ID": "nluds-0812",
+        "@Grade": "5",
+        "@Source": "http://www.ck12.org",
+        "Body": "There was 1,050 ml of tea in a pot. Anna poured the tea into some cups. If there were 65 ml of tea in each cup,",
+        "Question": "how many cups were filled with tea?",
+        "Solution-Type": "Floor-Division",
+        "Answer": "16 (cups)",
+        "Formula": "1050/65=16 r10"
+    },
+    {
+        "@ID": "nluds-0776",
+        "@Grade": "3",
+        "@Source": "http://www.ck12.org",
+        "Body": "Tom had $19 and he wanted to buy as many folders as he could. If one folder costs $2,",
+        "Question": "how many folders can Tom buy?",
+        "Solution-Type": "Floor-Division",
+        "Answer": "9 (folders)",
+        "Formula": "19/2=9 r1"
+    },
+    {
+        "@ID": "nluds-0145",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "A bee has 6 legs.",
+        "Question": "How many legs do 8 bees have?",
+        "Solution-Type": "Multiplication",
+        "Answer": "48 (legs)",
+        "Formula": "6*8=48"
+    },
+    {
+        "@ID": "nluds-1749",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Tom read three chapters of a book. If each chapter was eight pages,",
+        "Question": "how many pages did he read?",
+        "Solution-Type": "Multiplication",
+        "Answer": "24 (pages)",
+        "Formula": "3*8=24"
+    },
+    {
+        "@ID": "nluds-0151",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt bought 6 hot dogs. Each hot dog cost 50 cents.",
+        "Question": "How much money did she pay for all of the hot dogs?",
+        "Solution-Type": "Multiplication",
+        "Answer": "300 (cents)",
+        "Formula": "6*50=300"
+    },
+    {
+        "@ID": "nluds-0571",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "It takes 7 minutes to bake one pan of cookies.",
+        "Question": "How long will it take to bake 4 pans of cookies?",
+        "Solution-Type": "Multiplication",
+        "Answer": "28 (minutes)",
+        "Formula": "7*4=28"
+    },
+    {
+        "@ID": "nluds-0161",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "The Hawks scored three touchdowns worth 7 points each.",
+        "Question": "How many points do they have?",
+        "Solution-Type": "Multiplication",
+        "Answer": "21 (points)",
+        "Formula": "7*3=21"
+    },
+    {
+        "@ID": "nluds-0541",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "For the fifth grade play, the chairs have been put into 27 rows with 16 chairs in each row.",
+        "Question": "How many chairs have been put out for the play?",
+        "Solution-Type": "Multiplication",
+        "Answer": "432 (chairs)",
+        "Formula": "27*16=432"
+    },
+    {
+        "@ID": "nluds-0179",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Kim has 4 cousins. She wants to give each one 5 pieces of gum.",
+        "Question": "How much gum will she need?",
+        "Solution-Type": "Multiplication",
+        "Answer": "20 (pieces of gum)",
+        "Formula": "4*5=20"
+    },
+    {
+        "@ID": "nluds-0625",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Mrs. Hilt uses 2 ounces of detergent to wash a pound of clothes.",
+        "Question": "How many ounces of soap will she use to wash 9 pounds of clothes?",
+        "Solution-Type": "Multiplication",
+        "Answer": "18 (ounces)",
+        "Formula": "2*9=18"
+    },
+    {
+        "@ID": "nluds-0181",
+        "@Grade": "2",
+        "@Source": "http://www.k5learning.com",
+        "Body": "5 boats are in the lake. Each boat has 3 people.",
+        "Question": "How many people are on boats in the lake?",
+        "Solution-Type": "Multiplication",
+        "Answer": "15 (people)",
+        "Formula": "5*3=15"
+    },
+    {
+        "@ID": "nluds-1805",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Janet was practicing for a marathon. She practiced for 9 days, running 8 miles each day.",
+        "Question": "How many miles did Janet run altogether?",
+        "Solution-Type": "Multiplication",
+        "Answer": "72 (miles)",
+        "Formula": "9*8=72"
+    },
+    {
+        "@ID": "nluds-0371",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Andrew is having his friends over for game night. So he decided to prepare the snacks and the games. He started by making mini sandwiches. If he has 4 friends coming over and he made 3 sandwiches for each one of them,",
+        "Question": "how many sandwiches did he make in total?",
+        "Solution-Type": "Multiplication",
+        "Answer": "12 (sandwiches)",
+        "Formula": "4*3=12"
+    },
+    {
+        "@ID": "nluds-0552",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "There were 150 book shelves. Each book shelf had 15 books.",
+        "Question": "How many books were on the shelves?",
+        "Solution-Type": "Multiplication",
+        "Answer": "2250 (books)",
+        "Formula": "150*15=2250"
+    },
+    {
+        "@ID": "nluds-0372",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "He also made some juice from fresh oranges. If he used 2 oranges per glass of juice and he made 6 glasses of juice,",
+        "Question": "how many oranges did he use?",
+        "Solution-Type": "Multiplication",
+        "Answer": "12 (oranges)",
+        "Formula": "2*6=12"
+    },
+    {
+        "@ID": "nluds-0603",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Robin has 27 packages of gum. There are 18 pieces in each package.",
+        "Question": "How many pieces of gum does Robin have?",
+        "Solution-Type": "Multiplication",
+        "Answer": "486 (pieces of gum)",
+        "Formula": "27*18=486"
+    },
+    {
+        "@ID": "nluds-0375",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Lastly, Andrew tried to compute his expenses for the game night. If he spent $9.00 for each game they played and they played a total of 5 games,",
+        "Question": "how much money did he spend that night?",
+        "Solution-Type": "Multiplication",
+        "Answer": "45 (dollars)",
+        "Formula": "9*5=45"
+    },
+    {
+        "@ID": "nluds-1721",
+        "@Grade": "3",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Mike played six games of basketball with his friends. If Mike scored four points each game,",
+        "Question": "how many points did he score total?",
+        "Solution-Type": "Multiplication",
+        "Answer": "24 (points)",
+        "Formula": "6*4=24"
+    },
+    {
+        "@ID": "nluds-0377",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Her mom also baked some cookies. If she baked 5 pans of cookies and there are 8 cookies per pan,",
+        "Question": "how many cookies did her mom bake for her birthday?",
+        "Solution-Type": "Multiplication",
+        "Answer": "40 (cookies)",
+        "Formula": "5*8=40"
+    },
+    {
+        "@ID": "nluds-1775",
+        "@Grade": "4",
+        "@Source": "http://www.commoncoresheets.com",
+        "Body": "Olivia's dad took her and some friends out to eat for her birthday. If each meal costs 7 dollars and her dad paid for 3 meals,",
+        "Question": "how much did he spend?",
+        "Solution-Type": "Multiplication",
+        "Answer": "21 (dollars)",
+        "Formula": "7*3=21"
+    },
+    {
+        "@ID": "nluds-0378",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "They planned to serve some cold drinks as well. If they plan to make 9 pitchers of drinks and each pitcher can fill 6 glasses,",
+        "Question": "how many glasses of drinks are they planning to prepare in total?",
+        "Solution-Type": "Multiplication",
+        "Answer": "54 (glasses of drinks)",
+        "Formula": "9*6=54"
+    },
+    {
+        "@ID": "nluds-0460",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Having this kind of collection made Jack a fast reader. If he can read 9 books in a day,",
+        "Question": "how many books can he read in a year (a year = 365 days)?",
+        "Solution-Type": "Multiplication",
+        "Answer": "3285 (books)",
+        "Formula": "9*365=3285"
+    },
+    {
+        "@ID": "nluds-0379",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "They decided to hold the party in their backyard. If they have 8 sets of tables and each set has 7 chairs,",
+        "Question": "how many chairs do they have for the guests?",
+        "Solution-Type": "Multiplication",
+        "Answer": "56 (chairs)",
+        "Formula": "8*7=56"
+    },
+    {
+        "@ID": "nluds-0548",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "There are 261 fishbowls. Each fishbowl has 23 fish.",
+        "Question": "How many fish are there?",
+        "Solution-Type": "Multiplication",
+        "Answer": "6003 (fish)",
+        "Formula": "261*23=6003"
+    },
+    {
+        "@ID": "nluds-0380",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "At the end of the party, Mona gave away some souvenirs to her 6 closest friends. If each of them received 2 souvenir items,",
+        "Question": "how many souvenirs did Mona give away?",
+        "Solution-Type": "Multiplication",
+        "Answer": "12 (souvenirs)",
+        "Formula": "6*2=12"
+    },
+    {
+        "@ID": "nluds-0559",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Your class is having a pizza party. You buy 5 pizzas. Each pizza has 4 slices.",
+        "Question": "How many slices is that altogether?",
+        "Solution-Type": "Multiplication",
+        "Answer": "20 (slices)",
+        "Formula": "5*4=20"
+    },
+    {
+        "@ID": "nluds-0381",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "John is building a tree house to serve as his hideout whenever he wanted to spend some time alone with himself. The first thing he did is to gather some materials. For the pillars, he needs two sets of wood with different lengths. If the first set of wood is 4 feet long and the second set is 5 times longer than the first set,",
+        "Question": "how long is the second set of wood?",
+        "Solution-Type": "Multiplication",
+        "Answer": "20 (feet)",
+        "Formula": "4*5=20"
+    },
+    {
+        "@ID": "nluds-0582",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "The Razorback T-shirt Shop makes $9 dollars off each t-shirt sold. During the Arkansas and Texas Tech game they sold 245 t-shirts.",
+        "Question": "How much money did they make from selling the t-shirts?",
+        "Solution-Type": "Multiplication",
+        "Answer": "2205 (dollars)",
+        "Formula": "9*245=2205"
+    },
+    {
+        "@ID": "nluds-0382",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Another material that he needs is rope. If he already has 6 feet of rope and he needs additional ropes having 5 times the length of what he already have,",
+        "Question": "how long should be the additional rope?",
+        "Solution-Type": "Multiplication",
+        "Answer": "30 (feet of rope)",
+        "Formula": "6*5=30"
+    },
+    {
+        "@ID": "nluds-0615",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "There are 124 students making 3 stars each for the school wall.",
+        "Question": "How many stars will they make all together?",
+        "Solution-Type": "Multiplication",
+        "Answer": "372 (stars)",
+        "Formula": "124*3=372"
+    },
+    {
+        "@ID": "nluds-0383",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "For the walls of the house, he would use 9 large planks of wood. If each plank of wood needs 8 pieces of nails to be secured,",
+        "Question": "how many nails does John need for the house wall?",
+        "Solution-Type": "Multiplication",
+        "Answer": "72 (pieces of nails)",
+        "Formula": "9*8=72"
+    },
+    {
+        "@ID": "nluds-0649",
+        "@Grade": "3",
+        "@Source": "http://www.k5learning.com",
+        "Body": "Each bag contains 23 pounds of oranges.",
+        "Question": "How many pounds of oranges are in 45 bags?",
+        "Solution-Type": "Multiplication",
+        "Answer": "1035 (pounds)",
+        "Formula": "23*45=1035"
+    },
+    {
+        "@ID": "nluds-0849",
+        "@Grade": "4",
+        "@Source": "http://www.ck12.org",
+        "Body": "Dave earned $53.90. Sara earned $39.33.",
+        "Question": "How much more money did Dave earn than Sara?",
+        "Solution-Type": "Difference",
+        "Answer": "14.57 (dollars)",
+        "Formula": "53.90-39.33=14.57"
+    },
+    {
+        "@ID": "nluds-1277",
+        "@Grade": "1",
+        "@Source": "Created by an Annotator",
+        "Body": "A waiter had nineteen customers. After some left he still had four customers.",
+        "Question": "What's the difference between the number of customers before leaving and after leaving?",
+        "Solution-Type": "Difference",
+        "Answer": "15 (customers)",
+        "Formula": "19-4=15"
+    },
+    {
+        "@ID": "nluds-0886",
+        "@Grade": "5",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Greg and Brad started reading their books at the same time. Greg read 18 pages a day. Brad read 26 pages a day.",
+        "Question": "How many more pages did Brad read than Greg?",
+        "Solution-Type": "Difference",
+        "Answer": "8 (pages)",
+        "Formula": "26-18=8"
+    },
+    {
+        "@ID": "nluds-1268",
+        "@Grade": "2",
+        "@Source": "Created by an Annotator",
+        "Body": "Paul spent $75. Now he has $11.",
+        "Question": "What's the difference between the number of dollars that he spent and he has now?",
+        "Solution-Type": "Difference",
+        "Answer": "64 (dollars)",
+        "Formula": "75-11=64"
+    },
+    {
+        "@ID": "nluds-0894",
+        "@Grade": "5",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Rick and Todd have the same number of candy bars. Rick ate 11 candy bars. Todd gave away 18 of his candy bars.",
+        "Question": "How many more candy bars did Rick have than Todd then?",
+        "Solution-Type": "Difference",
+        "Answer": "7 (candy bars)",
+        "Formula": "18-11=7"
+    },
+    {
+        "@ID": "nluds-1287",
+        "@Grade": "1",
+        "@Source": "Created by an Annotator",
+        "Body": "A museum had fourteen paintings. After they got rid of some, they had four left.",
+        "Question": "What's the difference between the number of paintings before they got rid of and the left?",
+        "Solution-Type": "Difference",
+        "Answer": "10 (paintings)",
+        "Formula": "14-4=10"
+    },
+    {
+        "@ID": "nluds-0903",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Annette and Caitlin weigh 95 pounds together. Caitlin and Sara weigh 87 pounds together.",
+        "Question": "How much more does Annette weigh than Sara?",
+        "Solution-Type": "Difference",
+        "Answer": "8 (pounds)",
+        "Formula": "95-87=8"
+    },
+    {
+        "@ID": "nluds-1273",
+        "@Grade": "1",
+        "@Source": "Created by an Annotator",
+        "Body": "Haley had 2 dollars. If she got 13 more dollars in total for doing chores and her birthday,",
+        "Question": "what's the difference between the number of dollars before Haley got money and she got from events?",
+        "Solution-Type": "Difference",
+        "Answer": "11 (dollars)",
+        "Formula": "13-2=11"
+    },
+    {
+        "@ID": "nluds-0982",
+        "@Grade": "3",
+        "@Source": "http://www.mathplayground.com",
+        "Body": "Trevor counted 77 coins in his bank. He counted 29 quarters. The rest are dimes.",
+        "Question": "How many more coints of the total than quarts does Trevor have?",
+        "Solution-Type": "Difference",
+        "Answer": "48 (coints)",
+        "Formula": "77-29=48"
+    }
+]

@@ -499,6 +499,10 @@ class Graph2Tree(nn.Module):
         temp_0 = [0 for _ in range(hidden_size)]
         for b in range(batch_size):
             for i in num_pos[b]:
+                if i == -1:
+                    indices.append(0)
+                    masked_index.append(temp_1)
+                    continue
                 indices.append(i + b * sen_len)
                 masked_index.append(temp_0)
             indices += [0 for _ in range(len(num_pos[b]), num_size)]

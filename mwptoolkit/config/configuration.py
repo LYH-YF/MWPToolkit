@@ -158,6 +158,8 @@ class Config(object):
 
     def _build_path_config(self):
         path_config_dict = {}
+        root=os.getcwd()
+        path_config_dict['root']=root
         model_name = self.config_dict['model']
         dataset_name = self.config_dict['dataset']
         if model_name == None:

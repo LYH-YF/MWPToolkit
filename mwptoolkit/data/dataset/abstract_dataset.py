@@ -1,4 +1,5 @@
 import random
+import os
 import copy
 import torch
 from mwptoolkit.utils.utils import read_json_data, write_json_data
@@ -26,6 +27,7 @@ class AbstractDataset(object):
         self.linear = config["linear"]
         self.device = config["device"]
         self.equation_fix = config["equation_fix"]
+        self.root = config['root']
         self.max_span_size = 1
 
     def _load_dataset(self):
@@ -35,9 +37,14 @@ class AbstractDataset(object):
         trainset_file = self.dataset_path + "/trainset.json"
         validset_file = self.dataset_path + "/validset.json"
         testset_file = self.dataset_path + "/testset.json"
-        self.trainset = read_json_data(trainset_file)[:]
-        self.validset = read_json_data(validset_file)[:]
-        self.testset = read_json_data(testset_file)[:]
+        # base_dir=os.path.abspath(trainset_file)
+        # print(base_dir)
+        self.trainset = read_json_data(os.path.join(self.root,trainset_file))[:]
+        self.validset = read_json_data(os.path.join(self.root,validset_file))[:]
+        self.testset = read_json_data(os.path.join(self.root,testset_file))[:]
+        # self.trainset = read_json_data(trainset_file)[:]
+        # self.validset = read_json_data(validset_file)[:]
+        # self.testset = read_json_data(testset_file)[:]
 
     def _load_fold_dataset(self):
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)

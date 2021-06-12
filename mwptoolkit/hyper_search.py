@@ -1,5 +1,6 @@
 from functools import partial
 from logging import getLogger
+import os
 
 import torch
 import ray
@@ -14,77 +15,39 @@ from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
 from mwptoolkit.utils.logger import init_logger
 
-def train_process(search_parameter,config):
+def train_process(search_parameter,configs):
     for key,value in search_parameter.items():
-        config[key]=value
-    dataset = create_dataset(config)
+        configs[key]=value
+    dataset = create_dataset(configs)
     dataset.dataset_load()
-    if config["share_vocab"]:
-        config["out_symbol2idx"] = dataset.out_symbol2idx
-        config["out_idx2symbol"] = dataset.out_idx2symbol
-        config["in_word2idx"] = dataset.in_word2idx
-        config["in_idx2word"] = dataset.in_idx2word
-        config["out_sos_token"] = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
-    else:
-        if config["symbol_for_tree"]:
-            config["out_symbol2idx"] = dataset.out_symbol2idx
-            config["out_idx2symbol"] = dataset.out_idx2symbol
-            config["in_word2idx"] = dataset.in_word2idx
-            config["in_idx2word"] = dataset.in_idx2word
-        else:
-            config["out_symbol2idx"] = dataset.out_symbol2idx
-            config["out_idx2symbol"] = dataset.out_idx2symbol
-            config["out_sos_token"] = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
-            config["out_eos_token"] = dataset.out_symbol2idx[SpecialTokens.EOS_TOKEN]
-            config["out_pad_token"] = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
-            config["in_word2idx"] = dataset.in_word2idx
-            config["in_idx2word"] = dataset.in_idx2word
 
-    config["vocab_size"] = len(dataset.in_idx2word)
-    config["symbol_size"] = len(dataset.out_idx2symbol)
-    config['span_size'] = dataset.max_span_size
-    config["operator_nums"] = dataset.operator_nums
-    config["copy_nums"] = dataset.copy_nums
-    config["generate_size"] = len(dataset.generate_list)
-    config["generate_list"] = dataset.generate_list
-    config["operator_list"] = dataset.operator_list
-    config["num_start"] = dataset.num_start
+    dataloader = create_dataloader(configs)(configs, dataset)
 
-    dataloader = create_dataloader(config)(config, dataset)
+    model = get_model(configs["model"])(configs, dataset).to(configs["device"])
 
-    model = get_model(config["model"])(config).to(config["device"])
-    if config["pretrained_model_path"]:
-        config["vocab_size"] = len(model.tokenizer)
-        config["symbol_size"] = len(model.tokenizer)
-        config["embedding_size"] = len(model.tokenizer)
-        config["in_word2idx"] = model.tokenizer.get_vocab()
-        config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
-        config["out_symbol2idx"] = model.tokenizer.get_vocab()
-        config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
-
-    if config["equation_fix"] == FixType.Prefix:
-        evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
-    elif config["equation_fix"] == FixType.Nonfix:
-        evaluator = SeqEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
-    elif config["equation_fix"] == FixType.Postfix:
-        evaluator = PostEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+    if configs["equation_fix"] == FixType.Prefix:
+        evaluator = PreEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
+    elif configs["equation_fix"] == FixType.Nonfix:
+        evaluator = SeqEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
+    elif configs["equation_fix"] == FixType.Postfix:
+        evaluator = PostEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
     else:
         raise NotImplementedError
 
-    trainer = get_trainer(config["task_type"], config["model"])(config, model, dataloader, evaluator)
+    trainer = get_trainer(configs["task_type"], configs["model"], configs["supervising_mode"])(configs, model, dataloader, evaluator)
     trainer.fit()
     tune.report(accuracy=trainer.best_test_value_accuracy)
 
 def hyper_search_process(model_name, dataset_name, task_type, search_parameter, config_dict={}):
-    config = Config(model_name, dataset_name, task_type, config_dict)
+    configs = Config(model_name, dataset_name, task_type, config_dict)
 
-    init_seed(config['random_seed'], True)
+    init_seed(configs['random_seed'], True)
 
-    init_logger(config)
+    init_logger(configs)
     logger = getLogger()
 
-    logger.info(config)
-    ray.init(num_gpus=config['gpu_nums'])
+    logger.info(configs)
+    ray.init(num_gpus=configs['gpu_nums'])
 
     scheduler = ASHAScheduler(
         metric="accuracy",
@@ -95,9 +58,10 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
     reporter = CLIReporter(
         metric_columns=["accuracy"])
     result=tune.run(
-        partial(train_process,config=config),
+        partial(train_process,configs=configs),
         config=search_parameter,
         scheduler=scheduler,
+        num_samples=10,
         progress_reporter=reporter
     )
 

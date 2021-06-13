@@ -4,5 +4,6 @@
     "max_output_len":30,
     "gpu_id":"0",
     "test_step":2,
-    "supervising_mode": "fully_supervised"
+    "supervising_mode": "fully_supervised",
+    "rebuild":false
 }

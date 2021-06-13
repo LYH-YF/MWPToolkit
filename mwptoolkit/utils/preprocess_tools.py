@@ -630,6 +630,8 @@ def number_transfer_math23k(data, mask_type="number", min_generate_keep=0):
                 if pos.end() < len(s):
                     input_seq.append(s[pos.end():])
             else:
+                if s=='　' or s=='':
+                    continue
                 input_seq.append(s)
         # find all num position
         for word_pos, word in enumerate(input_seq):

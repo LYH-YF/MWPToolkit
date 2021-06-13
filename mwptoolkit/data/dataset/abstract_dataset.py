@@ -28,6 +28,7 @@ class AbstractDataset(object):
         self.device = config["device"]
         self.equation_fix = config["equation_fix"]
         self.root = config['root']
+        self.rebuild = config['rebuild']
         self.max_span_size = 1
 
     def _load_dataset(self):

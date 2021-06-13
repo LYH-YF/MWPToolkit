@@ -5,7 +5,7 @@ import stanza
 
 from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operators, MaskSymbol, SPECIAL_TOKENS, DatasetName, TaskType
-from mwptoolkit.utils.preprocess_tools import number_transfer, number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp, write_json_data
+from mwptoolkit.utils.preprocess_tools import number_transfer, number_transfer_asdiv_a, number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp, write_json_data
 from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
 from mwptoolkit.utils.utils import read_json_data
@@ -25,6 +25,8 @@ class DatasetMultiEncDec(TemplateDataset):
             transfer = number_transfer_ape200k
         elif self.dataset == DatasetName.SVAMP:
             transfer = number_transfer_svamp
+        elif self.dataset == DatasetName.asdiv_a:
+            transfer = number_transfer_asdiv_a
         elif self.dataset == DatasetName.alg514:
             transfer = num_transfer_alg514
         elif self.dataset == DatasetName.draw:
@@ -36,9 +38,17 @@ class DatasetMultiEncDec(TemplateDataset):
                 transfer = number_transfer
             elif self.task_type == TaskType.MultiEquation:
                 transfer = num_transfer_multi
-        self.trainset, generate_list, train_copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
-        self.validset, _g, valid_copy_nums = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
-        self.testset, _g, test_copy_nums = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
+        if self.task_type == TaskType.SingleEquation:
+            self.trainset, generate_list, train_copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
+            self.validset, _g, valid_copy_nums = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
+            self.testset, _g, test_copy_nums = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
+            unk_symbol=[]
+        elif self.task_type == TaskType.MultiEquation:
+            self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.mask_symbol, self.min_generate_keep, ";")
+            self.validset, _g, valid_copy_nums, _u = transfer(self.validset, self.mask_symbol, self.min_generate_keep, ";")
+            self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol, self.min_generate_keep, ";")
+        else:
+            raise NotImplementedError
         for idx, data in enumerate(self.trainset):
             self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
             self.trainset[idx]["postfix equation"] = from_infix_to_postfix(data["equation"])
@@ -51,7 +61,7 @@ class DatasetMultiEncDec(TemplateDataset):
             self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
             self.testset[idx]["postfix equation"] = from_infix_to_postfix(data["equation"])
             self.testset[idx]["prefix equation"] = from_infix_to_prefix(data["equation"])
-        self.generate_list = generate_list
+        self.generate_list = unk_symbol + generate_list
         if self.symbol_for_tree:
             self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         else:
@@ -65,7 +75,7 @@ class DatasetMultiEncDec(TemplateDataset):
             self.operator_list = copy.deepcopy(Operators.Multi)
         else:
             raise NotImplementedError
-        if os.path.exists(self.parse_tree_path):
+        if os.path.exists(self.parse_tree_path) and not self.rebuild:
             logger = getLogger()
             logger.info('read pos infomation from {} ...'.format(self.parse_tree_path))
             self.read_pos_from_file(self.parse_tree_path)

@@ -389,37 +389,50 @@ class MultiEncDecTrainer(GTSTrainer):
     def _build_optimizer(self):
         # optimizer
         # self.embedder_optimizer = torch.optim.Adam(self.model.embedder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        # self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        # self.decoder_optimizer = torch.optim.Adam(self.model.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        # self.node_generater_optimizer = torch.optim.Adam(self.model.node_generater.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        # self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        self.optimizer = torch.optim.Adam(self.model.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.numencoder_optimizer = torch.optim.Adam(self.model.numencoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.predict_optimizer = torch.optim.Adam(self.model.predict.parameters(),self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.decoder_optimizer = torch.optim.Adam(
+            [
+                {'params':self.model.decoder.parameters()},
+                {'params':self.model.out.parameters()},
+                {'params':self.model.out_embedder.parameters()}
+            ], 
+            self.config["learning_rate"], 
+            weight_decay=self.config["weight_decay"]
+        )
+        self.generate_optimizer = torch.optim.Adam(self.model.generate.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        #self.optimizer = torch.optim.Adam(self.model.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         # scheduler
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config["step_size"], gamma=0.5)
-        # self.embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.embedder_optimizer, step_size=self.config["step_size"], gamma=0.5)
-        # self.encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.encoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
-        # self.decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.decoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
-        # self.node_generater_scheduler = torch.optim.lr_scheduler.StepLR(self.node_generater_optimizer, step_size=self.config["step_size"], gamma=0.5)
-        # self.merge_scheduler = torch.optim.lr_scheduler.StepLR(self.merge_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        #self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.encoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.numencoder_scheduler = torch.optim.lr_scheduler.StepLR(self.numencoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.predict_scheduler = torch.optim.lr_scheduler.StepLR(self.predict_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.decoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.generate_scheduler = torch.optim.lr_scheduler.StepLR(self.generate_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.merge_scheduler = torch.optim.lr_scheduler.StepLR(self.merge_optimizer, step_size=self.config["step_size"], gamma=0.5)
 
     def _load_checkpoint(self):
         check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
-        self.optimizer.load_state_dict(check_pnt['optimizer'])
-        # self.embedder_optimizer.load_state_dict(check_pnt["embedder_optimizer"])
-        # self.encoder_optimizer.load_state_dict(check_pnt["encoder_optimizer"])
-        # self.decoder_optimizer.load_state_dict(check_pnt["decoder_optimizer"])
-        # self.node_generater_optimizer.load_state_dict(check_pnt["generate_optimizer"])
-        # self.merge_optimizer.load_state_dict(check_pnt["merge_optimizer"])
+        #self.optimizer.load_state_dict(check_pnt['optimizer'])
+        self.numencoder_optimizer.load_state_dict(check_pnt["numencoder_optimizer"])
+        self.encoder_optimizer.load_state_dict(check_pnt["encoder_optimizer"])
+        self.predict_optimizer.load_state_dict(check_pnt['predict_optimizer'])
+        self.decoder_optimizer.load_state_dict(check_pnt["decoder_optimizer"])
+        self.generate_optimizer.load_state_dict(check_pnt["generate_optimizer"])
+        self.merge_optimizer.load_state_dict(check_pnt["merge_optimizer"])
         #load parameter of scheduler
-        self.scheduler.load_state_dict(check_pnt['scheduler'])
-        # self.embedder_scheduler.load_state_dict(check_pnt["embedder_scheduler"])
-        # self.encoder_scheduler.load_state_dict(check_pnt["encoder_scheduler"])
-        # self.decoder_scheduler.load_state_dict(check_pnt["decoder_scheduler"])
-        # self.node_generater_scheduler.load_state_dict(check_pnt["generate_scheduler"])
-        # self.merge_scheduler.load_state_dict(check_pnt["merge_scheduler"])
+        #self.scheduler.load_state_dict(check_pnt['scheduler'])
+        self.encoder_scheduler.load_state_dict(check_pnt["encoder_scheduler"])
+        self.numencoder_scheduler.load_state_dict(check_pnt["numencoder_scheduler"])
+        self.predict_scheduler.load_state_dict(check_pnt['predict_scheduler'])
+        self.decoder_scheduler.load_state_dict(check_pnt["decoder_scheduler"])
+        self.node_generater_scheduler.load_state_dict(check_pnt["generate_scheduler"])
+        self.merge_scheduler.load_state_dict(check_pnt["merge_scheduler"])
         # other parameter
         self.start_epoch = check_pnt["start_epoch"]
         self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
@@ -431,18 +444,18 @@ class MultiEncDecTrainer(GTSTrainer):
     def _save_checkpoint(self):
         check_pnt = {
             "model": self.model.state_dict(),
-            "optimizer":self.optimizer.state_dict(),
-            "scheduler":self.scheduler.state_dict(),
-            # "embedder_optimizer": self.embedder_optimizer.state_dict(),
-            # "encoder_optimizer": self.encoder_optimizer.state_dict(),
-            # "decoder_optimizer": self.decoder_optimizer.state_dict(),
-            # "generate_optimizer": self.node_generater_optimizer.state_dict(),
-            # "merge_optimizer": self.merge_optimizer.state_dict(),
-            # "embedder_scheduler": self.embedder_scheduler.state_dict(),
-            # "encoder_scheduler": self.encoder_scheduler.state_dict(),
-            # "decoder_scheduler": self.decoder_scheduler.state_dict(),
-            # "generate_scheduler": self.node_generater_scheduler.state_dict(),
-            # "merge_scheduler": self.merge_scheduler.state_dict(),
+            "encoder_optimizer": self.encoder_optimizer.state_dict(),
+            "numencoder_optimizer": self.numencoder_optimizer.state_dict(),
+            "predict_optimizer": self.predict_optimizer.state_dict(),
+            "decoder_optimizer": self.decoder_optimizer.state_dict(),
+            "generate_optimizer": self.generate_optimizer.state_dict(),
+            "merge_optimizer": self.merge_optimizer.state_dict(),
+            "encoder_scheduler": self.encoder_scheduler.state_dict(),
+            "numencoder_scheduler": self.numencoder_scheduler.state_dict(),
+            "predict_scheduler": self.predict_scheduler.state_dict(),
+            "decoder_scheduler": self.decoder_scheduler.state_dict(),
+            "generate_scheduler": self.generate_scheduler.state_dict(),
+            "merge_scheduler": self.merge_scheduler.state_dict(),
             "start_epoch": self.epoch_i,
             "best_valid_value_accuracy": self.best_valid_value_accuracy,
             "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
@@ -454,20 +467,22 @@ class MultiEncDecTrainer(GTSTrainer):
         torch.save(check_pnt, self.config["checkpoint_path"])
 
     def _scheduler_step(self):
-        self.scheduler.step()
-        # self.embedder_scheduler.step()
-        # self.encoder_scheduler.step()
-        # self.decoder_scheduler.step()
-        # self.node_generater_scheduler.step()
-        # self.merge_scheduler.step()
+        #self.scheduler.step()
+        self.encoder_scheduler.step()
+        self.numencoder_scheduler.step()
+        self.predict_scheduler.step()
+        self.decoder_scheduler.step()
+        self.generate_scheduler.step()
+        self.merge_scheduler.step()
 
     def _optimizer_step(self):
-        self.optimizer.step()
-        # self.embedder_optimizer.step()
-        # self.encoder_optimizer.step()
-        # self.decoder_optimizer.step()
-        # self.node_generater_optimizer.step()
-        # self.merge_optimizer.step()
+        #self.optimizer.step()
+        self.encoder_optimizer.step()
+        self.numencoder_optimizer.step()
+        self.predict_optimizer.step()
+        self.decoder_optimizer.step()
+        self.generate_optimizer.step()
+        self.merge_optimizer.step()
 
     def _train_batch(self, batch):
         batch_loss = self.model.calculate_loss(batch)

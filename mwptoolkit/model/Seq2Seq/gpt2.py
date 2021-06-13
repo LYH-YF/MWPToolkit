@@ -1,15 +1,17 @@
 import torch
 from torch import nn
 from transformers import GPT2LMHeadModel, GPT2Config, BertTokenizer, GPT2Tokenizer
+from mwptoolkit.loss.nll_loss import NLLLoss
 
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask, DatasetName
 
 class GPT2(nn.Module):
-    def __init__(self, config):
+    def __init__(self, config, dataset):
         super().__init__()
 
         #self.eval_generate_num = config['eval_generate_num']
         self.device=config["device"]
+        self.max_out_len = config['max_output_len']
 
         self.pretrained_model_path = config['pretrained_model_path']
 
@@ -29,17 +31,18 @@ class GPT2(nn.Module):
 
         self.decoder = GPT2LMHeadModel.from_pretrained(self.pretrained_model_path, config=self.configuration)
         
-        self.init_tokenizer_and_resize(config["generate_list"],NumMask.number[:config["copy_nums"]],config["operator_list"])
+        self.init_tokenizer_and_resize(dataset.generate_list,NumMask.number[:dataset.copy_nums],dataset.operator_list)
         #self.padding_token_idx = self.tokenizer.pad_token_id
-        self.max_out_len = config['max_output_len']
 
-        config["vocab_size"] = len(self.tokenizer)
-        config["symbol_size"] = len(self.tokenizer)
-        config["embedding_size"] = len(self.tokenizer)
-        config["in_word2idx"] = self.tokenizer.get_vocab()
-        config["in_idx2word"] = list(self.tokenizer.get_vocab().keys())
-        config["out_symbol2idx"] = self.tokenizer.get_vocab()
-        config["out_idx2symbol"] = list(self.tokenizer.get_vocab().keys())
+        # config["vocab_size"] = len(self.tokenizer)
+        # config["symbol_size"] = len(self.tokenizer)
+        # config["embedding_size"] = len(self.tokenizer)
+        # config["in_word2idx"] = self.tokenizer.get_vocab()
+        # config["in_idx2word"] = list(self.tokenizer.get_vocab().keys())
+        # config["out_symbol2idx"] = self.tokenizer.get_vocab()
+        # config["out_idx2symbol"] = list(self.tokenizer.get_vocab().keys())
+
+        self.loss = NLLLoss()
     
     def init_tokenizer_and_resize(self,generate_list,mask_number_list,operator_list):
         _ = self.tokenizer.add_tokens(operator_list)
@@ -61,10 +64,34 @@ class GPT2(nn.Module):
         else:
             all_output=self.generate_without_t(seq)
             return all_output,None
+
+    def calculate_loss(self, batch_data):
+        seq, target = batch_data["ques_source"], batch_data["equ_source"]
+        outputs, target = self.forward(seq, target)
+        outputs = torch.nn.functional.log_softmax(outputs, dim=1)
+
+        self.loss.reset()
+        self.loss.eval_batch(outputs, target.view(-1))
+        self.loss.backward()
+
+        return self.loss.get_loss()
+
+    def model_test(self, batch_data):
+        seq = batch_data["ques_source"]
+
+        num_list = batch_data['num list']
+        target = batch_data['equ_source']
+
+        outputs = self.generate_without_t(seq)
+        batch_size = len(target)
+
+        outputs = self.convert_idx2symbol(outputs, num_list)
+        targets = self.convert_idx2symbol(target, num_list)
+        return outputs, targets
+
     def list2str(self,x):
         y=''.join(x)
         return y
-
 
     def generate_t(self,seq,target=None):
         srcs = []
@@ -133,11 +160,10 @@ class GPT2(nn.Module):
             all_output.append(tokens)
             inputs=torch.cat((inputs,tokens),dim=1)
         all_output=torch.cat(all_output,dim=1)
-        #all_output = self.decode_(all_output)
+        all_output = self.decode_(all_output)
         # print (all_output)
         # print ("all_output:", all_output.size())
         return all_output
-
 
     def decode_(self,outputs):
         batch_size=outputs.size(0)
@@ -149,9 +175,11 @@ class GPT2(nn.Module):
             for token in symbols:
                 if token == self.start_token:
                     continue
-                if '/' == token[0] and len(token) == 2 and ('+' == token[1] or  '-' == token[1] or '*' == token[1] or '/' == token[1]):
-                    symbols_.append(token[0])
+                if 'Ġ' in token:
                     symbols_.append(token[1:])
+                # if '/' == token[0] and len(token) == 2 and ('+' == token[1] or  '-' == token[1] or '*' == token[1] or '/' == token[1]):
+                #     symbols_.append(token[0])
+                #     symbols_.append(token[1:])
                 elif token == self.eos_token:
                     break
                 else:
@@ -174,6 +202,29 @@ class GPT2(nn.Module):
         outputs_tensor = torch.LongTensor(outputs)
 
         return outputs_tensor
+
+    def convert_idx2symbol(self, outputs, num_lists):
+        batch_size = len(outputs)
+        output_list = []
+        for b_i in range(batch_size):
+            num_len = len(num_lists[b_i])
+            res = []
+            if isinstance(outputs[b_i], str):
+                output = outputs[b_i].split()
+            else:
+                output = outputs[b_i]
+            for s_i in range(len(output)):
+                symbol = output[s_i]
+                if "NUM" in symbol:
+                    num_idx = NumMask.number.index(symbol)
+                    if num_idx >= num_len:
+                        res.append(symbol)
+                    else:
+                        res.append(num_lists[b_i][num_idx])
+                else:
+                    res.append(symbol)
+            output_list.append(res)
+        return output_list
 
 # class GPT2(nn.Module):
 #     def __init__(self, config):

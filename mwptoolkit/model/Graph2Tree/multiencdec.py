@@ -350,16 +350,7 @@ class MultiEncDec(nn.Module):
         max_target_length = max(target_length)
 
         all_node_outputs = []
-        # all_leafs = []
-
-        #    copy_num_len = [len(_) for _ in num_pos]
-        #    num_size = max(copy_num_len)
-        #    nums_encoder_outputs, masked_index = get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
-        #                                                                        encoder.hidden_size)
-        #    all_nums_encoder_outputs = numencoder(nums_encoder_outputs, num_order_pad)
-        #    all_nums_encoder_outputs = all_nums_encoder_outputs.masked_fill_(masked_index.bool(), 0.0)
-
-        # num_start = output_lang.num_start
+        
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
         for t in range(max_target_length):
@@ -402,19 +393,8 @@ class MultiEncDec(nn.Module):
 
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
-        #all_node_outputs = all_node_outputs.view(-1,all_node_outputs.size(-1))
-
-        # target = target.transpose(0, 1).contiguous()
-        # if USE_CUDA:
-        #     # all_leafs = all_leafs.cuda()
-        #     all_node_outputs = all_node_outputs.cuda()
-        #     target = target.cuda()
-
-        # # op_target = target < num_start
-        # # loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
-        # loss = masked_cross_entropy(all_node_outputs, target, target_length)
-        # # loss = loss_0 + loss_1
-        return all_node_outputs  # , loss_0.item(), loss_1.item()
+        
+        return all_node_outputs  
 
     def train_attn_double(self, encoder_outputs, decoder_hidden, target, target_length, batch_size, seq_mask, nums_stack_batch):
         max_target_length = max(target_length)

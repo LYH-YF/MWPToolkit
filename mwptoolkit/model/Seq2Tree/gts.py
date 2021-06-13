@@ -213,15 +213,7 @@ class GTS(nn.Module):
             left_childs = []
             #print("target", target.size())
             #print("target[:,t]", target[:,t].size())
-            '''+ + n2 n3 n1
-                        +
-                    +(l1)    n1(r1)
-                n2(l2)   n3(r2)
             
-            node stack(r1,r2)
-            tree_emb(+,)
-            left_child(n2)
-            '''
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:, t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()

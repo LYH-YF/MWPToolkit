@@ -6,7 +6,7 @@
     "max_len":256,
     "warmup_steps": 1500,
     "share_vocab":true,
-    "test_batch_size":1,
+    "test_batch_size":32,
     "epoch_nums":80,
     "add_sos":true,
     "add_eos":true

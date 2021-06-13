@@ -94,8 +94,9 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
             output2_batch.append(postfix_equ_tensor)
 
             num_list=[str2float(n) for n in data['number list']]
-            num_list_batch.append(num_list)
+            #num_list_batch.append(num_list)
             num_order=self.num_order_processed(num_list)
+            num_list_batch.append(data['number list'])
             num_order_batch.append(num_order)
             num_stack_batch.append(self._build_num_stack(prefix_equ, data["number list"]))
             parse_tree_batch.append(data['parse tree'])

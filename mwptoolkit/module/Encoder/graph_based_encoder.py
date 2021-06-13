@@ -312,6 +312,7 @@ class NumEncoder(nn.Module):
         self.num_gnn = clones(Num_Graph_Module(node_dim), hop_size)
     
     def forward(self, encoder_outputs, num_encoder_outputs, num_pos_pad, num_order_pad):
+        #torch.Size([64, 51, 512]) torch.Size([64, 9, 512]) torch.Size([64, 9]) torch.Size([64, 9])
         num_embedding = num_encoder_outputs.clone()
         batch_size = num_embedding.size(0)
         num_mask = (num_pos_pad > -1).long()
@@ -343,6 +344,6 @@ class NumEncoder(nn.Module):
         #gnn_info_vec = gnn_info_vec.transpose(0, 1)
         gnn_info_vec = encoder_outputs + gnn_info_vec
         num_embedding = num_encoder_outputs + num_embedding
-        problem_output = torch.max(gnn_info_vec, 0).values
+        problem_output = torch.max(gnn_info_vec, 1).values
         
         return gnn_info_vec, num_embedding, problem_output

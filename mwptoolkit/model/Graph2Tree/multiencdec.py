@@ -334,8 +334,8 @@ class MultiEncDec(nn.Module):
         all_output1 = self.evaluate_tree_double(encoder_outputs, problem_output, num_outputs, batch_size, padding_hidden, seq_mask, num_mask)
         all_output2 = self.evaluate_attn_double(encoder_outputs, decoder_hidden, batch_size, seq_mask)
         if all_output1.score >= all_output2.score:
-            output1=self.convert_idx2symbol1(all_output1.out,num_list,num_stack1_batch)
-            targets1=self.convert_idx2symbol1(target1,num_list,num_stack1_batch)
+            output1=self.convert_idx2symbol1(all_output1.out,num_list[0],copy_list(num_stack1_batch[0]))
+            targets1=self.convert_idx2symbol1(target1[0],num_list[0],copy_list(num_stack1_batch[0]))
             return "tree", output1, targets1
         else:
             output2=self.convert_idx2symbol2(torch.tensor(all_output2.all_output).view(1,-1),num_list)
@@ -445,8 +445,8 @@ class MultiEncDec(nn.Module):
                 #     self.loss.reset()
                 #     self.loss.eval_batch(decoder_output,target[:,t],target[:,t]!=0)
                 #     self.loss.backward()
-
-                all_decoder_outputs[:,t,:] = decoder_output.squeeze(dim=1)
+                decoder_output=decoder_output.squeeze(dim=1)
+                all_decoder_outputs[:,t,:] = decoder_output
                 #all_decoder_outputs.append(decoder_output)
                 decoder_input = self.generate_decoder_input(target[:,t], decoder_output, nums_stack_batch)
                 target[:,t] = decoder_input
@@ -519,8 +519,8 @@ class MultiEncDec(nn.Module):
                     beam_list.append(Beam(topv[:, k], temp_input, temp_hidden, temp_output))
             all_decoder_outputs = beam_list[0].all_output
 
-            for t in range(max_target_length):
-                target[:,t] = self.generate_decoder_input(target[:,t], all_decoder_outputs[t], nums_stack_batch)
+            # for t in range(max_target_length):
+            #     target[:,t] = self.generate_decoder_input(target[:,t], all_decoder_outputs[t], nums_stack_batch)
         # Loss calculation and backpropagation
 
         # if USE_CUDA:
@@ -690,6 +690,10 @@ class MultiEncDec(nn.Module):
         temp_0 = [0 for _ in range(hidden_size)]
         for b in range(batch_size):
             for i in num_pos[b]:
+                if i == -1:
+                    indices.append(0)
+                    masked_index.append(temp_1)
+                    continue
                 indices.append(i + b * sen_len)
                 masked_index.append(temp_0)
             indices += [0 for _ in range(len(num_pos[b]), num_size)]

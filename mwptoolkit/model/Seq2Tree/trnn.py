@@ -1,4 +1,5 @@
 import copy
+from mwptoolkit.module.Decoder.rnn_decoder import AttentionalRNNDecoder
 from mwptoolkit.loss.nll_loss import NLLLoss
 import torch
 from torch import nn
@@ -11,6 +12,229 @@ from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.model.Seq2Seq.rnnencdec import RNNEncDec
 from mwptoolkit.utils.data_structure import Node, BinaryTree
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
+
+
+class TRNN(nn.Module):
+    def __init__(self, config, dataset):
+        super(TRNN,self).__init__()
+        self.embedding_size=config["embedding_size"]
+        self.dropout_ratio = config['dropout_ratio']
+        self.bidirectional = config["bidirectional"]
+        self.embedding_size = config["embedding_size"]
+        self.hidden_size = config["hidden_size"]
+        self.decode_hidden_size = config["decode_hidden_size"]
+        self.attention = config["attention"]
+        self.num_layers = config["num_layers"]
+        self.share_vocab = config["share_vocab"]
+        self.teacher_force_ratio = config["teacher_force_ratio"]
+        self.encoder_rnn_cell_type = config["encoder_rnn_cell_type"]
+        self.decoder_rnn_cell_type = config["decoder_rnn_cell_type"]
+        
+        self.vocab_size=len(dataset.in_idx2word)
+        self.symbol_size=len(dataset.out_idx2symbol)
+        self.temp_symbol_size=len(dataset.temp_idx2symbol)
+        self.operator_nums=len(dataset.operator_list)
+        self.operator_list=dataset.operator_list
+        # seq2seq module
+        self.seq2seq_in_embedder=BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
+        if self.share_vocab:
+            self.seq2seq_out_embedder=self.seq2seq_in_embedder
+        else:
+            self.seq2seq_out_embedder=BaiscEmbedder(self.temp_symbol_size,self.embedding_size,self.dropout_ratio)
+        self.seq2seq_encoder=BasicRNNEncoder(self.embedding_size,self.hidden_size,self.num_layers,\
+                                                self.encoder_rnn_cell_type,self.dropout_ratio,self.bidirectional)
+        self.seq2seq_decoder=AttentionalRNNDecoder(self.embedding_size,self.decode_hidden_size,self.hidden_size,\
+                                                    self.num_layers,self.decoder_rnn_cell_type,self.dropout_ratio)
+        self.seq2seq_gen_linear = nn.Linear(self.hidden_size, self.temp_symbol_size)
+        #answer module
+        self.answer_in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        self.answer_encoder=SelfAttentionRNNEncoder(self.embedding_size,self.hidden_size,self.embedding_size,self.num_layers,\
+                                                    self.encoder_rnn_cell_type,self.dropout_ratio,self.bidirectional)
+        self.answer_rnn = RecursiveNN(self.embedding_size, self.operator_nums, self.operator_list)
+
+    def seq2seq_calculate_loss(self, batch_data):
+        r"""calculate loss of a batch data.
+        """
+        seq = batch_data['question']
+        seq_length = batch_data['ques len']
+        target = batch_data['template']
+
+        batch_size = seq.size(0)
+        device = seq.device
+
+        seq_emb = self.seq2seq_in_embedder(seq)
+        encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
+
+        if self.bidirectional:
+            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+            if (self.encoder_rnn_cell_type == 'lstm'):
+                encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
+            else:
+                encoder_hidden = encoder_hidden[::2].contiguous()
+        if self.encoder_rnn_cell_type == self.decoder_rnn_cell_type:
+            pass
+        elif (self.encoder_rnn_cell_type == 'gru') and (self.decoder_rnn_cell_type == 'lstm'):
+            encoder_hidden = (encoder_hidden, encoder_hidden)
+        elif (self.encoder_rnn_cell_type == 'rnn') and (self.decoder_rnn_cell_type == 'lstm'):
+            encoder_hidden = (encoder_hidden, encoder_hidden)
+        elif (self.encoder_rnn_cell_type == 'lstm') and (self.decoder_rnn_cell_type == 'gru' or self.decoder_rnn_cell_type == 'rnn'):
+            encoder_hidden = encoder_hidden[0]
+        else:
+            pass
+
+        decoder_inputs = self.init_seq2seq_decoder_inputs(target, device, batch_size)
+        token_logits = self.seq2seq_generate_t(encoder_outputs, encoder_hidden, decoder_inputs)
+        if self.share_vocab:
+            target = self.convert_in_idx_2_temp_idx(target)
+        self.loss.reset()
+        self.loss.eval_batch(token_logits, target.view(-1))
+        self.loss.backward()
+        return self.loss.get_loss()
+    def calculate_loss_ans_module(self,batch_data):
+        seq=batch_data["question"]
+        seq_length=batch_data["ques len"]
+        num_pos=batch_data["num pos"]
+        template=batch_data["equ_source"]
+
+        device = seq.device
+        seq_emb = self.answer_in_embedder(seq)
+        encoder_output, encoder_hidden = self.answer_encoder(seq_emb, seq_length)
+        batch_size = encoder_output.size(0)
+        generate_num = [self.in_idx2word.index(SpecialTokens.UNK_TOKEN)] + [self.in_idx2word.index(num) for num in self.generate_list]
+        generate_num = torch.tensor(generate_num).to(device)
+        generate_emb = self.answer_in_embedder(generate_num)
+
+        batch_prob = []
+        batch_target = []
+        for b_i in range(batch_size):
+            look_up = [SpecialTokens.UNK_TOKEN] + self.generate_list + NumMask.number[:len(num_pos[b_i])]
+            num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
+            #tree_i=tree[b_i]
+            try:
+                tree_i = self.template2tree(template[b_i])
+            except IndexError:
+                continue
+            prob, target = self.answer_rnn(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
+            if prob != []:
+                batch_prob.append(prob)
+                batch_target.append(target)
+        
+        self.ans_module_loss.reset()
+        for b_i in range(len(target)):
+            output=torch.nn.functional.log_softmax(batch_prob[b_i],dim=1)
+            self.ans_module_loss.eval_batch(output, target[b_i].view(-1))
+        self.ans_module_loss.backward()
+        return self.ans_module_loss.get_loss()
+    
+    def seq2seq_generate_t(self, encoder_outputs, encoder_hidden, decoder_inputs):
+        with_t = random.random()
+        if with_t < self.teacher_force_ratio:
+            if self.attention:
+                decoder_outputs, decoder_states = self.seq2seq_decoder(decoder_inputs, encoder_hidden, encoder_outputs)
+            else:
+                decoder_outputs, decoder_states = self.seq2seq_decoder(decoder_inputs, encoder_hidden)
+            token_logits = self.seq2seq_gen_linear(decoder_outputs)
+            token_logits = token_logits.view(-1, token_logits.size(-1))
+            token_logits = torch.nn.functional.log_softmax(token_logits, dim=1)
+            #token_logits=torch.log_softmax(token_logits,dim=1)
+        else:
+            seq_len = decoder_inputs.size(1)
+            decoder_hidden = encoder_hidden
+            decoder_input = decoder_inputs[:, 0, :].unsqueeze(1)
+            token_logits = []
+            for idx in range(seq_len):
+                if self.attention:
+                    decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden, encoder_outputs)
+                else:
+                    decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden)
+                #attn_list.append(attn)
+                step_output = decoder_output.squeeze(1)
+                token_logit = self.seq2seq_gen_linear(step_output)
+                predict = torch.nn.functional.log_softmax(token_logit, dim=1)
+                #predict=torch.log_softmax(token_logit,dim=1)
+                output = predict.topk(1, dim=1)[1]
+                token_logits.append(predict)
+
+                if self.share_vocab:
+                    output = self.convert_temp_idx_2_in_idx(output)
+                    decoder_input = self.seq2seq_out_embedder(output)
+                else:
+                    decoder_input = self.seq2seq_out_embedder(output)
+            token_logits = torch.stack(token_logits, dim=1)
+            token_logits = token_logits.view(-1, token_logits.size(-1))
+        return token_logits
+
+    def seq2seq_generate_without_t(self, encoder_outputs, encoder_hidden, decoder_input):
+        all_outputs = []
+        decoder_hidden = encoder_hidden
+        for idx in range(self.max_gen_len):
+            if self.attention:
+                decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden, encoder_outputs)
+            else:
+                decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden)
+            #attn_list.append(attn)
+            step_output = decoder_output.squeeze(1)
+            token_logits = self.seq2seq_gen_linear(step_output)
+            predict = torch.nn.functional.log_softmax(token_logits, dim=1)
+            output = predict.topk(1, dim=1)[1]
+
+            all_outputs.append(output)
+            if self.share_vocab:
+                output = self.convert_temp_idx_2_in_idx(output)
+                decoder_input = self.seq2seq_out_embedder(output)
+            else:
+                decoder_input = self.seq2seq_out_embedder(output)
+        all_outputs = torch.cat(all_outputs, dim=1)
+        return all_outputs
+
+    def template2tree(self, template):
+        tree = BinaryTree()
+        tree.equ2tree_(template)
+        return tree
+
+    def tree2equation(self, tree):
+        equation = tree.tree2equ(tree.root)
+        return equation
+    def init_seq2seq_decoder_inputs(self, target, device, batch_size):
+        pad_var = torch.LongTensor([self.sos_token_idx] * batch_size).to(device).view(batch_size, 1)
+        if target != None:
+            decoder_inputs = torch.cat((pad_var, target), dim=1)[:, :-1]
+        else:
+            decoder_inputs = pad_var
+        decoder_inputs = self.seq2seq_out_embedder(decoder_inputs)
+        return decoder_inputs
+
+    def convert_temp_idx_2_in_idx(self, output):
+        device = output.device
+
+        batch_size = output.size(0)
+        seq_len = output.size(1)
+
+        decoded_output = []
+        for b_i in range(batch_size):
+            output_i = []
+            for s_i in range(seq_len):
+                output_i.append(self.in_word2idx[self.out_idx2symbol[output[b_i, s_i]]])
+            decoded_output.append(output_i)
+        decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
+        return decoded_output
+
+    def convert_in_idx_2_temp_idx(self, output):
+        device = output.device
+
+        batch_size = output.size(0)
+        seq_len = output.size(1)
+
+        decoded_output = []
+        for b_i in range(batch_size):
+            output_i = []
+            for s_i in range(seq_len):
+                output_i.append(self.out_symbol2idx[self.in_idx2word[output[b_i, s_i]]])
+            decoded_output.append(output_i)
+        decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
+        return decoded_output
+
+
 
 
 class TRNN(nn.Module):

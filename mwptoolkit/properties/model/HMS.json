@@ -8,7 +8,7 @@
     "beam_size":1,
     "epoch_nums":80,
     "share_vocab":true,
-    "mask_symbol":"NUM",
+    "mask_symbol":"number",
     "test_batch_size":1,
     "symbol_for_tree":false,
     "equation_fix":"prefix",

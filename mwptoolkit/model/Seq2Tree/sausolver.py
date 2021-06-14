@@ -245,7 +245,13 @@ class SAUSolver(nn.Module):
                     node_stack.append(TreeNode(l, left_flag=True))
                     o.append(TreeEmbedding(node_label[idx].unsqueeze(0), False))
                 else:
-                    current_num = current_nums_embeddings[idx, i - num_start].unsqueeze(0)
+                    try:
+                        current_num = current_nums_embeddings[idx, i - num_start].unsqueeze(0)
+                    except:
+                            print('current_num_emb:',current_nums_embeddings.size(),'num start:',self.num_start,'token idx:',i)
+                            print('out list:',self.out_idx2symbol,'out gen:',self.generate_size)
+                            print('batch i:',i)
+                            raise ValueError
                     while len(o) > 0 and o[-1].terminal:
                         sub_stree = o.pop()
                         op = o.pop()
@@ -323,8 +329,12 @@ class SAUSolver(nn.Module):
 
                         current_embeddings_stacks[0].append(TreeEmbedding(node_label[0].unsqueeze(0), False))
                     else:
-                        current_num = current_nums_embeddings[0, out_token - num_start].unsqueeze(0)
-
+                        try:
+                            current_num = current_nums_embeddings[0, out_token - num_start].unsqueeze(0)
+                        except:
+                            print('current_num_emb:',current_nums_embeddings.size(),'num start:',self.num_start,'token idx:',out_token)
+                            print('operator:',op.size(),'num:',num_score.size(),'out:',out_score.size())
+                            raise ValueError
                         while len(current_embeddings_stacks[0]) > 0 and current_embeddings_stacks[0][-1].terminal:
                             sub_stree = current_embeddings_stacks[0].pop()
                             op = current_embeddings_stacks[0].pop()

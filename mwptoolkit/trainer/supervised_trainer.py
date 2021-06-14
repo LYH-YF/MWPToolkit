@@ -709,3 +709,34 @@ class TreeLSTMTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+
+class SAUSolverTrainer(GTSTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+
+    def _train_batch(self, batch):
+        try:
+            batch_loss = self.model.calculate_loss(batch)
+        except:
+            print(batch['id'])
+        return batch_loss
+
+    def _eval_batch(self, batch):
+        try:
+            test_out, target = self.model.model_test(batch)
+        except:
+            print(batch['id'])
+
+        batch_size = len(test_out)
+        val_acc = []
+        equ_acc = []
+        for idx in range(batch_size):
+            if self.config["task_type"] == TaskType.SingleEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx])
+            elif self.config["task_type"] == TaskType.MultiEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx])
+            else:
+                raise NotImplementedError
+            val_acc.append(val_ac)
+            equ_acc.append(equ_ac)
+        return val_acc, equ_acc

@@ -128,9 +128,9 @@ class DatasetMultiEncDec(TemplateDataset):
 
     def _build_symbol(self):
         if self.share_vocab:
-            self.out_idx2symbol_2 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
+            self.out_idx2symbol_2 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
         else:
-            self.out_idx2symbol_2 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
+            self.out_idx2symbol_2 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
         self.num_start2 = len(self.out_idx2symbol_2)
         self.out_idx2symbol_2 += self.generate_list
         if self.mask_symbol == MaskSymbol.NUM:
@@ -169,7 +169,7 @@ class DatasetMultiEncDec(TemplateDataset):
         self.out_idx2symbol_2 += [SpecialTokens.UNK_TOKEN]
 
     def _build_symbol_for_tree(self):
-        self.out_idx2symbol_1 = copy.deepcopy(Operators.Single)
+        self.out_idx2symbol_1 = copy.deepcopy(self.operator_list)
         self.num_start1 = len(self.out_idx2symbol_1)
         self.out_idx2symbol_1 += self.generate_list
 

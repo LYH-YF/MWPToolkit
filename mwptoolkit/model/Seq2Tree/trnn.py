@@ -1,4 +1,6 @@
 import copy
+import random
+
 from mwptoolkit.module.Decoder.rnn_decoder import AttentionalRNNDecoder
 from mwptoolkit.loss.nll_loss import NLLLoss
 import torch

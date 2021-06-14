@@ -87,7 +87,7 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
             input2_length_batch.append(len(input2_tensor))
             output1_length_batch.append(len(prefix_equ_tensor))
             output2_length_batch.append(len(postfix_equ_tensor))
-            
+            assert len(input1_tensor)==len(input2_tensor)
             input1_batch.append(input1_tensor)
             input2_batch.append(input2_tensor)
             output1_batch.append(prefix_equ_tensor)

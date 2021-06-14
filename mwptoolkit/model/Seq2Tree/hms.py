@@ -56,7 +56,8 @@ class HMS(nn.Module):
         
         weight = torch.ones(self.symbol_size).to(self.device)
         pad = self.out_pad_token
-        self.loss = NLLLoss(weight, pad)
+        #self.loss = NLLLoss(weight, pad)
+        self.loss = nn.NLLLoss(weight,pad,reduction='sum')
     def forward(self, input_variable, input_lengths,span_num_pos,word_num_poses, span_length=None,tree=None,
                 target_variable=None, max_length=None, beam_width=None):
         num_pos=(span_num_pos,word_num_poses)
@@ -112,12 +113,20 @@ class HMS(nn.Module):
             max_length=max_length,
             beam_width=beam_width
         )
-        outputs=torch.stack(decoder_outputs,dim=1)
-        outputs=outputs.view(-1,outputs.size(-1))
-        self.loss.reset()
-        self.loss.eval_batch(outputs,target_variable.view(-1))
-        self.loss.backward()
-        return self.loss.get_loss()
+        # outputs=torch.stack(decoder_outputs,dim=1)
+        # outputs=outputs.view(-1,outputs.size(-1))
+        # self.loss.reset()
+        # self.loss.eval_batch(outputs,target_variable.view(-1))
+        # self.loss.backward()
+        batch_size = span_length.size(0)
+        loss = 0
+        for step, step_output in enumerate(decoder_outputs):
+            loss += self.loss(step_output.contiguous().view(batch_size, -1), target_variable[:, step].view(-1))
+        
+        total_target_length = (target_variable != self.out_pad_token).sum().item()
+        loss = loss / total_target_length
+        loss.backward()
+        return loss.item()
 
     def model_test(self,batch_data):
         input_variable=batch_data["spans"]

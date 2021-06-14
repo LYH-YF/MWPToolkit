@@ -1320,6 +1320,8 @@ def num_transfer_multi(data, mask_type="number", min_generate_keep=0, equ_split_
                 if pos.end() < len(s):
                     input_seq.append(s[pos.end():])
             else:
+                if s == '':
+                    continue
                 input_seq.append(s)
 
         # find all num position

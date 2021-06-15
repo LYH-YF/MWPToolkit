@@ -18,6 +18,7 @@ class AbstractDataLoader(object):
         self.max_equ_len = config["max_equ_len"]
         self.add_sos = config["add_sos"]
         self.add_eos = config["add_eos"]
+        self.filt_dirty = config["filt_dirty"]
 
         self.dataset = dataset
         self.in_pad_token = None

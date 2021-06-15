@@ -12,6 +12,7 @@
     "test_batch_size":1,
     "symbol_for_tree":false,
     "equation_fix":"prefix",
+    "filt_dirty":true,
     "add_sos":false,
     "add_eos":false,
     "parse_tree_file_name":"span_level_deprel_tree_info"

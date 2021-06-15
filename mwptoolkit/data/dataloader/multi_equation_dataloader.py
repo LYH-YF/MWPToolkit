@@ -85,6 +85,8 @@ class MultiEquationDataLoader(AbstractDataLoader):
         word_num_poses_batch=[]
         word_num_poses_pad_batch=[]
         for data in batch_data:
+            if data['number position']==[-1] and self.filt_dirty:
+                continue
             span_nums = len(data['split sentences'])
             span_nums_batch.append(span_nums)
             span_num_pos = [-1] * len(self.dataset.out_idx2symbol)
@@ -161,6 +163,8 @@ class MultiEquationDataLoader(AbstractDataLoader):
 
         group_nums_batch = []
         for data in batch_data:
+            if data['number position']==[-1] and self.filt_dirty:
+                continue
             ques_tensor = []
             equ_tensor = []
             temp_tensor = []

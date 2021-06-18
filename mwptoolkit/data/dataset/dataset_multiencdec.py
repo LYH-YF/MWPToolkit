@@ -8,6 +8,7 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operator
 from mwptoolkit.utils.preprocess_tools import number_transfer, number_transfer_asdiv_a, number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp, write_json_data
 from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
+from mwptoolkit.utils.preprocess_tools import id_reedit
 from mwptoolkit.utils.utils import read_json_data
 
 class DatasetMultiEncDec(TemplateDataset):
@@ -19,6 +20,8 @@ class DatasetMultiEncDec(TemplateDataset):
             self.parse_tree_path = self.dataset_path+'/'+self.parse_tree_path+'.json'
 
     def _preprocess(self):
+        if self.dataset in [DatasetName.hmwp]:
+            self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
         if self.dataset == DatasetName.math23k:
             transfer = number_transfer_math23k
         elif self.dataset == DatasetName.ape200k:

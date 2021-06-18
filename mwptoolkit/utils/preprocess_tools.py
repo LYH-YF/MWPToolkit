@@ -7,7 +7,6 @@ from collections import OrderedDict
 import nltk
 import stanza
 
-
 from mwptoolkit.utils.utils import read_json_data, str2float, lists2dict
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens
 from mwptoolkit.utils.data_structure import DependencyTree
@@ -630,7 +629,7 @@ def number_transfer_math23k(data, mask_type="number", min_generate_keep=0):
                 if pos.end() < len(s):
                     input_seq.append(s[pos.end():])
             else:
-                if s=='　' or s=='':
+                if s == '　' or s == '':
                     continue
                 input_seq.append(s)
         # find all num position
@@ -665,7 +664,7 @@ def number_transfer_math23k(data, mask_type="number", min_generate_keep=0):
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
 
         out_seq = seg_and_tag_math23k(equations, nums_fraction, nums)
-        for idx,s in enumerate(out_seq):
+        for idx, s in enumerate(out_seq):
             # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
@@ -673,11 +672,11 @@ def number_transfer_math23k(data, mask_type="number", min_generate_keep=0):
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-            if mask_type==MaskSymbol.NUM:
+            if mask_type == MaskSymbol.NUM:
                 if 'NUM' in s:
-                    number=num_list[int(s[4:])]
-                    if len(num_pos_dict[number])>1:
-                        out_seq[idx]=number
+                    number = num_list[int(s[4:])]
+                    if len(num_pos_dict[number]) > 1:
+                        out_seq[idx] = number
 
         source = deepcopy(input_seq)
         for pos in all_pos:
@@ -880,7 +879,7 @@ def number_transfer_svamp(data, mask_type="number", min_generate_keep=0):
         equations = d["Equation"]
         if equations.startswith('( ') and equations.endswith(' )'):
             equations = equations[2:-2]
-        
+
         num_pos_dict = {}
         # match and split number
         input_seq = []
@@ -924,7 +923,7 @@ def number_transfer_svamp(data, mask_type="number", min_generate_keep=0):
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
 
         out_seq = seg_and_tag_svamp(equations, nums_fraction, nums)
-        for idx,s in enumerate(out_seq):
+        for idx, s in enumerate(out_seq):
             # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
@@ -932,11 +931,11 @@ def number_transfer_svamp(data, mask_type="number", min_generate_keep=0):
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-            if mask_type==MaskSymbol.NUM:
+            if mask_type == MaskSymbol.NUM:
                 if 'NUM' in s:
-                    number=num_list[int(s[4:])]
-                    if len(num_pos_dict[number])>1:
-                        out_seq[idx]=number
+                    number = num_list[int(s[4:])]
+                    if len(num_pos_dict[number]) > 1:
+                        out_seq[idx] = number
 
         source = deepcopy(input_seq)
         for pos in all_pos:
@@ -963,8 +962,8 @@ def number_transfer_svamp(data, mask_type="number", min_generate_keep=0):
         new_data["equation"] = out_seq
         new_data["number list"] = num_list
         new_data["number position"] = num_pos
-        new_data["id"]=d["ID"]
-        new_data["ans"]=d["Answer"]
+        new_data["id"] = d["ID"]
+        new_data["ans"] = d["Answer"]
         processed_datas.append(new_data)
 
     generate_number = []
@@ -1009,9 +1008,9 @@ def number_transfer_asdiv_a(data, mask_type="number", min_generate_keep=0):
         num_list = []
         input_seq = []
         seg = d["Body"].split(" ") + d["Question"].split()
-        formula=d["Formula"]
+        formula = d["Formula"]
         equations = formula[:formula.index('=')]
-        ans = formula[formula.index('=')+1:]
+        ans = formula[formula.index('=') + 1:]
         num_pos_dict = {}
         for idx, word in enumerate(seg):
             if re.match(r"(\d+\,\d+)+", word):
@@ -1066,7 +1065,7 @@ def number_transfer_asdiv_a(data, mask_type="number", min_generate_keep=0):
         nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
 
         out_seq = seg_and_tag_asdiv_a(equations, nums_fraction, nums)
-        for idx,s in enumerate(out_seq):
+        for idx, s in enumerate(out_seq):
             # tag the num which is generated
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
@@ -1074,11 +1073,11 @@ def number_transfer_asdiv_a(data, mask_type="number", min_generate_keep=0):
             if s in generate_nums and s not in num_list:
                 generate_nums_dict[s] = generate_nums_dict[s] + 1
 
-            if mask_type==MaskSymbol.NUM:
+            if mask_type == MaskSymbol.NUM:
                 if 'NUM' in s:
-                    number=num_list[int(s[4:])]
-                    if len(num_pos_dict[number])>1:
-                        out_seq[idx]=number
+                    number = num_list[int(s[4:])]
+                    if len(num_pos_dict[number]) > 1:
+                        out_seq[idx] = number
 
         source = deepcopy(input_seq)
         for pos in all_pos:
@@ -1218,7 +1217,7 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
         # tag the num which is generated
         for s in out_seq:
             if s[0].isdigit() and str(str2float(s)) not in generate_nums and s not in num_list:
-                s=str(str2float(s))
+                s = str(str2float(s))
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if s in generate_nums and s not in num_list:
@@ -1527,7 +1526,7 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
         # tag the num which is generated
         for s in out_seq:
             if s[0].isdigit() and str(str2float(s)) not in generate_nums and s not in num_list:
-                s=str(str2float(s))
+                s = str(str2float(s))
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
             if re.match(r"^-((\d+\.?\d*))", s) and s not in generate_nums and s not in num_list:
@@ -1932,35 +1931,37 @@ def EN_rule2_(equ_list):
             i += 1
     return new_list
 
-def deprel_tree_to_file(train_datas,valid_datas,test_datas,path,language,use_gpu):
-    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error',use_gpu=use_gpu)
+
+def deprel_tree_to_file(train_datas, valid_datas, test_datas, path, language, use_gpu):
+    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error', use_gpu=use_gpu)
     new_datas = []
     for idx, data in enumerate(train_datas):
         doc = nlp(data["ques source 1"])
         token_list = doc.to_dict()[0]
-        new_datas.append({'id':data['id'],'deprel':token_list})
+        new_datas.append({'id': data['id'], 'deprel': token_list})
     for idx, data in enumerate(valid_datas):
         doc = nlp(data["ques source 1"])
         token_list = doc.to_dict()[0]
-        new_datas.append({'id':data['id'],'deprel':token_list})
+        new_datas.append({'id': data['id'], 'deprel': token_list})
     for idx, data in enumerate(test_datas):
         doc = nlp(data["ques source 1"])
         token_list = doc.to_dict()[0]
-        new_datas.append({'id':data['id'],'deprel':token_list})
-    write_json_data(new_datas,path)
+        new_datas.append({'id': data['id'], 'deprel': token_list})
+    write_json_data(new_datas, path)
 
-def get_group_nums_(train_datas,valid_datas,test_datas,path):
-    deprel_datas=read_json_data(path)
+
+def get_group_nums_(train_datas, valid_datas, test_datas, path):
+    deprel_datas = read_json_data(path)
     new_datas = []
     for idx, data in enumerate(train_datas):
         group_nums = []
         num_pos = data["number position"]
         sent_len = len(data["question"])
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                token_list=deprel_data['deprel']
+                token_list = deprel_data['deprel']
                 for n_pos in num_pos:
                     pos_stack = []
                     group_num = []
@@ -2012,10 +2013,10 @@ def get_group_nums_(train_datas,valid_datas,test_datas,path):
         num_pos = data["number position"]
         sent_len = len(data["question"])
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                token_list=deprel_data['deprel']
+                token_list = deprel_data['deprel']
                 for n_pos in num_pos:
                     pos_stack = []
                     group_num = []
@@ -2067,10 +2068,10 @@ def get_group_nums_(train_datas,valid_datas,test_datas,path):
         num_pos = data["number position"]
         sent_len = len(data["question"])
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                token_list=deprel_data['deprel']
+                token_list = deprel_data['deprel']
                 for n_pos in num_pos:
                     pos_stack = []
                     group_num = []
@@ -2117,139 +2118,142 @@ def get_group_nums_(train_datas,valid_datas,test_datas,path):
                 deprel_datas.remove(deprel_data)
                 break
         data["group nums"] = group_nums
-        
-    return train_datas,valid_datas,test_datas
 
-def span_level_deprel_tree_to_file(train_datas,valid_datas,test_datas,path,language,use_gpu):
+    return train_datas, valid_datas, test_datas
+
+
+def span_level_deprel_tree_to_file(train_datas, valid_datas, test_datas, path, language, use_gpu):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
     new_datas = []
-    max_span_size=0
+    max_span_size = 0
     for idx, data in enumerate(train_datas):
-        sentences=split_sentence(data["ques source 1"])
-        dependency_infos=[]
-        deprel_trees=[]
+        sentences = split_sentence(data["ques source 1"])
+        dependency_infos = []
+        deprel_trees = []
         for sentence in sentences:
-            dependency_info=[]
+            dependency_info = []
             doc = nlp(sentence)
             token_list = doc.to_dict()[0]
             for token in token_list:
-                deprel=token['deprel']
-                father_idx=token['head'] - 1
-                child_idx=token['id']-1
-                dependency_info.append([deprel,child_idx,father_idx])
+                deprel = token['deprel']
+                father_idx = token['head'] - 1
+                child_idx = token['id'] - 1
+                dependency_info.append([deprel, child_idx, father_idx])
             dependency_infos.append(dependency_info)
-        new_datas.append({'id':data['id'],'split sentences source':sentences,'dependency info':dependency_infos})
+        new_datas.append({'id': data['id'], 'split sentences source': sentences, 'dependency info': dependency_infos})
     for idx, data in enumerate(valid_datas):
-        sentences=split_sentence(data["ques source 1"])
-        dependency_infos=[]
-        deprel_trees=[]
+        sentences = split_sentence(data["ques source 1"])
+        dependency_infos = []
+        deprel_trees = []
         for sentence in sentences:
-            dependency_info=[]
+            dependency_info = []
             doc = nlp(sentence)
             token_list = doc.to_dict()[0]
             for token in token_list:
-                deprel=token['deprel']
-                father_idx=token['head'] - 1
-                child_idx=token['id']-1
-                dependency_info.append([deprel,child_idx,father_idx])
+                deprel = token['deprel']
+                father_idx = token['head'] - 1
+                child_idx = token['id'] - 1
+                dependency_info.append([deprel, child_idx, father_idx])
             dependency_infos.append(dependency_info)
-        new_datas.append({'id':data['id'],'split sentences source':sentences,'dependency info':dependency_infos})
+        new_datas.append({'id': data['id'], 'split sentences source': sentences, 'dependency info': dependency_infos})
     for idx, data in enumerate(test_datas):
-        sentences=split_sentence(data["ques source 1"])
-        dependency_infos=[]
-        deprel_trees=[]
+        sentences = split_sentence(data["ques source 1"])
+        dependency_infos = []
+        deprel_trees = []
         for sentence in sentences:
-            dependency_info=[]
+            dependency_info = []
             doc = nlp(sentence)
             token_list = doc.to_dict()[0]
             for token in token_list:
-                deprel=token['deprel']
-                father_idx=token['head'] - 1
-                child_idx=token['id']-1
-                dependency_info.append([deprel,child_idx,father_idx])
+                deprel = token['deprel']
+                father_idx = token['head'] - 1
+                child_idx = token['id'] - 1
+                dependency_info.append([deprel, child_idx, father_idx])
             dependency_infos.append(dependency_info)
-        new_datas.append({'id':data['id'],'split sentences source':sentences,'dependency info':dependency_infos})
-    write_json_data(new_datas,path)
+        new_datas.append({'id': data['id'], 'split sentences source': sentences, 'dependency info': dependency_infos})
+    write_json_data(new_datas, path)
 
-def get_span_level_deprel_tree_(train_datas,valid_datas,test_datas,path):
-    deprel_datas=read_json_data(path)
-    max_span_size=0
+
+def get_span_level_deprel_tree_(train_datas, valid_datas, test_datas, path):
+    deprel_datas = read_json_data(path)
+    max_span_size = 0
     for idx, data in enumerate(train_datas):
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                masked_sentences=split_sentence(' '.join(data['question']))
-                span_size=len(masked_sentences)
+                masked_sentences = split_sentence(' '.join(data['question']))
+                span_size = len(masked_sentences)
                 if span_size > max_span_size:
-                    max_span_size=span_size 
-                deprel_trees=[]
-                for sentence,dependency_info in zip(deprel_data['split sentences source'],deprel_data['dependency info']):
-                    tree=DependencyTree()
-                    tree.sentence2tree(sentence.split(' '),dependency_info)
+                    max_span_size = span_size
+                deprel_trees = []
+                for sentence, dependency_info in zip(deprel_data['split sentences source'], deprel_data['dependency info']):
+                    tree = DependencyTree()
+                    tree.sentence2tree(sentence.split(' '), dependency_info)
                     deprel_trees.append(tree)
-                data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
-                data['split sentences source']=deprel_data['split sentences source']
-                data['dependency info']=deprel_data['dependency info']
-                data['deprel tree']=deprel_trees
+                data['split sentences'] = [sentence.split(' ') for sentence in masked_sentences]
+                data['split sentences source'] = deprel_data['split sentences source']
+                data['dependency info'] = deprel_data['dependency info']
+                data['deprel tree'] = deprel_trees
                 deprel_datas.remove(deprel_data)
                 break
     for idx, data in enumerate(valid_datas):
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                masked_sentences=split_sentence(' '.join(data['question']))
-                span_size=len(masked_sentences)
+                masked_sentences = split_sentence(' '.join(data['question']))
+                span_size = len(masked_sentences)
                 if span_size > max_span_size:
-                    max_span_size=span_size 
-                deprel_trees=[]
-                for sentence,dependency_info in zip(deprel_data['split sentences source'],deprel_data['dependency info']):
-                    tree=DependencyTree()
-                    tree.sentence2tree(sentence.split(' '),dependency_info)
+                    max_span_size = span_size
+                deprel_trees = []
+                for sentence, dependency_info in zip(deprel_data['split sentences source'], deprel_data['dependency info']):
+                    tree = DependencyTree()
+                    tree.sentence2tree(sentence.split(' '), dependency_info)
                     deprel_trees.append(tree)
-                data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
-                data['split sentences source']=deprel_data['split sentences source']
-                data['dependency info']=deprel_data['dependency info']
-                data['deprel tree']=deprel_trees
+                data['split sentences'] = [sentence.split(' ') for sentence in masked_sentences]
+                data['split sentences source'] = deprel_data['split sentences source']
+                data['dependency info'] = deprel_data['dependency info']
+                data['deprel tree'] = deprel_trees
                 deprel_datas.remove(deprel_data)
                 break
     for idx, data in enumerate(test_datas):
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                masked_sentences=split_sentence(' '.join(data['question']))
-                span_size=len(masked_sentences)
+                masked_sentences = split_sentence(' '.join(data['question']))
+                span_size = len(masked_sentences)
                 if span_size > max_span_size:
-                    max_span_size=span_size 
-                deprel_trees=[]
-                for sentence,dependency_info in zip(deprel_data['split sentences source'],deprel_data['dependency info']):
-                    tree=DependencyTree()
-                    tree.sentence2tree(sentence.split(' '),dependency_info)
+                    max_span_size = span_size
+                deprel_trees = []
+                for sentence, dependency_info in zip(deprel_data['split sentences source'], deprel_data['dependency info']):
+                    tree = DependencyTree()
+                    tree.sentence2tree(sentence.split(' '), dependency_info)
                     deprel_trees.append(tree)
-                data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
-                data['split sentences source']=deprel_data['split sentences source']
-                data['dependency info']=deprel_data['dependency info']
-                data['deprel tree']=deprel_trees
+                data['split sentences'] = [sentence.split(' ') for sentence in masked_sentences]
+                data['split sentences source'] = deprel_data['split sentences source']
+                data['dependency info'] = deprel_data['dependency info']
+                data['deprel tree'] = deprel_trees
                 deprel_datas.remove(deprel_data)
                 break
-    return train_datas,valid_datas,test_datas,max_span_size
+    return train_datas, valid_datas, test_datas, max_span_size
 
-                #token_list=deprel_data['deprel']
+    #token_list=deprel_data['deprel']
 
-def get_deprel_tree_(train_datas,valid_datas,test_datas,path):
-    deprel_datas=read_json_data(path)
-    deprel_tokens=[]
+
+def get_deprel_tree_(train_datas, valid_datas, test_datas, path):
+    deprel_datas = read_json_data(path)
+    deprel_tokens = []
     for idx, data in enumerate(train_datas):
         group_nums = []
         deprel_token = []
         length = len(data["question"])
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                token_list=deprel_data['deprel']
+                token_list = deprel_data['deprel']
                 for idx, x in enumerate(token_list):
                     token = x['deprel']
                     if token in deprel_token:
@@ -2271,10 +2275,10 @@ def get_deprel_tree_(train_datas,valid_datas,test_datas,path):
         deprel_token = []
         length = len(data["question"])
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                token_list=deprel_data['deprel']
+                token_list = deprel_data['deprel']
                 for idx, x in enumerate(token_list):
                     token = x['deprel']
                     if token in deprel_token:
@@ -2293,10 +2297,10 @@ def get_deprel_tree_(train_datas,valid_datas,test_datas,path):
         deprel_token = []
         length = len(data["question"])
         for deprel_data in deprel_datas:
-            if data['id']!=deprel_data['id']:
+            if data['id'] != deprel_data['id']:
                 continue
             else:
-                token_list=deprel_data['deprel']
+                token_list = deprel_data['deprel']
                 for idx, x in enumerate(token_list):
                     token = x['deprel']
                     if token in deprel_token:
@@ -2310,10 +2314,11 @@ def get_deprel_tree_(train_datas,valid_datas,test_datas,path):
                 data["question"] = data["question"] + deprel_token
                 deprel_datas.remove(deprel_data)
                 break
-    return train_datas,valid_datas,test_datas,deprel_tokens
+    return train_datas, valid_datas, test_datas, deprel_tokens
 
-def get_group_nums(datas, language,use_gpu):
-    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error',use_gpu=use_gpu)
+
+def get_group_nums(datas, language, use_gpu):
+    nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error', use_gpu=use_gpu)
     new_datas = []
     for idx, data in enumerate(datas):
         group_nums = []
@@ -2407,47 +2412,47 @@ def get_deprel_tree(datas, language):
     return new_datas, deprel_tokens
 
 
-def get_span_level_deprel_tree(datas,language):
+def get_span_level_deprel_tree(datas, language):
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
     new_datas = []
-    max_span_size=0
+    max_span_size = 0
     for idx, data in enumerate(datas):
-        sentences=split_sentence(data["ques source 1"])
-        masked_sentences=split_sentence(' '.join(data['question']))
-        span_size=len(masked_sentences)
+        sentences = split_sentence(data["ques source 1"])
+        masked_sentences = split_sentence(' '.join(data['question']))
+        span_size = len(masked_sentences)
         if span_size > max_span_size:
-            max_span_size=span_size 
-        dependency_infos=[]
-        deprel_trees=[]
+            max_span_size = span_size
+        dependency_infos = []
+        deprel_trees = []
         for sentence in sentences:
-            dependency_info=[]
+            dependency_info = []
             doc = nlp(sentence)
             token_list = doc.to_dict()[0]
             for token in token_list:
-                deprel=token['deprel']
-                father_idx=token['head'] - 1
-                child_idx=token['id']-1
-                dependency_info.append([deprel,child_idx,father_idx])
-            tree=DependencyTree()
-            tree.sentence2tree(sentence.split(' '),dependency_info)
+                deprel = token['deprel']
+                father_idx = token['head'] - 1
+                child_idx = token['id'] - 1
+                dependency_info.append([deprel, child_idx, father_idx])
+            tree = DependencyTree()
+            tree.sentence2tree(sentence.split(' '), dependency_info)
             dependency_infos.append(dependency_info)
             deprel_trees.append(tree)
-        data['split sentences']=[sentence.split(' ') for sentence in masked_sentences]
-        data['split sentences source']=sentences
-        data['deprel tree']=deprel_trees
-        data['dependency info']=dependency_infos
+        data['split sentences'] = [sentence.split(' ') for sentence in masked_sentences]
+        data['split sentences source'] = sentences
+        data['deprel tree'] = deprel_trees
+        data['dependency info'] = dependency_infos
         new_datas.append(data)
-    return new_datas,max_span_size
+    return new_datas, max_span_size
 
 
 def split_sentence(text):
     #seps = ['，',',','。','．','. ','；','？','！','!']
-    sentences=nltk.tokenize.sent_tokenize(text)
+    sentences = nltk.tokenize.sent_tokenize(text)
     #seps='，。(\. )．；？！!'
     #x=f"([{seps}])"
     #seps = "，。．.；？！!"
     spans_posts = []
-    seps="，。．；？！!" 
+    seps = "，。．；？！!"
     sep_pattern = re.compile(f"([{seps}])")
     #sep_pattern = re.compile(r'，|。|(\. )|．|；|？|！|!',re.S)
     for sentence in sentences:
@@ -2460,8 +2465,9 @@ def split_sentence(text):
                     spans_post[-1] += ' ' + span
             else:
                 spans_post.append(span)
-        spans_posts+=spans_post
+        spans_posts += spans_post
     return spans_posts
+
 
 def operator_mask(expression):
     template = []
@@ -2560,6 +2566,54 @@ def from_infix_to_multi_way_tree(expression):
             else:
                 res.append(e)
     return res
+
+
+def id_reedit(trainset, validset, testset):
+    r"""if some datas of a dataset hava the same id, re-edit the id for differentiate them. 
+
+    example: There are two datas have the same id 709356. Make one of them be 709356 and the other be 709356-1.
+    """
+    id_dict = {}
+    for data in trainset:
+        if not isinstance(data['id'], str):
+            data['id'] = str(data['id'])
+        try:
+            id_dict[data['id']] = id_dict[data['id']] + 1
+        except:
+            id_dict[data['id']] = 1
+    for data in validset:
+        if not isinstance(data['id'], str):
+            data['id'] = str(data['id'])
+        try:
+            id_dict[data['id']] = id_dict[data['id']] + 1
+        except:
+            id_dict[data['id']] = 1
+    for data in testset:
+        if not isinstance(data['id'], str):
+            data['id'] = str(data['id'])
+        try:
+            id_dict[data['id']] = id_dict[data['id']] + 1
+        except:
+            id_dict[data['id']] = 1
+    for data in trainset:
+        old_id = data['id']
+        if id_dict[old_id] > 1:
+            new_id = old_id + '-' + str(id_dict[old_id] - 1)
+            data['id'] = new_id
+            id_dict[old_id] = id_dict[old_id] - 1
+    for data in validset:
+        old_id = data['id']
+        if id_dict[old_id] > 1:
+            new_id = old_id + '-' + str(id_dict[old_id] - 1)
+            data['id'] = new_id
+            id_dict[old_id] = id_dict[old_id] - 1
+    for data in testset:
+        old_id = data['id']
+        if id_dict[old_id] > 1:
+            new_id = old_id + '-' + str(id_dict[old_id] - 1)
+            data['id'] = new_id
+            id_dict[old_id] = id_dict[old_id] - 1
+    return trainset, validset, testset
 
 
 def num_transfer_draw_(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):

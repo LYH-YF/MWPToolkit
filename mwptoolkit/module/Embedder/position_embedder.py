@@ -30,7 +30,7 @@ class PositionEmbedder_x(nn.Module):
         seq_len=input_embedding.size(1)
         #outputs=input_embedding+self.weight[:batch_size,:]
         outputs=input_embedding+self.pe.squeeze()[:seq_len]
-        outputs=self.dropout(outputs)
+        #outputs=self.dropout(outputs)
         return outputs
 
 class PositionEmbedder(nn.Module):

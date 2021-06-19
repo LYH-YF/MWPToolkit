@@ -62,17 +62,9 @@ class SupervisedTrainer(AbstractTrainer):
         return batch_equation_
 
     def _train_batch(self, batch):
-        #outputs = self.model(batch["question"], batch["ques len"], batch["equation"])
         batch_loss = self.model.calculate_loss(batch)
-        #outputs=torch.nn.functional.log_softmax(outputs,dim=1)
-        # if self.config["share_vocab"]:
-        #     batch_equation = self._idx2word_2idx(batch["equation"])
-        #     self.loss.eval_batch(outputs, batch_equation.view(-1))
-        # else:
-        #     self.loss.eval_batch(outputs, batch["equation"].view(-1))
-        # batch_loss = self.loss.get_loss()
         return batch_loss
-
+    
     def _eval_batch(self, batch):
         test_out, target = self.model.model_test(batch)
         batch_size = len(test_out)
@@ -746,25 +738,26 @@ class TRNNTrainer(SupervisedTrainer):
             self._load_checkpoint()
 
     def _build_optimizer(self):
-        self.seq2seq_optimizer = torch.optim.Adam(
-            [
-                {'params': self.model.seq2seq_in_embedder.parameters()}, \
-                {'params': self.model.seq2seq_out_embedder.parameters()}, \
-                {'params': self.model.seq2seq_encoder.parameters()}, \
-                {'params': self.model.seq2seq_decoder.parameters()}, \
-                {'params': self.model.seq2seq_gen_linear.parameters()}\
-            ],
-            self.config["learning_rate"]
-        )
+        self.optimizer = torch.optim.Adam(self.model.parameters(),self.config["learning_rate"])
+        # self.seq2seq_optimizer = torch.optim.Adam(
+        #     [
+        #         {'params': self.model.seq2seq_in_embedder.parameters()}, \
+        #         {'params': self.model.seq2seq_out_embedder.parameters()}, \
+        #         {'params': self.model.seq2seq_encoder.parameters()}, \
+        #         {'params': self.model.seq2seq_decoder.parameters()}, \
+        #         {'params': self.model.seq2seq_gen_linear.parameters()}\
+        #     ],
+        #     self.config["learning_rate"]
+        # )
 
-        self.answer_module_optimizer = torch.optim.Adam(
-            [
-                {'params': self.model.answer_in_embedder.parameters()}, \
-                {'params': self.model.answer_encoder.parameters()}, \
-                {'params': self.model.answer_rnn.parameters()}\
-            ], 
-            self.config["learning_rate"]
-        )
+        # self.answer_module_optimizer = torch.optim.Adam(
+        #     [
+        #         {'params': self.model.answer_in_embedder.parameters()}, \
+        #         {'params': self.model.answer_encoder.parameters()}, \
+        #         {'params': self.model.answer_rnn.parameters()}\
+        #     ], 
+        #     self.config["learning_rate"]
+        # )
 
     def _save_checkpoint(self):
         check_pnt = {
@@ -796,6 +789,13 @@ class TRNNTrainer(SupervisedTrainer):
         self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
         self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
         self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
+    
+    def _train_seq2seq_batch(self, batch):
+        batch_loss = self.model.seq2seq_calculate_loss(batch)
+        return batch_loss
+    def _train_ans_batch(self, batch):
+        batch_loss = self.model.ans_module_calculate_loss(batch)
+        return batch_loss
 
     def _train_epoch(self):
         epoch_start_time = time.time()
@@ -803,13 +803,33 @@ class TRNNTrainer(SupervisedTrainer):
         loss_total_ans_module = 0.
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
-            self.model.train()
+            # first stage
+            self.model.seq2seq_in_embedder.train()
+            self.model.seq2seq_out_embedder.train()
+            self.model.seq2seq_encoder.train()
+            self.model.seq2seq_decoder.train()
+            self.model.seq2seq_gen_linear.train()
+            self.model.answer_in_embedder.eval()
+            self.model.answer_encoder.eval()
+            self.model.answer_rnn.eval()
             self.model.zero_grad()
-            batch_seq2seq_loss, batch_ans_module_loss = self._train_batch(batch)
+            batch_seq2seq_loss = self._train_seq2seq_batch(batch)
+            # second stage
+            self.model.seq2seq_in_embedder.eval()
+            self.model.seq2seq_out_embedder.eval()
+            self.model.seq2seq_encoder.eval()
+            self.model.seq2seq_decoder.eval()
+            self.model.seq2seq_gen_linear.eval()
+            self.model.answer_in_embedder.train()
+            self.model.answer_encoder.train()
+            self.model.answer_rnn.train()
+            self.model.zero_grad()
+            batch_ans_module_loss = self._train_ans_batch(batch)
             loss_total_seq2seq += batch_seq2seq_loss
             loss_total_ans_module += batch_ans_module_loss
-            self.seq2seq_optimizer.step()
-            self.answer_module_optimizer.step()
+            #self.seq2seq_optimizer.step()
+            #self.answer_module_optimizer.step()
+            self.optimizer.step()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total_seq2seq, loss_total_ans_module, epoch_time_cost
 

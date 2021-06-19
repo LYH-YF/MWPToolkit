@@ -814,6 +814,7 @@ class TRNNTrainer(SupervisedTrainer):
             self.model.answer_rnn.eval()
             self.model.zero_grad()
             batch_seq2seq_loss = self._train_seq2seq_batch(batch)
+            self.optimizer.step()
             # second stage
             self.model.seq2seq_in_embedder.eval()
             self.model.seq2seq_out_embedder.eval()

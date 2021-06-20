@@ -9,7 +9,6 @@ from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
 from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
 from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_
-from mwptoolkit.utils.preprocess_tools import id_reedit
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName
 
 
@@ -25,9 +24,6 @@ class MultiEquationDataset(AbstractDataset):
             self.parse_tree_path = self.dataset_path + '/' + self.parse_tree_path + '.json'
 
     def _preprocess(self):
-        if self.dataset in [DatasetName.hmwp]:
-            self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
-        
         if self.dataset == DatasetName.alg514:
             transfer = num_transfer_alg514
         elif self.dataset == DatasetName.draw:

@@ -6,6 +6,7 @@ from torch import nn
 from mwptoolkit.module.Attention.seq_attention import SeqAttention
 from mwptoolkit.module.Attention.group_attention import GroupAttention
 from mwptoolkit.module.Attention.hierarchical_attention import Attention
+from mwptoolkit.module.Attention.seq_attention import Attention as Attention_x
 from mwptoolkit.module.Embedder.position_embedder import PositionalEncoding
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Encoder.transformer_encoder import GroupATTEncoder
@@ -317,6 +318,135 @@ class HWCPEncoder(nn.Module):
         # invalid value in full padding span will be ignored in span level attention
         mask[mask.sum(dim=-1) == pad_length, 0] = 0
         return mask
+
+class SalignedEncoder(torch.nn.Module):
+    """ Simple RNN encoder with attention which also extract variable embedding.
+
+    Args:
+        dim_embed (int): Dimension of input embedding.
+        dim_hidden (int): Dimension of encoder RNN.
+        dim_last (int): Dimension of the last state will be transformed to.
+        dropout_rate (float): Dropout rate.
+    """
+    def __init__(self, dim_embed, dim_hidden, dim_last, dropout_rate,
+                 dim_attn_hidden=256):
+        super(SalignedEncoder, self).__init__()
+        self.rnn = torch.nn.LSTM(dim_embed,
+                                 dim_hidden,
+                                 1,
+                                 bidirectional=True,
+                                 batch_first=True)
+        self.mlp1 = torch.nn.Sequential(
+            torch.nn.Linear(dim_hidden * 2, dim_last),
+            torch.nn.Dropout(dropout_rate),
+            torch.nn.Tanh())
+        self.mlp2 = torch.nn.Sequential(
+            torch.nn.Linear(dim_hidden * 2, dim_last),
+            torch.nn.Dropout(dropout_rate),
+            torch.nn.Tanh())
+        self.attn = Attention_x(dim_hidden * 2, dim_hidden * 2,
+                              dim_attn_hidden)
+        self.register_buffer('padding',
+                             torch.zeros(dim_hidden * 2))
+        self.embeddings = torch.nn.Parameter(
+            torch.normal(torch.zeros(20, 2 * dim_hidden), 0.01))
+        self.dim_hidden = dim_hidden
+
+    def initialize_fix_constant(self, con_len, device):
+        self.embedding_con = [torch.nn.Parameter(
+            torch.normal(torch.zeros(2 * self.dim_hidden), 0.01)).to(device) for c in range(con_len)]
+
+    def forward(self, inputs, lengths, constant_indices):
+        """
+
+        Args:
+            inputs (tensor): Indices of words. The shape is `B x T x 1`.
+            length (list of int): Length of inputs.
+            constant_indices (list of int): Each list contains list
+
+        Return:
+            outputs (tensor): Encoded sequence. The shape is
+                `B x T x dim_hidden`.
+        """
+        packed = torch.nn.utils.rnn.pack_padded_sequence(
+            inputs, lengths, batch_first=True)
+        hidden_state = None
+        outputs, hidden_state = self.rnn(packed, hidden_state)
+        outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs,
+                                                            batch_first=True)
+
+        # reshape (2, batch, dim_hidden) to (batch, dim_hidden)
+        hidden_state = \
+            (hidden_state[0].transpose(1, 0).contiguous()
+             .view(hidden_state[0].size(1), -1),
+             hidden_state[1].transpose(1, 0).contiguous()
+             .view(hidden_state[1].size(1), -1))
+        hidden_state = \
+            (self.mlp1(hidden_state[0]).unsqueeze(0),
+             self.mlp2(hidden_state[1]).unsqueeze(0))
+
+        batch_size = outputs.size(0)
+        operands = [self.embedding_con + #[self.embedding_one, self.embedding_pi] +
+                    [outputs[b][i]
+                     for i in constant_indices[b]]
+                    for b in range(batch_size)]
+        return outputs, hidden_state, operands
+
+# class SalignedEncoder(torch.nn.Module):
+#     """ Simple RNN encoder.
+
+#     Args:
+#         dim_embed (int): Dimension of input embedding.
+#         dim_hidden (int): Dimension of encoder RNN.
+#         dim_last (int): Dimension of the last state will be transformed to.
+#         dropout_rate (float): Dropout rate.
+#     """
+#     def __init__(self, dim_embed, dim_hidden, dim_last, dropout_rate):
+#         super(SalignedEncoder, self).__init__()
+#         self.rnn = torch.nn.LSTM(dim_embed,
+#                                  dim_hidden,
+#                                  1,
+#                                  bidirectional=True,
+#                                  batch_first=True)
+#         self.mlp1 = torch.nn.Sequential(
+#             torch.nn.Linear(dim_hidden * 2, dim_last),
+#             torch.nn.Dropout(dropout_rate),
+#             torch.nn.Tanh())
+#         self.mlp2 = torch.nn.Sequential(
+#             torch.nn.Linear(dim_hidden * 2, dim_last),
+#             torch.nn.Dropout(dropout_rate),
+#             torch.nn.Tanh())
+
+#     def forward(self, inputs, lengths):
+#         """
+
+#         Args:
+#             inputs (tensor): Indices of words. The shape is `B x T x 1`.
+#             length (list of int): Length of inputs.
+
+#         Return:
+#             outputs (tensor): Encoded sequence. The shape is
+#                 `B x T x dim_hidden`.
+#         """
+#         packed = torch.nn.utils.rnn.pack_padded_sequence(
+#             inputs, lengths, batch_first=True)
+#         hidden_state = None
+#         outputs, hidden_state = self.rnn(packed, hidden_state)
+#         outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs,
+#                                                             batch_first=True)
+
+#         # reshape (2, batch, dim_hidden) to (batch, dim_hidden)
+#         hidden_state = \
+#             (hidden_state[0].transpose(1, 0).contiguous()
+#              .view(hidden_state[0].size(1), -1),
+#              hidden_state[1].transpose(1, 0).contiguous()
+#              .view(hidden_state[1].size(1), -1))
+#         hidden_state = \
+#             (self.mlp1(hidden_state[0]).unsqueeze(0),
+#              self.mlp2(hidden_state[1]).unsqueeze(0))
+
+#         return outputs, hidden_state
+
 
 # class GroupAttentionRNNEncoder(nn.Module):
 #     def __init__(self, embedding_size, hidden_size, num_layers, bidirectional, rnn_cell_type, dropout_ratio, in_word2idx, d_ff=2048, N=1):

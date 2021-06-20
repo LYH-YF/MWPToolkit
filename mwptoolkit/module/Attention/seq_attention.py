@@ -1,3 +1,5 @@
+import math
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -34,3 +36,105 @@ class SeqAttention(nn.Module):
         # output: (b, o, dim)
         # attn  : (b, o, i)
         return output, attn
+
+class Attention(nn.Module):
+    """ Calculate attention
+
+    Args:
+        dim_value (int): Dimension of value.
+        dim_query (int): Dimension of query.
+        dim_hidden (int): Dimension of hidden layer in attention calculation.
+    """
+    def __init__(self, dim_value, dim_query,
+                 dim_hidden=256, dropout_rate=0.5):
+        super(Attention, self).__init__()
+        self.relevant_score = \
+            MaskedRelevantScore(dim_value, dim_query, dim_hidden)
+
+    def forward(self, value, query, lens):
+        """ Generate variable embedding with attention.
+
+        Args:
+            query (FloatTensor): Current hidden state, with size
+                (batch_size, dim_query).
+            value (FloatTensor): Sequence to be attented, with size
+                (batch_size, seq_len, dim_value).
+            lens (list of int): Lengths of values in a batch.
+
+        Return:
+            FloatTensor: Calculated attention, with size
+                (batch_size, dim_value).
+        """
+        relevant_scores = self.relevant_score(value, query, lens)
+        e_relevant_scores = torch.exp(relevant_scores)
+        weights = e_relevant_scores / e_relevant_scores.sum(-1, keepdim=True)
+        attention = (weights.unsqueeze(-1) * value).sum(1)
+        return attention
+
+
+class MaskedRelevantScore(nn.Module):
+    """ Relevant score masked by sequence lengths.
+
+    Args:
+        dim_value (int): Dimension of value.
+        dim_query (int): Dimension of query.
+        dim_hidden (int): Dimension of hidden layer in attention calculation.
+    """
+    def __init__(self, dim_value, dim_query, dim_hidden=256,
+                 dropout_rate=0.0):
+        super(MaskedRelevantScore, self).__init__()
+        self.dropout = nn.Dropout(dropout_rate)
+        self.relevant_score = RelevantScore(dim_value, dim_query,
+                                            dim_hidden,
+                                            dropout_rate)
+
+    def forward(self, value, query, lens):
+        """ Choose candidate from candidates.
+
+        Args:
+            query (FloatTensor): Current hidden state, with size
+                (batch_size, dim_query).
+            value (FloatTensor): Sequence to be attented, with size
+                (batch_size, seq_len, dim_value).
+            lens (list of int): Lengths of values in a batch.
+
+        Return:
+            tensor: Activation for each operand, with size
+                (batch, max([len(os) for os in operands])).
+        """
+        relevant_scores = self.relevant_score(value, query)
+
+        # make mask to mask out padding embeddings
+        mask = torch.zeros_like(relevant_scores)
+        for b, n_c in enumerate(lens):
+            mask[b, n_c:] = -math.inf
+
+        # apply mask
+        relevant_scores += mask
+
+        return relevant_scores
+
+
+class RelevantScore(nn.Module):
+    def __init__(self, dim_value, dim_query, hidden1, dropout_rate=0):
+        super(RelevantScore, self).__init__()
+        self.lW1 = nn.Linear(dim_value, hidden1, bias=False)
+        self.lW2 = nn.Linear(dim_query, hidden1, bias=False)
+        self.b = nn.Parameter(
+            torch.normal(torch.zeros(1, 1, hidden1), 0.01))
+        self.tanh = nn.Tanh()
+        self.lw = nn.Linear(hidden1, 1, bias=False)
+        self.dropout = nn.Dropout(dropout_rate)
+
+    def forward(self, value, query):
+        """
+        Args:
+            value (FloatTensor): (batch, seq_len, dim_value).
+            query (FloatTensor): (batch, dim_query).
+        """
+        u = self.tanh(self.dropout(
+            self.lW1(value)
+            + self.lW2(query).unsqueeze(1)
+            + self.b))
+        # u.size() == (batch, seq_len, dim_hidden)
+        return self.lw(u).squeeze(-1)

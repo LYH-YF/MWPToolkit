@@ -5,6 +5,8 @@ import torch
 from mwptoolkit.utils.utils import read_json_data, write_json_data
 from mwptoolkit.utils.preprocess_tools import operator_mask, EN_rule1_stat, EN_rule2_
 from mwptoolkit.utils.preprocess_tools import get_group_nums, get_deprel_tree, get_span_level_deprel_tree
+from mwptoolkit.utils.preprocess_tools import id_reedit
+from mwptoolkit.utils.enum_type import DatasetName
 
 
 class AbstractDataset(object):
@@ -43,6 +45,9 @@ class AbstractDataset(object):
         self.trainset = read_json_data(os.path.join(self.root,trainset_file))[:]
         self.validset = read_json_data(os.path.join(self.root,validset_file))[:]
         self.testset = read_json_data(os.path.join(self.root,testset_file))[:]
+
+        if self.dataset in [DatasetName.hmwp]:
+            self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
         # self.trainset = read_json_data(trainset_file)[:]
         # self.validset = read_json_data(validset_file)[:]
         # self.testset = read_json_data(testset_file)[:]

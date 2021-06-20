@@ -1,7 +1,9 @@
 import torch
 from torch import nn
 
-from mwptoolkit.module.Attention.seq_attention import SeqAttention
+from mwptoolkit.module.Attention.seq_attention import SeqAttention,Attention,MaskedRelevantScore
+from mwptoolkit.module.Layer.layers import Transformer
+from mwptoolkit.module.Environment.stack_machine import OPERATIONS
 
 class BasicRNNDecoder(nn.Module):
     r"""
@@ -152,3 +154,212 @@ class AttentionalRNNDecoder(nn.Module):
             all_outputs.append(output)
         outputs = torch.cat(all_outputs, dim=1)
         return outputs, hidden_states
+
+
+class SalignedDecoder(torch.nn.Module):
+    def __init__(self, dim_hidden=300, dropout_rate=0.5, device=None):
+        super(SalignedDecoder, self).__init__()
+        self._device = device
+        self.transformer_add = Transformer(2 * dim_hidden)
+        self.transformer_sub = Transformer(2 * dim_hidden)
+        self.transformer_mul = Transformer(2 * dim_hidden)
+        self.transformer_div = Transformer(2 * dim_hidden)
+        self.transformer_power = Transformer(2 * dim_hidden)
+        self.transformers = {
+            OPERATIONS.ADD: self.transformer_add,
+            OPERATIONS.SUB: self.transformer_sub,
+            OPERATIONS.MUL: self.transformer_mul,
+            OPERATIONS.DIV: self.transformer_div,
+            OPERATIONS.POWER: self.transformer_power,
+            OPERATIONS.EQL: None}
+        self.gen_var = Attention(2 * dim_hidden,
+                                 dim_hidden,
+                                 dropout_rate=0.0)
+        self.attention = Attention(2 * dim_hidden,
+                                   dim_hidden,
+                                   dropout_rate=dropout_rate)
+        self.choose_arg = MaskedRelevantScore(
+            dim_hidden * 2,
+            dim_hidden * 7,
+            dropout_rate=dropout_rate)
+        self.arg_gate = torch.nn.Linear(
+            dim_hidden * 7,
+            3,
+            torch.nn.Sigmoid()
+        )
+        self.rnn = torch.nn.LSTM(2 * dim_hidden,
+                                 dim_hidden,
+                                 1,
+                                 batch_first=True)
+        self.op_selector = torch.nn.Sequential(
+            torch.nn.Linear(dim_hidden * 7, 256),
+            torch.nn.ReLU(),
+            torch.nn.Dropout(dropout_rate),
+            torch.nn.Linear(256, 9))
+        self.op_gate = torch.nn.Linear(
+            dim_hidden * 7,
+            3,
+            torch.nn.Sigmoid()
+        )
+        self.dropout = torch.nn.Dropout(dropout_rate)
+        self.register_buffer('noop_padding_return',
+                             torch.zeros(dim_hidden * 2))
+        self.register_buffer('padding_embedding',
+                             torch.zeros(dim_hidden * 2))
+
+    def forward(self, context, text_len, operands, stacks,
+                prev_op, prev_output, prev_state, N_OPS):
+        """
+        Args:
+            context (FloatTensor): Encoded context, with size
+                (batch_size, text_len, dim_hidden).
+            text_len (LongTensor): Text length for each problem in the batch.
+            operands (list of FloatTensor): List of operands embeddings for
+                each problem in the batch. Each element in the list is of size
+                (n_operands, dim_hidden).
+            stacks (list of StackMachine): List of stack machines used for each
+                problem.
+            prev_op (LongTensor): Previous operation, with size (batch, 1).
+            prev_arg (LongTensor): Previous argument indices, with size
+                (batch, 1). Can be None for the first step.
+            prev_output (FloatTensor): Previous decoder RNN outputs, with size
+                (batch, dim_hidden). Can be None for the first step.
+            prev_state (FloatTensor): Previous decoder RNN state, with size
+                (batch, dim_hidden). Can be None for the first step.
+
+        Returns:
+            op_logits (FloatTensor): Logits of operation selection.
+            arg_logits (FloatTensor): Logits of argument choosing.
+            outputs (FloatTensor): Outputs of decoder RNN.
+            state (FloatTensor): Hidden state of decoder RNN.
+        """
+        batch_size = context.size(0)
+
+        # collect stack states
+        stack_states = \
+            torch.stack([stack.get_top2().view(-1,) for stack in stacks],
+                        dim=0).to(self._device)
+        #print('stack_states', stack_states)
+
+        # skip the first step (all NOOP)
+        if prev_output is not None:
+            # result calculated batch-wise
+            batch_result = {
+                OPERATIONS.GEN_VAR: self.gen_var(
+                    context, prev_output, text_len),
+                OPERATIONS.ADD: self.transformer_add(stack_states),
+                OPERATIONS.SUB: self.transformer_sub(stack_states),
+                OPERATIONS.MUL: self.transformer_mul(stack_states),
+                OPERATIONS.DIV: self.transformer_div(stack_states),
+                OPERATIONS.POWER: self.transformer_power(stack_states),
+            }
+
+        prev_returns = []
+        # apply previous op on stacks
+        for b in range(batch_size):
+            #print('prev_op[b].item()', prev_op[b].item())
+            #print(prev_op[b].item(), OPERATIONS.NOOP, OPERATIONS.GEN_VAR, OPERATIONS.EQL); exit()
+            # no op
+            if prev_op[b].item() == OPERATIONS.NOOP:
+                ret = self.noop_padding_return
+
+            # generate variable
+            elif prev_op[b].item() == OPERATIONS.GEN_VAR:
+                variable = batch_result[OPERATIONS.GEN_VAR][b]
+                operands[b].append(variable)
+                stacks[b].add_variable(variable)
+                ret = variable
+                #print('add_variable', stacks[b]._operands)
+
+            # OPERATIONS.ADD, SUB, MUL, DIV
+            elif prev_op[b].item() in [OPERATIONS.ADD, OPERATIONS.SUB,
+                                       OPERATIONS.MUL, OPERATIONS.DIV, OPERATIONS.POWER]:
+                transformed = batch_result[prev_op[b].item()][b]
+                ret = stacks[b].apply(
+                    prev_op[b].item(),
+                    transformed)
+
+            elif prev_op[b].item() == OPERATIONS.EQL:
+                ret = stacks[b].apply(prev_op[b].item(), None)
+
+            # push operand
+            else:
+                stacks[b].push(prev_op[b].item() - N_OPS)
+                ret = operands[b][prev_op[b].item() - N_OPS]
+            prev_returns.append(ret)
+            #exit()
+
+        # collect stack states (after applied op)
+        stack_states = \
+            torch.stack([stack.get_top2().view(-1,) for stack in stacks],
+                        dim=0).to(self._device)
+
+        # collect previous returns
+        prev_returns = torch.stack(prev_returns)
+        prev_returns = self.dropout(prev_returns)
+
+        # decode
+        outputs, hidden_state = self.rnn(prev_returns.unsqueeze(1),
+                                         prev_state)
+        outputs = outputs.squeeze(1)
+
+        # attention
+        #print(context, outputs, text_len)
+        attention = self.attention(context, outputs, text_len)
+
+        # collect information for op selector
+        #print(outputs, stack_states, attention)
+        gate_in = torch.cat([outputs, stack_states, attention], -1)
+        op_gate_in = self.dropout(gate_in)
+        op_gate = self.op_gate(op_gate_in)
+        arg_gate_in = self.dropout(gate_in)
+        arg_gate = self.arg_gate(arg_gate_in)
+        op_in = torch.cat([op_gate[:, 0:1] * outputs,
+                           op_gate[:, 1:2] * stack_states,
+                           op_gate[:, 2:3] * attention], -1)
+        arg_in = torch.cat([arg_gate[:, 0:1] * outputs,
+                            arg_gate[:, 1:2] * stack_states,
+                            arg_gate[:, 2:3] * attention], -1)
+        #print('op_in', op_in.size(), 'arg_in', arg_in.size())
+        # op_in = arg_in = torch.cat([outputs, stack_states, attention], -1)
+
+        op_logits = self.op_selector(op_in)
+
+        n_operands, cated_operands = \
+            self.pad_and_cat(operands, self.padding_embedding)
+        #print('cated_operands, arg_in, n_operands', cated_operands.size(), arg_in.size(), n_operands)
+        arg_logits = self.choose_arg(
+            cated_operands, arg_in, n_operands)
+        #print('arg_logits', arg_logits.size())
+
+        return op_logits, arg_logits, outputs, hidden_state
+    
+    def pad_and_cat(self,tensors, padding):
+        """ Pad lists to have same number of elements, and concatenate
+        those elements to a 3d tensor.
+
+        Args:
+            tensors (list of list of Tensors): Each list contains
+                list of operand embeddings. Each operand embedding is of
+                size (dim_element,).
+            padding (Tensor):
+                Element used to pad lists, with size (dim_element,).
+
+        Return:
+            n_tensors (list of int): Length of lists in tensors.
+            tensors (Tensor): Concatenated tensor after padding the list.
+        """
+        n_tensors = [len(ts) for ts in tensors]
+        #print('n_tensors', n_tensors)
+        pad_size = max(n_tensors)
+
+        # pad to has same number of operands for each problem
+        tensors = [ts + (pad_size - len(ts)) * [padding]
+                for ts in tensors]
+
+        # tensors.size() = (batch_size, pad_size, dim_hidden)
+        tensors = torch.stack([torch.stack(t)
+                            for t in tensors], dim=0)
+
+        return n_tensors, tensors
+

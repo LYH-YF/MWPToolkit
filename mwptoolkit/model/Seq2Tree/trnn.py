@@ -97,7 +97,7 @@ class TRNN(nn.Module):
         pad = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         self.seq2seq_loss = NLLLoss(weight, pad)
         weight2=torch.ones(self.operator_nums).to(config["device"])
-        self.ans_module_loss=CrossEntropyLoss()
+        self.ans_module_loss=CrossEntropyLoss(weight2,size_average=True)
 
         self.wrong=0
 

@@ -6,6 +6,7 @@ from mwptoolkit.loss.abstract_loss import AbstractLoss
 class CrossEntropyLoss(AbstractLoss):
     _Name="cross entropy loss"
     def __init__(self,weight=None, mask=None, size_average=True):
+        self.size_average=size_average
         super(CrossEntropyLoss,self).__init__(self._Name,F.cross_entropy)
     def get_loss(self):
         if isinstance(self.acc_loss, int):

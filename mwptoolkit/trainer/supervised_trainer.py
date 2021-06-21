@@ -759,37 +759,6 @@ class TRNNTrainer(SupervisedTrainer):
         #     ], 
         #     self.config["learning_rate"]
         # )
-
-    # def _save_checkpoint(self):
-    #     check_pnt = {
-    #         "model": self.model.state_dict(),
-    #         "seq2seq_optimizer": self.seq2seq_optimizer.state_dict(),
-    #         "answer_module_optimizer": self.answer_module_optimizer.state_dict(),
-    #         "start_epoch": self.epoch_i,
-    #         "best_valid_value_accuracy": self.best_valid_value_accuracy,
-    #         "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
-    #         "best_test_value_accuracy": self.best_test_value_accuracy,
-    #         "best_test_equ_accuracy": self.best_test_equ_accuracy,
-    #         "best_folds_accuracy": self.best_folds_accuracy,
-    #         "fold_t": self.config["fold_t"]
-    #     }
-    #     torch.save(check_pnt, self.config["checkpoint_path"])
-
-    # def _load_checkpoint(self):
-    #     #check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
-    #     check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
-    #     # load parameter of model
-    #     self.model.load_state_dict(check_pnt["model"])
-    #     # load parameter of optimizer
-    #     self.seq2seq_optimizer.load_state_dict(check_pnt["optimizer"])
-    #     self.answer_module_optimizer.load_state_dict(check_pnt["answer_module_optimizer"])
-    #     # other parameter
-    #     self.start_epoch = check_pnt["start_epoch"]
-    #     self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
-    #     self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
-    #     self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
-    #     self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
-    #     self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
     
     def _train_seq2seq_batch(self, batch):
         batch_loss = self.model.seq2seq_calculate_loss(batch)
@@ -834,6 +803,25 @@ class TRNNTrainer(SupervisedTrainer):
             self.optimizer.step()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total_seq2seq, loss_total_ans_module, epoch_time_cost
+
+    def _eval_batch(self, batch):
+        test_out, target,temp_out,template = self.model.model_test(batch)
+        batch_size = len(test_out)
+        val_acc = []
+        equ_acc = []
+        for idx in range(batch_size):
+            if self.config["task_type"] == TaskType.SingleEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx])
+            elif self.config["task_type"] == TaskType.MultiEquation:
+                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx])
+            else:
+                raise NotImplementedError
+            if temp_out==template:
+                equ_acc.append(True)
+            else:
+                equ_acc.append(False)
+            val_acc.append(val_ac)
+        return val_acc, equ_acc
 
     def fit(self):
         train_batch_size = self.config["train_batch_size"]

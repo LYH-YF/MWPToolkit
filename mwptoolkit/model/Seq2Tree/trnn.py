@@ -155,7 +155,7 @@ class TRNN(nn.Module):
             # equations.append([])
         equations=self.mask2num(equations,num_list)
         targets=self.convert_idx2symbol(target,num_list)
-        return equations,targets
+        return equations,targets,template,batch_data['template']
     
     def seq2seq_calculate_loss(self, batch_data):
         r"""calculate loss of a batch data.

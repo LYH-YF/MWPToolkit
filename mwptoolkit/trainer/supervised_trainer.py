@@ -751,13 +751,14 @@ class TRNNTrainer(SupervisedTrainer):
             self.config["learning_rate"]
         )
 
-        self.answer_module_optimizer = torch.optim.Adam(
+        self.answer_module_optimizer = torch.optim.SGD(
             [
                 {'params': self.model.answer_in_embedder.parameters()}, \
                 {'params': self.model.answer_encoder.parameters()}, \
                 {'params': self.model.answer_rnn.parameters()}\
             ], 
-            self.config["learning_rate"]
+            self.config["learning_rate"],
+            momentum=0.9
         )
     
     def _train_seq2seq_batch(self, batch):

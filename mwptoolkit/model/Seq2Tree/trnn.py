@@ -3,6 +3,7 @@ import random
 
 from mwptoolkit.module.Decoder.rnn_decoder import AttentionalRNNDecoder
 from mwptoolkit.loss.nll_loss import NLLLoss
+from mwptoolkit.loss.cross_entropy_loss import CrossEntropyLoss
 import torch
 from torch import nn
 
@@ -43,7 +44,7 @@ class TRNN(nn.Module):
         self.operator_nums=len(dataset.operator_list)
         self.operator_list=dataset.operator_list
         self.generate_list=[SpecialTokens.UNK_TOKEN]+dataset.generate_list
-        self.generate_idx = [self.in_idx2word.index(SpecialTokens.UNK_TOKEN)] + [self.in_idx2word.index(num) for num in self.generate_list]
+        self.generate_idx = [self.in_idx2word.index(num) for num in self.generate_list]
         
         if self.share_vocab:
             self.sos_token_idx = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
@@ -61,6 +62,19 @@ class TRNN(nn.Module):
             self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
+        
+        try:
+            self.temp_sos_token = dataset.temp_symbol2idx[SpecialTokens.SOS_TOKEN]
+        except:
+            self.temp_sos_token = None
+        try:
+            self.temp_eos_token = dataset.temp_symbol2idx[SpecialTokens.EOS_TOKEN]
+        except:
+            self.temp_eos_token = None
+        try:
+            self.temp_pad_token = dataset.temp_symbol2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            self.temp_pad_token = None
 
         # seq2seq module
         self.seq2seq_in_embedder=BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
@@ -83,7 +97,7 @@ class TRNN(nn.Module):
         pad = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         self.seq2seq_loss = NLLLoss(weight, pad)
         weight2=torch.ones(self.operator_nums).to(config["device"])
-        self.ans_module_loss=NLLLoss(weight2)
+        self.ans_module_loss=CrossEntropyLoss()
 
         self.wrong=0
 
@@ -144,7 +158,7 @@ class TRNN(nn.Module):
             except:
                 equations.append([])
                 continue
-            look_up = [SpecialTokens.UNK_TOKEN] + self.generate_list + NumMask.number[:len(num_pos[b_i])]
+            look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
             num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
             nodes_pred = self.answer_rnn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
             tree_i.root = nodes_pred
@@ -155,7 +169,8 @@ class TRNN(nn.Module):
             # equations.append([])
         equations=self.mask2num(equations,num_list)
         targets=self.convert_idx2symbol(target,num_list)
-        return equations,targets,template,batch_data['template']
+        temp_t=self.convert_temp_idx2symbol(batch_data['template'])
+        return equations,targets,template,temp_t
     
     def seq2seq_calculate_loss(self, batch_data):
         r"""calculate loss of a batch data.
@@ -221,6 +236,7 @@ class TRNN(nn.Module):
                 continue
             look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
             num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
+            assert len(look_up)==len(num_embedding)
             #tree_i=tree[b_i]
             prob, target = self.answer_rnn(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
             if prob != []:
@@ -229,8 +245,8 @@ class TRNN(nn.Module):
         
         self.ans_module_loss.reset()
         for b_i in range(len(batch_target)):
-            output=torch.nn.functional.log_softmax(batch_prob[b_i],dim=1)
-            self.ans_module_loss.eval_batch(output, batch_target[b_i].view(-1))
+            #output=torch.nn.functional.log_softmax(batch_prob[b_i],dim=1)
+            self.ans_module_loss.eval_batch(batch_prob[b_i], batch_target[b_i].view(-1))
         self.ans_module_loss.backward()
         return self.ans_module_loss.get_loss()
     
@@ -349,8 +365,12 @@ class TRNN(nn.Module):
         symbol_list = []
         for b_i in range(batch_size):
             symbols = []
-            for i in range(seq_len):
-                symbols.append(self.temp_idx2symbol[output[b_i, i]])
+            for s_i in range(seq_len):
+                idx=output[b_i][s_i]
+                if idx in [self.temp_sos_token, self.temp_eos_token, self.temp_pad_token]:
+                    break
+                symbol = self.temp_idx2symbol[idx]
+                symbols.append(symbol)
             symbol_list.append(symbols)
         return symbol_list
 

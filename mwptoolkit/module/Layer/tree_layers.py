@@ -419,8 +419,8 @@ class RecursiveNN(nn.Module):
 
     def RecurCell(self, combine_emb):
         node_embedding = self.W(combine_emb)
-        #op=self.softmax(self.generate_linear(node_embedding))
-        op = self.generate_linear(node_embedding)
+        op=self.softmax(self.generate_linear(node_embedding))
+        #op = self.generate_linear(node_embedding)
         return node_embedding, op
 
 

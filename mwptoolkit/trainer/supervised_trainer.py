@@ -739,26 +739,26 @@ class TRNNTrainer(SupervisedTrainer):
             self._load_checkpoint()
 
     def _build_optimizer(self):
-        self.optimizer = torch.optim.Adam(self.model.parameters(),self.config["learning_rate"])
-        # self.seq2seq_optimizer = torch.optim.Adam(
-        #     [
-        #         {'params': self.model.seq2seq_in_embedder.parameters()}, \
-        #         {'params': self.model.seq2seq_out_embedder.parameters()}, \
-        #         {'params': self.model.seq2seq_encoder.parameters()}, \
-        #         {'params': self.model.seq2seq_decoder.parameters()}, \
-        #         {'params': self.model.seq2seq_gen_linear.parameters()}\
-        #     ],
-        #     self.config["learning_rate"]
-        # )
+        #self.optimizer = torch.optim.Adam(self.model.parameters(),self.config["learning_rate"])
+        self.optimizer = torch.optim.Adam(
+            [
+                {'params': self.model.seq2seq_in_embedder.parameters()}, \
+                {'params': self.model.seq2seq_out_embedder.parameters()}, \
+                {'params': self.model.seq2seq_encoder.parameters()}, \
+                {'params': self.model.seq2seq_decoder.parameters()}, \
+                {'params': self.model.seq2seq_gen_linear.parameters()}\
+            ],
+            self.config["learning_rate"]
+        )
 
-        # self.answer_module_optimizer = torch.optim.Adam(
-        #     [
-        #         {'params': self.model.answer_in_embedder.parameters()}, \
-        #         {'params': self.model.answer_encoder.parameters()}, \
-        #         {'params': self.model.answer_rnn.parameters()}\
-        #     ], 
-        #     self.config["learning_rate"]
-        # )
+        self.answer_module_optimizer = torch.optim.Adam(
+            [
+                {'params': self.model.answer_in_embedder.parameters()}, \
+                {'params': self.model.answer_encoder.parameters()}, \
+                {'params': self.model.answer_rnn.parameters()}\
+            ], 
+            self.config["learning_rate"]
+        )
     
     def _train_seq2seq_batch(self, batch):
         batch_loss = self.model.seq2seq_calculate_loss(batch)
@@ -800,12 +800,12 @@ class TRNNTrainer(SupervisedTrainer):
             loss_total_ans_module += batch_ans_module_loss
             #self.seq2seq_optimizer.step()
             #self.answer_module_optimizer.step()
-            self.optimizer.step()
+            self.answer_module_optimizer.step()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total_seq2seq, loss_total_ans_module, epoch_time_cost
 
     def _eval_batch(self, batch):
-        test_out, target,temp_out,template = self.model.model_test(batch)
+        test_out, target,_,_ = self.model.model_test(batch)
         batch_size = len(test_out)
         val_acc = []
         equ_acc = []
@@ -816,10 +816,8 @@ class TRNNTrainer(SupervisedTrainer):
                 val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[idx], target[idx])
             else:
                 raise NotImplementedError
-            if temp_out==template:
-                equ_acc.append(True)
-            else:
-                equ_acc.append(False)
+            
+            equ_acc.append(equ_ac)
             val_acc.append(val_ac)
         return val_acc, equ_acc
 

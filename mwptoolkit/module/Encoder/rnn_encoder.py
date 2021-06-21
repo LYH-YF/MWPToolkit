@@ -328,7 +328,7 @@ class SalignedEncoder(torch.nn.Module):
         dim_last (int): Dimension of the last state will be transformed to.
         dropout_rate (float): Dropout rate.
     """
-    def __init__(self, dim_embed, dim_hidden, dim_last, dropout_rate,
+    def __init__(self, dim_embed, dim_hidden, dim_last,con_len, dropout_rate,device,
                  dim_attn_hidden=256):
         super(SalignedEncoder, self).__init__()
         self.rnn = torch.nn.LSTM(dim_embed,
@@ -351,6 +351,7 @@ class SalignedEncoder(torch.nn.Module):
         self.embeddings = torch.nn.Parameter(
             torch.normal(torch.zeros(20, 2 * dim_hidden), 0.01))
         self.dim_hidden = dim_hidden
+        self.initialize_fix_constant(con_len,device)
 
     def initialize_fix_constant(self, con_len, device):
         self.embedding_con = [torch.nn.Parameter(
@@ -369,7 +370,7 @@ class SalignedEncoder(torch.nn.Module):
                 `B x T x dim_hidden`.
         """
         packed = torch.nn.utils.rnn.pack_padded_sequence(
-            inputs, lengths, batch_first=True)
+            inputs, lengths, batch_first=True,enforce_sorted=True)
         hidden_state = None
         outputs, hidden_state = self.rnn(packed, hidden_state)
         outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs,

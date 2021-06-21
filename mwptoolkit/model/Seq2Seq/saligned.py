@@ -1,5 +1,4 @@
 import math
-
 import torch
 from torch import nn
 import numpy as np
@@ -8,6 +7,7 @@ from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import SalignedEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import SalignedDecoder
 from mwptoolkit.module.Environment.stack_machine import OPERATIONS,StackMachine
+from mwptoolkit.utils.enum_type import SpecialTokens,NumMask
 
 
 class Saligned(nn.Module):
@@ -35,16 +35,36 @@ class Saligned(nn.Module):
         self.EQL = OPERATIONS.EQL
         self.N_OPS = OPERATIONS.N_OPS
 
+        self.min_NUM = dataset.out_symbol2idx['NUM_0']
         max_NUM = list(dataset.out_symbol2idx.keys())[-2]
         self.max_NUM = dataset.out_symbol2idx[max_NUM]
         self.ADD = dataset.out_symbol2idx['+']
         self.POWER = dataset.out_symbol2idx['^']
-        self.min_CON = self.N_OPS = self.POWER + 1
+        #self.min_CON = self.N_OPS = self.POWER + 1
+        self.min_CON = self.POWER + 1
         self.UNK = dataset.out_symbol2idx['<UNK>']
         self.max_CON = self.min_NUM - 1
         self.constant = list(dataset.out_symbol2idx.keys())[self.min_CON: self.min_NUM]
 
         self._device = device = config["device"]
+
+        self.mask_list = NumMask.number
+        
+        self.out_symbol2idx = dataset.out_symbol2idx
+        self.out_idx2symbol = dataset.out_idx2symbol
+        #self.sos_token_idx = self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+        try:
+            self.out_sos_token = self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+        except:
+            self.out_sos_token = None
+        try:
+            self.out_eos_token = self.out_symbol2idx[SpecialTokens.EOS_TOKEN]
+        except:
+            self.out_eos_token = None
+        try:
+            self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            self.out_pad_token = None
         # module
         #print('vocab_size', config); #exit()
         self.embedder=BaiscEmbedder(vocab_size,
@@ -53,7 +73,9 @@ class Saligned(nn.Module):
         self.encoder = SalignedEncoder(dim_embed,
                                    dim_hidden,
                                    dim_hidden,
-                                   dropout_rate)
+                                   len(self.constant),
+                                   dropout_rate,
+                                   self._device)
         self.decoder = SalignedDecoder(dim_hidden, dropout_rate, device)
         self.embedding_one = nn.Parameter(
             torch.normal(torch.zeros(2 * dim_hidden), 0.01))
@@ -236,6 +258,8 @@ class Saligned(nn.Module):
         return predicts
 
     def calculate_loss(self,batch_data):
+        batch_data["raw_equation"] = batch_data["equation"].clone()
+        batch_data["equation"], batch_data['equ len'] = self.adjust_equ(batch_data["raw_equation"], batch_data['equ len'], batch_data['num list'])
         text=batch_data["question"]
         ops=batch_data["equation"]
         text_len=batch_data["ques len"]
@@ -245,6 +269,7 @@ class Saligned(nn.Module):
         fix_constants=self.constant
         N_OPS=self.N_OPS
         batch_size = len(text)
+        
 
         # zero embedding for the stack bottom
         bottom = torch.zeros(self._dim_hidden * 2).to(self._device)
@@ -319,7 +344,169 @@ class Saligned(nn.Module):
         loss = (loss * weights).mean()
         pred_logits = torch.stack(pred_logits, 1)
         #print('train pred_logits', pred_logits[0, :])
-        predicts = [stack.stack_log_index for stack in stacks]
+        #predicts = [stack.stack_log_index for stack in stacks]
         #print(pred_logits.size(), ops.size())
         #exit()
-        return predicts, loss
+        loss.backward()
+        return loss.item()
+    
+    def model_test(self,batch_data):
+        batch_data["raw_equation"] = batch_data["equation"].clone()
+        batch_data["equation"], batch_data['equ len'] = self.adjust_equ(batch_data["raw_equation"], batch_data['equ len'], batch_data['num list'])
+        text=batch_data["question"]
+        ops=batch_data["equation"]
+        text_len=batch_data["ques len"]
+        constant_indices=batch_data["num pos"]
+        constants=batch_data['num list']
+        op_len=batch_data["equ len"]
+        fix_constants=self.constant
+        N_OPS=self.N_OPS
+        batch_size = len(text)
+
+        # zero embedding for the stack bottom
+        bottom = torch.zeros(self._dim_hidden * 2).to(self._device)
+        bottom.requires_grad = False
+
+        # deal with device
+        seq_emb = self.embedder(text)
+        #print('seq_emb', seq_emb.size(), text_len, constant_indices)
+        context, state, operands = \
+            self.encoder.forward(seq_emb, text_len, constant_indices)
+        #print('operands', fix_constants + constants[0], ops); # exit()
+        # initialize stacks
+        stacks = [StackMachine(fix_constants + constants[b], operands[b], bottom)
+                  for b in range(batch_size)]
+
+        loss = torch.zeros(batch_size).to(self._device)
+        prev_op = torch.zeros(batch_size).to(self._device)
+        prev_output = None
+        prev_state = state
+        finished = [False] * batch_size
+        eql_finished = [False] * batch_size
+        pred_logits = []
+        for t in range(40):
+            op_logits, arg_logits, prev_output, prev_state = \
+                self.decoder(
+                    context, text_len, operands, stacks,
+                    prev_op, prev_output, prev_state, self.N_OPS)
+
+            n_finished = 0
+            for b in range(batch_size):
+                #print('stacks[b]', stacks[b])
+                if stacks[b].get_solution() is not None:
+                    finished[b] = True
+
+                if finished[b]:
+                    op_logits[b, OPERATIONS.NOOP] = math.inf
+                    n_finished += 1
+                #print(stacks[b].stack_log_index)
+                if (len(stacks[b].stack_log_index) and stacks[b].stack_log_index[-1] == OPERATIONS.EQL):
+                    eql_finished[b] = True
+                    #print('should break'); exit()
+
+                if stacks[b].get_height() < 2:
+                    op_logits[b, OPERATIONS.ADD] = -math.inf
+                    op_logits[b, OPERATIONS.SUB] = -math.inf
+                    op_logits[b, OPERATIONS.MUL] = -math.inf
+                    op_logits[b, OPERATIONS.DIV] = -math.inf
+                    op_logits[b, OPERATIONS.POWER] = -math.inf
+                    op_logits[b, OPERATIONS.EQL] = -math.inf
+
+            op_loss, prev_op = torch.log(
+                torch.nn.functional.softmax(op_logits, -1)
+            ).max(-1)
+            arg_loss, prev_arg = torch.log(
+                torch.nn.functional.softmax(arg_logits, -1)
+            ).max(-1)
+
+            for b in range(batch_size):
+                if prev_op[b] == OPERATIONS.N_OPS:
+                    prev_op[b] += prev_arg[b]
+                    loss[b] += arg_loss[b]
+
+                if prev_op[b] != OPERATIONS.NOOP:
+                    loss[b] += op_loss[b]
+
+            if n_finished == batch_size:
+                break
+            if np.sum(eql_finished) == batch_size:
+                break #print(stacks[0].stack_log);
+
+        predicts = [None] * batch_size
+        #pred_logits = torch.stack(pred_logits, 1)
+        # print(pred_logits[:, :5], ops[:, :5])
+        for i in range(batch_size):
+            #print('stacks[i].stack_log', stacks[i].stack_log_index)
+            predicts[i] = {
+                'ans': stacks[i].get_solution(),
+                'equations': stacks[i].stack_log,
+                'equations_index': stacks[i].stack_log_index,
+                'confidence': loss[i].item()
+            }
+        
+        targets=self.convert_idx2symbol(batch_data["raw_equation"],batch_data['num list'])
+
+
+        return predicts,targets
+
+    def adjust_equ(self, op_target, eq_len, num_list):
+        batch_size, batch_len = op_target.size()
+        # change NUM
+        # target_mask = torch.ge(op_target, self.min_NUM) * torch.le(op_target, self.max_NUM).to(torch.long)
+        # op_target = (op_target + self.UNK - self.min_NUM + 4) * target_mask + op_target * (1 - target_mask)
+        # change constants
+        target_mask = torch.ge(op_target, self.min_CON) * torch.le(op_target, self.max_NUM).to(torch.long)
+        op_target = (op_target + 3) * target_mask + op_target * (1 - target_mask)
+        # change unk
+        target_mask = torch.eq(op_target, self.UNK).to(torch.long)
+        op_target = (self.min_NUM + 3) * target_mask + op_target * (1 - target_mask)
+        # change +/-/*//
+        target_mask = torch.ge(op_target, self.ADD) * torch.le(op_target, self.POWER - 1).to(torch.long)
+        op_target = (op_target + 2) * target_mask + op_target * (1 - target_mask)
+        # change padding
+        #print(eq_len, num_list)
+        target_mask = torch.tensor([[1]*eq_len[b]+[0]*(batch_len-eq_len[b]) for b in range(batch_size)]).to(torch.long).to(self._device)
+        op_target = op_target * target_mask
+        # attach prefix/postfix
+        batch_size, _ = op_target.size()
+        #if self.do_addeql:
+        eq_postfix = torch.zeros((batch_size, 1), dtype=torch.long).to(self._device) + 2
+        op_target = torch.cat([op_target, eq_postfix], dim=1)
+        op_target.scatter_(1, torch.tensor([[idx] for idx in eq_len]).to(self._device), self.EQL)
+        #op_target[torch.arange(batch_size).unsqueeze(1), eq_len] = self.model.EQL
+        #print('op_target', op_target[:3, :10])
+        gen_var_prefix = [self.min_NUM + len(num) + 3 for num in num_list]
+        #print('gen_var_prefix', self.max_NUM, num_list, gen_var_prefix)
+        gen_var_prefix = torch.tensor(gen_var_prefix, dtype=torch.long).unsqueeze(1).to(self._device)
+        #gen_var_prefix = torch.zeros((batch_size, 1), dtype=torch.long).to(self.model._device) + 14 #self.max_NUM + 4
+        x_prefix = torch.zeros((batch_size, 1), dtype=torch.long).to(self._device) + self.GEN_VAR
+        op_target = torch.cat([x_prefix, gen_var_prefix, op_target], dim=1)
+        #if self.do_addeql:
+        eq_len = [(idx + 3) for idx in eq_len]
+        # else:
+        #     eq_len = [(idx + 2) for idx in eq_len]
+
+        return op_target, eq_len
+
+    def convert_idx2symbol(self, output, num_list):
+        batch_size = output.size(0)
+        seq_len = output.size(1)
+        output_list = []
+        for b_i in range(batch_size):
+            res = []
+            num_len = len(num_list[b_i])
+            for s_i in range(seq_len):
+                idx = output[b_i][s_i]
+                if idx in [self.out_sos_token, self.out_eos_token, self.out_pad_token]:
+                    break
+                symbol = self.out_idx2symbol[idx]
+                if "NUM" in symbol:
+                    num_idx = self.mask_list.index(symbol)
+                    if num_idx >= num_len:
+                        res.append(symbol)
+                    else:
+                        res.append(num_list[b_i][num_idx])
+                else:
+                    res.append(symbol)
+            output_list.append(res)
+        return output_list

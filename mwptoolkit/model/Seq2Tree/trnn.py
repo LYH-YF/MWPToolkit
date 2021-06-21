@@ -339,7 +339,7 @@ class TRNN(nn.Module):
         for b_i in range(batch_size):
             output_i = []
             for s_i in range(seq_len):
-                output_i.append(self.in_word2idx[self.out_idx2symbol[output[b_i, s_i]]])
+                output_i.append(self.in_word2idx[self.temp_idx2symbol[output[b_i, s_i]]])
             decoded_output.append(output_i)
         decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
         return decoded_output
@@ -354,7 +354,7 @@ class TRNN(nn.Module):
         for b_i in range(batch_size):
             output_i = []
             for s_i in range(seq_len):
-                output_i.append(self.out_symbol2idx[self.in_idx2word[output[b_i, s_i]]])
+                output_i.append(self.temp_symbol2idx[self.in_idx2word[output[b_i, s_i]]])
             decoded_output.append(output_i)
         decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
         return decoded_output

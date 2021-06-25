@@ -18,3 +18,6 @@ span_level_deprel_tree_info.json
 /mwptoolkit/utils/old.py
 /dataset/math23k/span_level_deprel_tree_info.json
 /dataset/math23k/deprel_tree_info.json
+hms_test.json
+hms_train.json
+hms_valid.json

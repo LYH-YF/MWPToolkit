@@ -22,16 +22,12 @@ class HMS(nn.Module):
         self.vocab_size = len(dataset.in_idx2word)
         self.symbol_size = len(dataset.out_idx2symbol)
         self.operator_list = dataset.operator_list
-        if self.share_vacab:
-            self.out_symbol2idx = dataset.out_symbol2idx
-            self.out_idx2symbol = dataset.out_idx2symbol
-            self.in_word2idx = dataset.in_word2idx
-            self.in_idx2word = dataset.in_idx2word
-            #self.sos_token_idx = self.in_word2idx[SpecialTokens.SOS_TOKEN]
-        else:
-            self.out_symbol2idx = dataset.out_symbol2idx
-            self.out_idx2symbol = dataset.out_idx2symbol
-            #self.sos_token_idx = self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+
+        self.out_symbol2idx = dataset.out_symbol2idx
+        self.out_idx2symbol = dataset.out_idx2symbol
+        self.in_word2idx = dataset.in_word2idx
+        self.in_idx2word = dataset.in_idx2word
+        
         self.mask_list = NumMask.number
         self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         try:
@@ -46,13 +42,13 @@ class HMS(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-        self.in_embedder=BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
-        if self.share_vacab:
-            self.out_embedder=self.in_embedder
-        else:
-            self.out_embedder=BaiscEmbedder(self.symbol_size,self.embedding_size,self.dropout_ratio)
-        self.encoder=HWCPEncoder(self.in_embedder,self.embedding_size,self.hidden_size,self.span_size,self.dropout_ratio)
-        self.decoder=HMSDecoder(self.out_embedder,self.hidden_size,self.dropout_ratio,self.operator_list,self.in_word2idx,self.out_idx2symbol,self.device)
+        embedder=BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
+        # if self.share_vacab:
+        #     self.out_embedder=self.in_embedder
+        # else:
+        #     self.out_embedder=BaiscEmbedder(self.symbol_size,self.embedding_size,self.dropout_ratio)
+        self.encoder=HWCPEncoder(embedder,self.embedding_size,self.hidden_size,self.span_size,self.dropout_ratio)
+        self.decoder=HMSDecoder(embedder,self.hidden_size,self.dropout_ratio,self.operator_list,self.in_word2idx,self.out_idx2symbol,self.device)
         
         weight = torch.ones(self.symbol_size).to(self.device)
         pad = self.out_pad_token

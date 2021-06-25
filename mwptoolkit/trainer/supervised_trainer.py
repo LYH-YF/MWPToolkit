@@ -907,3 +907,43 @@ class SalignedTrainer(SupervisedTrainer):
             equ_acc.append(equ_ac)
         
         return val_acc, equ_acc
+
+class HMSTrainer(GTSTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+    def _build_optimizer(self):
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.config["learning_rate"],weight_decay=self.config["weight_decay"])
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=self.config["step_size"], gamma=self.config["scheduler_gamma"])
+    def _optimizer_step(self):
+        self.optimizer.step()
+    def _scheduler_step(self):
+        self.scheduler.step()
+    def _load_checkpoint(self):
+        #check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
+        check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.optimizer.load_state_dict(check_pnt["optimizer"])
+        self.scheduler.load_state_dict(check_pnt["scheduler"])
+        # other parameter
+        self.start_epoch = check_pnt["start_epoch"]
+        self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
+        self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
+        self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
+        self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
+    def _save_checkpoint(self):
+        check_pnt = {
+            "model": self.model.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "scheduler": self.scheduler.state_dict(),
+            "start_epoch": self.epoch_i,
+            "best_valid_value_accuracy": self.best_valid_value_accuracy,
+            "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
+            "best_test_value_accuracy": self.best_test_value_accuracy,
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t": self.config["fold_t"]
+        }
+        torch.save(check_pnt, self.config["checkpoint_path"])

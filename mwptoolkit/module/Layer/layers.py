@@ -2,6 +2,7 @@ import torch
 from torch import nn
 
 from mwptoolkit.module.Attention.seq_attention import Attention
+from mwptoolkit.module.Attention.tree_attention import TreeAttention as Attn
 
 class GenVar(nn.Module):
     """ Module to generate variable embedding.
@@ -54,4 +55,49 @@ class Transformer(nn.Module):
     def forward(self, top2):
         return self.mlp(top2)
         # return torch.stack([self.ret] * top2.size(0), 0)
+
+
+class AttnDecoderRNN(nn.Module):
+    def __init__(
+            self, hidden_size, embedding_size, input_size, output_size, n_layers=2, dropout=0.5):
+        super(AttnDecoderRNN, self).__init__()
+
+        # Keep for reference
+        self.embedding_size = embedding_size
+        self.hidden_size = hidden_size
+        self.input_size = input_size
+        self.output_size = output_size
+        self.n_layers = n_layers
+        self.dropout = dropout
+
+        # Define layers
+        self.em_dropout = nn.Dropout(dropout)
+        self.embedding = nn.Embedding(input_size, embedding_size, padding_idx=0)
+        self.gru = nn.GRU(hidden_size + embedding_size, hidden_size, n_layers, dropout=dropout,batch_first=True)
+        self.concat = nn.Linear(hidden_size * 2, hidden_size)
+        self.out = nn.Linear(hidden_size, output_size)
+        # Choose attention model
+        self.attn = Attn(hidden_size,hidden_size)
+
+    def forward(self, input_seq, last_hidden, encoder_outputs, seq_mask):
+        # Get the embedding of the current input word (last output word)
+        batch_size = input_seq.size(0)
+        embedded = self.embedding(input_seq)
+        embedded = self.em_dropout(embedded)
+        embedded = embedded.view(batch_size, 1, self.embedding_size)  # S=1 x B x N
+
+        # Calculate attention from current RNN state and all encoder outputs;
+        # apply to encoder outputs to get weighted average
+        attn_weights = self.attn(last_hidden[-1].unsqueeze(0).transpose(0,1), encoder_outputs, seq_mask)
+        context = attn_weights.bmm(encoder_outputs)  # B x S=1 x N
+
+        # Get current hidden state from input word and last hidden state
+        rnn_output, hidden = self.gru(torch.cat((embedded, context), 2), last_hidden)
+
+        # Attentional vector using the RNN hidden state and context vector
+        # concatenated together (Luong eq. 5)
+        output = self.out(torch.tanh(self.concat(torch.cat((rnn_output.squeeze(1), context.squeeze(1)), 1))))
+
+        # Return final output, hidden state
+        return output, hidden
 

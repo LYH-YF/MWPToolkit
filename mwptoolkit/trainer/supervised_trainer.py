@@ -386,15 +386,7 @@ class MultiEncDecTrainer(GTSTrainer):
         self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.numencoder_optimizer = torch.optim.Adam(self.model.numencoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.predict_optimizer = torch.optim.Adam(self.model.predict.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        self.decoder_optimizer = torch.optim.Adam(
-            [
-                {'params': self.model.decoder.parameters()}, \
-                {'params': self.model.out.parameters()}, \
-                {'params': self.model.out_embedder.parameters()}\
-            ],
-            self.config["learning_rate"], \
-            weight_decay=self.config["weight_decay"]
-        )
+        self.decoder_optimizer = torch.optim.Adam(self.model.decoder.parameters(),self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.generate_optimizer = torch.optim.Adam(self.model.generate.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         #self.optimizer = torch.optim.Adam(self.model.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])

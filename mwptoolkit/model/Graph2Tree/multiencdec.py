@@ -567,7 +567,7 @@ class MultiEncDec(nn.Module):
 
     def evaluate_attn_double(self, encoder_outputs, decoder_hidden, batch_size, seq_mask):
         # Create starting vectors for decoder
-        decoder_input = torch.LongTensor([self.sos2])  # SOS
+        decoder_input = torch.LongTensor([self.sos2]).to(self.device)  # SOS
         beam_list = list()
         score = 0
         beam_list.append(Beam(score, decoder_input, decoder_hidden, []))
@@ -610,7 +610,7 @@ class MultiEncDec(nn.Module):
             for k in range(self.beam_size):
                 word_n = int(topi[k])
                 word_input = word_n % self.output2_size
-                temp_input = torch.LongTensor([word_input])
+                temp_input = torch.LongTensor([word_input]).to(self.device)
                 indices = int(word_n / self.output2_size)
 
                 temp_hidden = all_hidden[indices]

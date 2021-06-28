@@ -15,6 +15,8 @@ from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
 from mwptoolkit.utils.logger import init_logger
 
+from mwptoolkit.quick_start import run_toolkit
+
 def train_process(search_parameter,configs):
     for key,value in search_parameter.items():
         configs[key]=value
@@ -67,5 +69,9 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
         num_samples=1,
         progress_reporter=reporter
     )
+    best_config=result.get_best_config(metric="accuracy", mode="max")
+    print("Best config: ", best_config)
 
-    print("Best config: ", result.get_best_config(metric="accuracy", mode="max"))
+    config_dict.update(best_config)
+
+    run_toolkit(model_name,dataset_name,task_type,config_dict)

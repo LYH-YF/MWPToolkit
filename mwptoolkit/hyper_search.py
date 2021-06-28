@@ -6,7 +6,7 @@ import torch
 import ray
 from ray import tune
 from ray.tune import CLIReporter
-from ray.tune.schedulers import ASHAScheduler
+from ray.tune.schedulers import ASHAScheduler, AsyncHyperBandScheduler
 
 from mwptoolkit.config.configuration import Config
 from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator
@@ -48,12 +48,15 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
     logger.info(configs)
     ray.init(num_gpus=configs['gpu_nums'])
 
-    scheduler = ASHAScheduler(
+    # scheduler = ASHAScheduler(
+    #     metric="accuracy",
+    #     mode="max",
+    #     max_t=10,
+    #     grace_period=1,
+    #     reduction_factor=2)
+    scheduler = AsyncHyperBandScheduler(
         metric="accuracy",
-        mode="max",
-        max_t=10,
-        grace_period=1,
-        reduction_factor=2)
+        mode="max")
     reporter = CLIReporter(
         metric_columns=["accuracy"])
     result=tune.run(

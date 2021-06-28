@@ -22,6 +22,8 @@ if __name__ == '__main__':
         space = eval(value[1])
         if isinstance(space,list):
             parameter_dict[value[0]] = tune.grid_search(space)
+        elif isinstance(space,tuple) and len(space)==2:
+            parameter_dict[value[0]] = tune.loguniform(space[0],space[1])
         else:
             parameter_dict[value[0]] = space
 

@@ -437,9 +437,15 @@ class Saligned(nn.Module):
         # print(pred_logits[:, :5], ops[:, :5])
         for i in range(batch_size):
             #print('stacks[i].stack_log', stacks[i].stack_log_index)
+            equations=[]
+            for symbol in stacks[i].stack_log:
+                if symbol in ['x0','=']:
+                    continue
+                else:
+                    equations.append(symbol)
             predicts[i] = {
                 'ans': stacks[i].get_solution(),
-                'equations': stacks[i].stack_log,
+                'equations': equations,
                 'equations_index': stacks[i].stack_log_index,
                 'confidence': loss[i].item()
             }

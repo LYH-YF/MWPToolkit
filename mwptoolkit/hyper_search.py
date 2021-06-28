@@ -35,8 +35,7 @@ def train_process(search_parameter,configs):
         raise NotImplementedError
 
     trainer = get_trainer(configs["task_type"], configs["model"], configs["supervising_mode"])(configs, model, dataloader, evaluator)
-    trainer.fit()
-    tune.report(accuracy=trainer.best_test_value_accuracy)
+    trainer.param_search()
 
 def hyper_search_process(model_name, dataset_name, task_type, search_parameter, config_dict={}):
     configs = Config(model_name, dataset_name, task_type, config_dict)
@@ -59,10 +58,10 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
         metric_columns=["accuracy"])
     result=tune.run(
         partial(train_process,configs=configs),
-        resources_per_trial={"cpu": 8, "gpu": 1},
+        resources_per_trial={"cpu": 2, "gpu": configs['gpu_nums']},
         config=search_parameter,
         scheduler=scheduler,
-        num_samples=10,
+        num_samples=1,
         progress_reporter=reporter
     )
 

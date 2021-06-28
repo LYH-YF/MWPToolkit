@@ -58,7 +58,7 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
         metric_columns=["accuracy"])
     result=tune.run(
         partial(train_process,configs=configs),
-        resources_per_trial={"cpu": 2, "gpu": configs['gpu_nums']},
+        resources_per_trial={"cpu": configs['cpu_per_trial'], "gpu": configs['gpu_per_trial']},
         config=search_parameter,
         scheduler=scheduler,
         num_samples=1,

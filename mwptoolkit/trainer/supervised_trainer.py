@@ -210,8 +210,8 @@ class SupervisedTrainer(AbstractTrainer):
                 #     self.best_test_value_accuracy = test_val_ac
                 #     self.best_test_equ_accuracy = test_equ_ac
                 #     self._save_model()
-            if epo % 5 == 0:
-                self._save_checkpoint()
+            # if epo % 5 == 0:
+            #     self._save_checkpoint()
         # self.logger.info('''training finished.
         #                     best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
         #                     best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\

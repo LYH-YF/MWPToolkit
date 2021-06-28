@@ -19,6 +19,10 @@ if __name__ == '__main__':
     search_parameter = args.search_parameter
     for parameter in search_parameter:
         value = parameter.split('=')
-        parameter_dict[value[0]] = tune.grid_search(json.loads(value[1]))
+        space = eval(value[1])
+        if isinstance(space,list):
+            parameter_dict[value[0]] = tune.grid_search(space)
+        else:
+            parameter_dict[value[0]] = space
 
     hyper_search_process(args.model, args.dataset, args.task_type, parameter_dict, config_dict)

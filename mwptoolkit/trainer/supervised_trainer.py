@@ -843,6 +843,24 @@ class TRNNTrainer(SupervisedTrainer):
             momentum=0.9
         )
     
+    def seq2seq_train(self):
+        self.model.seq2seq_in_embedder.train()
+        self.model.seq2seq_out_embedder.train()
+        self.model.seq2seq_encoder.train()
+        self.model.seq2seq_decoder.train()
+        self.model.seq2seq_gen_linear.train()
+        self.model.answer_in_embedder.eval()
+        self.model.answer_encoder.eval()
+        self.model.answer_rnn.eval()
+    def ans_train(self):
+        self.model.seq2seq_in_embedder.eval()
+        self.model.seq2seq_out_embedder.eval()
+        self.model.seq2seq_encoder.eval()
+        self.model.seq2seq_decoder.eval()
+        self.model.seq2seq_gen_linear.eval()
+        self.model.answer_in_embedder.train()
+        self.model.answer_encoder.train()
+        self.model.answer_rnn.train()
     def _train_seq2seq_batch(self, batch):
         batch_loss = self.model.seq2seq_calculate_loss(batch)
         return batch_loss
@@ -857,26 +875,12 @@ class TRNNTrainer(SupervisedTrainer):
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             # first stage
-            self.model.seq2seq_in_embedder.train()
-            self.model.seq2seq_out_embedder.train()
-            self.model.seq2seq_encoder.train()
-            self.model.seq2seq_decoder.train()
-            self.model.seq2seq_gen_linear.train()
-            self.model.answer_in_embedder.eval()
-            self.model.answer_encoder.eval()
-            self.model.answer_rnn.eval()
+            self.seq2seq_train()
             self.model.zero_grad()
             batch_seq2seq_loss = self._train_seq2seq_batch(batch)
             self.optimizer.step()
             # second stage
-            self.model.seq2seq_in_embedder.eval()
-            self.model.seq2seq_out_embedder.eval()
-            self.model.seq2seq_encoder.eval()
-            self.model.seq2seq_decoder.eval()
-            self.model.seq2seq_gen_linear.eval()
-            self.model.answer_in_embedder.train()
-            self.model.answer_encoder.train()
-            self.model.answer_rnn.train()
+            self.ans_train()
             self.model.zero_grad()
             batch_ans_module_loss = self._train_ans_batch(batch)
             loss_total_seq2seq += batch_seq2seq_loss
@@ -888,10 +892,12 @@ class TRNNTrainer(SupervisedTrainer):
         return loss_total_seq2seq, loss_total_ans_module, epoch_time_cost
 
     def _eval_batch(self, batch):
-        test_out, target,_,_ = self.model.model_test(batch)
+        test_out, target,temp_out,temp_tar,equ_out,equ_tar = self.model.model_test(batch)
         batch_size = len(test_out)
         val_acc = []
         equ_acc = []
+        temp_acc = []
+        equs_acc = []
         for idx in range(batch_size):
             if self.config["task_type"] == TaskType.SingleEquation:
                 val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx])
@@ -902,7 +908,16 @@ class TRNNTrainer(SupervisedTrainer):
             
             equ_acc.append(equ_ac)
             val_acc.append(val_ac)
-        return val_acc, equ_acc
+
+            if temp_out[idx]==temp_tar[idx]:
+                temp_acc.append(True)
+            else:
+                temp_acc.append(False)
+            if equ_out[idx]==equ_tar[idx]:
+                equs_acc.append(True)
+            else:
+                equs_acc.append(False)
+        return val_acc, equ_acc, temp_acc, equs_acc
 
     def fit(self):
         train_batch_size = self.config["train_batch_size"]
@@ -912,17 +927,19 @@ class TRNNTrainer(SupervisedTrainer):
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
-            self.model.train()
-            loss_total_seq2seq, loss_total_ans_module, train_time_cost = self._train_epoch()
+            # self.model.train()
+            # loss_total_seq2seq, loss_total_ans_module, train_time_cost = self._train_epoch()
 
-            self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
-                                %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
-            self.logger.info("target wrong: {} target total: {}".format(self.model.wrong, self.dataloader.trainset_nums))
-            self.model.wrong=0
+            # self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
+            #                     %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
+            # self.logger.info("target wrong: {} target total: {}".format(self.model.wrong, self.dataloader.trainset_nums))
+            # self.model.wrong=0
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
-                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+                    test_equ_ac, test_val_ac,template_ac,equation_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
+                    self.logger.info("---------- test total [%d] | seq2seq module acc [%2.3f] | answer module acc [%2.3f]"\
+                                    %(test_total,template_ac,equation_ac))
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                     %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
@@ -931,11 +948,11 @@ class TRNNTrainer(SupervisedTrainer):
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
                 else:
-                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+                    valid_equ_ac, valid_val_ac,_,_, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
                     self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
                                     %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
-                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+                    test_equ_ac, test_val_ac,_,_, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                     %(test_total,test_equ_ac,test_val_ac,test_time_cost))
@@ -954,6 +971,27 @@ class TRNNTrainer(SupervisedTrainer):
                             %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
+    def evaluate(self, eval_set):
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        template_ac = 0
+        equations_ac = 0
+        eval_total = 0
+        test_start_time = time.time()
+
+        for batch in self.dataloader.load_data(eval_set):
+            batch_val_ac, batch_equ_ac, batch_temp_acc, batch_equs_acc = self._eval_batch(batch)
+            value_ac += batch_val_ac.count(True)
+            equation_ac += batch_equ_ac.count(True)
+            template_ac += batch_temp_acc.count(True)
+            equations_ac += batch_equs_acc.count(True)
+            eval_total += len(batch_val_ac)
+
+        test_time_cost = time_since(time.time() - test_start_time)
+        return equation_ac / eval_total, value_ac / eval_total,\
+                template_ac / eval_total, equations_ac / eval_total,\
+                eval_total, test_time_cost
 class SalignedTrainer(SupervisedTrainer):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)

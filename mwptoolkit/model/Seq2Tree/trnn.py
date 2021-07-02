@@ -116,6 +116,7 @@ class TRNN(nn.Module):
         target = batch_data['equation']
         num_pos = batch_data['num pos']
         num_list = batch_data["num list"]
+        template_target=self.convert_temp_idx2symbol(batch_data['template'])
 
         batch_size = seq.size(0)
         device = seq.device
@@ -152,6 +153,7 @@ class TRNN(nn.Module):
         generate_num = torch.tensor(self.generate_idx).to(device)
         generate_emb = self.answer_in_embedder(generate_num)
         equations = []
+        ans_module_test=[]
         for b_i in range(batch_size):
             try:
                 tree_i = self.template2tree(template[b_i])
@@ -159,18 +161,36 @@ class TRNN(nn.Module):
                 equations.append([])
                 continue
             look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
-            num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
+            num_encoding = seq_emb[b_i, num_pos[b_i]]+encoder_output[b_i, num_pos[b_i]]
+            num_embedding = torch.cat([generate_emb, num_encoding], dim=0)
+            #num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
+            nodes_pred = self.answer_rnn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
+            tree_i.root = nodes_pred
+            equation = self.tree2equation(tree_i)
+            
+            equations.append(equation)
+        for b_i in range(batch_size):
+            try:
+                tree_i = self.template2tree(template_target[b_i])
+            except:
+                ans_module_test.append([])
+                continue
+            look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
+            num_encoding = seq_emb[b_i, num_pos[b_i]]+encoder_output[b_i, num_pos[b_i]]
+            num_embedding = torch.cat([generate_emb, num_encoding], dim=0)
+            #num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
             nodes_pred = self.answer_rnn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
             tree_i.root = nodes_pred
             equation = self.tree2equation(tree_i)
             #equation = self.symbol2idx(equation)
-            equations.append(equation)
+            ans_module_test.append(equation)
             # tree_i=self.template2tree(template[b_i])
             # equations.append([])
         equations=self.mask2num(equations,num_list)
+        ans_module_test=self.mask2num(ans_module_test,num_list)
         targets=self.convert_idx2symbol(target,num_list)
         temp_t=self.convert_temp_idx2symbol(batch_data['template'])
-        return equations,targets,template,temp_t
+        return equations,targets,template,temp_t,ans_module_test,targets
     
     def seq2seq_calculate_loss(self, batch_data):
         r"""calculate loss of a batch data.
@@ -235,7 +255,8 @@ class TRNN(nn.Module):
                 self.wrong+=1
                 continue
             look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
-            num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
+            num_encoding = seq_emb[b_i, num_pos[b_i]]+encoder_output[b_i, num_pos[b_i]]
+            num_embedding = torch.cat([generate_emb, num_encoding], dim=0)
             assert len(look_up)==len(num_embedding)
             #tree_i=tree[b_i]
             prob, target = self.answer_rnn(tree_i.root, num_embedding, look_up, self.out_idx2symbol)

@@ -927,13 +927,13 @@ class TRNNTrainer(SupervisedTrainer):
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
-            # self.model.train()
-            # loss_total_seq2seq, loss_total_ans_module, train_time_cost = self._train_epoch()
+            self.model.train()
+            loss_total_seq2seq, loss_total_ans_module, train_time_cost = self._train_epoch()
 
-            # self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
-            # self.logger.info("target wrong: {} target total: {}".format(self.model.wrong, self.dataloader.trainset_nums))
-            # self.model.wrong=0
+            self.logger.info("epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s"\
+                                %(self.epoch_i,loss_total_seq2seq/self.train_batch_nums,loss_total_ans_module/self.train_batch_nums,train_time_cost))
+            self.logger.info("target wrong: {} target total: {}".format(self.model.wrong, self.dataloader.trainset_nums))
+            self.model.wrong=0
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
                     test_equ_ac, test_val_ac,template_ac,equation_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)

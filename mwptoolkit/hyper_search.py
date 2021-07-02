@@ -11,7 +11,7 @@ from ray.tune.schedulers import ASHAScheduler, AsyncHyperBandScheduler
 from mwptoolkit.config.configuration import Config
 from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator
 from mwptoolkit.data.utils import create_dataset, create_dataloader
-from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
+from mwptoolkit.utils.utils import get_model, init_seed, get_trainer, read_json_data, write_json_data
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
 from mwptoolkit.utils.logger import init_logger
 
@@ -67,8 +67,16 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
         num_samples=1
     )
     best_config=result.get_best_config(metric="accuracy", mode="max")
-    print("Best config: ", best_config)
 
-    config_dict.update(best_config)
+    logger.info("best config:{}".format(best_config))
+    #print("Best config: ", best_config)
+    
 
-    run_toolkit(model_name,dataset_name,task_type,config_dict)
+    #config_dict.update(best_config)
+
+    #run_toolkit(model_name,dataset_name,task_type,config_dict)
+
+    model_config=read_json_data(configs["model_config_path"])
+    model_config.update(best_config)
+    write_json_data(model_config,configs["best_config_path"])
+    logger.info("best config saved at {}".format(configs["best_config_path"]))

@@ -1,6 +1,12 @@
 import argparse
+import sys
+import os
+from os.path import abspath, dirname
 
 from mwptoolkit.quick_start import run_toolkit
+
+print (abspath(dirname(__file__)))
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

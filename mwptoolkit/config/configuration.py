@@ -21,8 +21,8 @@ class Config(object):
         self.path_config_dict = {}  #
         self.final_config_dict = {}
         self._load_config()
-        self._load_cmd_line()
         self._merge_config_dict(model_name, dataset_name, task_type, config_dict)
+        self._load_cmd_line()
 
         self._build_path_config()  #
         self._load_model_config()  #
@@ -42,11 +42,7 @@ class Config(object):
         self.config_dict['dataset'] = dataset_name
         self.config_dict['task_type'] = task_type
         self.config_dict.update(config_dict)
-        for key, value in self.config_dict.items():
-            try:
-                self.config_dict[key] = self.cmd_config_dict[key]
-            except:
-                pass
+        
 
     def _convert_config_dict(self, config_dict):
         r"""This function convert the str parameters to their original type.
@@ -98,9 +94,24 @@ class Config(object):
             logger.warning('command line args [{}] will not be used in Mwptoolkit'.format(' '.join(unrecognized_args)))
         cmd_config_dict = self._convert_config_dict(cmd_config_dict)
 
-        if cmd_config_dict['task_type'] not in ['single_equation', 'multi_equation']:
-            raise NotImplementedError("task_type {} can't be found".format(cmd_config_dict['task_type']))
+        if 'task_type' not in cmd_config_dict:
+            task_type=self.config_dict['task_type']
+        else:
+            task_type=cmd_config_dict['task_type']
+        if task_type not in ['single_equation', 'multi_equation']:
+            raise NotImplementedError("task_type {} can't be found".format(task_type))
         self.cmd_config_dict.update(cmd_config_dict)
+        
+        for key, value in self.config_dict.items():
+            try:
+                self.config_dict[key] = self.cmd_config_dict[key]
+            except:
+                pass
+        for key, value in self.file_config_dict.items():
+            try:
+                self.file_config_dict[key] = self.cmd_config_dict[key]
+            except:
+                pass
         return cmd_config_dict
 
     def _get_model_and_dataset(self, model, dataset):
@@ -127,8 +138,12 @@ class Config(object):
         return final_model, final_model_class, final_dataset
 
     def _load_model_config(self):
+        if self.file_config_dict["load_best_config"]:
+            model_config_path=self.path_config_dict["best_config_path"]
+        else:
+            model_config_path=self.path_config_dict["model_config_path"]
         try:
-            self.model_config_dict = read_json_data(self.path_config_dict["model_config_path"])
+            self.model_config_dict = read_json_data(model_config_path)
         except:
             self.model_config_dict = {}
         for key, value in self.model_config_dict.items():
@@ -167,6 +182,7 @@ class Config(object):
         if dataset_name == None:
             dataset_name = self.cmd_config_dict["dataset"]
         path_config_dict["model_config_path"] = "mwptoolkit/properties/model/{}.json".format(model_name)
+        path_config_dict["best_config_path"] = "mwptoolkit/properties/best_config/{}_{}.json".format(model_name,dataset_name)
         path_config_dict["dataset_config_path"] = "mwptoolkit/properties/dataset/{}.json".format(dataset_name)
         path_config_dict["dataset_path"] = "dataset/{}".format(dataset_name)
         self.path_config_dict = path_config_dict

@@ -46,11 +46,13 @@ class AbstractDataset(object):
         self.validset = read_json_data(os.path.join(self.root,validset_file))[:]
         self.testset = read_json_data(os.path.join(self.root,testset_file))[:]
 
-        if self.dataset in [DatasetName.hmwp]:
-            self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
         # self.trainset = read_json_data(trainset_file)[:]
         # self.validset = read_json_data(validset_file)[:]
         # self.testset = read_json_data(testset_file)[:]
+
+        if self.dataset in [DatasetName.hmwp]:
+            self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
+        
 
     def _load_fold_dataset(self):
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)

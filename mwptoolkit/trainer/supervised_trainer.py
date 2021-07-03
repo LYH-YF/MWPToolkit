@@ -943,8 +943,12 @@ class TRNNTrainer(SupervisedTrainer):
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                     %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
-                    if test_val_ac >= self.best_test_value_accuracy:
-                        self.best_test_value_accuracy = test_val_ac
+                    # if test_val_ac >= self.best_test_value_accuracy:
+                    #     self.best_test_value_accuracy = test_val_ac
+                    #     self.best_test_equ_accuracy = test_equ_ac
+                    #     self._save_model()
+                    if equation_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = equation_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
                 else:
@@ -965,6 +969,8 @@ class TRNNTrainer(SupervisedTrainer):
                         self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
+        self.test(DatasetType.Test)
+        self.test(DatasetType.Train)
         self.logger.info('''training finished.
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
@@ -992,6 +998,29 @@ class TRNNTrainer(SupervisedTrainer):
         return equation_ac / eval_total, value_ac / eval_total,\
                 template_ac / eval_total, equations_ac / eval_total,\
                 eval_total, test_time_cost
+
+    def test(self,type):
+        self._load_model()
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        ans_acc=0
+        test_start_time = time.time()
+
+        for batch in self.dataloader.load_data(type):
+            batch_val_ac, batch_equ_ac, batch_temp_acc, batch_equs_acc = self._eval_batch(batch)
+            value_ac += batch_val_ac.count(True)
+            equation_ac += batch_equ_ac.count(True)
+            ans_acc+=batch_equs_acc.count(True)
+            eval_total += len(batch_val_ac)
+        test_time_cost = time_since(time.time() - test_start_time)
+        # self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+        #                         %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | ans module acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,ans_acc/eval_total,test_time_cost))
+
+
 class SalignedTrainer(SupervisedTrainer):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)

@@ -1,0 +1,1050 @@
+[
+    {
+        "id": 704,
+        "original_text": "Yuri has a board that 98 inches long . He wishes to cut the board into 2 pieces so that one piece will be 10 inches longer than the other . What should the length of the shorter piece be , in inches ? What will the length of the longer piece be ?",
+        "equation": "m+n=98.0 ; m-n=10.0",
+        "ans": [
+            44.0,
+            54.0
+        ],
+        "number list": [
+            "98.0",
+            "2.0",
+            "1.0",
+            "10.0"
+        ],
+        "number_position": [
+            5,
+            16,
+            20,
+            24
+        ]
+    },
+    {
+        "id": 2802,
+        "original_text": "One year Walt invested 12,000 dollars . He invested part of the money at 7 % and the rest at 9 % . He made a total of 970 dollars in interest . How much was invested at 7 % ?",
+        "equation": "0.01*7.0*m+0.01*9.0*n=970.0 ; n+m=12000.0",
+        "ans": [
+            5500.0,
+            6500.0
+        ],
+        "number list": [
+            "1.0",
+            "12000.0",
+            "7.0",
+            "9.0",
+            "970.0",
+            "7.0"
+        ],
+        "number_position": [
+            0,
+            4,
+            14,
+            20,
+            28,
+            38
+        ]
+    },
+    {
+        "id": 2095,
+        "original_text": "Amber has 30 coins in nickels and dimes . In all she has 2.10 dollars . How many nickels and dimes does she have ?",
+        "equation": "0.05*m+0.1*n=2.1 ; m+n=30.0",
+        "ans": [
+            18.0,
+            12.0
+        ],
+        "number list": [
+            "30.0",
+            "2.1"
+        ],
+        "number_position": [
+            2,
+            13
+        ]
+    },
+    {
+        "id": 3591,
+        "original_text": "Think of a number , half it and the result is 9 . Find the number .",
+        "equation": "0.5*m=9.0",
+        "ans": [
+            18.0
+        ],
+        "number list": [
+            "0.5",
+            "9.0"
+        ],
+        "number_position": [
+            5,
+            11
+        ]
+    },
+    {
+        "id": 5480,
+        "original_text": "An art dealer sold 16 etchings for 630 dollars . He sold some of them at 35 dollars each and the rest at 45 dollars each . How many etchings did he sell at 35 dollars ? How many etchings did he sell at 45 dollars ?",
+        "equation": "35.0*m+45.0*n=630.0 ; m+n=16.0",
+        "ans": [
+            9.0,
+            7.0
+        ],
+        "number list": [
+            "16.0",
+            "630.0",
+            "35.0",
+            "45.0",
+            "35.0",
+            "45.0"
+        ],
+        "number_position": [
+            4,
+            7,
+            16,
+            23,
+            34,
+            44
+        ]
+    },
+    {
+        "id": 2189,
+        "original_text": "Snookers Lumber can convert logs into either lumber or plywood . In a given day , the mill turns out three times as many units of plywood as lumber . It makes a profit of 30 dollars on a unit of lumber and 50 dollars on a unit of plywood . Snookers lumber must produce and sell ___ units of lumber and ___ units of plywood to make a profit of 18360 dollars ?",
+        "equation": "30.0*m+50.0*n=18360.0 ; 3.0*m-n=0",
+        "ans": [
+            102.0,
+            306.0
+        ],
+        "number list": [
+            "3.0",
+            "30.0",
+            "50.0",
+            "18360.0"
+        ],
+        "number_position": [
+            20,
+            35,
+            43,
+            71
+        ]
+    },
+    {
+        "id": 5356,
+        "original_text": "Arthur bought 3 hamburgers and 4 hot dogs for 10 dollars . The next day , he bought 2 hamburgers and 3 hot dogs for 7 dollars . How much does a hot dog cost ?",
+        "equation": "3.0*m+4.0*n=10.0 ; 2.0*m+3.0*n=7.0",
+        "ans": [
+            1.0,
+            2.0
+        ],
+        "number list": [
+            "3.0",
+            "4.0",
+            "10.0",
+            "2.0",
+            "3.0",
+            "7.0"
+        ],
+        "number_position": [
+            2,
+            5,
+            9,
+            18,
+            21,
+            25
+        ]
+    },
+    {
+        "id": 1679,
+        "original_text": "University Theater sold 510 tickets for a play . Tickets cost 21 dollars per adult and 15 dollars per senior citizen . If total receipts were 8748 dollars , how many senior citizen tickets were sold ?",
+        "equation": "21.0*m+15.0*n=8748.0 ; m+n=510.0",
+        "ans": [
+            327.0,
+            183.0
+        ],
+        "number list": [
+            "510.0",
+            "21.0",
+            "15.0",
+            "8748.0"
+        ],
+        "number_position": [
+            3,
+            11,
+            16,
+            26
+        ]
+    },
+    {
+        "id": 2559,
+        "original_text": "The total number of Democrats and Republicans in the House of Representatives was 434 . There were 30 more Republicans then Democrats . How many Democrats and Republicans were there in the Senate ?",
+        "equation": "m+n=434.0 ; m-n=30.0",
+        "ans": [
+            202.0,
+            232.0
+        ],
+        "number list": [
+            "434.0",
+            "30.0"
+        ],
+        "number_position": [
+            13,
+            17
+        ]
+    },
+    {
+        "id": 271,
+        "original_text": "Student tickets cost 4 dollars and general admission tickets cost 6 dollars . You sell 525 tickets and collect 2876 dollars . How many student tickets did you sell ? How many general admission tickets did you sell ?",
+        "equation": "4.0*m+6.0*n=2876.0 ; m+n=525.0",
+        "ans": [
+            137.0,
+            388.0
+        ],
+        "number list": [
+            "4.0",
+            "6.0",
+            "525.0",
+            "2876.0"
+        ],
+        "number_position": [
+            3,
+            10,
+            15,
+            19
+        ]
+    },
+    {
+        "id": 724,
+        "original_text": "The state market has 27 more apples than oranges . There are 301 apples and oranges all together . How many apples are in the market ?",
+        "equation": "m+n=301.0 ; m-n=27.0",
+        "ans": [
+            164.0,
+            137.0
+        ],
+        "number list": [
+            "27.0",
+            "301.0"
+        ],
+        "number_position": [
+            4,
+            12
+        ]
+    },
+    {
+        "id": 6241,
+        "original_text": "There are 21 animals total , all sheep and chickens . If there are 56 legs total , how many of the 21 animals are sheep ? How many are chickens ?",
+        "equation": "m+n=21.0 ; 2*m+4*n=56.0",
+        "ans": [
+            7.0,
+            14.0
+        ],
+        "number list": [
+            "21.0",
+            "56.0",
+            "21.0"
+        ],
+        "number_position": [
+            2,
+            14,
+            22
+        ]
+    },
+    {
+        "id": 1486,
+        "original_text": "Bob invested 22,000 dollars , part at 18 % and part at 14 % . If the total interest at the end of the year is 3,360 dollars , how much did he invest at 18 % ?",
+        "equation": "0.01*18.0*m+0.01*14.0*n=3360.0 ; n+m=22000.0",
+        "ans": [
+            7000.0,
+            15000.0
+        ],
+        "number list": [
+            "22000.0",
+            "18.0",
+            "14.0",
+            "3360.0",
+            "18.0"
+        ],
+        "number_position": [
+            2,
+            7,
+            12,
+            26,
+            35
+        ]
+    },
+    {
+        "id": 82,
+        "original_text": "The Rhapsody Theater sold 800 total tickets . An advanced ticket costs 14.50 dollars and a ticket at the door costs 22.00 dollars . In all , 16,640 dollars was taken in . How many tickets were sold at the door ? How many advanced tickets were sold ?",
+        "equation": "14.5*m+22.0*n=16640.0 ; m+n=800.0",
+        "ans": [
+            672.0,
+            128.0
+        ],
+        "number list": [
+            "800.0",
+            "14.5",
+            "22.0",
+            "16640.0"
+        ],
+        "number_position": [
+            4,
+            12,
+            21,
+            27
+        ]
+    },
+    {
+        "id": 6417,
+        "original_text": "A total of 32,000 dollars is invested in 2 municipal bonds that pay 5.75 % and 6.25 % simple interest . The investor wants an annual interest income of 1900 dollars from the investments . What amount should be invested in the 5.75 % bond ?",
+        "equation": "0.01*5.75*m+0.01*6.25*n=1900.0 ; n+m=32000.0",
+        "ans": [
+            20000.0,
+            12000.0
+        ],
+        "number list": [
+            "32000.0",
+            "2.0",
+            "5.75",
+            "6.25",
+            "1900.0",
+            "5.75"
+        ],
+        "number_position": [
+            3,
+            8,
+            13,
+            16,
+            29,
+            42
+        ]
+    },
+    {
+        "id": 1739,
+        "original_text": "Jane has a dress shop . She has space for 200 dresses . She sells only red and blue dresses . After reading several fashion magazines she decides to stock her shelves with 34 more blue dresses than red dresses . How many blue dresses and red dresses should she stock ?",
+        "equation": "m+n=200.0 ; m-n=34.0",
+        "ans": [
+            117.0,
+            83.0
+        ],
+        "number list": [
+            "200.0",
+            "34.0"
+        ],
+        "number_position": [
+            10,
+            33
+        ]
+    },
+    {
+        "id": 5843,
+        "original_text": "Wal-Mart sells thermometers for 2 dollars , and hot-water bottles for 6 dollars . Total sales for these 2 items during the month of January was 1,200 dollars . There were 7 times as many thermometers as hot-water bottles sold . How many thermometers were sold ? How many hot-water bottles ?",
+        "equation": "6.0*m+2.0*n=1200.0 ; 7.0*m-n=0",
+        "ans": [
+            420.0,
+            60.0
+        ],
+        "number list": [
+            "2.0",
+            "6.0",
+            "2.0",
+            "1200.0",
+            "7.0"
+        ],
+        "number_position": [
+            4,
+            11,
+            18,
+            26,
+            31
+        ]
+    },
+    {
+        "id": 3289,
+        "original_text": "The sum of two numbers is 104 . The larger number is 1 less than twice the smaller number . Find the numbers .",
+        "equation": "2.0*m-n=1.0 ; m+n=104.0",
+        "ans": [
+            35.0,
+            69.0
+        ],
+        "number list": [
+            "2.0",
+            "104.0",
+            "1.0",
+            "2.0"
+        ],
+        "number_position": [
+            3,
+            6,
+            12,
+            15
+        ]
+    },
+    {
+        "id": 6452,
+        "original_text": "Terry did all 25 problems on his test and got an 85 . Scores are computed by giving 4 points for each right answer and subtracting one point for each wrong answer . How many problems did terry get right and wrong ?",
+        "equation": "4.0*m-1.0*n=85.0 ; n+m=25.0",
+        "ans": [
+            22.0,
+            3.0
+        ],
+        "number list": [
+            "25.0",
+            "85.0",
+            "4.0",
+            "1.0"
+        ],
+        "number_position": [
+            3,
+            11,
+            18,
+            26
+        ]
+    },
+    {
+        "id": 158,
+        "original_text": "The Kings won two less than three times as many games as they lost . They played 82 games . How many wins and losses did the team have ?",
+        "equation": "3.0*m-n=2.0 ; m+n=82.0",
+        "ans": [
+            61.0,
+            21.0
+        ],
+        "number list": [
+            "2.0",
+            "3.0",
+            "82.0"
+        ],
+        "number_position": [
+            3,
+            6,
+            17
+        ]
+    },
+    {
+        "id": 7032,
+        "original_text": "Your cell phone company offers two text-messaging plans . Plan A costs 0.25 dollars per text message , plus a monthly fee of 9 dollars . The other plan costs 0.40 dollars per text message with no monthly fee . For how many text messages will both plans cost the same amount ?",
+        "equation": "0.4*m-0.25*m=9.0",
+        "ans": [
+            60.0
+        ],
+        "number list": [
+            "2.0",
+            "0.25",
+            "9.0",
+            "0.4"
+        ],
+        "number_position": [
+            5,
+            12,
+            23,
+            30
+        ]
+    },
+    {
+        "id": 3079,
+        "original_text": "The Jurassic Zoo charges 8 dollars for each adult and 4 dollars for each child . Total bill for the 201 people was 964 dollars . How many children were at the zoo ?",
+        "equation": "8.0*m+4.0*n=964.0 ; m+n=201.0",
+        "ans": [
+            161.0,
+            40.0
+        ],
+        "number list": [
+            "8.0",
+            "4.0",
+            "201.0",
+            "964.0"
+        ],
+        "number_position": [
+            4,
+            10,
+            20,
+            23
+        ]
+    },
+    {
+        "id": 3174,
+        "original_text": "Safety Rent A Truck costs 41.95 dollars plus 0.29 dollars per mile . City Rentals rents the truck for 38.95 dollars plus 0.31 dollars per mile . For what mileage are the costs the same ?",
+        "equation": "0.29*m-0.31*m=38.95-41.95",
+        "ans": [
+            150.0
+        ],
+        "number list": [
+            "41.95",
+            "0.29",
+            "38.95",
+            "0.31"
+        ],
+        "number_position": [
+            5,
+            8,
+            19,
+            22
+        ]
+    },
+    {
+        "id": 6334,
+        "original_text": "The Lakers scored 43 points on a combination of 20 two point baskets and three point baskets . How many shots of two point baskets and how many shots of three point baskets were made ?",
+        "equation": "3.0*m+2.0*n=43.0 ; m+n=20.0",
+        "ans": [
+            17.0,
+            3.0
+        ],
+        "number list": [
+            "43.0",
+            "20.0",
+            "2.0",
+            "3.0",
+            "2.0",
+            "3.0"
+        ],
+        "number_position": [
+            3,
+            9,
+            10,
+            14,
+            22,
+            30
+        ]
+    },
+    {
+        "id": 3543,
+        "original_text": "Three times a number is the same as the difference of twice the number and seven . Find the number .",
+        "equation": "2.0*m-3.0*m=7.0",
+        "ans": [
+            -7.0
+        ],
+        "number list": [
+            "3.0",
+            "2.0",
+            "7.0"
+        ],
+        "number_position": [
+            0,
+            11,
+            15
+        ]
+    },
+    {
+        "id": 5874,
+        "original_text": "Colombian coffee beans cost 5.50 dollars per pound , while Peruvian coffee beans cost 4.25 dollars per pound . We want to mix the beans together so as to produce a 40-pound bag , costing 4.60 dollars per pound . How many pounds of Columbian beans and how many pounds of Peruvian beans should be used ?",
+        "equation": "5.5*m+4.25*n=40.0*4.6 ; m+n=40.0",
+        "ans": [
+            11.2,
+            28.8
+        ],
+        "number list": [
+            "5.5",
+            "4.25",
+            "40.0",
+            "4.6"
+        ],
+        "number_position": [
+            4,
+            14,
+            31,
+            35
+        ]
+    },
+    {
+        "id": 1558,
+        "original_text": "A painting is 10 inches tall and 15 inches wide . A print of the painting is 25 inches tall , how wide is the print in inches ?",
+        "equation": "10.0*m=15.0 ; 25.0*m-n=0",
+        "ans": [
+            37.5,
+            1.5
+        ],
+        "number list": [
+            "10.0",
+            "15.0",
+            "25.0"
+        ],
+        "number_position": [
+            3,
+            7,
+            17
+        ]
+    },
+    {
+        "id": 5706,
+        "original_text": "A mechanic charged 45 dollars an hour , plus 225 dollars for the parts . If the total bill was 450 dollars , how man hours did the job take ?",
+        "equation": "45.0*m=450.0-225.0",
+        "ans": [
+            5.0
+        ],
+        "number list": [
+            "45.0",
+            "225.0",
+            "450.0"
+        ],
+        "number_position": [
+            3,
+            9,
+            20
+        ]
+    },
+    {
+        "id": 2982,
+        "original_text": "There are 7066 known nesting pairs of bald eagles in the lower 48 states today . This is 6649 more pairs than in 1963 . How many nesting pairs of bald eagles were there in the lower 48 states in 1963 ?",
+        "equation": "m=7066.0-6649.0",
+        "ans": [
+            417.0
+        ],
+        "number list": [
+            "7066.0",
+            "48.0",
+            "6649.0",
+            "1963.0",
+            "48.0",
+            "1963.0"
+        ],
+        "number_position": [
+            2,
+            12,
+            18,
+            23,
+            37,
+            40
+        ]
+    },
+    {
+        "id": 6149,
+        "original_text": "Pedro goes to the market and buys a total of 32 plums and peaches for 52 dollars . A plum costs 2 dollars and a peach costs 1 dollars . How many plums did Pedro buy ?",
+        "equation": "1.0*m+2.0*n=52.0 ; m+n=32.0",
+        "ans": [
+            20.0,
+            12.0
+        ],
+        "number list": [
+            "32.0",
+            "52.0",
+            "2.0",
+            "1.0"
+        ],
+        "number_position": [
+            10,
+            15,
+            21,
+            27
+        ]
+    },
+    {
+        "id": 2488,
+        "original_text": "The difference between two numbers is 3 . Their sum is 13 . Find the numbers . What is the larger number ? What is the smaller number ?",
+        "equation": "m+n=13.0 ; m-n=3.0",
+        "ans": [
+            8.0,
+            5.0
+        ],
+        "number list": [
+            "2.0",
+            "3.0",
+            "13.0"
+        ],
+        "number_position": [
+            3,
+            6,
+            11
+        ]
+    },
+    {
+        "id": 5145,
+        "original_text": "If 6 is subtracted from three times a number , the difference is twice the number . What is the number ?",
+        "equation": "3.0*m-2.0*m=6.0",
+        "ans": [
+            6.0
+        ],
+        "number list": [
+            "6.0",
+            "3.0",
+            "2.0"
+        ],
+        "number_position": [
+            1,
+            5,
+            13
+        ]
+    },
+    {
+        "id": 4585,
+        "original_text": "Post card stamps are 0.20 dollars each . Letter stamps cost 0.33 dollars each . If you have 50 stamps worth 12.60 dollars , how many post card stamps do you have ? How many letter stamps ?",
+        "equation": "0.2*m+0.33*n=12.6 ; m+n=50.0",
+        "ans": [
+            30.0,
+            20.0
+        ],
+        "number list": [
+            "0.2",
+            "0.33",
+            "50.0",
+            "12.6"
+        ],
+        "number_position": [
+            4,
+            11,
+            18,
+            21
+        ]
+    },
+    {
+        "id": 6376,
+        "original_text": "The larger of two numbers is 23 less than twice the smaller . The sum of the two numbers is 70 . Find the two numbers .",
+        "equation": "2.0*m-n=23.0 ; m+n=70.0",
+        "ans": [
+            31.0,
+            39.0
+        ],
+        "number list": [
+            "2.0",
+            "23.0",
+            "2.0",
+            "2.0",
+            "70.0",
+            "2.0"
+        ],
+        "number_position": [
+            3,
+            6,
+            9,
+            17,
+            20,
+            24
+        ]
+    },
+    {
+        "id": 1564,
+        "original_text": "The sum of two numbers is 40 , one number is 8 more than the other . Find the numbers .",
+        "equation": "m+n=40.0 ; m-n=8.0",
+        "ans": [
+            16.0,
+            24.0
+        ],
+        "number list": [
+            "2.0",
+            "40.0",
+            "1.0",
+            "8.0"
+        ],
+        "number_position": [
+            3,
+            6,
+            8,
+            11
+        ]
+    },
+    {
+        "id": 6196,
+        "original_text": "Mario has 5000 pence to invest and decides to invest part of it at 4 % and the rest of it at 6.5 % . If the total interest for the year is 245 pence , how much does Mario has to invest at 4 % rate and how much does she has to invest at 6.5 % rate ?",
+        "equation": "0.01*4.0*m+0.01*6.5*n=245.0 ; n+m=5000.0",
+        "ans": [
+            3200.0,
+            1800.0
+        ],
+        "number list": [
+            "5000.0",
+            "4.0",
+            "6.5",
+            "245.0",
+            "4.0",
+            "6.5"
+        ],
+        "number_position": [
+            2,
+            14,
+            22,
+            33,
+            44,
+            56
+        ]
+    },
+    {
+        "id": 2205,
+        "original_text": "The Coffee Counter charges 9.00 dollars per pound for Kenyan French Roast coffee and 8.00 dollars per pound for Sumatran coffee . How many pounds of Kenyan French Roast and Sumatran should be used to make a 20-pound blend that sells for 8.40 dollars per pound ?",
+        "equation": "9.0*m+8.0*n=20.0*8.4 ; m+n=20.0",
+        "ans": [
+            8.0,
+            12.0
+        ],
+        "number list": [
+            "9.0",
+            "8.0",
+            "20.0",
+            "8.4"
+        ],
+        "number_position": [
+            4,
+            14,
+            37,
+            42
+        ]
+    },
+    {
+        "id": 2130,
+        "original_text": "The difference of 3 times a number and 5 is 40 . Find the number .",
+        "equation": "3.0*m=5.0+40.0",
+        "ans": [
+            15.0
+        ],
+        "number list": [
+            "3.0",
+            "5.0",
+            "40.0"
+        ],
+        "number_position": [
+            3,
+            8,
+            10
+        ]
+    },
+    {
+        "id": 972,
+        "original_text": "A 12 ounce can of cranberry juice sells for 84 cents . Give the unit cost in cents per ounce .",
+        "equation": "12.0*m=84.0",
+        "ans": [
+            7.0
+        ],
+        "number list": [
+            "12.0",
+            "84.0"
+        ],
+        "number_position": [
+            1,
+            9
+        ]
+    },
+    {
+        "id": 6999,
+        "original_text": "An auditorium has 500 balcony seats and 1800 main-level seats . If tickets for balcony seats will cost 15 dollars less than tickets for main-level seats , what should the prices be for the main-level seats and prices for the balcony seats , so that the total revenue from a sellout performance will be 84,500 ?",
+        "equation": "1800.0*m+500.0*n=84500.0 ; m-n=15.0",
+        "ans": [
+            40.0,
+            25.0
+        ],
+        "number list": [
+            "500.0",
+            "1800.0",
+            "15.0",
+            "84500.0"
+        ],
+        "number_position": [
+            3,
+            7,
+            18,
+            54
+        ]
+    },
+    {
+        "id": 2584,
+        "original_text": "A person wishes to invest 2,400.00 dollars , part at 9 % and part at 6 % . If the total interest desired at the end of the year is 189.00 dollars , how much should be invested at each rate ?",
+        "equation": "0.01*9.0*m+0.01*6.0*n=189.0 ; n+m=2400.0",
+        "ans": [
+            1500.0,
+            900.0
+        ],
+        "number list": [
+            "2400.0",
+            "9.0",
+            "6.0",
+            "189.0"
+        ],
+        "number_position": [
+            5,
+            10,
+            15,
+            30
+        ]
+    },
+    {
+        "id": 1341,
+        "original_text": "The probability that San Francisco plays in the next super bowl is nine times the probability that they do not play in the next super bowl . The probability that San Francisco plays in the next super bowl plus the probability that they do not play is 1 . What is the probability that San Francisco plays in the next super bowl ?",
+        "equation": "m+n=1.0 ; n-9.0*m=0",
+        "ans": [
+            0.9,
+            0.1
+        ],
+        "number list": [
+            "9.0",
+            "1.0"
+        ],
+        "number_position": [
+            12,
+            47
+        ]
+    },
+    {
+        "id": 3159,
+        "original_text": "Maria added a white vinegar solution of acetic acid in water . There are 2 strengths of white vinegar , a 5 % solution and a 10 % solution . How many milliliters of the 5 % solution and the 10 % solution must she mix to make 50 milliliters of a 9 % vinegar solution ?",
+        "equation": "5.0*m+10.0*n=50.0*9.0 ; m+n=50.0",
+        "ans": [
+            10.0,
+            40.0
+        ],
+        "number list": [
+            "2.0",
+            "5.0",
+            "10.0",
+            "5.0",
+            "10.0",
+            "50.0",
+            "9.0"
+        ],
+        "number_position": [
+            14,
+            21,
+            26,
+            35,
+            40,
+            48,
+            52
+        ]
+    },
+    {
+        "id": 266,
+        "original_text": "The total attendance at a rally was 750 people . Tickets bought before the rally were 2 dollars each , and tickets bought at the door were 2.75 dollars each . How many tickets were bought at the door if the total receipts were 1706.25 dollars ? How many tickets were bought before the rally ?",
+        "equation": "2.0*m+2.75*n=1706.25 ; m+n=750.0",
+        "ans": [
+            275.0,
+            475.0
+        ],
+        "number list": [
+            "750.0",
+            "2.0",
+            "2.75",
+            "1706.25"
+        ],
+        "number_position": [
+            7,
+            16,
+            27,
+            44
+        ]
+    },
+    {
+        "id": 3245,
+        "original_text": "Class A and class B donated their class fund totaling 127 dollars to an orphanage . If the amount donated by class A is 7 dollars short of 0.6667 of the amount donated by class B. How much did Class A Donate ? How much to class B donate ?",
+        "equation": "0.6667*m-n=7.0 ; m+n=127.0",
+        "ans": [
+            46.6016,
+            80.3983
+        ],
+        "number list": [
+            "127.0",
+            "7.0",
+            "0.6667"
+        ],
+        "number_position": [
+            10,
+            24,
+            28
+        ]
+    },
+    {
+        "id": 1119,
+        "original_text": "A car rents for 30 dollars per day plus 23 cents per mile . You are on a daily budget of 76 dollars . What mileage can you go and stay within your budget ?",
+        "equation": "0.01*23.0*m=76.0-30.0",
+        "ans": [
+            200.0
+        ],
+        "number list": [
+            "30.0",
+            "23.0",
+            "76.0"
+        ],
+        "number_position": [
+            4,
+            9,
+            21
+        ]
+    },
+    {
+        "id": 3394,
+        "original_text": "The sum of 2 numbers is 50 . The first number is 43 less than twice the second number . Find the smaller number . Find the larger number .",
+        "equation": "2.0*m-n=43.0 ; m+n=50.0",
+        "ans": [
+            19.0,
+            31.0
+        ],
+        "number list": [
+            "2.0",
+            "50.0",
+            "43.0",
+            "2.0"
+        ],
+        "number_position": [
+            3,
+            6,
+            12,
+            15
+        ]
+    },
+    {
+        "id": 6920,
+        "original_text": "During the 1998-1999 Little League season , the Tigers played 57 games . They lost 21 more games than they won . They did n't tie any . How many games did they win that season ?",
+        "equation": "m+n=57.0 ; m-n=21.0",
+        "ans": [
+            18.0,
+            39.0
+        ],
+        "number list": [
+            "1998.0",
+            "-1999.0",
+            "57.0",
+            "21.0"
+        ],
+        "number_position": [
+            2,
+            2,
+            10,
+            15
+        ]
+    },
+    {
+        "id": 3852,
+        "original_text": "At a movie theater , tickets cost 9.50 dollars for adults and 6.50 dollars for children . A group of 7 moviegoers pays a total of 54.50 dollars . How many adults and children were in the group ?",
+        "equation": "9.5*m+6.5*n=54.5 ; m+n=7.0",
+        "ans": [
+            3.0,
+            4.0
+        ],
+        "number list": [
+            "9.5",
+            "6.5",
+            "7.0",
+            "54.5"
+        ],
+        "number_position": [
+            7,
+            12,
+            20,
+            26
+        ]
+    },
+    {
+        "id": 262,
+        "original_text": "A physician 's assistant measures a child and finds that his height is 41.5 inches . At his last visit to the doctor 's office , the child was 38.5 inches tall . How much did the child grow , in inches ?",
+        "equation": "m=41.5-38.5",
+        "ans": [
+            3.0
+        ],
+        "number list": [
+            "41.5",
+            "38.5"
+        ],
+        "number_position": [
+            13,
+            29
+        ]
+    },
+    {
+        "id": 2500,
+        "original_text": "A plane flies 900 miles with a tail wind in 3 hours . The same plane takes 4 hours to make the return trip against the wind . What is the speed of the plane in still air ?",
+        "equation": "3.0*m+3.0*n=900.0 ; 4.0*m-4.0*n=900.0",
+        "ans": [
+            262.5,
+            37.5
+        ],
+        "number list": [
+            "900.0",
+            "3.0",
+            "4.0"
+        ],
+        "number_position": [
+            3,
+            10,
+            17
+        ]
+    }
+]

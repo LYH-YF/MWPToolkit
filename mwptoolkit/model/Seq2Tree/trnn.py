@@ -1,11 +1,14 @@
 import copy
 import random
 
+from torch.nn.functional import cross_entropy
+
 from mwptoolkit.module.Decoder.rnn_decoder import AttentionalRNNDecoder
 from mwptoolkit.loss.nll_loss import NLLLoss
-from mwptoolkit.loss.cross_entropy_loss import CrossEntropyLoss
+#from mwptoolkit.loss.cross_entropy_loss import CrossEntropyLoss
 import torch
 from torch import nn
+
 
 #from mwptoolkit.module.Layer.tree_layers import Node,BinaryTree
 from mwptoolkit.module.Layer.tree_layers import RecursiveNN
@@ -97,7 +100,7 @@ class TRNN(nn.Module):
         pad = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         self.seq2seq_loss = NLLLoss(weight, pad)
         weight2=torch.ones(self.operator_nums).to(config["device"])
-        self.ans_module_loss=CrossEntropyLoss(weight2,size_average=True)
+        #self.ans_module_loss=CrossEntropyLoss(weight2,size_average=True)
 
         self.wrong=0
 
@@ -264,12 +267,16 @@ class TRNN(nn.Module):
                 batch_prob.append(prob)
                 batch_target.append(target)
         
-        self.ans_module_loss.reset()
+        #self.ans_module_loss.reset()
+        loss = 0
         for b_i in range(len(batch_target)):
             #output=torch.nn.functional.log_softmax(batch_prob[b_i],dim=1)
-            self.ans_module_loss.eval_batch(batch_prob[b_i], batch_target[b_i].view(-1))
-        self.ans_module_loss.backward()
-        return self.ans_module_loss.get_loss()
+            #self.ans_module_loss.eval_batch(batch_prob[b_i], batch_target[b_i].view(-1))
+            loss+=cross_entropy(batch_prob[b_i], batch_target[b_i].view(-1))
+        loss/=len(batch_target)
+        #self.ans_module_loss.backward()
+        loss.backward()
+        return loss.item() #self.ans_module_loss.get_loss()
     
     def seq2seq_generate_t(self, encoder_outputs, encoder_hidden, decoder_inputs):
         with_t = random.random()

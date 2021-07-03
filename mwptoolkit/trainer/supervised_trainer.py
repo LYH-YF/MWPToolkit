@@ -891,7 +891,7 @@ class TRNNTrainer(SupervisedTrainer):
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total_seq2seq, loss_total_ans_module, epoch_time_cost
 
-    def _eval_batch(self, batch):
+    def _eval_batch(self, batch,x=0):
         test_out, target,temp_out,temp_tar,equ_out,equ_tar = self.model.model_test(batch)
         batch_size = len(test_out)
         val_acc = []
@@ -917,6 +917,10 @@ class TRNNTrainer(SupervisedTrainer):
                 equs_acc.append(True)
             else:
                 equs_acc.append(False)
+            if x:
+                self.logger('{} {} {}\n{} {} {}'.format(equ_out,temp_out,test_out,\
+                    equ_tar,temp_tar,target))
+
         return val_acc, equ_acc, temp_acc, equs_acc
 
     def fit(self):
@@ -1009,7 +1013,7 @@ class TRNNTrainer(SupervisedTrainer):
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(type):
-            batch_val_ac, batch_equ_ac, batch_temp_acc, batch_equs_acc = self._eval_batch(batch)
+            batch_val_ac, batch_equ_ac, batch_temp_acc, batch_equs_acc = self._eval_batch(batch,1)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             ans_acc+=batch_equs_acc.count(True)

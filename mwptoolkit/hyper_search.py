@@ -64,7 +64,7 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
         resources_per_trial={"cpu": configs['cpu_per_trial'], "gpu": configs['gpu_per_trial']},
         config=search_parameter,
         scheduler=scheduler,
-        num_samples=1
+        num_samples=configs["samples"]
     )
     best_config=result.get_best_config(metric="accuracy", mode="max")
 
@@ -72,9 +72,9 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
     #print("Best config: ", best_config)
     
 
-    #config_dict.update(best_config)
+    config_dict.update(best_config)
 
-    #run_toolkit(model_name,dataset_name,task_type,config_dict)
+    run_toolkit(model_name,dataset_name,task_type,config_dict)
 
     model_config=read_json_data(configs["model_config_path"])
     model_config.update(best_config)

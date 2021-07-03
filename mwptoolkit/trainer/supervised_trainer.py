@@ -918,7 +918,7 @@ class TRNNTrainer(SupervisedTrainer):
             else:
                 equs_acc.append(False)
             if x:
-                self.logger('{} {} {}\n{} {} {}'.format(equ_out[idx],temp_out[idx],test_out[idx],\
+                self.logger.info('{} {} {}\n{} {} {}'.format(equ_out[idx],temp_out[idx],test_out[idx],\
                     equ_tar[idx],temp_tar[idx],target[idx]))
 
         return val_acc, equ_acc, temp_acc, equs_acc

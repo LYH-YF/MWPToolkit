@@ -1034,7 +1034,7 @@ class TRNNTrainer(SupervisedTrainer):
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
-            loss_total, train_time_cost = self._train_epoch()
+            seq2seq_loss_total,_, train_time_cost = self._train_epoch()
             # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
             #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 

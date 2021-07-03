@@ -3,6 +3,7 @@
     "hidden_size":512,
     "decode_hidden_size":512,
     "learning_rate":0.001,
+    "ans_learning_rate":0.001,
     "num_layers":2,
     "rnn_cell_type":"lstm",
     "encoder_rnn_cell_type":"lstm",

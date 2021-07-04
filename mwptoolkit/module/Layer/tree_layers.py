@@ -345,7 +345,7 @@ class RecursiveNN(nn.Module):
         self.op_size = op_size
         self.W = nn.Linear(emb_size * 2, emb_size, bias=True)
         self.generate_linear = nn.Linear(emb_size, op_size, bias=True)
-        self.softmax = nn.functional.softmax
+        #self.softmax = nn.functional.softmax
         self.classes = op_list
 
     def forward(self, expression_tree, num_embedding, look_up, out_idx2symbol):
@@ -409,7 +409,6 @@ class RecursiveNN(nn.Module):
             combined_v = torch.cat((left_vector, right_vector), 1)
             currentNode, op_prob = self.RecurCell(combined_v)
             node.embedding = currentNode.squeeze(0)
-            op_prob = self.softmax(op_prob, dim=1)
             op_idx = torch.topk(op_prob, 1, 1)[1]
             node.node_value = self.classes[op_idx]
             #self.nodeProbList.append(op_prob)
@@ -418,9 +417,9 @@ class RecursiveNN(nn.Module):
         return currentNode
 
     def RecurCell(self, combine_emb):
-        node_embedding = self.W(combine_emb)
-        op=self.softmax(self.generate_linear(node_embedding),dim=1)
-        #op = self.generate_linear(node_embedding)
+        node_embedding = F.tanh(self.W(combine_emb))
+        #op=self.softmax(self.generate_linear(node_embedding),dim=1)
+        op = self.generate_linear(node_embedding)
         return node_embedding, op
 
 

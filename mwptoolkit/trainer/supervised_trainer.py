@@ -974,8 +974,8 @@ class TRNNTrainer(SupervisedTrainer):
                         self._save_model()
             if epo % 5 == 0:
                 self._save_checkpoint()
-        self.test(DatasetType.Test)
-        self.test(DatasetType.Train)
+        #self.test(DatasetType.Test)
+        #self.test(DatasetType.Train)
         self.logger.info('''training finished.
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\

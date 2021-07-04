@@ -952,8 +952,8 @@ class TRNNTrainer(SupervisedTrainer):
                     #     self.best_test_value_accuracy = test_val_ac
                     #     self.best_test_equ_accuracy = test_equ_ac
                     #     self._save_model()
-                    if equation_ac >= self.best_test_value_accuracy:
-                        self.best_test_value_accuracy = equation_ac
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
                 else:

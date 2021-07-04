@@ -1046,7 +1046,7 @@ class TRNNTrainer(SupervisedTrainer):
                 #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac,_,acc, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
-                tune.report(accuracy=acc)
+                tune.report(accuracy=test_val_ac)
 
 class SalignedTrainer(SupervisedTrainer):
     def __init__(self, config, model, dataloader, evaluator):

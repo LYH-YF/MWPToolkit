@@ -9,7 +9,6 @@ from mwptoolkit.loss.nll_loss import NLLLoss
 import torch
 from torch import nn
 
-
 #from mwptoolkit.module.Layer.tree_layers import Node,BinaryTree
 from mwptoolkit.module.Layer.tree_layers import RecursiveNN
 from mwptoolkit.module.Encoder.rnn_encoder import SelfAttentionRNNEncoder, BasicRNNEncoder
@@ -22,33 +21,37 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 class TRNN(nn.Module):
     def __init__(self, config, dataset):
-        super(TRNN,self).__init__()
-        self.embedding_size=config["embedding_size"]
-        self.dropout_ratio = config['dropout_ratio']
-        self.bidirectional = config["bidirectional"]
-        self.embedding_size = config["embedding_size"]
-        self.hidden_size = config["hidden_size"]
-        self.decode_hidden_size = config["decode_hidden_size"]
-        self.attention = True
-        self.num_layers = config["num_layers"]
-        self.share_vocab = config["share_vocab"]
+        super(TRNN, self).__init__()
+        self.seq2seq_embedding_size = config["seqseq_embedding_size"]
+        self.seq2seq_encode_hidden_size = config["seq2seq_encode_hidden_size"]
+        self.seq2seq_decode_hidden_size = config["seq2seq_decode_hidden_size"]
+        self.num_layers = config["seq2seq_num_layers"]
         self.teacher_force_ratio = config["teacher_force_ratio"]
+        self.seq2seq_dropout_ratio = config['seq2seq_dropout_ratio']
+        self.ans_embedding_size = config["ans_embedding_size"]
+        self.ans_hidden_size = config["ans_hidden_size"]
+        self.ans_dropout_ratio = config["ans_dropout_ratio"]
+        self.ans_num_layers = config["ans_num_layers"]
+
         self.encoder_rnn_cell_type = config["encoder_rnn_cell_type"]
         self.decoder_rnn_cell_type = config["decoder_rnn_cell_type"]
-        self.max_gen_len=config["max_output_len"]
-        
+        self.max_gen_len = config["max_output_len"]
+        self.bidirectional = config["bidirectional"]
+        self.attention = True
+        self.share_vocab = config["share_vocab"]
+
         self.mask_list = NumMask.number
         self.in_idx2word = dataset.in_idx2word
-        self.out_idx2symbol=dataset.out_idx2symbol
-        self.temp_idx2symbol=dataset.temp_idx2symbol
-        self.vocab_size=len(dataset.in_idx2word)
-        self.symbol_size=len(dataset.out_idx2symbol)
-        self.temp_symbol_size=len(dataset.temp_idx2symbol)
-        self.operator_nums=len(dataset.operator_list)
-        self.operator_list=dataset.operator_list
-        self.generate_list=[SpecialTokens.UNK_TOKEN]+dataset.generate_list
+        self.out_idx2symbol = dataset.out_idx2symbol
+        self.temp_idx2symbol = dataset.temp_idx2symbol
+        self.vocab_size = len(dataset.in_idx2word)
+        self.symbol_size = len(dataset.out_idx2symbol)
+        self.temp_symbol_size = len(dataset.temp_idx2symbol)
+        self.operator_nums = len(dataset.operator_list)
+        self.operator_list = dataset.operator_list
+        self.generate_list = [SpecialTokens.UNK_TOKEN] + dataset.generate_list
         self.generate_idx = [self.in_idx2word.index(num) for num in self.generate_list]
-        
+
         if self.share_vocab:
             self.sos_token_idx = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
         else:
@@ -65,7 +68,7 @@ class TRNN(nn.Module):
             self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-        
+
         try:
             self.temp_sos_token = dataset.temp_symbol2idx[SpecialTokens.SOS_TOKEN]
         except:
@@ -80,47 +83,47 @@ class TRNN(nn.Module):
             self.temp_pad_token = None
 
         # seq2seq module
-        self.seq2seq_in_embedder=BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
+        self.seq2seq_in_embedder = BaiscEmbedder(self.vocab_size, self.seq2seq_embedding_size, self.seq2seq_dropout_ratio)
         if self.share_vocab:
-            self.seq2seq_out_embedder=self.seq2seq_in_embedder
+            self.seq2seq_out_embedder = self.seq2seq_in_embedder
         else:
-            self.seq2seq_out_embedder=BaiscEmbedder(self.temp_symbol_size,self.embedding_size,self.dropout_ratio)
-        self.seq2seq_encoder=BasicRNNEncoder(self.embedding_size,self.hidden_size,self.num_layers,\
-                                                self.encoder_rnn_cell_type,self.dropout_ratio,self.bidirectional)
-        self.seq2seq_decoder=AttentionalRNNDecoder(self.embedding_size,self.decode_hidden_size,self.hidden_size,\
-                                                    self.num_layers,self.decoder_rnn_cell_type,self.dropout_ratio)
-        self.seq2seq_gen_linear = nn.Linear(self.hidden_size, self.temp_symbol_size)
+            self.seq2seq_out_embedder = BaiscEmbedder(self.temp_symbol_size, self.seq2seq_embedding_size, self.seq2seq_dropout_ratio)
+        self.seq2seq_encoder=BasicRNNEncoder(self.seq2seq_embedding_size,self.seq2seq_encode_hidden_size,self.num_layers,\
+                                                self.encoder_rnn_cell_type,self.seq2seq_dropout_ratio,self.bidirectional)
+        self.seq2seq_decoder=AttentionalRNNDecoder(self.seq2seq_embedding_size,self.seq2seq_decode_hidden_size,self.seq2seq_encode_hidden_size,\
+                                                    self.num_layers,self.decoder_rnn_cell_type,self.seq2seq_dropout_ratio)
+        self.seq2seq_gen_linear = nn.Linear(self.seq2seq_encode_hidden_size, self.temp_symbol_size)
         #answer module
-        self.answer_in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.answer_encoder=SelfAttentionRNNEncoder(self.embedding_size,self.hidden_size,self.embedding_size,self.num_layers,\
-                                                    self.encoder_rnn_cell_type,self.dropout_ratio,self.bidirectional)
-        self.answer_rnn = RecursiveNN(self.embedding_size, self.operator_nums, self.operator_list)
+        self.answer_in_embedder = BaiscEmbedder(self.vocab_size, self.ans_embedding_size, self.ans_dropout_ratio)
+        self.answer_encoder=SelfAttentionRNNEncoder(self.ans_embedding_size,self.ans_hidden_size,self.ans_embedding_size,self.num_layers,\
+                                                    self.encoder_rnn_cell_type,self.ans_dropout_ratio,self.bidirectional)
+        self.answer_rnn = RecursiveNN(self.ans_embedding_size, self.operator_nums, self.operator_list)
 
         weight = torch.ones(self.temp_symbol_size).to(config["device"])
         pad = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         self.seq2seq_loss = NLLLoss(weight, pad)
-        weight2=torch.ones(self.operator_nums).to(config["device"])
-        self.ans_module_loss=NLLLoss(weight2,size_average=True)
+        weight2 = torch.ones(self.operator_nums).to(config["device"])
+        self.ans_module_loss = NLLLoss(weight2, size_average=True)
         #self.ans_module_loss=CrossEntropyLoss(weight2,size_average=True)
 
-        self.wrong=0
+        self.wrong = 0
 
-    def calculate_loss(self,batch_data):
+    def calculate_loss(self, batch_data):
         # first stage:train seq2seq
-        seq2seq_loss=self.seq2seq_calculate_loss(batch_data)
+        seq2seq_loss = self.seq2seq_calculate_loss(batch_data)
 
         # second stage: train answer module
-        answer_loss=self.ans_module_calculate_loss(batch_data)
+        answer_loss = self.ans_module_calculate_loss(batch_data)
 
-        return seq2seq_loss,answer_loss
-    
-    def model_test(self,batch_data):
+        return seq2seq_loss, answer_loss
+
+    def model_test(self, batch_data):
         seq = batch_data['question']
         seq_length = batch_data['ques len']
         target = batch_data['equation']
         num_pos = batch_data['num pos']
         num_list = batch_data["num list"]
-        template_target=self.convert_temp_idx2symbol(batch_data['template'])
+        template_target = self.convert_temp_idx2symbol(batch_data['template'])
 
         batch_size = seq.size(0)
         device = seq.device
@@ -129,7 +132,7 @@ class TRNN(nn.Module):
         encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
 
         if self.bidirectional:
-            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+            encoder_outputs = encoder_outputs[:, :, self.seq2seq_encode_hidden_size:] + encoder_outputs[:, :, :self.seq2seq_encode_hidden_size]
             if (self.encoder_rnn_cell_type == 'lstm'):
                 encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:
@@ -148,7 +151,7 @@ class TRNN(nn.Module):
         decoder_inputs = self.init_seq2seq_decoder_inputs(None, device, batch_size)
         output_template = self.seq2seq_generate_without_t(encoder_outputs, encoder_hidden, decoder_inputs)
         template = self.convert_temp_idx2symbol(output_template)
-        
+
         device = seq.device
         seq_emb = self.answer_in_embedder(seq)
         encoder_output, encoder_hidden = self.answer_encoder(seq_emb, seq_length)
@@ -157,7 +160,7 @@ class TRNN(nn.Module):
         generate_num = torch.tensor(self.generate_idx).to(device)
         generate_emb = self.answer_in_embedder(generate_num)
         equations = []
-        ans_module_test=[]
+        ans_module_test = []
         for b_i in range(batch_size):
             try:
                 tree_i = self.template2tree(template[b_i])
@@ -165,13 +168,13 @@ class TRNN(nn.Module):
                 equations.append([])
                 continue
             look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
-            num_encoding = seq_emb[b_i, num_pos[b_i]]+encoder_output[b_i, num_pos[b_i]]
+            num_encoding = seq_emb[b_i, num_pos[b_i]] + encoder_output[b_i, num_pos[b_i]]
             num_embedding = torch.cat([generate_emb, num_encoding], dim=0)
             #num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
             nodes_pred = self.answer_rnn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
             tree_i.root = nodes_pred
             equation = self.tree2equation(tree_i)
-            
+
             equations.append(equation)
         for b_i in range(batch_size):
             try:
@@ -180,7 +183,7 @@ class TRNN(nn.Module):
                 ans_module_test.append([])
                 continue
             look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
-            num_encoding = seq_emb[b_i, num_pos[b_i]]+encoder_output[b_i, num_pos[b_i]]
+            num_encoding = seq_emb[b_i, num_pos[b_i]] + encoder_output[b_i, num_pos[b_i]]
             num_embedding = torch.cat([generate_emb, num_encoding], dim=0)
             #num_embedding = torch.cat([generate_emb, encoder_output[b_i, num_pos[b_i]]], dim=0)
             nodes_pred = self.answer_rnn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
@@ -190,12 +193,12 @@ class TRNN(nn.Module):
             ans_module_test.append(equation)
             # tree_i=self.template2tree(template[b_i])
             # equations.append([])
-        equations=self.mask2num(equations,num_list)
-        ans_module_test=self.mask2num(ans_module_test,num_list)
-        targets=self.convert_idx2symbol(target,num_list)
-        temp_t=self.convert_temp_idx2symbol(batch_data['template'])
-        return equations,targets,template,temp_t,ans_module_test,targets
-    
+        equations = self.mask2num(equations, num_list)
+        ans_module_test = self.mask2num(ans_module_test, num_list)
+        targets = self.convert_idx2symbol(target, num_list)
+        temp_t = self.convert_temp_idx2symbol(batch_data['template'])
+        return equations, targets, template, temp_t, ans_module_test, targets
+
     def seq2seq_calculate_loss(self, batch_data):
         r"""calculate loss of a batch data.
         """
@@ -210,7 +213,7 @@ class TRNN(nn.Module):
         encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
 
         if self.bidirectional:
-            encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
+            encoder_outputs = encoder_outputs[:, :, self.seq2seq_encode_hidden_size:] + encoder_outputs[:, :, :self.seq2seq_encode_hidden_size]
             if (self.encoder_rnn_cell_type == 'lstm'):
                 encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:
@@ -234,14 +237,14 @@ class TRNN(nn.Module):
         self.seq2seq_loss.eval_batch(token_logits, target.view(-1))
         self.seq2seq_loss.backward()
         return self.seq2seq_loss.get_loss()
-    
-    def ans_module_calculate_loss(self,batch_data):
-        seq=batch_data["question"]
-        seq_length=batch_data["ques len"]
-        num_pos=batch_data["num pos"]
-        for idx,equ in enumerate(batch_data["equ_source"]):
-            batch_data["equ_source"][idx]=equ.split(" ")
-        template=batch_data["equ_source"]
+
+    def ans_module_calculate_loss(self, batch_data):
+        seq = batch_data["question"]
+        seq_length = batch_data["ques len"]
+        num_pos = batch_data["num pos"]
+        for idx, equ in enumerate(batch_data["equ_source"]):
+            batch_data["equ_source"][idx] = equ.split(" ")
+        template = batch_data["equ_source"]
 
         device = seq.device
         seq_emb = self.answer_in_embedder(seq)
@@ -256,29 +259,29 @@ class TRNN(nn.Module):
             try:
                 tree_i = self.template2tree(template[b_i])
             except IndexError:
-                self.wrong+=1
+                self.wrong += 1
                 continue
             look_up = self.generate_list + NumMask.number[:len(num_pos[b_i])]
-            num_encoding = seq_emb[b_i, num_pos[b_i]]+encoder_output[b_i, num_pos[b_i]]
+            num_encoding = seq_emb[b_i, num_pos[b_i]] + encoder_output[b_i, num_pos[b_i]]
             num_embedding = torch.cat([generate_emb, num_encoding], dim=0)
-            assert len(look_up)==len(num_embedding)
+            assert len(look_up) == len(num_embedding)
             #tree_i=tree[b_i]
             prob, target = self.answer_rnn(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
             if prob != []:
                 batch_prob.append(prob)
                 batch_target.append(target)
-        
+
         self.ans_module_loss.reset()
         #loss = 0
         for b_i in range(len(batch_target)):
-            output=torch.nn.functional.log_softmax(batch_prob[b_i],dim=1)
+            output = torch.nn.functional.log_softmax(batch_prob[b_i], dim=1)
             self.ans_module_loss.eval_batch(output, batch_target[b_i].view(-1))
             #loss+=cross_entropy(batch_prob[b_i], batch_target[b_i].view(-1))
         #loss/=len(batch_target)
         self.ans_module_loss.backward()
         #loss.backward()
         return self.ans_module_loss.get_loss()
-    
+
     def seq2seq_generate_t(self, encoder_outputs, encoder_hidden, decoder_inputs):
         with_t = random.random()
         if with_t < self.teacher_force_ratio:
@@ -348,7 +351,7 @@ class TRNN(nn.Module):
     def tree2equation(self, tree):
         equation = tree.tree2equ(tree.root)
         return equation
-    
+
     def init_seq2seq_decoder_inputs(self, target, device, batch_size):
         pad_var = torch.LongTensor([self.sos_token_idx] * batch_size).to(device).view(batch_size, 1)
         if target != None:
@@ -388,14 +391,14 @@ class TRNN(nn.Module):
         decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
         return decoded_output
 
-    def convert_temp_idx2symbol(self,output):
+    def convert_temp_idx2symbol(self, output):
         batch_size = output.size(0)
         seq_len = output.size(1)
         symbol_list = []
         for b_i in range(batch_size):
             symbols = []
             for s_i in range(seq_len):
-                idx=output[b_i][s_i]
+                idx = output[b_i][s_i]
                 if idx in [self.temp_sos_token, self.temp_eos_token, self.temp_pad_token]:
                     break
                 symbol = self.temp_idx2symbol[idx]
@@ -403,7 +406,7 @@ class TRNN(nn.Module):
             symbol_list.append(symbols)
         return symbol_list
 
-    def convert_idx2symbol(self,output,num_list):
+    def convert_idx2symbol(self, output, num_list):
         batch_size = output.size(0)
         seq_len = output.size(1)
         output_list = []
@@ -439,12 +442,12 @@ class TRNN(nn.Module):
             outputs.append(idx)
         return outputs
 
-    def mask2num(self,output,num_list):
-        batch_size=len(output)
+    def mask2num(self, output, num_list):
+        batch_size = len(output)
         output_list = []
         for b_i in range(batch_size):
-            res=[]
-            seq_len=len(output[b_i])
+            res = []
+            seq_len = len(output[b_i])
             num_len = len(num_list[b_i])
             for s_i in range(seq_len):
                 symbol = output[b_i][s_i]
@@ -458,7 +461,7 @@ class TRNN(nn.Module):
                     res.append(symbol)
             output_list.append(res)
         return output_list
-        
+
 
 # class TRNN(nn.Module):
 #     def __init__(self, config, dataset):
@@ -485,7 +488,7 @@ class TRNN(nn.Module):
 #         self.temp_symbol_size = len(dataset.temp_idx2symbol)
 #         self.operator_nums = len(dataset.operator_list)
 #         self.operator_list = dataset.operator_list
-        
+
 #         self.generate_list = [SpecialTokens.UNK_TOKEN]+dataset.generate_list
 #         self.generate_idx = [self.in_idx2word.index(num) for num in self.generate_list]
 
@@ -522,7 +525,7 @@ class TRNN(nn.Module):
 #             self.sos_token_idx = dataset.in_word2idx[SpecialTokens.SOS_TOKEN]
 #         else:
 #             self.sos_token_idx = dataset.temp_symbol2idx[SpecialTokens.EOS_TOKEN]
-        
+
 #         try:
 #             self.out_sos_token = dataset.out_symbol2idx[SpecialTokens.SOS_TOKEN]
 #         except:
@@ -535,7 +538,7 @@ class TRNN(nn.Module):
 #             self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
 #         except:
 #             self.out_pad_token = None
-        
+
 #         try:
 #             self.temp_sos_token = dataset.temp_symbol2idx[SpecialTokens.SOS_TOKEN]
 #         except:
@@ -587,7 +590,7 @@ class TRNN(nn.Module):
 #         self.seq2seq_loss.eval_batch(token_logits, target.view(-1))
 #         self.seq2seq_loss.backward()
 #         return self.seq2seq_loss.get_loss()
-    
+
 #     def ans_module_calculate_loss(self,batch_data):
 #         seq=batch_data["question"]
 #         seq_length=batch_data["ques len"]
@@ -629,7 +632,7 @@ class TRNN(nn.Module):
 #             if prob != []:
 #                 batch_prob.append(prob)
 #                 batch_target.append(target)
-        
+
 #         #self.ans_module_loss.reset()
 #         loss = 0
 #         for b_i in range(len(batch_target)):
@@ -640,7 +643,7 @@ class TRNN(nn.Module):
 #         #self.ans_module_loss.backward()
 #         loss.backward()
 #         return loss.item() #self.ans_module_loss.get_loss()
-    
+
 #     def seq2seq_generate_t(self, encoder_outputs, encoder_hidden, decoder_inputs):
 #         with_t = random.random()
 #         if with_t < self.teacher_force_ratio:
@@ -710,7 +713,7 @@ class TRNN(nn.Module):
 #     def tree2equation(self, tree):
 #         equation = tree.tree2equ(tree.root)
 #         return equation
-    
+
 #     def init_seq2seq_decoder_inputs(self, target, device, batch_size):
 #         pad_var = torch.LongTensor([self.sos_token_idx] * batch_size).to(device).view(batch_size, 1)
 #         if target != None:
@@ -820,8 +823,6 @@ class TRNN(nn.Module):
 #                     res.append(symbol)
 #             output_list.append(res)
 #         return output_list
-        
-
 
 # class TRNN(nn.Module):
 #     def __init__(self, config):
@@ -886,7 +887,7 @@ class TRNN(nn.Module):
 #             if prob != []:
 #                 batch_prob.append(prob)
 #                 batch_target.append(target)
-        
+
 #         self.ans_module_loss.reset()
 #         for b_i in range(len(target)):
 #             output=torch.nn.functional.log_softmax(batch_prob[b_i],dim=1)

@@ -137,6 +137,7 @@ class TransformerLayer(nn.Module):
 
 
 class GAEncoderLayer(nn.Module):
+    """GA means Group Attention."""
     "Encoder is made up of self-attn and feed forward (defined below)"
     def __init__(self, size, self_attn, feed_forward, dropout):
         super(GAEncoderLayer, self).__init__()

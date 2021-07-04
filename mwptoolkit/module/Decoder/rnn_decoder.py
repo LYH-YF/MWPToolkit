@@ -156,9 +156,22 @@ class AttentionalRNNDecoder(nn.Module):
         return outputs, hidden_states
 
 
-class SalignedDecoder(torch.nn.Module):
-    def __init__(self, dim_hidden=300, dropout_rate=0.5, device=None):
+class SalignedDecoder(nn.Module):
+    def __init__(self, operations, dim_hidden=300, dropout_rate=0.5, device=None):
         super(SalignedDecoder, self).__init__()
+        self.NOOP = operations.NOOP
+        self.GEN_VAR = operations.GEN_VAR
+        self.ADD = operations.ADD
+        self.SUB = operations.SUB
+        self.MUL = operations.MUL
+        self.DIV = operations.DIV
+        self.POWER = operations.POWER
+        self.EQL = operations.EQL
+        self.N_OPS = operations.N_OPS
+        self.PAD = operations.PAD
+        self.RAW_EQL = operations.RAW_EQL
+        self.BRG = operations.BRG
+
         self._device = device
         self.transformer_add = Transformer(2 * dim_hidden)
         self.transformer_sub = Transformer(2 * dim_hidden)
@@ -166,12 +179,13 @@ class SalignedDecoder(torch.nn.Module):
         self.transformer_div = Transformer(2 * dim_hidden)
         self.transformer_power = Transformer(2 * dim_hidden)
         self.transformers = {
-            OPERATIONS.ADD: self.transformer_add,
-            OPERATIONS.SUB: self.transformer_sub,
-            OPERATIONS.MUL: self.transformer_mul,
-            OPERATIONS.DIV: self.transformer_div,
-            OPERATIONS.POWER: self.transformer_power,
-            OPERATIONS.EQL: None}
+            self.ADD: self.transformer_add,
+            self.SUB: self.transformer_sub,
+            self.MUL: self.transformer_mul,
+            self.DIV: self.transformer_div,
+            self.POWER: self.transformer_power,
+            self.RAW_EQL: None,
+            self.BRG: None}
         self.gen_var = Attention(2 * dim_hidden,
                                  dim_hidden,
                                  dropout_rate=0.0)
@@ -195,7 +209,7 @@ class SalignedDecoder(torch.nn.Module):
             torch.nn.Linear(dim_hidden * 7, 256),
             torch.nn.ReLU(),
             torch.nn.Dropout(dropout_rate),
-            torch.nn.Linear(256, 9))
+            torch.nn.Linear(256, self.N_OPS+1))
         self.op_gate = torch.nn.Linear(
             dim_hidden * 7,
             3,
@@ -245,13 +259,11 @@ class SalignedDecoder(torch.nn.Module):
         if prev_output is not None:
             # result calculated batch-wise
             batch_result = {
-                OPERATIONS.GEN_VAR: self.gen_var(
-                    context, prev_output, text_len),
-                OPERATIONS.ADD: self.transformer_add(stack_states),
-                OPERATIONS.SUB: self.transformer_sub(stack_states),
-                OPERATIONS.MUL: self.transformer_mul(stack_states),
-                OPERATIONS.DIV: self.transformer_div(stack_states),
-                OPERATIONS.POWER: self.transformer_power(stack_states),
+                self.ADD: self.transformer_add(stack_states),
+                self.SUB: self.transformer_sub(stack_states),
+                self.MUL: self.transformer_mul(stack_states),
+                self.DIV: self.transformer_div(stack_states),
+                self.POWER: self.transformer_power(stack_states)
             }
 
         prev_returns = []
@@ -260,30 +272,38 @@ class SalignedDecoder(torch.nn.Module):
             #print('prev_op[b].item()', prev_op[b].item())
             #print(prev_op[b].item(), OPERATIONS.NOOP, OPERATIONS.GEN_VAR, OPERATIONS.EQL); exit()
             # no op
-            if prev_op[b].item() == OPERATIONS.NOOP:
+            if prev_op[b].item() == self.NOOP:
                 ret = self.noop_padding_return
 
+            elif prev_op[b].item() == self.PAD:
+                ret = self.noop_padding_return
             # generate variable
-            elif prev_op[b].item() == OPERATIONS.GEN_VAR:
-                variable = batch_result[OPERATIONS.GEN_VAR][b]
+            elif prev_op[b].item() == self.GEN_VAR:
+                variable = batch_result[self.GEN_VAR][b]
                 operands[b].append(variable)
                 stacks[b].add_variable(variable)
                 ret = variable
                 #print('add_variable', stacks[b]._operands)
 
             # OPERATIONS.ADD, SUB, MUL, DIV
-            elif prev_op[b].item() in [OPERATIONS.ADD, OPERATIONS.SUB,
-                                       OPERATIONS.MUL, OPERATIONS.DIV, OPERATIONS.POWER]:
+            elif prev_op[b].item() in [self.ADD, self.SUB,
+                                       self.MUL, self.DIV, self.POWER]:
+                #print('>>> OPERATIONS.ADD, SUB, MUL, DIV', len(stacks[b]._stack))
                 transformed = batch_result[prev_op[b].item()][b]
-                ret = stacks[b].apply(
+                #print('transformed', transformed)
+                ret = stacks[b].apply_embed_only(
                     prev_op[b].item(),
                     transformed)
 
-            elif prev_op[b].item() == OPERATIONS.EQL:
-                ret = stacks[b].apply(prev_op[b].item(), None)
+            elif prev_op[b].item() in [self.RAW_EQL, self.BRG]:
+                ret = stacks[b].apply_embed_only(prev_op[b].item(), None)
+
+            elif prev_op[b].item() == self.EQL:
+                ret = stacks[b].apply_eql(prev_op[b].item())
 
             # push operand
             else:
+                #if b == 0: print('>>> push operand', len(stacks[b]._stack))
                 stacks[b].push(prev_op[b].item() - N_OPS)
                 ret = operands[b][prev_op[b].item() - N_OPS]
             prev_returns.append(ret)
@@ -333,8 +353,8 @@ class SalignedDecoder(torch.nn.Module):
         #print('arg_logits', arg_logits.size())
 
         return op_logits, arg_logits, outputs, hidden_state
-    
-    def pad_and_cat(self,tensors, padding):
+
+    def pad_and_cat(self, tensors, padding):
         """ Pad lists to have same number of elements, and concatenate
         those elements to a 3d tensor.
 

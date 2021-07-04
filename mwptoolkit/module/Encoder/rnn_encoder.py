@@ -319,7 +319,7 @@ class HWCPEncoder(nn.Module):
         mask[mask.sum(dim=-1) == pad_length, 0] = 0
         return mask
 
-class SalignedEncoder(torch.nn.Module):
+class SalignedEncoder(nn.Module):
     """ Simple RNN encoder with attention which also extract variable embedding.
 
     Args:
@@ -328,7 +328,7 @@ class SalignedEncoder(torch.nn.Module):
         dim_last (int): Dimension of the last state will be transformed to.
         dropout_rate (float): Dropout rate.
     """
-    def __init__(self, dim_embed, dim_hidden, dim_last,con_len, dropout_rate,device,
+    def __init__(self, dim_embed, dim_hidden, dim_last, dropout_rate,
                  dim_attn_hidden=256):
         super(SalignedEncoder, self).__init__()
         self.rnn = torch.nn.LSTM(dim_embed,
@@ -346,12 +346,15 @@ class SalignedEncoder(torch.nn.Module):
             torch.nn.Tanh())
         self.attn = Attention_x(dim_hidden * 2, dim_hidden * 2,
                               dim_attn_hidden)
+        # self.embedding_one = torch.nn.Parameter(
+        #     torch.normal(torch.zeros(2 * dim_hidden), 0.01))
+        # self.embedding_pi = torch.nn.Parameter(
+        #     torch.normal(torch.zeros(2 * dim_hidden), 0.01))
         self.register_buffer('padding',
                              torch.zeros(dim_hidden * 2))
         self.embeddings = torch.nn.Parameter(
             torch.normal(torch.zeros(20, 2 * dim_hidden), 0.01))
         self.dim_hidden = dim_hidden
-        self.initialize_fix_constant(con_len,device)
 
     def initialize_fix_constant(self, con_len, device):
         self.embedding_con = [torch.nn.Parameter(
@@ -370,7 +373,7 @@ class SalignedEncoder(torch.nn.Module):
                 `B x T x dim_hidden`.
         """
         packed = torch.nn.utils.rnn.pack_padded_sequence(
-            inputs, lengths, batch_first=True,enforce_sorted=True)
+            inputs, lengths, batch_first=True)
         hidden_state = None
         outputs, hidden_state = self.rnn(packed, hidden_state)
         outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(outputs,
@@ -391,6 +394,22 @@ class SalignedEncoder(torch.nn.Module):
                     [outputs[b][i]
                      for i in constant_indices[b]]
                     for b in range(batch_size)]
+        # operands = [[self.embedding_one, self.embedding_pi] +
+        #             [self.embeddings[i]
+        #              for i in range(len(constant_indices[b]))]
+        #             for b in range(batch_size)]
+        # n_operands, operands = pad_and_cat(operands, self.padding)
+
+        # attns = []
+        # for i in range(operands.size(1)):
+        #     attn = self.attn(outputs, operands[:, i], lengths)
+        #     attns.append(attn)
+
+        # operands = [[self.embedding_one, self.embedding_pi]
+        #             + [attns[i][b]
+        #                for i in range(len(constant_indices[b]))]
+        #             for b in range(batch_size)]
+
         return outputs, hidden_state, operands
 
 # class SalignedEncoder(torch.nn.Module):

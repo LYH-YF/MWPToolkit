@@ -111,6 +111,9 @@ def run_toolkit(model_name, dataset_name, task_type, config_dict={}):
             evaluator = PostEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
         else:
             raise NotImplementedError
+        
+        if config['model'].lower() in ['multiencdec']:
+            evaluator = MultiEncDecEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
 
         trainer = get_trainer(config["task_type"], config["model"], config["supervising_mode"])(config, model, dataloader, evaluator)
         logger.info(model)

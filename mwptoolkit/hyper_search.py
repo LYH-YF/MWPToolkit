@@ -9,7 +9,7 @@ from ray.tune import CLIReporter
 from ray.tune.schedulers import ASHAScheduler, AsyncHyperBandScheduler
 
 from mwptoolkit.config.configuration import Config
-from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator
+from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator, MultiEncDecEvaluator
 from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer, read_json_data, write_json_data
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
@@ -35,6 +35,9 @@ def train_process(search_parameter,configs):
         evaluator = PostEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
     else:
         raise NotImplementedError
+    
+    if configs['model'].lower() in ['multiencdec']:
+        evaluator = MultiEncDecEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
 
     trainer = get_trainer(configs["task_type"], configs["model"], configs["supervising_mode"])(configs, model, dataloader, evaluator)
     trainer.param_search()

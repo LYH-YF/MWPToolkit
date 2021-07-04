@@ -417,7 +417,7 @@ class RecursiveNN(nn.Module):
         return currentNode
 
     def RecurCell(self, combine_emb):
-        node_embedding = F.tanh(self.W(combine_emb))
+        node_embedding = torch.tanh(self.W(combine_emb))
         #op=self.softmax(self.generate_linear(node_embedding),dim=1)
         op = self.generate_linear(node_embedding)
         return node_embedding, op

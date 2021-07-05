@@ -85,6 +85,7 @@ class Saligned(nn.Module):
         #print(batch_data.keys())
         num_len = batch_data["num size"]
         fix_constants=self.constant
+        batch_data["raw_equation"] = batch_data["equation"].clone()
 
         batch_size = len(text)
         # zero embedding for the stack bottom
@@ -265,7 +266,7 @@ class Saligned(nn.Module):
 
         return predicts, targets
 
-
+    
 # class Saligned(nn.Module):
 #     """ Neural Math Word Problem Solver Machine Version 1.
 

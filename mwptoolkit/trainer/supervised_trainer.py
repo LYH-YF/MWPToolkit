@@ -1176,7 +1176,7 @@ class SalignedTrainer(SupervisedTrainer):
 
         return op_target, eq_len
 
-    def _train_batch(self, batch, N_OPS):
+    def _train_batch(self, batch):
         order = torch.sort(batch['ques len'] * -1)[1]
         for k in batch:
             if type(batch[k]) is list:
@@ -1186,7 +1186,7 @@ class SalignedTrainer(SupervisedTrainer):
         batch_loss = self.model.calculate_loss(batch)
         return batch_loss
 
-    def _eval_batch(self, batch, N_OPS):
+    def _eval_batch(self, batch):
         order = torch.sort(batch['ques len'] * -1)[1]
         for k in batch:
             if type(batch[k]) is list:
@@ -1194,7 +1194,7 @@ class SalignedTrainer(SupervisedTrainer):
             else:
                 batch[k] = batch[k][order]
 
-        test_out, target = self.model.model_test(batch, self.constant, N_OPS)
+        test_out, target = self.model.model_test(batch)
 
         batch_size = len(test_out)
         val_acc = []
@@ -1213,7 +1213,6 @@ class SalignedTrainer(SupervisedTrainer):
     def _train_epoch(self):
         epoch_start_time = time.time()
         loss_total = 0.
-        N_OPS = self.N_OPS
         self.model.train()
         #print(self.dataloader.dataset.out_symbol2idx); #exit()
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
@@ -1222,8 +1221,6 @@ class SalignedTrainer(SupervisedTrainer):
             batch["raw_equation"] = batch["equation"].clone()
             self.batch_idx = batch_idx + 1
             self.model.zero_grad()
-            # batch["equation"], batch['equ len'] = self.adjust_equ(batch["raw_equation"], batch['equ len'],
-            #                                                       batch['num list'])
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
             batch_loss.backward()
@@ -1239,12 +1236,12 @@ class SalignedTrainer(SupervisedTrainer):
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
-            self.model.train()
-            loss_total, train_time_cost = self._train_epoch()
-            self._scheduler_step()
+            # self.model.train()
+            # loss_total, train_time_cost = self._train_epoch()
+            # self._scheduler_step()
 
-            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-                                %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
+            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
@@ -1292,7 +1289,7 @@ class SalignedTrainer(SupervisedTrainer):
             batch["raw_equation"] = batch["equation"].clone()
             # batch["equation"], batch['equ len'] = self.adjust_equ(batch["raw_equation"], batch['equ len'],
             #                                                       batch['num list'])
-            batch_val_ac, batch_equ_ac = self._eval_batch(batch, self.N_OPS)
+            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)

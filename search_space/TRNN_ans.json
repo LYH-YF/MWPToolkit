@@ -1,0 +1,7 @@
+[
+    "ans_learning_rate=(1e-4, 1e-2)",
+    "ans_embedding_size=[64,128,256]",
+    "ans_hidden_size=[128,256,512]",
+    "ans_dropout_ratio=(0,1)",
+    "ans_num_layers=[1,2,3,4]"
+]

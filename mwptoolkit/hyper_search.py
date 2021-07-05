@@ -67,7 +67,8 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
         resources_per_trial={"cpu": configs['cpu_per_trial'], "gpu": configs['gpu_per_trial']},
         config=search_parameter,
         scheduler=scheduler,
-        num_samples=configs["samples"]
+        num_samples=configs["samples"],
+        raise_on_failed_trial=False
     )
     best_config=result.get_best_config(metric="accuracy", mode="max")
 

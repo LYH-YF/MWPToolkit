@@ -1,7 +1,7 @@
 [
     "seq2seq_encode_hidden_size=[128,256,512]",
     "seq2seq_decode_hidden_size=[128,256,512]",
-    "seqseq_embedding_size=[128,256]",
+    "seqseq_embedding_size=[64,128,256]",
     "seq2seq_learning_rate=(1e-4, 1e-2)",
     "teacher_force_ratio=(0,1)",
     "seq2seq_dropout_ratio=(0,1)",

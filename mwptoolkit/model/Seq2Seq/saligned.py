@@ -50,6 +50,22 @@ class Saligned(nn.Module):
         self.max_CON = self.min_NUM - 1
         self.constant = list(dataset.out_symbol2idx.keys())[self.min_CON: self.min_NUM]
 
+        self.mask_list = NumMask.number
+        
+        self.out_symbol2idx = dataset.out_symbol2idx
+        self.out_idx2symbol = dataset.out_idx2symbol
+        try:
+            self.out_sos_token = self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
+        except:
+            self.out_sos_token = None
+        try:
+            self.out_eos_token = self.out_symbol2idx[SpecialTokens.EOS_TOKEN]
+        except:
+            self.out_eos_token = None
+        try:
+            self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            self.out_pad_token = None
         # module
         #print('vocab_size', config); #exit()
         self.embedder=BaiscEmbedder(vocab_size,
@@ -260,11 +276,55 @@ class Saligned(nn.Module):
         # print(pred_logits[:, :5], ops[:, :5])
         for i in range(batch_size):
             #print('stacks[i].stack_log', stacks[i].stack_log_index)
-            predicts[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD]]
-            targets[i] = list(batch_data["equation"][i].cpu().numpy())
+            #predicts[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD]]
+            predicts[i] = [w for w in stacks[i].stack_log if w not in [SpecialTokens.EOS_TOKEN,SpecialTokens.PAD_TOKEN]]
+            #targets[i] = list(batch_data["equation"][i].cpu().numpy())
+            #predicts[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD,self.eos]]
+        predicts = self.convert_mask_num(predicts,constants)
+        targets = self.convert_idx2symbol(target,constants)
         #print(predicts[0], targets[0]); #exit()
 
         return predicts, targets
+    def convert_mask_num(self,batch_output,num_list):
+        output_list=[]
+        for b_i,output in enumerate(batch_output):
+            res = []
+            num_len = len(num_list[b_i])
+            for symbol in output:
+                if "NUM" in symbol:
+                    num_idx = self.mask_list.index(symbol)
+                    if num_idx >= num_len:
+                        res.append(symbol)
+                    else:
+                        res.append(num_list[b_i][num_idx])
+                else:
+                    res.append(symbol)
+            output_list.append(res)
+        return output_list
+
+
+    def convert_idx2symbol(self, output, num_list):
+        batch_size = output.size(0)
+        seq_len = output.size(1)
+        output_list = []
+        for b_i in range(batch_size):
+            res = []
+            num_len = len(num_list[b_i])
+            for s_i in range(seq_len):
+                idx = output[b_i][s_i]
+                if idx in [self.out_sos_token, self.out_eos_token, self.out_pad_token]:
+                    break
+                symbol = self.out_idx2symbol[idx]
+                if "NUM" in symbol:
+                    num_idx = self.mask_list.index(symbol)
+                    if num_idx >= num_len:
+                        res.append(symbol)
+                    else:
+                        res.append(num_list[b_i][num_idx])
+                else:
+                    res.append(symbol)
+            output_list.append(res)
+        return output_list
 
     
 # class Saligned(nn.Module):

@@ -8,7 +8,7 @@ from mwptoolkit.trainer.abstract_trainer import AbstractTrainer
 from mwptoolkit.trainer.template_trainer import TemplateTrainer
 from mwptoolkit.utils.enum_type import TaskType, DatasetType, SpecialTokens
 from mwptoolkit.utils.utils import time_since
-
+from mwptoolkit.model.Seq2Tree.tsn import TSN
 
 class SupervisedTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):
@@ -227,7 +227,7 @@ class GTSTrainer(AbstractTrainer):
         # optimizer
         self.embedder_optimizer = torch.optim.Adam(self.model.embedder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        self.decoder_optimizer = torch.optim.Adam(self.model.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.decoder_optimizer = torch.optim.Adam(self.model.decoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.node_generater_optimizer = torch.optim.Adam(self.model.node_generater.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         # scheduler
@@ -1051,42 +1051,6 @@ class TRNNTrainer(SupervisedTrainer):
 class SalignedTrainer(SupervisedTrainer):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)
-
-    def _train_batch(self, batch):
-        order = torch.sort(batch['ques len'] * -1)[1]
-        for k in batch:
-            if type(batch[k]) is list:
-                batch[k] = [batch[k][i] for i in order]
-            else:
-                batch[k] = batch[k][order]
-        batch_loss = self.model.calculate_loss(batch)
-        return batch_loss
-    def _eval_batch(self, batch):
-        order = torch.sort(batch['ques len'] * -1)[1]
-        for k in batch:
-            if type(batch[k]) is list:
-                batch[k] = [batch[k][i] for i in order]
-            else:
-                batch[k] = batch[k][order]
-        test_out, target = self.model.model_test(batch)
-        batch_size = len(test_out)
-        val_acc = []
-        equ_acc = []
-        for i in range(batch_size):
-            if self.config["task_type"] == TaskType.SingleEquation:
-                val_ac, equ_ac, _, _ = self.evaluator.result(test_out[i]["equations"], target[i])
-            elif self.config["task_type"] == TaskType.MultiEquation:
-                val_ac, equ_ac, _, _ = self.evaluator.result_multi(test_out[i]["equations"], target[i]) #, i==0
-            else:
-                raise NotImplementedError
-            val_acc.append(val_ac)
-            equ_acc.append(equ_ac)
-        
-        return val_acc, equ_acc
-
-class SalignedTrainer(SupervisedTrainer):
-    def __init__(self, config, model, dataloader, evaluator):
-        super().__init__(config, model, dataloader, evaluator)
         self._build_optimizer()
 
         
@@ -1236,12 +1200,12 @@ class SalignedTrainer(SupervisedTrainer):
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
-            # self.model.train()
-            # loss_total, train_time_cost = self._train_epoch()
-            # self._scheduler_step()
+            self.model.train()
+            loss_total, train_time_cost = self._train_epoch()
+            self._scheduler_step()
 
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
+                                %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
@@ -1355,3 +1319,194 @@ class HMSTrainer(GTSTrainer):
             "fold_t": self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
+
+class TSNTrainer(AbstractTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+    
+    def _build_optimizer(self):
+        # optimizer
+        self.t_embedder_optimizer = torch.optim.Adam(self.model.t_embedder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.t_encoder_optimizer = torch.optim.Adam(self.model.t_encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.t_decoder_optimizer = torch.optim.Adam(self.model.t_decoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.t_node_generater_optimizer = torch.optim.Adam(self.model.t_node_generater.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.t_merge_optimizer = torch.optim.Adam(self.model.t_merge.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        
+        self.s_embedder_optimizer = torch.optim.Adam(self.model.s_embedder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.s_encoder_optimizer = torch.optim.Adam(self.model.s_encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.s_decoder_optimizer1 = torch.optim.Adam(self.model.s_decoder_1.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.s_node_generater_optimizer1 = torch.optim.Adam(self.model.s_node_generater_1.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.s_merge_optimizer1 = torch.optim.Adam(self.model.s_merge_1.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.s_decoder_optimizer2 = torch.optim.Adam(self.model.s_decoder_2.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.s_node_generater_optimizer2 = torch.optim.Adam(self.model.s_node_generater_2.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.s_merge_optimizer2 = torch.optim.Adam(self.model.s_merge_2.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        
+        # scheduler
+        self.t_embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.t_embedder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.t_encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.t_encoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.t_decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.t_decoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.t_node_generater_scheduler = torch.optim.lr_scheduler.StepLR(self.t_node_generater_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.t_merge_scheduler = torch.optim.lr_scheduler.StepLR(self.t_merge_optimizer, step_size=self.config["step_size"], gamma=0.5)
+
+        self.s_embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.s_embedder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.s_encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.s_encoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.s_decoder_scheduler1 = torch.optim.lr_scheduler.StepLR(self.s_decoder_optimizer1, step_size=self.config["step_size"], gamma=0.5)
+        self.s_node_generater_scheduler1 = torch.optim.lr_scheduler.StepLR(self.s_node_generater_optimizer1, step_size=self.config["step_size"], gamma=0.5)
+        self.s_merge_scheduler1 = torch.optim.lr_scheduler.StepLR(self.s_merge_optimizer1, step_size=self.config["step_size"], gamma=0.5)
+        self.s_decoder_scheduler2 = torch.optim.lr_scheduler.StepLR(self.s_decoder_optimizer2, step_size=self.config["step_size"], gamma=0.5)
+        self.s_node_generater_scheduler2 = torch.optim.lr_scheduler.StepLR(self.s_node_generater_optimizer2, step_size=self.config["step_size"], gamma=0.5)
+        self.s_merge_scheduler2 = torch.optim.lr_scheduler.StepLR(self.s_merge_optimizer2, step_size=self.config["step_size"], gamma=0.5)
+
+    def _teacher_net_train(self):
+        self.model.t_embedder.train()
+        self.model.t_encoder.train()
+        self.model.t_decoder.train()
+        self.model.t_node_generater.train()
+        self.model.t_merge.train()
+        self.model.s_embedder.eval()
+        self.model.s_encoder.eval()
+        self.model.s_decoder_1.eval()
+        self.model.s_node_generater_1.eval()
+        self.model.s_merge_1.eval()
+        self.model.s_decoder_2.eval()
+        self.model.s_node_generater_2.eval()
+        self.model.s_merge_2.eval()
+    def _student_net_train(self):
+        self.model.t_embedder.eval()
+        self.model.t_encoder.eval()
+        self.model.t_decoder.eval()
+        self.model.t_node_generater.eval()
+        self.model.t_merge.eval()
+        self.model.s_embedder.train()
+        self.model.s_encoder.train()
+        self.model.s_decoder_1.train()
+        self.model.s_node_generater_1.train()
+        self.model.s_merge_1.train()
+        self.model.s_decoder_2.train()
+        self.model.s_node_generater_2.train()
+        self.model.s_merge_2.train()
+    def _teacher_optimizer_step(self):
+        self.t_embedder_optimizer.step()
+        self.t_encoder_optimizer.step()
+        self.t_decoder_optimizer.step()
+        self.t_node_generater_optimizer.step()
+        self.t_merge_optimizer.step()
+    def _student_optimizer_step(self):
+        self.s_embedder_optimizer.step()
+        self.s_encoder_optimizer.step()
+        self.s_decoder_optimizer1.step()
+        self.s_node_generater_optimizer1.step()
+        self.s_merge_optimizer1.step()
+        self.s_decoder_optimizer2.step()
+        self.s_node_generater_optimizer2.step()
+        self.s_merge_optimizer2.step()
+    def _teacher_scheduler_step(self):
+        self.t_embedder_scheduler.step()
+        self.t_encoder_scheduler.step()
+        self.t_decoder_scheduler.step()
+        self.t_node_generater_scheduler.step()
+        self.t_merge_scheduler.step()
+    def _student_scheduler_step(self):
+        self.s_embedder_scheduler.step()
+        self.s_encoder_scheduler.step()
+        self.s_decoder_scheduler1.step()
+        self.s_node_generater_scheduler1.step()
+        self.s_merge_scheduler1.step()
+        self.s_decoder_scheduler2.step()
+        self.s_node_generater_scheduler2.step()
+        self.s_merge_scheduler2.step()
+
+    def _train_epoch(self):
+        return super()._train_epoch()
+    def fit(self):
+        train_batch_size = self.config["train_batch_size"]
+        epoch_nums = self.config["epoch_nums"]
+        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+
+        self.logger.info("start training...")
+        self.logger.info("start training teacher net...")
+        for epo in range(self.t_start_epoch, epoch_nums):
+            self.t_epoch_i = epo + 1
+            self.model.train()
+            self._teacher_net_train()
+            loss_total, train_time_cost = self._train_epoch()
+            self._teacher_scheduler_step()
+
+            self.logger.info("epoch [%3d] teacher net avr loss [%2.8f] | train time %s"\
+                                %(self.t_epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+
+                    self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                    %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+            if epo % 5 == 0:
+                self._save_checkpoint()
+        self.logger.info("start training student net...")
+        for epo in range(self.s_start_epoch, epoch_nums):
+            self.s_epoch_i = epo + 1
+            self.model.train()
+            self._student_net_train()
+            loss_total, train_time_cost = self._train_epoch()
+            self._student_scheduler_step()
+
+            self.logger.info("epoch [%3d] student net avr loss [%2.8f] | train time %s"\
+                                %(self.t_epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
+                if self.config["k_fold"]:
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if test_val_ac >= self.best_test_value_accuracy:
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+                else:
+                    valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+
+                    self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                                    %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                    test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                    self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                    %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                    if valid_val_ac >= self.best_valid_value_accuracy:
+                        self.best_valid_value_accuracy = valid_val_ac
+                        self.best_valid_equ_accuracy = valid_equ_ac
+                        self.best_test_value_accuracy = test_val_ac
+                        self.best_test_equ_accuracy = test_equ_ac
+                        self._save_model()
+            if epo % 5 == 0:
+                self._save_checkpoint()
+        
+        self.logger.info('''training finished.
+                            best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+                            best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+                            %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+                                self.best_test_equ_accuracy,self.best_test_value_accuracy))

@@ -223,6 +223,7 @@ class TSN(nn.Module):
         num_start = self.num_start
         # sequence mask for attention
         beam_size = self.beam_size
+        max_length = self.max_out_len
         seq_mask = []
         max_len = max(seq_length)
         for i in seq_length:
@@ -594,7 +595,7 @@ class TSN(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
                                                                                                            seq_mask, num_mask)
 
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
@@ -617,7 +618,7 @@ class TSN(nn.Module):
                     if out_token < num_start:
                         generate_input = torch.LongTensor([out_token]).to(self.device)
 
-                        left_child, right_child, node_label = self.s_node_generater_1(current_embeddings, generate_input, current_context)
+                        left_child, right_child, node_label = self.s_node_generater_2(current_embeddings, generate_input, current_context)
 
                         current_node_stack[0].append(TreeNode(right_child))
                         current_node_stack[0].append(TreeNode(left_child, left_flag=True))
@@ -629,7 +630,7 @@ class TSN(nn.Module):
                         while len(current_embeddings_stacks[0]) > 0 and current_embeddings_stacks[0][-1].terminal:
                             sub_stree = current_embeddings_stacks[0].pop()
                             op = current_embeddings_stacks[0].pop()
-                            current_num = self.s_merge_1(op.embedding, sub_stree.embedding, current_num)
+                            current_num = self.s_merge_2(op.embedding, sub_stree.embedding, current_num)
                         current_embeddings_stacks[0].append(TreeEmbedding(current_num, True))
                     if len(current_embeddings_stacks[0]) > 0 and current_embeddings_stacks[0][-1].terminal:
                         current_left_childs.append(current_embeddings_stacks[0][-1].embedding)

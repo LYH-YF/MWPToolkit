@@ -1333,6 +1333,8 @@ class TSNTrainer(AbstractTrainer):
         super().__init__(config, model, dataloader, evaluator)
         self.t_start_epoch = 0
         self.s_start_epoch = 0
+        self.t_epoch_i = 0
+        self.s_epoch_i = 0
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
@@ -1409,7 +1411,6 @@ class TSNTrainer(AbstractTrainer):
             "fold_t": self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
-        return super()._save_checkpoint()
 
     def _load_checkpoint(self):
         return super()._load_checkpoint()
@@ -1623,7 +1624,7 @@ class TSNTrainer(AbstractTrainer):
             self._student_scheduler_step()
 
             self.logger.info("epoch [%3d] student net avr loss [%2.8f] | train time %s"\
-                                %(self.t_epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+                                %(self.s_epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
@@ -1639,13 +1640,13 @@ class TSNTrainer(AbstractTrainer):
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
                 else:
-                    valid_equ_ac, valid_val_ac,s1_equ_ac,s1_val_ac,s2_equ_ac,s2_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+                    valid_equ_ac, valid_val_ac,s1_equ_ac,s1_val_ac,s2_equ_ac,s2_val_ac, valid_total, valid_time_cost = self.evaluate_student(DatasetType.Valid)
 
                     self.logger.info("---------- valid total [%d] | student1 equ acc [%2.3f] | student1 value acc [%2.3f] | student2 equ acc [%2.3f] | student2 value acc [%2.3f]"\
                                     %(test_total,s1_equ_ac,s1_val_ac,s2_equ_ac,s2_val_ac))
                     self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
                                     %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
-                    test_equ_ac, test_val_ac,s1_equ_ac,s1_val_ac,s2_equ_ac,s2_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+                    test_equ_ac, test_val_ac,s1_equ_ac,s1_val_ac,s2_equ_ac,s2_val_ac, test_total, test_time_cost = self.evaluate_student(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | student1 equ acc [%2.3f] | student1 value acc [%2.3f] | student2 equ acc [%2.3f] | student2 value acc [%2.3f]"\
                                     %(test_total,s1_equ_ac,s1_val_ac,s2_equ_ac,s2_val_ac))
@@ -1674,7 +1675,7 @@ class TSNTrainer(AbstractTrainer):
         eval_total = 0
         test_start_time = time.time()
         for batch in self.dataloader.load_data(eval_set):
-            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
+            batch_val_ac, batch_equ_ac = self._eval_teacher_net_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
@@ -1693,7 +1694,7 @@ class TSNTrainer(AbstractTrainer):
         eval_total = 0
         test_start_time = time.time()
         for batch in self.dataloader.load_data(eval_set):
-            batch_val_ac, batch_equ_ac, s1_val_ac, s1_equ_ac, s2_val_ac, s2_equ_ac = self._eval_batch(batch)
+            batch_val_ac, batch_equ_ac, s1_val_ac, s1_equ_ac, s2_val_ac, s2_equ_ac = self._eval_student_net_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             s1_value_ac += s1_val_ac.count(True)

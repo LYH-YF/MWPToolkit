@@ -1010,7 +1010,7 @@ def number_transfer_asdiv_a(data, mask_type="number", min_generate_keep=0):
         input_seq = []
         seg = d["Body"].split(" ") + d["Question"].split()
         #sss=d["Body"]+d["Question"]
-        seg = nltk.word_tokenize(d["Body"]+d["Question"])
+        seg = nltk.word_tokenize(d["Body"]+' '+d["Question"])
         formula = d["Formula"]
         equations = formula[:formula.index('=')]
         ans = formula[formula.index('=') + 1:]

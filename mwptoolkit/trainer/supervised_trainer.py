@@ -1611,7 +1611,7 @@ class TSNTrainer(AbstractTrainer):
             self.batch_idx = batch_idx + 1
             self._build_soft_target_batch(batch)
 
-        self.model.init_encoder_mask(self.config['batch_size'])
+        self.model.init_encoder_mask(self.config['train_batch_size'])
         self.logger.info("start training student net...")
         self.best_valid_value_accuracy = 0.
         self.best_valid_equ_accuracy = 0.

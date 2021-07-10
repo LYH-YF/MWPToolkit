@@ -115,25 +115,39 @@ def get_trainer_(task_type, model_name, sup_mode):
     Returns:
         ~mwptoolkit.trainer.trainer.Trainer: trainer class
     """
-    try:
-        if sup_mode == "fully_supervising":
+    if sup_mode == "fully_supervising":
+        try:
             return getattr(importlib.import_module('mwptoolkit.trainer'),
-                       model_name + 'Trainer')
-        else:
-            return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
-                       model_name + 'WeakTrainer')
-    except AttributeError:
-        if task_type == TaskType.SingleEquation:
-            return getattr(
-                importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
-                'SupervisedTrainer')
-        elif task_type == TaskType.MultiEquation:
-            return getattr(
-                importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
-                'SupervisedTrainer')
-        else:
-            return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
-                           'Trainer')
+                        model_name + 'Trainer')
+        except AttributeError:
+            if task_type == TaskType.SingleEquation:
+                return getattr(
+                    importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                    'SupervisedTrainer')
+            elif task_type == TaskType.MultiEquation:
+                return getattr(
+                    importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                    'SupervisedTrainer')
+            else:
+                return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
+                            'Trainer')
+    else:
+        try: 
+            return getattr(importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
+                        model_name + 'WeakTrainer')
+        except AttributeError:
+            if task_type == TaskType.SingleEquation:
+                return getattr(
+                    importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
+                    'WeaklySupervisiedTrainer')
+            elif task_type == TaskType.MultiEquation:
+                return getattr(
+                    importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
+                    'WeaklySupervisiedTrainer')
+            else:
+                return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
+                            'Trainer')
+
 def get_trainer(task_type, model_name, sup_mode):
     r"""Automatically select trainer class based on task type and model name
 
@@ -157,11 +171,11 @@ def get_trainer(task_type, model_name, sup_mode):
                 'SupervisedTrainer'
             )
 
-    elif sup_mode == SupervisingMode.weakly_supervised:
+    elif sup_mode in SupervisingMode.weakly_supervised:
         try:
             return getattr(
                 importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
-                model_name + 'Trainer'
+                model_name + 'WeakTrainer'
             )
         except AttributeError:
             return getattr(

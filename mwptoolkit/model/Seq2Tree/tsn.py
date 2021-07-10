@@ -506,7 +506,9 @@ class TSN(nn.Module):
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
-        num_size = len(num_pos[0])
+        #num_size = len(num_pos[0])
+        copy_num_len = [len(_) for _ in num_pos]
+        num_size = max(copy_num_len)
         all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, num_size, self.s_encoder.hidden_size)
 
         embeddings_stacks = [[] for _ in range(batch_size)]
@@ -579,7 +581,9 @@ class TSN(nn.Module):
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
-        num_size = len(num_pos[0])
+        #num_size = len(num_pos[0])
+        copy_num_len = [len(_) for _ in num_pos]
+        num_size = max(copy_num_len)
         all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, num_size, self.s_encoder.hidden_size)
 
         embeddings_stacks = [[] for _ in range(batch_size)]

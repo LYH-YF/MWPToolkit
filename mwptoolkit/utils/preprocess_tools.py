@@ -253,6 +253,8 @@ def seg_and_tag_asdiv_a(st, nums_fraction, nums):  # seg the equation and tag th
             res += seg_and_tag_asdiv_a(st[p_end:], nums_fraction, nums)
         return res
     for ss in st:
+        if ss == ' ':
+            continue
         res.append(ss)
     return res
 

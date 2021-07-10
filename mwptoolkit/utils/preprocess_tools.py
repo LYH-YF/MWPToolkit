@@ -1163,7 +1163,9 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
         num_pos_dict = {}
         #num_list=[]
         input_seq = []
-        seg = d["original_text"].split(" ")
+        #seg1 = d["original_text"].split(" ")
+        seg = nltk.word_tokenize(d["original_text"])
+        #assert len(seg1)==len(seg)
         for idx, word in enumerate(seg):
             if re.match(r"(\d+\,\d+)+", word):
                 new_word = "".join(word.split(","))

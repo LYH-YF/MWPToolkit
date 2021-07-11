@@ -282,41 +282,44 @@ class ExprTree:
         st = list()
         operators = ["+", "-", "**", "*", "/"]
         pre_fix.reverse()
-        for p in pre_fix:
-            if p not in operators:
-                pos = re.search("\d+\(", p)
-                if pos:
-                    st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
-                elif p[-1] == "%":
-                    st.append(float(p[:-1]) / 100)
+        try:
+            for p in pre_fix:
+                if p not in operators:
+                    pos = re.search("\d+\(", p)
+                    if pos:
+                        st.append(eval(p[pos.start(): pos.end() - 1] + "+" + p[pos.end() - 1:]))
+                    elif p[-1] == "%":
+                        st.append(float(p[:-1]) / 100)
+                    else:
+                        st.append(eval(p))
+                elif p == "+" and len(st) > 1:
+                    a = st.pop()
+                    b = st.pop()
+                    st.append(a + b)
+                elif p == "*" and len(st) > 1:
+                    a = st.pop()
+                    b = st.pop()
+                    st.append(a * b)
+                elif p == "/" and len(st) > 1:
+                    a = st.pop()
+                    b = st.pop()
+                    if b == 0 or b == 1:
+                        return None
+                    st.append(a / b)
+                elif p == "-" and len(st) > 1:
+                    a = st.pop()
+                    b = st.pop()
+                    st.append(a - b)
+                elif p == "**" and len(st) > 1:
+                    a = st.pop()
+                    b = st.pop()
+                    if float(b) != 2.0 or float(b) != 3.0:
+                        return None
+                    st.append(a ** b)
                 else:
-                    st.append(eval(p))
-            elif p == "+" and len(st) > 1:
-                a = st.pop()
-                b = st.pop()
-                st.append(a + b)
-            elif p == "*" and len(st) > 1:
-                a = st.pop()
-                b = st.pop()
-                st.append(a * b)
-            elif p == "/" and len(st) > 1:
-                a = st.pop()
-                b = st.pop()
-                if b == 0 or b == 1:
                     return None
-                st.append(a / b)
-            elif p == "-" and len(st) > 1:
-                a = st.pop()
-                b = st.pop()
-                st.append(a - b)
-            elif p == "**" and len(st) > 1:
-                a = st.pop()
-                b = st.pop()
-                if float(b) != 2.0 or float(b) != 3.0:
-                    return None
-                st.append(a ** b)
-            else:
-                return None
+        except:
+            return None
         if len(st) == 1:
             return st.pop()
         return None
@@ -561,10 +564,12 @@ def out_expression_list(test, output_lang, num_list):
 
         if "NUM_" in idx:
             if int(idx[4:]) >= len(num_list):
-                return None
+                continue
             res.append(num_list[int(idx[4:])])
-        elif "UNK" in idx:
+        elif "UNK" in idx or "PAD" in idx or 'SOS' in idx:
             continue
+        elif "EOS" in idx:
+            break
         else:
             res.append(idx)
 
@@ -594,41 +599,6 @@ def prefix_to_infix(formula, length=None):
     return stack[-1]
 
 
-def Weakly_Supervising(generate_exps, all_node_outputs_mask,buffer_batch, buffer_batch_exp,nums_stack, batch_size,num_start,\
-                       target_length, fix_input_length, fix_target_list, fix_index, fix_target_length, fix_found, supervising_mode, Lang, seq_length, num_ans, n_step=50):
-    buffer_batch_new = buffer_batch.copy()
-    buffer_batch_new_exp = buffer_batch_exp.copy()
-    num_start = Lang.dataset.num_start
-    #print("*"*89)
-    #print("buffer_batch_new", buffer_batch_new)
-    #print("buffer_batch_new_exp", buffer_batch_new_exp)
-    #print("generate_exps", generate_exps.size())
-    #print("nums_stack", nums_stack)
-
-    for idx, exp, num in zip(range(batch_size), generate_exps, nums_stack):
-        if fix_found[idx] == True:
-            continue
-        #print("num", num)
-        generate_exp = out_expression_list(exp, Lang, num)
-        all_list = Lang.dataset.out_idx2symbol[: num_start + 2] + num
-        probs = all_node_outputs_mask[idx].detach().cpu().numpy()
-        probs = probs[:target_length[idx]]
-        probs = probs[:, :num_start + 2 + len(num)]
-
-        fix_input_length, fix_target_list,\
-        fix_index, fix_target_length,\
-        fix_found,buffer_batch_new, buffer_batch_new_exp=get_weakly_supervised(supervising_mode)(idx, exp, num, generate_exp, target_length, num_ans, all_list, probs,num_start, n_step, fix_input_length,
-                fix_target_list, fix_index, fix_target_length, fix_found, buffer_batch_new, buffer_batch_new_exp,
-                seq_length, Lang)
-        #print("fix_input_length", fix_input_length)
-        #print("fix_index", fix_index)
-        #print("fix_found", fix_found)
-        #print("~"*89)
-        #print("buffer_batch_new", buffer_batch_new)
-        #print("buffer_batch_new_exp", buffer_batch_new_exp)
-    #print("*"*89)
-
-    return fix_input_length, fix_target_list, fix_index, fix_target_length,buffer_batch_new, buffer_batch_new_exp
 
 def fixStrategy(idx, exp, num, generate_exp, target_length, num_ans, all_list, probs,num_start, n_step, fix_input_length,
                 fix_target_list, fix_index, fix_target_length, fix_found, buffer_batch_new, buffer_batch_new_exp,
@@ -639,22 +609,32 @@ def fixStrategy(idx, exp, num, generate_exp, target_length, num_ans, all_list, p
     #print("all_list", all_list)
     #print("num_start", num_start)
     #print("n_step", n_step)
-    fix = find_fix(
-        generate_exp[:target_length[idx]],
-        num_ans[idx],
-        probs,
-        all_list,
-        num_start,
-        n_step)
-    #print(fix)
-
+    try:
+        fix = find_fix(
+            generate_exp[:target_length[idx]],
+            num_ans[idx],
+            probs,
+            all_list,
+            num_start,
+            n_step)
+    except:
+        fix = []
+    #print("fix", fix)
+    #print("num_ans", num_ans[idx])
+    #print("*"*100)
     if len(fix):
         fix_found[idx] = True
         fix_exp = out_expression_list(fix, Lang, num)
+        #print("fix_exp", fix_exp)
         fix_infix = prefix_to_infix(fix_exp, target_length[idx])
         try:
             y = eval(fix_infix)
             if y == eval(num_ans[idx]):
+                #print("fix_infix", fix_infix)
+                #print("fix", fix)
+                #print("num", num)
+                #print("y", y)
+                #print("gold_ans",eval(num_ans[idx]))
                 fix_target_list.append(fix)
                 fix_index.append(idx)
                 fix_target_length.append(len(fix))
@@ -668,13 +648,16 @@ def fixStrategy(idx, exp, num, generate_exp, target_length, num_ans, all_list, p
 def mafixStrategy(idx, exp, num,generate_exp, target_length, num_ans, all_list, probs,num_start, n_step, fix_input_length,
                 fix_target_list, fix_index, fix_target_length, fix_found, buffer_batch_new, buffer_batch_new_exp,
                   input_length, Lang):
-    fix = find_fix(
-        generate_exp[:target_length[idx]],
-        num_ans[idx],
-        probs,
-        all_list,
-        num_start,
-        n_step)
+    try:
+        fix = find_fix(
+            generate_exp[:target_length[idx]],
+            num_ans[idx],
+            probs,
+            all_list,
+            num_start,
+            n_step)
+    except:
+        fix = []
 
     if len(fix):
         fix_found[idx] = True
@@ -769,9 +752,13 @@ def find_fix(pred, gt, all_prob, sym_list, num_start, n_step):
     etree = ExprTree(sym_list, num_start)
     etree.parse(tokens)
     fix = []
-
-    if abs(etree.res()[0] - gt) <= 1e-5:
-        fix = [sym_list.index(i) for i in pred]
+    try:
+        if abs(etree.res()[0] - gt) <= 1e-5:
+            fix = [sym_list.index(i) for i in pred]
+    except TypeError:
+        output = etree.fix(gt, n_step=n_step)
+        if output:
+            fix = [sym_list.index(i) for i in output[0]]
         # print("No fix needed")
     else:
         output = etree.fix(gt, n_step=n_step)

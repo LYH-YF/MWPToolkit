@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import nltk
 import stanza
+from word2number import w2n
 
 from mwptoolkit.utils.utils import read_json_data, str2float, lists2dict
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, EPT
@@ -1010,6 +1011,8 @@ def number_transfer_asdiv_a(data, mask_type="number", min_generate_keep=0):
         num_list = []
         input_seq = []
         seg = d["Body"].split(" ") + d["Question"].split()
+        #sss=d["Body"]+d["Question"]
+        seg = nltk.word_tokenize(d["Body"]+' '+d["Question"])
         formula = d["Formula"]
         equations = formula[:formula.index('=')]
         ans = formula[formula.index('=') + 1:]
@@ -1018,6 +1021,7 @@ def number_transfer_asdiv_a(data, mask_type="number", min_generate_keep=0):
             if re.match(r"(\d+\,\d+)+", word):
                 new_word = "".join(word.split(","))
                 seg[idx] = new_word
+        seg = english_word_2_num(seg)
         # match and split number
         input_seq = []
         for s in seg:
@@ -1112,7 +1116,6 @@ def number_transfer_asdiv_a(data, mask_type="number", min_generate_keep=0):
             new_data["number list"] = ["-inf"]
             new_data["number position"] = [-1]
         processed_datas.append(new_data)
-        
 
     generate_number = []
     for g in generate_nums:
@@ -1162,11 +1165,14 @@ def num_transfer_alg514(data, mask_type="number", min_generate_keep=0, equ_split
         num_pos_dict = {}
         #num_list=[]
         input_seq = []
-        seg = d["original_text"].split(" ")
+        #seg1 = d["original_text"].split(" ")
+        seg = nltk.word_tokenize(d["original_text"])
+        #assert len(seg1)==len(seg)
         for idx, word in enumerate(seg):
             if re.match(r"(\d+\,\d+)+", word):
                 new_word = "".join(word.split(","))
                 seg[idx] = new_word
+        seg = english_word_2_num(seg)
         equations = d["equation"]
         equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
         equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
@@ -1455,7 +1461,7 @@ def num_transfer_draw(data, mask_type="number", min_generate_keep=0, equ_split_s
             elif re.match(r"\.\d+", word):
                 new_word = "0" + word
                 seg[idx] = new_word
-
+        seg = english_word_2_num(seg)
         equations = d["equation"]
         equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
         equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
@@ -1735,6 +1741,52 @@ def trans_symbol_2_number(equ_list, num_list):
         else:
             new_equ_list.append(symbol)
     return new_equ_list
+
+
+def english_word_2_num(sentence_list):
+    # bug : 4.9 million can't be matched
+    match_word=[
+        'zero','one','two','three','four','five','six','seven','eight','nine','ten',\
+        'eleven','twelve','thirteen','fourteen','fifteen','sixteen','seventeen','eighteen','nineteen',\
+        'twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety',\
+        'hundred','thousand','million','billion',\
+        'point'
+    ]
+    num1=['one','two','three','four','five','six','seven','eight','nine']
+    num2=['twenty','thirty','forty','fifty','sixty','seventy','eighty','ninety']
+    for n2 in num2:
+        for n1 in num1:
+            match_word.append(n2+'-'+n1)
+    new_list=[]
+    stack=[]
+    start_idx=0
+    for idx,word in enumerate(sentence_list):
+        if idx<start_idx:
+            continue
+        if word.lower() in match_word :
+            start_idx=idx
+            while(sentence_list[start_idx].lower() in match_word):
+                stack.append(sentence_list[start_idx])
+                start_idx+=1
+            if len(stack)==1 and stack[0] == 'point':
+                new_list.append(stack[0])
+            # elif len(stack)==2 and 'point' in stack and 'and' in stack:
+            #     new_list.extend(stack)
+            elif stack[-1] == 'point':
+                num_words=' '.join(stack[:-1])
+                number=w2n.word_to_num(num_words)
+                new_list.append(str(number))
+                new_list.append(stack[-1])
+            else:
+                if len(stack)>=2:
+                    x=1
+                num_words=' '.join(stack)
+                number=w2n.word_to_num(num_words)
+                new_list.append(str(number))
+            stack=[]
+        else:
+            new_list.append(word)
+    return new_list
 
 
 def EN_rule1_stat(datas, sample_k=100):

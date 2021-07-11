@@ -26,6 +26,8 @@ class MultiEquationDataset(AbstractDataset):
         self.parse_tree_path = config['parse_tree_file_name']
         if self.parse_tree_path != None:
             self.parse_tree_path = self.dataset_path + '/' + self.parse_tree_path + '.json'
+            self.parse_tree_path = os.path.join(self.root,self.parse_tree_path)
+        
         if self.model.lower() in ['ept']:
             self.decoder = config["decoder"]
         

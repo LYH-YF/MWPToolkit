@@ -120,33 +120,24 @@ def get_trainer_(task_type, model_name, sup_mode):
             return getattr(importlib.import_module('mwptoolkit.trainer'),
                         model_name + 'Trainer')
         except AttributeError:
-            if task_type == TaskType.SingleEquation:
-                return getattr(
-                    importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
-                    'SupervisedTrainer')
-            elif task_type == TaskType.MultiEquation:
-                return getattr(
-                    importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
-                    'SupervisedTrainer')
-            else:
-                return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
-                            'Trainer')
-    else:
+            return getattr(
+                importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                'SupervisedTrainer'
+            )
+    elif sup_mode == SupervisingMode.weakly_supervised:
         try: 
             return getattr(importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
                         model_name + 'WeakTrainer')
         except AttributeError:
-            if task_type == TaskType.SingleEquation:
-                return getattr(
-                    importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
-                    'WeaklySupervisiedTrainer')
-            elif task_type == TaskType.MultiEquation:
-                return getattr(
-                    importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
-                    'WeaklySupervisiedTrainer')
-            else:
-                return getattr(importlib.import_module('mwptoolkit.trainer.trainer'),
-                            'Trainer')
+            return getattr(
+                importlib.import_module('mwptoolkit.trainer.weakly_supervised_trainer'),
+                'WeaklySupervisedTrainer'
+            )
+    else:
+        return getattr(
+            importlib.import_module('mwptoolkit.trainer.abstract_trainer'),
+            'AbstractTrainer'
+        )
 
 def get_trainer(task_type, model_name, sup_mode):
     r"""Automatically select trainer class based on task type and model name

@@ -3,7 +3,9 @@ import math
 from torch import nn
 from torch.nn import functional as F
 
-from mwptoolkit.module.Attention.multi_head_attention import MultiHeadAttention
+from transformers.modeling_bert import gelu_new as gelu_bert
+
+from mwptoolkit.module.Attention.multi_head_attention import EPTMultiHeadAttention
 from mwptoolkit.module.Attention.group_attention import GroupAttention
 from mwptoolkit.utils.utils import clones
 
@@ -25,7 +27,7 @@ class TransformerLayer(nn.Module):
     """
     def __init__(self, embedding_size, ffn_size, num_heads, attn_dropout_ratio=0.0, attn_weight_dropout_ratio=0.0, ffn_dropout_ratio=0.0, with_external=False):
         super(TransformerLayer, self).__init__()
-        self.multi_head_attention = MultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
+        self.multi_head_attention = EPTMultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
         self.feed_forward_1 = nn.Linear(embedding_size, ffn_size)
         self.feed_forward_2 = nn.Linear(ffn_size, embedding_size)
 
@@ -38,7 +40,7 @@ class TransformerLayer(nn.Module):
         self.with_external = with_external
 
         if self.with_external:
-            self.external_multi_head_attention = MultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
+            self.external_multi_head_attention = EPTMultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
             self.external_layer_norm = nn.LayerNorm(embedding_size)
 
         self.reset_parameters()
@@ -137,7 +139,6 @@ class TransformerLayer(nn.Module):
 
 
 class GAEncoderLayer(nn.Module):
-    """GA means Group Attention."""
     "Encoder is made up of self-attn and feed forward (defined below)"
     def __init__(self, size, self_attn, feed_forward, dropout):
         super(GAEncoderLayer, self).__init__()
@@ -206,3 +207,86 @@ class PositionwiseFeedForward(nn.Module):
 
     def forward(self, x):
         return self.w_2(self.dropout(F.relu(self.w_1(x))))
+
+
+class EPTTransformerLayer(nn.Module):
+    """
+    Class for Transformer Encoder/Decoder layer (follows the paper, 'Attention is all you need')
+    """
+
+    def __init__(self, hidden_dim = None, num_decoder_heads = None, layernorm_eps = None,intermediate_dim= None):
+        """
+        Initialize TransformerLayer class
+
+        :param ModelConfig config: Configuration of this Encoder/Decoder layer
+        """
+        super().__init__()
+
+        # Self-attention layer
+        self.attn = EPTMultiHeadAttention(hidden_dim=hidden_dim, num_heads=num_decoder_heads,
+                                       layernorm_eps=layernorm_eps, dropout=0.0)
+        # Source-Target attention layer
+        self.mem = EPTMultiHeadAttention(hidden_dim=hidden_dim, num_heads=num_decoder_heads,
+                                       layernorm_eps=layernorm_eps, dropout=0.0)
+
+        # Dropout for self-attention
+        self.dropout_attn = nn.Dropout(0.0)
+        # Dropout for source-target attention
+        self.dropout_mem = nn.Dropout(0.0)
+        # Dropout for expansion before outputting
+        self.dropout_expand = nn.Dropout(0.0)
+        # Dropout for outputting
+        self.dropout_out = nn.Dropout(0.0)
+
+        # Linear transformation layer for expansion (H -> I) where I = vector dimension of intermediate state
+        self.lin_expand = nn.Linear(hidden_dim, intermediate_dim)
+        # Linear transformation layer for output (I -> H)
+        self.lin_collapse = nn.Linear(intermediate_dim, hidden_dim)
+
+        # Post Layer Normalization for self-attention
+        self.norm_attn = nn.LayerNorm(hidden_dim, eps=layernorm_eps)
+        # Post Layer Normalization for source-target attention
+        self.norm_mem = nn.LayerNorm(hidden_dim, eps=layernorm_eps)
+        # Post Layer Normalization for outputting
+        self.norm_out = nn.LayerNorm(hidden_dim, eps=layernorm_eps)
+
+    def forward(self, target, target_ignorance_mask=None, target_attention_mask=None,
+                memory=None, memory_ignorance_mask=None):
+        """
+        Forward-computation of Transformer Encoder/Decoder layers
+
+        :param torch.Tensor target:
+            FloatTensor indicating Sequence of target vectors. Shape [B, T, H]
+            where B = batch size, T = length of target sequence, H = vector dimension of hidden state
+        :param torch.Tensor target_ignorance_mask:
+            BoolTensor indicating Mask for target tokens that should be ignored. Shape [B, T].
+        :param torch.Tensor target_attention_mask:
+            BoolTensor indicating Target-to-target Attention mask for target tokens. Shape [T, T].
+        :param torch.Tensor memory:
+            FloatTensor indicating Sequence of source vectors. Shape [B, S, H]
+            where S = length of source sequence
+            This can be None when you want to use this layer as an encoder layer.
+        :param torch.Tensor memory_ignorance_mask:
+            BoolTensor indicating Mask for source tokens that should be ignored. Shape [B, S].
+        :rtype: torch.FloatTensor
+        :return: Decoder hidden states per each target token, shape [B, S, H].
+        """
+        # Compute self-attention
+        attented = self.attn(query=target, attention_mask=target_attention_mask,
+                             key_ignorance_mask=target_ignorance_mask)
+        target = target + self.dropout_attn(attented)
+        target = self.norm_attn(target)
+
+        # Compute attention over targets with source as queries.
+        if memory is not None:
+            attented = self.mem(query=target, key_value=memory, key_ignorance_mask=memory_ignorance_mask)
+            target = target + self.dropout_mem(attented)
+            target = self.norm_mem(target)
+
+        # Pass linear transformations
+        output = self.lin_collapse(self.dropout_expand(gelu_bert(self.lin_expand(target))))
+        target = target + self.dropout_out(output)
+        target = self.norm_out(target)
+
+        return target
+

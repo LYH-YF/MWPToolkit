@@ -40,15 +40,15 @@ class Saligned(nn.Module):
 
         self.min_NUM = dataset.out_symbol2idx['NUM_0']
         #print(self.dataloader.dataset.out_symbol2idx); exit()
-        self.do_addeql = False if '<BRG>' in dataset.out_symbol2idx else True
-        max_NUM = list(dataset.out_symbol2idx.keys())[-2]
-        self.max_NUM = dataset.out_symbol2idx[max_NUM]
-        self.ADD = dataset.out_symbol2idx['+']
+        #self.do_addeql = False if '<BRG>' in dataset.out_symbol2idx else True
+        #max_NUM = list(dataset.out_symbol2idx.keys())[-2]
+        #self.max_NUM = dataset.out_symbol2idx[max_NUM]
+        #self.ADD = dataset.out_symbol2idx['+']
         self.POWER = dataset.out_symbol2idx['^']
-        self.min_CON = self.N_OPS = self.POWER + 1
-        self.UNK = dataset.out_symbol2idx['<UNK>']
-        self.max_CON = self.min_NUM - 1
-        self.constant = list(dataset.out_symbol2idx.keys())[self.min_CON: self.min_NUM]
+        self.min_CON = self.N_OPS_out = self.POWER + 1
+        #self.UNK = dataset.out_symbol2idx['<UNK>']
+        #self.max_CON = self.min_NUM - 1
+        self.fix_constants = list(dataset.out_symbol2idx.keys())[self.min_CON: self.min_NUM]
 
         self.mask_list = NumMask.number
         
@@ -80,7 +80,7 @@ class Saligned(nn.Module):
             torch.normal(torch.zeros(2 * dim_hidden), 0.01))
         self.embedding_pi = torch.nn.Parameter(
             torch.normal(torch.zeros(2 * dim_hidden), 0.01))
-        self.encoder.initialize_fix_constant(len(self.constant), self._device)
+        self.encoder.initialize_fix_constant(len(self.fix_constants), self._device)
 
         # make loss
         class_weights = torch.ones(operations.N_OPS+1)
@@ -100,8 +100,8 @@ class Saligned(nn.Module):
         op_len = batch_data["equ len"]
         #print(batch_data.keys())
         num_len = batch_data["num size"]
-        fix_constants=self.constant
-        batch_data["raw_equation"] = batch_data["equation"].clone()
+        fix_constants=self.fix_constants
+        #batch_data["raw_equation"] = batch_data["equation"].clone()
 
         batch_size = len(text)
         # zero embedding for the stack bottom
@@ -201,7 +201,7 @@ class Saligned(nn.Module):
         op_len = batch_data["equ len"]
         target = batch_data["equation"]
         nums_stack = batch_data["num stack"]
-        fix_constants=self.constant
+        fix_constants=self.fix_constants
         batch_size = len(text)
 
         # zero embedding for the stack bottom
@@ -271,18 +271,21 @@ class Saligned(nn.Module):
                 break
 
         predicts = [None] * batch_size
+        predicts_idx = [None] * batch_size
         targets = [None] * batch_size
         #pred_logits = torch.stack(pred_logits, 1)
         # print(pred_logits[:, :5], ops[:, :5])
         for i in range(batch_size):
             #print('stacks[i].stack_log', stacks[i].stack_log_index)
-            #predicts[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD]]
-            predicts[i] = [w for w in stacks[i].stack_log if w not in [SpecialTokens.EOS_TOKEN,SpecialTokens.PAD_TOKEN]]
-            #targets[i] = list(batch_data["equation"][i].cpu().numpy())
-            #predicts[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD,self.eos]]
-        predicts = self.convert_mask_num(predicts,constants)
+            #predicts[i] = [w for w in stacks[i].stack_log if w not in [SpecialTokens.EOS_TOKEN,SpecialTokens.PAD_TOKEN]]
+            predicts_idx[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD]]
+            targets[i] = list(batch_data["equation"][i].cpu().numpy())
+        #print(stacks[0]._operands, stacks[0]._op_chars)
+        #print(predicts_idx[0], targets[0], target);
+        #predicts = self.convert_mask_num(predicts,constants)
+        predicts = self.convert_idx2symbol(torch.LongTensor(predicts_idx).to(self._device),constants)
         targets = self.convert_idx2symbol(target,constants)
-        #print(predicts[0], targets[0]); #exit()
+        #print(predicts[0], targets[0]); exit()
 
         return predicts, targets
     def convert_mask_num(self,batch_output,num_list):

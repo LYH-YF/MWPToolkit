@@ -60,6 +60,7 @@ class StackMachine:
             self.operations.BRG: '<BRG>',
             self.operations.EQL: '<EOS>'
         }
+        #print(self._operands, self._op_chars); exit()
 
         self._bottom_embed = bottom_embedding
 
@@ -94,7 +95,8 @@ class StackMachine:
         """
         self._stack.append((self._operands[operand_index],
                             self._embeddings[operand_index]))
-        self.stack_log.append(str(self._operands[operand_index]))
+        self.stack_log.append(self._operands[operand_index])
+        #print('self.stack_log', self.stack_log, operand_index, self._operands, self._op_chars, self.operations.N_OPS); exit()
         self.stack_log_index.append(operand_index + self.operations.N_OPS) #
         return self._embeddings[operand_index]
 

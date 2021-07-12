@@ -3,8 +3,11 @@ import math
 from torch import nn
 from torch.nn import functional as F
 
-from transformers.modeling_bert import gelu_new as gelu_bert
+#from transformers.modeling_bert import gelu_new as gelu_bert
+from transformers.activations import gelu_new as gelu_bert
 
+
+from mwptoolkit.module.Attention.multi_head_attention import MultiHeadAttention
 from mwptoolkit.module.Attention.multi_head_attention import EPTMultiHeadAttention
 from mwptoolkit.module.Attention.group_attention import GroupAttention
 from mwptoolkit.utils.utils import clones
@@ -27,7 +30,7 @@ class TransformerLayer(nn.Module):
     """
     def __init__(self, embedding_size, ffn_size, num_heads, attn_dropout_ratio=0.0, attn_weight_dropout_ratio=0.0, ffn_dropout_ratio=0.0, with_external=False):
         super(TransformerLayer, self).__init__()
-        self.multi_head_attention = EPTMultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
+        self.multi_head_attention = MultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
         self.feed_forward_1 = nn.Linear(embedding_size, ffn_size)
         self.feed_forward_2 = nn.Linear(ffn_size, embedding_size)
 
@@ -40,7 +43,7 @@ class TransformerLayer(nn.Module):
         self.with_external = with_external
 
         if self.with_external:
-            self.external_multi_head_attention = EPTMultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
+            self.external_multi_head_attention = MultiHeadAttention(embedding_size, num_heads, attn_weight_dropout_ratio)
             self.external_layer_norm = nn.LayerNorm(embedding_size)
 
         self.reset_parameters()

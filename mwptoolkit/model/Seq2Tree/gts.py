@@ -134,7 +134,7 @@ class GTS(nn.Module):
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)
         self.loss.reset()
-        self.loss.eval_batch(all_node_outputs, target, equ_mask)
+        self.loss.eval_batch(all_node_outputs, target_, equ_mask)
         self.loss.backward()
         return self.loss.get_loss()
 

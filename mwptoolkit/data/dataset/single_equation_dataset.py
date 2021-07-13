@@ -11,6 +11,7 @@ from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser
 from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp,number_transfer_asdiv_a
 from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_, preprocess_ept_dataset_
+from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, FixType, Operators, DatasetName, EPT
 from mwptoolkit.utils.enum_type import OPERATORS, SPECIAL_TOKENS
 from transformers import AutoTokenizer
@@ -36,18 +37,23 @@ class SingleEquationDataset(AbstractDataset):
             self.pretrained_model = None
     def _preprocess(self):
         if self.dataset == DatasetName.math23k:
-            transfer = number_transfer_math23k
+            transfer = number_transfer
         elif self.dataset == DatasetName.ape200k:
             transfer = number_transfer_ape200k
         elif self.dataset == DatasetName.SVAMP:
             transfer = number_transfer_svamp
         elif self.dataset == DatasetName.asdiv_a:
-            transfer = number_transfer_asdiv_a
+            transfer = number_transfer
         else:
             NotImplementedError
-        self.trainset, generate_list, train_copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
-        self.validset, _g, valid_copy_nums = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
-        self.testset, _g, test_copy_nums = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
+        if self.dataset in [DatasetName.math23k,DatasetName.asdiv_a]:
+            self.trainset, generate_list, train_copy_nums,_ = transfer(self.trainset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
+            self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
+            self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
+        else:
+            self.trainset, generate_list, train_copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
+            self.validset, _g, valid_copy_nums = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
+            self.testset, _g, test_copy_nums = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
 
         if self.rule1:
             if self.linear and self.single:

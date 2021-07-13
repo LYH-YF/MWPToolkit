@@ -1779,7 +1779,6 @@ class EPTTrainer(AbstractTrainer):
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
-
                     self.logger.info(
                         "---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s" \
                         % (test_total, test_equ_ac, test_val_ac, test_time_cost))

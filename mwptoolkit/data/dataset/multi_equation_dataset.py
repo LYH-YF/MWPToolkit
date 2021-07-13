@@ -12,6 +12,7 @@ from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_
 from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
 from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_, preprocess_ept_dataset_
 from mwptoolkit.utils.preprocess_tools import id_reedit
+from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName, EPT
 
 from transformers import AutoTokenizer
@@ -46,11 +47,18 @@ class MultiEquationDataset(AbstractDataset):
             transfer = num_transfer_draw
         elif self.dataset == DatasetName.hmwp:
             transfer = num_transfer_hmwp
+        elif self.dataset == DatasetName.mawps:
+            transfer = number_transfer
         else:
             transfer = num_transfer_multi
-        self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.mask_symbol, self.min_generate_keep, ";")
-        self.validset, _g, valid_copy_nums, _u = transfer(self.validset, self.mask_symbol, self.min_generate_keep, ";")
-        self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol, self.min_generate_keep, ";")
+        if self.dataset in [DatasetName.mawps]:
+            self.trainset, generate_list, train_copy_nums,_ = transfer(self.trainset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
+            self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
+            self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
+        else:
+            self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.mask_symbol, self.min_generate_keep, ";")
+            self.validset, _g, valid_copy_nums, _u = transfer(self.validset, self.mask_symbol, self.min_generate_keep, ";")
+            self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol, self.min_generate_keep, ";")
 
         if self.rule1:
             if self.linear and self.single:

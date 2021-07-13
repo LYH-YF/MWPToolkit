@@ -7,7 +7,8 @@ from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
-from mwptoolkit.module.Strategy.weakly_supervising import Weakly_Supervising, out_expression_list
+from mwptoolkit.module.Strategy.weakly_supervising import out_expression_list
+#from mwptoolkit.module.Strategy.weakly_supervising import Weakly_Supervising, out_expression_list
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
 from mwptoolkit.utils.utils import copy_list, get_weakly_supervised
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens

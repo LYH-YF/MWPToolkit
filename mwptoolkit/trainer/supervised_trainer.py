@@ -225,13 +225,20 @@ class GTSTrainer(AbstractTrainer):
 
     def _build_optimizer(self):
         # optimizer
-        self.embedder_optimizer = torch.optim.Adam(self.model.embedder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
-        self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        #self.embedder_optimizer = torch.optim.Adam(self.model.embedder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        #self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
+        self.encoder_optimizer = torch.optim.Adam(
+            [
+                {'params': self.model.embedder.parameters()}, \
+                {'params': self.model.encoder.parameters()}
+            ],
+            self.config["learning_rate"]
+        )
         self.decoder_optimizer = torch.optim.Adam(self.model.decoder.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.node_generater_optimizer = torch.optim.Adam(self.model.node_generater.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         # scheduler
-        self.embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.embedder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        #self.embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.embedder_optimizer, step_size=self.config["step_size"], gamma=0.5)
         self.encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.encoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
         self.decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.decoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
         self.node_generater_scheduler = torch.optim.lr_scheduler.StepLR(self.node_generater_optimizer, step_size=self.config["step_size"], gamma=0.5)
@@ -240,12 +247,10 @@ class GTSTrainer(AbstractTrainer):
     def _save_checkpoint(self):
         check_pnt = {
             "model": self.model.state_dict(),
-            "embedder_optimizer": self.embedder_optimizer.state_dict(),
             "encoder_optimizer": self.encoder_optimizer.state_dict(),
             "decoder_optimizer": self.decoder_optimizer.state_dict(),
             "generate_optimizer": self.node_generater_optimizer.state_dict(),
             "merge_optimizer": self.merge_optimizer.state_dict(),
-            "embedder_scheduler": self.embedder_scheduler.state_dict(),
             "encoder_scheduler": self.encoder_scheduler.state_dict(),
             "decoder_scheduler": self.decoder_scheduler.state_dict(),
             "generate_scheduler": self.node_generater_scheduler.state_dict(),
@@ -265,13 +270,11 @@ class GTSTrainer(AbstractTrainer):
         # load parameter of model
         self.model.load_state_dict(check_pnt["model"])
         # load parameter of optimizer
-        self.embedder_optimizer.load_state_dict(check_pnt["embedder_optimizer"])
         self.encoder_optimizer.load_state_dict(check_pnt["encoder_optimizer"])
         self.decoder_optimizer.load_state_dict(check_pnt["decoder_optimizer"])
         self.node_generater_optimizer.load_state_dict(check_pnt["generate_optimizer"])
         self.merge_optimizer.load_state_dict(check_pnt["merge_optimizer"])
         #load parameter of scheduler
-        self.embedder_scheduler.load_state_dict(check_pnt["embedder_scheduler"])
         self.encoder_scheduler.load_state_dict(check_pnt["encoder_scheduler"])
         self.decoder_scheduler.load_state_dict(check_pnt["decoder_scheduler"])
         self.node_generater_scheduler.load_state_dict(check_pnt["generate_scheduler"])
@@ -285,14 +288,12 @@ class GTSTrainer(AbstractTrainer):
         self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _scheduler_step(self):
-        self.embedder_scheduler.step()
         self.encoder_scheduler.step()
         self.decoder_scheduler.step()
         self.node_generater_scheduler.step()
         self.merge_scheduler.step()
 
     def _optimizer_step(self):
-        self.embedder_optimizer.step()
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
         self.node_generater_optimizer.step()

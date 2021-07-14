@@ -382,4 +382,3 @@ class SalignedDecoder(nn.Module):
                             for t in tensors], dim=0)
 
         return n_tensors, tensors
-

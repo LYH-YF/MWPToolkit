@@ -8,7 +8,7 @@ from collections import Counter
 import torch
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
-from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser
+from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser, write_json_data
 from mwptoolkit.utils.preprocess_tools import number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp,number_transfer_asdiv_a
 from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_, preprocess_ept_dataset_
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
@@ -137,7 +137,10 @@ class SingleEquationDataset(AbstractDataset):
             logger.info("build ept information ···")
             self.trainset, self.validset, self.testset = \
                 preprocess_ept_dataset_(self.trainset, self.validset, self.testset, self.dataset)
-
+        
+        # write_json_data(self.trainset,'trainset_fold{}.json'.format(self.fold_t))
+        # write_json_data(self.testset,'testset_fold{}.json'.format(self.fold_t))
+        
 
     def _build_vocab(self):
         words_count = {}

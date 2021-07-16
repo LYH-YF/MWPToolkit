@@ -29,14 +29,6 @@ def train_cross_validation(config):
         dataloader = create_dataloader(config)(config, dataset)
 
         model = get_model(config["model"])(config,dataset).to(config["device"])
-        # if config["pretrained_model_path"]:
-        #     config["vocab_size"] = len(model.tokenizer)
-        #     config["symbol_size"] = len(model.tokenizer)
-        #     config["embedding_size"] = len(model.tokenizer)
-        #     config["in_word2idx"] = model.tokenizer.get_vocab()
-        #     config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
-        #     config["out_symbol2idx"] = model.tokenizer.get_vocab()
-        #     config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
 
         if config["equation_fix"] == FixType.Prefix:
             evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)

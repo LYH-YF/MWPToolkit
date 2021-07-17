@@ -6,6 +6,7 @@ from torch.nn import functional as F
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder, AttentionalRNNDecoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.roberta_embedder import RobertaEmbedder
 from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
@@ -52,7 +53,7 @@ class RNNEncDec(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-
+        
         self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
             self.out_embedder = self.in_embedder

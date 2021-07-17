@@ -54,6 +54,8 @@ class AsdivGTSDataset(TemplateDataset):
         self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
         self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
 
+    def get_dataset_len(self):
+        return len(self.trainset),len(self.validset),len(self.testset)
 
 def train_cross_validation(config):
     init_logger(config)
@@ -73,6 +75,7 @@ def train_cross_validation(config):
         
         config["fold_t"] = fold_t
         config["best_folds_accuracy"] = best_folds_accuracy
+        
 
         dataloader = SingleEquationDataLoader(config, dataset)
 

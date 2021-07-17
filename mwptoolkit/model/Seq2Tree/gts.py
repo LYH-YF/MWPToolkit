@@ -4,6 +4,8 @@ import copy
 import random
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.roberta_embedder import RobertaEmbedder
+from mwptoolkit.module.Embedder.bert_embedder import BertEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
@@ -51,7 +53,12 @@ class GTS(nn.Module):
         except:
             self.out_pad_token = None
         #module
-        self.embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        if config['embedding'] == 'roberta':
+            self.embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+        elif config['embedding'] == 'bert':
+            self.embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+        else:
+            self.embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         self.encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
         self.decoder = TreeDecoder(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.node_generater = NodeGenerater(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)

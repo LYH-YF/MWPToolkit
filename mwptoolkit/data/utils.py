@@ -2,6 +2,7 @@ from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.data.dataset.single_equation_dataset import SingleEquationDataset
 from mwptoolkit.data.dataset.multi_equation_dataset import MultiEquationDataset
 from mwptoolkit.data.dataset.dataset_multiencdec import DatasetMultiEncDec
+from mwptoolkit.data.dataset.pretrain_dataset import PretrainDataset
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 from mwptoolkit.data.dataloader.single_equation_dataloader import SingleEquationDataLoader
@@ -20,6 +21,8 @@ def create_dataset(config):
     """
     if config['model'].lower() in ['multiencdec']:
         return DatasetMultiEncDec(config)
+    if config['embedding'] != None:
+        return PretrainDataset(config)
     task_type = config['task_type'].lower()
     if task_type == TaskType.SingleEquation:
         return SingleEquationDataset(config)

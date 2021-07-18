@@ -320,10 +320,10 @@ class MultiEquationDataLoader(AbstractDataLoader):
 
             # question word to index
             if self.add_sos:
-                ques_tensor.append(self.dataset.in_word2idx["<SOS>"])
+                ques_tensor.append(self.dataset.in_word2idx[SpecialTokens.SOS_TOKEN])
             ques_tensor += self._word2idx(sentence)
             if self.add_eos:
-                ques_tensor.append(self.dataset.in_word2idx["<EOS>"])
+                ques_tensor.append(self.dataset.in_word2idx[SpecialTokens.EOS_TOKEN])
 
             # equation symbol to index
             equ_tensor = self._equ_symbol2idx(equation)
@@ -332,11 +332,11 @@ class MultiEquationDataLoader(AbstractDataLoader):
                 pass
             else:
                 if self.share_vocab:
-                    equ_tensor.append(self.dataset.in_word2idx["<EOS>"])
-                    temp_tensor.append(self.dataset.in_word2idx["<EOS>"])
+                    equ_tensor.append(self.dataset.in_word2idx[SpecialTokens.EOS_TOKEN])
+                    temp_tensor.append(self.dataset.in_word2idx[SpecialTokens.EOS_TOKEN])
                 else:
-                    equ_tensor.append(self.dataset.out_symbol2idx["<EOS>"])
-                    temp_tensor.append(self.dataset.temp_symbol2idx["<EOS>"])
+                    equ_tensor.append(self.dataset.out_symbol2idx[SpecialTokens.EOS_TOKEN])
+                    temp_tensor.append(self.dataset.temp_symbol2idx[SpecialTokens.EOS_TOKEN])
 
             equ_len_batch.append(len(equ_tensor))
             ques_len_batch.append(len(ques_tensor))

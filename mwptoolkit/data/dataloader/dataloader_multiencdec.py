@@ -4,6 +4,7 @@ import torch
 
 from mwptoolkit.data.dataloader.template_dataloader import TemplateDataLoader
 from mwptoolkit.utils.utils import str2float
+from mwptoolkit.utils.enum_type import SpecialTokens
 
 class DataLoaderMultiEncDec(TemplateDataLoader):
     def __init__(self, config, dataset):
@@ -71,17 +72,17 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
             prefix_equ = data['prefix equation']
             postfix_equ = data['postfix equation']
             if self.add_sos:
-                input1_tensor.append(self.dataset.in_word2idx_1["<SOS>"])
+                input1_tensor.append(self.dataset.in_word2idx_1[SpecialTokens.SOS_TOKEN])
             input1_tensor += self._word2idx_1(sentence)
             if self.add_eos:
-                input1_tensor.append(self.dataset.in_word2idx_1["<EOS>"])
+                input1_tensor.append(self.dataset.in_word2idx_1[SpecialTokens.EOS_TOKEN])
             
             input2_tensor+=self._word2idx_2(pos)
             # equation symbol to index
             prefix_equ_tensor = self._equ_symbol2idx_1(prefix_equ)
             postfix_equ_tensor = self._equ_symbol2idx_2(postfix_equ)
 
-            postfix_equ_tensor.append(self.dataset.out_idx2symbol_2.index('<EOS>'))
+            postfix_equ_tensor.append(self.dataset.out_idx2symbol_2.index(SpecialTokens.EOS_TOKEN))
 
             input1_length_batch.append(len(input1_tensor))
             input2_length_batch.append(len(input2_tensor))

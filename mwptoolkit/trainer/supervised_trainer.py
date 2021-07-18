@@ -292,12 +292,14 @@ class GTSTrainer(AbstractTrainer):
         self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _scheduler_step(self):
+        self.embedder_scheduler.step()
         self.encoder_scheduler.step()
         self.decoder_scheduler.step()
         self.node_generater_scheduler.step()
         self.merge_scheduler.step()
 
     def _optimizer_step(self):
+        self.embedder_optimizer.step()
         self.encoder_optimizer.step()
         self.decoder_optimizer.step()
         self.node_generater_optimizer.step()

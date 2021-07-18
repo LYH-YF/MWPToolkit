@@ -158,6 +158,7 @@ class GTS(nn.Module):
         num_pos = batch_data["num pos"]
         target = batch_data["equation"]
         num_list = batch_data['num list']
+        ques_mask = batch_data["ques mask"]
         #target_length=batch_data["equ len"]
         generate_nums = self.generate_nums
         num_start = self.num_start
@@ -180,7 +181,10 @@ class GTS(nn.Module):
 
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
-        seq_emb = self.embedder(seq)
+        if self.embedding == 'roberta':
+            seq_emb = self.embedder(seq,ques_mask)
+        else:
+            seq_emb = self.embedder(seq)
         pade_outputs, _ = self.encoder(seq_emb, seq_length)
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]

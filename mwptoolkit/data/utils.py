@@ -8,6 +8,7 @@ from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 from mwptoolkit.data.dataloader.single_equation_dataloader import SingleEquationDataLoader
 from mwptoolkit.data.dataloader.multi_equation_dataloader import MultiEquationDataLoader
 from mwptoolkit.data.dataloader.dataloader_multiencdec import DataLoaderMultiEncDec
+from mwptoolkit.data.dataloader.pretrain_dataloader import PretrainDataLoader
 from mwptoolkit.utils.enum_type import TaskType
 
 def create_dataset(config):
@@ -35,6 +36,8 @@ def create_dataloader(config):
     if config['model'].lower() in ['multiencdec']:
         return DataLoaderMultiEncDec
     task_type = config['task_type'].lower()
+    if config['embedding'] != None:
+        return PretrainDataLoader
     if task_type == TaskType.SingleEquation:
         return SingleEquationDataLoader
     elif task_type == TaskType.MultiEquation:

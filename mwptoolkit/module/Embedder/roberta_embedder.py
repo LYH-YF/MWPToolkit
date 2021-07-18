@@ -9,6 +9,6 @@ class RobertaEmbedder(nn.Module):
         self.roberta=RobertaModel.from_pretrained(pretrained_model_path)
         self.roberta.resize_token_embeddings(input_size)
     
-    def forward(self,input_seq):
-        output=self.roberta(input_seq)[0]
+    def forward(self,input_seq,attn_mask):
+        output=self.roberta(input_seq,attention_mask = attn_mask)[0]
         return output

@@ -37,7 +37,6 @@ class AbstractDataLoader(object):
             max_length = max(batch_seq_len)
         for idx, length in enumerate(batch_seq_len):
             if length < max_length:
-                x = batch_seq[idx] + [self.in_pad_token for i in range(max_length - length)]
                 batch_seq[idx] += [self.in_pad_token for i in range(max_length - length)]
             else:
                 batch_seq[idx] = batch_seq[idx][:max_length]

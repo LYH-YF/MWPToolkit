@@ -4,8 +4,8 @@ import warnings
 from logging import getLogger
 
 import torch
-from transformers import RobertaTokenizer
-from transformers.models.bert.tokenization_bert import BertTokenizer
+from transformers import RobertaTokenizer,BertTokenizer
+
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.enum_type import DatasetName, MaskSymbol, NumMask,TaskType,FixType,Operators,SpecialTokens
 from mwptoolkit.utils.preprocess_tools import number_transfer, number_transfer_asdiv_a, number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp, write_json_data
@@ -169,7 +169,7 @@ class PretrainDataset(AbstractDataset):
         if self.embedding == 'bert':
             SpecialTokens.SOS_TOKEN=tokenizer.cls_token
             SpecialTokens.EOS_TOKEN=tokenizer.sep_token
-
+        self.tokenizer=tokenizer
         self.in_idx2word = list(tokenizer.get_vocab().keys())
 
         if self.symbol_for_tree:

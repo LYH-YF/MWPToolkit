@@ -1770,6 +1770,11 @@ def english_word_2_num(sentence_list):
                 start_idx+=1
             if len(stack)==1 and stack[0] == 'point':
                 new_list.append(stack[0])
+            elif len(stack)==1 and stack[0].lower() == 'one':
+                new_list.append(stack[0])
+            elif len(stack)==2  and stack[0].lower() == 'one' and stack[1] == 'point':
+                new_list.append(stack[0])
+                new_list.append(stack[1])
             # elif len(stack)==2 and 'point' in stack and 'and' in stack:
             #     new_list.extend(stack)
             elif stack[-1] == 'point':

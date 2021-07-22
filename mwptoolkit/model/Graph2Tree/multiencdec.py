@@ -2,6 +2,7 @@ import copy
 import random
 
 import torch
+import numpy as np
 from torch import nn
 from torch.nn import functional as F
 
@@ -76,7 +77,8 @@ class MultiEncDec(nn.Module):
         except:
             self.out_pad_token2 = None
         # Initialize models
-        in_embedder = BaiscEmbedder(self.input1_size, self.embedding_size, self.dropout_ratio)
+        embedder = BaiscEmbedder(self.input1_size, self.embedding_size, self.dropout_ratio)
+        in_embedder = self._init_embedding_params(dataset.trainset,dataset.in_idx2word_1,config['embedding_size'],embedder)
 
         #self.out_embedder = BaiscEmbedder(self.output2_size,self.embedding_size,self.dropout_ratio)
 
@@ -115,6 +117,31 @@ class MultiEncDec(nn.Module):
         #self.out = nn.Linear(self.hidden_size, self.output2_size)
 
         self.loss = MaskedCrossEntropyLoss()
+
+    def _init_embedding_params(self,train_data,vocab,embedding_size,embedder):
+        sentences=[]
+        for data in train_data:
+            sentence=[]
+            for word in data['question']:
+                if word in vocab:
+                    sentence.append(word)
+                else:
+                    sentence.append(SpecialTokens.UNK_TOKEN)
+            sentences.append(sentence)
+        from gensim.models import word2vec
+        model = word2vec.Word2Vec(sentences, size=embedding_size, min_count=1)
+        emb_vectors = []
+        pad_idx = vocab.index(SpecialTokens.PAD_TOKEN)
+        for idx in range(len(vocab)):
+            if idx!=pad_idx:
+                emb_vectors.append(np.array(model.wv[vocab[idx]]))
+            else:
+                emb_vectors.append(np.zeros((embedding_size)))
+        emb_vectors=np.array(emb_vectors)
+        embedder.weight.data.copy_(torch.from_numpy(emb_vectors))
+
+        return embedder
+    
 
     def forward(self,input1_var, input2_var, input_length, target1, target1_length, target2, target2_length,\
                 num_stack_batch, num_size_batch,generate_list,num_pos_batch, num_order_batch, parse_graph):
@@ -260,10 +287,10 @@ class MultiEncDec(nn.Module):
         num_outputs = num_outputs.masked_fill_(masked_index.bool(), 0.0)
 
         decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
-        all_output1 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos_batch, num_order_pad,
+        all_output1,target1 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos_batch, num_order_pad,
                                              num_stack1_batch)
 
-        all_output2 = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, batch_size, seq_mask, num_stack2_batch)
+        all_output2,target2 = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, batch_size, seq_mask, num_stack2_batch)
         self.loss.reset()
         self.loss.eval_batch(all_output1, target1, equ_mask1)
         self.loss.eval_batch(all_output2, target2, equ_mask2)
@@ -404,7 +431,7 @@ class MultiEncDec(nn.Module):
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
         
-        return all_node_outputs  
+        return all_node_outputs,target
 
     def train_attn_double(self, encoder_outputs, decoder_hidden, target, target_length, batch_size, seq_mask, nums_stack_batch):
         max_target_length = max(target_length)
@@ -489,8 +516,10 @@ class MultiEncDec(nn.Module):
                     beam_list.append(Beam(topv[:, k], temp_input, temp_hidden, temp_output))
 
             all_decoder_outputs = beam_list[0].all_output
-
-        return all_decoder_outputs
+        for t in range(max_target_length):
+            target[:,t] = self.generate_decoder_input(
+                target[:,t], all_decoder_outputs[:,t], nums_stack_batch)
+        return all_decoder_outputs,target
 
     def evaluate_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, batch_size, padding_hidden, seq_mask, num_mask):
         # Prepare input and output variables
@@ -624,6 +653,7 @@ class MultiEncDec(nn.Module):
             else:
                 beam_list = temp_list[:self.beam_size]
         return beam_list[0]
+    
     def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, num_size, hidden_size):
         indices = list()
         sen_len = encoder_outputs.size(1)

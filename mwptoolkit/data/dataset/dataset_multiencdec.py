@@ -98,7 +98,7 @@ class DatasetMultiEncDec(TemplateDataset):
                     words_count_1[word] += 1
                 except:
                     words_count_1[word] = 1
-        self.in_idx2word_1 = [SpecialTokens.PAD_TOKEN, SpecialTokens.SOS_TOKEN, SpecialTokens.EOS_TOKEN, SpecialTokens.UNK_TOKEN]
+        self.in_idx2word_1 = [SpecialTokens.PAD_TOKEN, SpecialTokens.UNK_TOKEN]
         for key, value in words_count_1.items():
             if value > self.min_word_keep or "NUM" in key:
                 self.in_idx2word_1.append(key)
@@ -134,7 +134,7 @@ class DatasetMultiEncDec(TemplateDataset):
         if self.share_vocab:
             self.out_idx2symbol_2 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
         else:
-            self.out_idx2symbol_2 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
+            self.out_idx2symbol_2 = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
         self.num_start2 = len(self.out_idx2symbol_2)
         self.out_idx2symbol_2 += self.generate_list
         if self.mask_symbol == MaskSymbol.NUM:
@@ -170,6 +170,7 @@ class DatasetMultiEncDec(TemplateDataset):
                     continue
                 else:
                     self.out_idx2symbol_2.append(word)
+        self.out_idx2symbol_2 += [SpecialTokens.SOS_TOKEN]
         self.out_idx2symbol_2 += [SpecialTokens.UNK_TOKEN]
 
     def _build_symbol_for_tree(self):

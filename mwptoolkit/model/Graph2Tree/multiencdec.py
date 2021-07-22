@@ -138,7 +138,7 @@ class MultiEncDec(nn.Module):
             else:
                 emb_vectors.append(np.zeros((embedding_size)))
         emb_vectors=np.array(emb_vectors)
-        embedder.weight.data.copy_(torch.from_numpy(emb_vectors))
+        embedder.embedder.weight.data.copy_(torch.from_numpy(emb_vectors))
 
         return embedder
     

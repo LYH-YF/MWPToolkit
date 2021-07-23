@@ -17,6 +17,10 @@ def number_transfer(datas,dataset_name,task_type,mask_type,min_generate_keep,equ
         transfer=number_transfer_math23k
     elif dataset_name==DatasetName.asdiv_a:
         transfer=number_transfer_asdiv_a
+    elif dataset_name==DatasetName.SVAMP:
+        transfer=number_transfer_svamp
+    elif dataset_name==DatasetName.alg514:
+        transfer=num_transfer_alg514
     else:
         if task_type==TaskType.SingleEquation:
             transfer=None
@@ -33,9 +37,10 @@ def number_transfer(datas,dataset_name,task_type,mask_type,min_generate_keep,equ
         if task_type==TaskType.SingleEquation:
             new_data=transfer(data,mask_type)
         elif task_type==TaskType.MultiEquation:
-            new_data=num_transfer_multi(data,mask_type,equ_split_symbol)
+            new_data=transfer(data,mask_type,equ_split_symbol)
         else:
             raise NotImplementedError
+        
         num_list=new_data["number list"]
         out_seq=new_data["equation"]
         copy_num=len(new_data["number list"])
@@ -167,16 +172,54 @@ def seg_and_tag_asdiv_a(st, nums_fraction, nums):  # seg the equation and tag th
                 number = str(int(eval(st_num)))
                 res.append(nums[number])
             except:
+                number = str(str2float(st_num))
                 try:
-                    number = str(str2float(st_num))
                     res.append(nums[number])
                 except:
-                    res.append(st_num)
+                    res.append(number)
         if p_end < len(st):
             res += seg_and_tag_asdiv_a(st[p_end:], nums_fraction, nums)
         return res
     for ss in st:
         if ss == ' ':
+            continue
+        res.append(ss)
+    return res
+def seg_and_tag_svamp(st, nums_fraction, nums):  # seg the equation and tag the num
+    res = []
+    for n in nums_fraction:
+        if n in st:
+            p_start = st.find(n)
+            p_end = p_start + len(n)
+            if p_start > 0:
+                res += seg_and_tag_svamp(st[:p_start], nums_fraction, nums)
+            try:
+                res.append(nums[n])
+            except:
+                res.append(n)
+            if p_end < len(st):
+                res += seg_and_tag_svamp(st[p_end:], nums_fraction, nums)
+            return res
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_svamp(st[:p_start], nums_fraction, nums)
+        st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            number = str(str2float((st_num)))
+            try:
+                res.append(nums[number])
+            except:
+                res.append(number)
+        if p_end < len(st):
+            res += seg_and_tag_svamp(st[p_end:], nums_fraction, nums)
+        return res
+    for ss in st:
+        if ss == " ":
             continue
         res.append(ss)
     return res
@@ -192,14 +235,14 @@ def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the 
         try:
             res.append(nums[st_num])
         except:
+            number = str(str2float(st_num))
             try:
-                number = str(str2float(st_num))
                 if abs(eval(number) - eval(st_num)) < 1e-4:
                     res.append(nums[number])
                 else:
-                    res.append(st_num)
+                    res.append(number)
             except:
-                res.append(st_num)
+                res.append(number)
         if p_end < len(st):
             res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
         return res
@@ -226,14 +269,14 @@ def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the 
         try:
             res.append(nums[st_num])
         except:
+            number = str(str2float(st_num))
             try:
-                number = str(str2float(st_num))
                 if abs(eval(number) - eval(st_num)) < 1e-4:
                     res.append(nums[number])
                 else:
-                    res.append(st_num)
+                    res.append(number)
             except:
-                res.append(st_num)
+                res.append(number)
         if p_end < len(st):
             res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
         return res
@@ -328,7 +371,7 @@ def number_transfer_asdiv_a(data,mask_type):
     for s in seg:
         pos = re.search(pattern, s)
         if pos and pos.start() == 0:
-            input_seq.append(s[pos.start():pos.end()])
+            input_seq.append(str(str2float(s[pos.start():pos.end()])))
             if pos.end() < len(s):
                 input_seq.append(s[pos.end():])
         else:
@@ -364,6 +407,55 @@ def number_transfer_asdiv_a(data,mask_type):
 
     return new_data
 
+def number_transfer_svamp(data, mask_type):
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
+
+    nums = OrderedDict()
+    num_list = []
+    input_seq = []
+    seg = data["Body"].split(" ") + data["Question"].split()
+    seg = nltk.word_tokenize(data["Body"]+' '+data["Question"])
+    equations = data["Equation"]
+    if equations.startswith('( ') and equations.endswith(' )'):
+        equations = equations[2:-2]
+
+    num_pos_dict = {}
+    # match and split number
+    input_seq = []
+    for s in seg:
+        pos = re.search(pattern, s)
+        if pos and pos.start() == 0:
+            input_seq.append(str(str2float(s[pos.start():pos.end()])))
+            if pos.end() < len(s):
+                input_seq.append(s[pos.end():])
+        else:
+            input_seq.append(s)
+    
+    input_seq,num_list,num_pos,all_pos,nums,num_pos_dict,nums_for_ques,nums_fraction=get_num_pos(input_seq, mask_type, pattern)
+
+    out_seq = seg_and_tag_svamp(equations, nums_fraction, nums)
+
+    source = deepcopy(input_seq)
+    for pos in all_pos:
+        for key, value in num_pos_dict.items():
+            if pos in value:
+                num_str = key
+                break
+        num = str(str2float(num_str))
+        source[pos] = num
+    source = ' '.join(source)
+    
+    new_data = data
+    new_data["question"] = input_seq
+    new_data["ques source 1"] = source
+    new_data["equation"] = out_seq
+    new_data["number list"] = num_list
+    new_data["number position"] = num_pos
+    new_data["id"] = data["ID"]
+    new_data["ans"] = data["Answer"]
+    
+    return new_data
+
 def num_transfer_multi(data,mask_type,equ_split_symbol=";"):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
     nums = OrderedDict()
@@ -387,7 +479,8 @@ def num_transfer_multi(data,mask_type,equ_split_symbol=";"):
             if s == '':
                 continue
             input_seq.append(s)
-
+    if data['id']==46:
+        x=1
     input_seq,num_list,num_pos,all_pos,nums,num_pos_dict,nums_for_ques,nums_fraction=get_num_pos(input_seq, mask_type, pattern)
 
 
@@ -415,6 +508,66 @@ def num_transfer_multi(data,mask_type,equ_split_symbol=";"):
     new_data["number list"] = num_list
     new_data["number position"] = num_pos
     return new_data
+
+def num_transfer_alg514(data,mask_type,equ_split_symbol=";"):
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+
+    nums = OrderedDict()
+    num_pos_dict = {}
+    input_seq = []
+    seg = nltk.word_tokenize(data["original_text"])
+    for idx, word in enumerate(seg):
+        if re.match(r"(\d+\,\d+)+", word):
+            new_word = "".join(word.split(","))
+            seg[idx] = new_word
+    seg = english_word_2_num(seg)
+    equations = data["equation"]
+    equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
+    equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
+
+    # match and split number
+    input_seq = []
+    for s in seg:
+        pos = re.search(pattern, s)
+        if pos and pos.start() == 0:
+            #input_seq.append(s[pos.start():pos.end()])
+            input_seq.append(str(str2float(s[pos.start():pos.end()])))
+            if pos.end() < len(s):
+                input_seq.append(s[pos.end():])
+        else:
+            input_seq.append(s)
+    input_seq,num_list,num_pos,all_pos,nums,num_pos_dict,nums_for_ques,nums_fraction=get_num_pos(input_seq, mask_type, pattern)
+
+
+    out_seq = seg_and_tag_multi(equations, nums_fraction, nums)
+
+    source = deepcopy(input_seq)
+    for pos in all_pos:
+        for key, value in num_pos_dict.items():
+            if pos in value:
+                num_str = key
+                break
+        num = str(str2float(num_str))
+        source[pos] = num
+    source = ' '.join(source)
+    
+    
+    
+    assert len(num_list) == len(num_pos)
+    
+    # copy data
+    new_data = data
+    new_data["question"] = input_seq
+    new_data["equation"] = out_seq
+    new_data["ques source 1"] = source
+    new_data["number list"] = num_list
+    new_data["number position"] = num_pos
+    if num_list == []:
+        new_data["number list"] = ["-inf"]
+        new_data["number position"] = [-1]
+
+    return new_data
+
 
 def get_num_pos(input_seq,mask_type,pattern):
     if mask_type == MaskSymbol.NUM:

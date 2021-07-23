@@ -41,12 +41,12 @@ class SingleEquationDataset(AbstractDataset):
         elif self.dataset == DatasetName.ape200k:
             transfer = number_transfer_ape200k
         elif self.dataset == DatasetName.SVAMP:
-            transfer = number_transfer_svamp
+            transfer = number_transfer
         elif self.dataset == DatasetName.asdiv_a:
             transfer = number_transfer
         else:
             NotImplementedError
-        if self.dataset in [DatasetName.math23k,DatasetName.asdiv_a]:
+        if self.dataset in [DatasetName.math23k,DatasetName.asdiv_a,DatasetName.SVAMP]:
             self.trainset, generate_list, train_copy_nums,_ = transfer(self.trainset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
             self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
             self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)

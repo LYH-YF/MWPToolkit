@@ -42,7 +42,7 @@ class MultiEquationDataset(AbstractDataset):
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
         
         if self.dataset == DatasetName.alg514:
-            transfer = num_transfer_alg514
+            transfer = number_transfer
         elif self.dataset == DatasetName.draw:
             transfer = num_transfer_draw
         elif self.dataset == DatasetName.hmwp:
@@ -51,7 +51,7 @@ class MultiEquationDataset(AbstractDataset):
             transfer = number_transfer
         else:
             transfer = num_transfer_multi
-        if self.dataset in [DatasetName.mawps]:
+        if self.dataset in [DatasetName.mawps,DatasetName.alg514]:
             self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
             self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
             self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")

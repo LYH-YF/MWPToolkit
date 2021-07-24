@@ -175,7 +175,7 @@ class MultiEquationDataLoader(AbstractDataLoader):
                 equ_tokens = ept_equ_preprocess(equation, self.decoder)
 
                 #preprocessed_text, num_pos, numbers = ept_preprocess_input(text, numbers)
-                tokenized = self.pretrained_tokenzier.tokenize(text)
+                tokenized = self.pretrained_tokenzier.tokenize(text.strip())
                 ques_tensor = self.pretrained_tokenzier.convert_tokens_to_ids(tokenized)
                 ques_batch.append(ques_tensor)
                 ques_len_batch.append(len(ques_tensor))

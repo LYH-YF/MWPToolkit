@@ -11,7 +11,7 @@ from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser
 from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
 from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_, preprocess_ept_dataset_
-from mwptoolkit.utils.preprocess_tools import id_reedit
+from mwptoolkit.utils.preprocess_tools import id_reedit,read_aux_jsonl_data
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName, EPT
 
@@ -141,6 +141,60 @@ class MultiEquationDataset(AbstractDataset):
         if self.model.lower() in ["ept"]:
             logger = getLogger()
             logger.info("build ept information ···")
+            aux_trainset = []
+            aux_testset = []
+         
+            if self.dataset == DatasetName.alg514:
+                for fold_t in range(5):
+                    aux_trainset_file = self.dataset_path + "/alg514_fold{}_train.orig.jsonl".format(fold_t)
+                    aux_testset_file = self.dataset_path + "/alg514_fold{}_test.orig.jsonl".format(fold_t)
+                    aux_trainset += read_aux_jsonl_data(aux_trainset_file)
+                    aux_testset += read_aux_jsonl_data(aux_testset_file)
+                
+                for aux_data in aux_trainset:
+                    for dataid, data in enumerate(self.trainset):
+                        if data['id'] == int(aux_data["iIndex"]):
+                            self.trainset[dataid]["aux"] = aux_data 
+                for aux_data in aux_testset:
+                    for dataid, data in enumerate(self.testset):
+                        if data['id'] == int(aux_data["iIndex"]):
+                            self.testset[dataid]["aux"] = aux_data
+            if self.dataset == DatasetName.draw:
+                aux_trainset_file = self.dataset_path + "/draw_train.orig.jsonl"
+                aux_testset_file = self.dataset_path + "/draw_test.orig.jsonl"
+                aux_devset_file = self.dataset_path + "/draw_dev.orig.jsonl"
+                aux_trainset = read_aux_jsonl_data(aux_trainset_file)
+                aux_testset = read_aux_jsonl_data(aux_testset_file)
+                aux_devset = read_aux_jsonl_data(aux_devset_file)
+                dataset = aux_trainset+aux_testset +aux_devset
+                for aux_data in dataset:
+                    for dataid, data in enumerate(self.trainset):
+                        
+                        if data['id'] == aux_data["iIndex"]:
+                            self.trainset[dataid]["aux"] = aux_data 
+                            
+                for aux_data in dataset:
+                    for dataid, data in enumerate(self.testset):
+                        if data['id'] == aux_data["iIndex"]:
+                            self.testset[dataid]["aux"] = aux_data
+
+            if self.dataset == DatasetName.mawps:
+                for fold_t in range(5):
+                    aux_trainset_file = self.dataset_path + "/mawps_fold{}_train.orig.jsonl".format(fold_t)
+                    aux_testset_file = self.dataset_path + "/mawps_fold{}_test.orig.jsonl".format(fold_t)
+                    aux_trainset += read_aux_jsonl_data(aux_trainset_file)
+                    aux_testset += read_aux_jsonl_data(aux_testset_file)
+                
+                for aux_data in aux_trainset:
+                    for dataid, data in enumerate(self.trainset):
+                        if data['original_text'].strip() == aux_data["new_text"].strip():
+                            self.trainset[dataid]["aux"] = aux_data 
+                for aux_data in aux_testset:
+                    for dataid, data in enumerate(self.testset):
+                        if data['original_text'].strip() == aux_data["new_text"].strip():
+                            self.testset[dataid]["aux"] = aux_data
+
+            
             self.trainset, self.validset, self.testset = \
                 preprocess_ept_dataset_(self.trainset, self.validset, self.testset, self.dataset)
 

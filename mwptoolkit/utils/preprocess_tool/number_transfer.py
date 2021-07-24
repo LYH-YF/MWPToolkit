@@ -21,6 +21,8 @@ def number_transfer(datas,dataset_name,task_type,mask_type,min_generate_keep,equ
         transfer=number_transfer_svamp
     elif dataset_name==DatasetName.alg514:
         transfer=num_transfer_alg514
+    elif dataset_name==DatasetName.draw:
+        transfer=num_transfer_draw
     else:
         if task_type==TaskType.SingleEquation:
             transfer=None
@@ -47,6 +49,9 @@ def number_transfer(datas,dataset_name,task_type,mask_type,min_generate_keep,equ
 
         for idx, s in enumerate(out_seq):
             # tag the num which is generated
+            if s[0] == '-' and len(s)>=2 and s[1].isdigit() and s not in generate_nums and s not in num_list:
+                generate_nums.append(s)
+                generate_nums_dict[s] = 0
             if s[0].isdigit() and s not in generate_nums and s not in num_list:
                 generate_nums.append(s)
                 generate_nums_dict[s] = 0
@@ -556,6 +561,91 @@ def num_transfer_alg514(data,mask_type,equ_split_symbol=";"):
     assert len(num_list) == len(num_pos)
     
     # copy data
+    new_data = data
+    new_data["question"] = input_seq
+    new_data["equation"] = out_seq
+    new_data["ques source 1"] = source
+    new_data["number list"] = num_list
+    new_data["number position"] = num_pos
+    if num_list == []:
+        new_data["number list"] = ["-inf"]
+        new_data["number position"] = [-1]
+
+    return new_data
+
+def num_transfer_draw(data,mask_type,equ_split_symbol=";"):
+    pattern = re.compile(r"\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+    pattern = re.compile(r"\d+\/\d+|\d+\.\d+%?|\d+%?|(-\d+)")
+
+    #nums = []
+    nums = OrderedDict()
+    num_pos_dict = {}
+    #num_list=[]
+    input_seq = []
+    seg = data["original_text"].split(" ")
+    for idx, word in enumerate(seg):
+        if re.match(r"(\d+\,\d+)+", word):
+            new_word = "".join(word.split(","))
+            seg[idx] = new_word
+        elif re.match(r"\.\d+", word):
+            new_word = "0" + word
+            seg[idx] = new_word
+    seg = english_word_2_num(seg,3)
+    equations = data["equation"]
+    equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
+    equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
+
+    # match and split number
+    input_seq = []
+    for s in seg:
+        pos = re.search(pattern, s)
+        if pos and pos.start() == 0:
+            input_seq.append(str(str2float(s[pos.start():pos.end()])))
+            if pos.end() < len(s):
+                input_seq.append(s[pos.end():])
+        else:
+            input_seq.append(s)
+    input_seq,num_list,num_pos,all_pos,nums,num_pos_dict,nums_for_ques,nums_fraction=get_num_pos(input_seq, mask_type, pattern)
+
+    out_seq = []
+    pos_st = re.search(r"^-((\d+\.?\d*))", equations)  #search negative number starting
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            out_seq += seg_and_tag_multi(equations[:p_start], nums_fraction, nums)
+        st_num = equations[p_start:p_end]
+        try:
+            out_seq.append(nums[st_num])
+        except:
+            number = str(str2float(st_num))
+            try:
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    out_seq.append(nums[number])
+                else:
+                    out_seq.append(number)
+            except:
+                out_seq.append(number)
+        if p_end < len(equations):
+            out_seq += seg_and_tag_multi(equations[p_end:], nums_fraction, nums)
+    else:
+        out_seq = seg_and_tag_multi(equations, nums_fraction, nums)
+
+    
+
+    source = deepcopy(input_seq)
+    for pos in all_pos:
+        for key, value in num_pos_dict.items():
+            if pos in value:
+                num_str = key
+                break
+        num = str(str2float(num_str))
+        source[pos] = num
+    source = ' '.join(source)
+    
+    assert len(num_list) == len(num_pos)
+
+    #copy data
     new_data = data
     new_data["question"] = input_seq
     new_data["equation"] = out_seq

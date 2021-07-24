@@ -44,14 +44,14 @@ class MultiEquationDataset(AbstractDataset):
         if self.dataset == DatasetName.alg514:
             transfer = number_transfer
         elif self.dataset == DatasetName.draw:
-            transfer = num_transfer_draw
+            transfer = number_transfer
         elif self.dataset == DatasetName.hmwp:
             transfer = num_transfer_hmwp
         elif self.dataset == DatasetName.mawps:
             transfer = number_transfer
         else:
             transfer = num_transfer_multi
-        if self.dataset in [DatasetName.mawps,DatasetName.alg514]:
+        if self.dataset in [DatasetName.mawps,DatasetName.alg514,DatasetName.draw]:
             self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
             self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
             self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
@@ -143,7 +143,7 @@ class MultiEquationDataset(AbstractDataset):
             logger.info("build ept information ···")
             aux_trainset = []
             aux_testset = []
-         
+            
             if self.dataset == DatasetName.alg514:
                 for fold_t in range(5):
                     aux_trainset_file = self.dataset_path + "/alg514_fold{}_train.orig.jsonl".format(fold_t)

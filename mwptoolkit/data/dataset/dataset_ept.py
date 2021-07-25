@@ -76,6 +76,9 @@ class DatasetEPT(AbstractDataset):
             for fold_t in range(1):
                 aux_trainset_file = self.dataset_path + "/alg514_fold{}_train.orig.jsonl".format(fold_t)
                 aux_testset_file = self.dataset_path + "/alg514_fold{}_test.orig.jsonl".format(fold_t)
+                aux_trainset_file = os.path.join(self.root,aux_trainset_file)
+                aux_testset_file = os.path.join(self.root,aux_testset_file)
+                
                 aux_trainset += read_aux_jsonl_data(aux_trainset_file)
                 aux_testset += read_aux_jsonl_data(aux_testset_file)
             dataset = aux_trainset+aux_testset
@@ -107,6 +110,10 @@ class DatasetEPT(AbstractDataset):
             aux_trainset_file = self.dataset_path + "/draw_train.orig.jsonl"
             aux_testset_file = self.dataset_path + "/draw_test.orig.jsonl"
             aux_devset_file = self.dataset_path + "/draw_dev.orig.jsonl"
+            aux_trainset_file = os.path.join(self.root,aux_trainset_file)
+            aux_testset_file = os.path.join(self.root,aux_testset_file)
+            aux_devset_file = os.path.join(self.root,aux_devset_file)
+
             aux_trainset = read_aux_jsonl_data(aux_trainset_file)
             aux_testset = read_aux_jsonl_data(aux_testset_file)
             aux_devset = read_aux_jsonl_data(aux_devset_file)
@@ -141,6 +148,9 @@ class DatasetEPT(AbstractDataset):
             for fold_t in range(1):
                 aux_trainset_file = self.dataset_path + "/mawps_fold{}_train.orig.jsonl".format(fold_t)
                 aux_testset_file = self.dataset_path + "/mawps_fold{}_test.orig.jsonl".format(fold_t)
+                aux_trainset_file = os.path.join(self.root,aux_trainset_file)
+                aux_testset_file = os.path.join(self.root,aux_testset_file)
+                
                 aux_trainset += read_aux_jsonl_data(aux_trainset_file)
                 aux_testset += read_aux_jsonl_data(aux_testset_file)
             dataset = aux_trainset+aux_testset

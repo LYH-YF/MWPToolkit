@@ -1839,3 +1839,28 @@ class EPTTrainer(AbstractTrainer):
     def _build_optimizer(self):
         from torch_optimizer import Lamb
         self.optimizer = Lamb(self.model.parameters(), lr=self.config["learning_rate"], eps=1e-08)
+    
+    def param_search(self):
+        train_batch_size = self.config["train_batch_size"]
+        epoch_nums = self.config["epoch_nums"]
+
+        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+
+        self.logger.info("start training...")
+        for epo in range(self.start_epoch, epoch_nums):
+            self.epoch_i = epo + 1
+            self.model.train()
+            loss_total, train_time_cost = self._train_epoch()
+            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
+            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
+                #valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+
+                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                tune.report(accuracy=test_val_ac)
+
+                

@@ -1,0 +1,6 @@
+[
+    "learning_rate=(1e-4,1e-2)",
+    "num_decoder_layers=[2,4,6]",
+    "num_decoder_heads=[4,8,12]",
+    "num_hidden_layers=[2,4,6]"
+]

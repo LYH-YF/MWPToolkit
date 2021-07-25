@@ -11,9 +11,9 @@
     "step_size":20,
     "beam_size":1,
     "share_vocab":false,
-    "mask_symbol":"NUM",
+    "mask_symbol":"number",
     "equation_fix":"postfix",
     "decoder": "expr_ptr",
     "force_generation": true,
-    "pretrained_model": "albert-base-v2"
+    "pretrained_model_path": "albert-base-v2"
 }

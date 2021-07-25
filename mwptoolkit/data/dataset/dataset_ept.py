@@ -73,20 +73,36 @@ class DatasetEPT(AbstractDataset):
         aux_testset = []
         
         if self.dataset == DatasetName.alg514:
-            for fold_t in range(5):
+            for fold_t in range(1):
                 aux_trainset_file = self.dataset_path + "/alg514_fold{}_train.orig.jsonl".format(fold_t)
                 aux_testset_file = self.dataset_path + "/alg514_fold{}_test.orig.jsonl".format(fold_t)
                 aux_trainset += read_aux_jsonl_data(aux_trainset_file)
                 aux_testset += read_aux_jsonl_data(aux_testset_file)
+            dataset = aux_trainset+aux_testset
             
-            for aux_data in aux_trainset:
-                for dataid, data in enumerate(self.trainset):
+            for dataid, data in  enumerate(self.trainset):
+                for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
-                        self.trainset[dataid]["aux"] = aux_data 
-            for aux_data in aux_testset:
-                for dataid, data in enumerate(self.testset):
+                        self.trainset[dataid]["aux"] = aux_data
+                        break
+            for dataid, data in  enumerate(self.validset):
+                for aux_data in dataset:
+                    if data['id'] == int(aux_data["iIndex"]):
+                        self.validset[dataid]["aux"] = aux_data
+                        break
+            for dataid, data in  enumerate(self.testset):
+                for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
                         self.testset[dataid]["aux"] = aux_data
+                        break
+            # for aux_data in aux_trainset:
+            #     for dataid, data in enumerate(self.trainset):
+            #         if data['id'] == int(aux_data["iIndex"]):
+            #             self.trainset[dataid]["aux"] = aux_data 
+            # for aux_data in aux_testset:
+            #     for dataid, data in enumerate(self.testset):
+            #         if data['id'] == int(aux_data["iIndex"]):
+            #             self.testset[dataid]["aux"] = aux_data
         if self.dataset == DatasetName.draw:
             aux_trainset_file = self.dataset_path + "/draw_train.orig.jsonl"
             aux_testset_file = self.dataset_path + "/draw_test.orig.jsonl"
@@ -95,32 +111,65 @@ class DatasetEPT(AbstractDataset):
             aux_testset = read_aux_jsonl_data(aux_testset_file)
             aux_devset = read_aux_jsonl_data(aux_devset_file)
             dataset = aux_trainset+aux_testset +aux_devset
-            for aux_data in dataset:
-                for dataid, data in enumerate(self.trainset):
+            # for aux_data in dataset:
+            #     for dataid, data in enumerate(self.trainset):
                     
-                    if data['id'] == aux_data["iIndex"]:
-                        self.trainset[dataid]["aux"] = aux_data 
+            #         if data['id'] == aux_data["iIndex"]:
+            #             self.trainset[dataid]["aux"] = aux_data 
                         
-            for aux_data in dataset:
-                for dataid, data in enumerate(self.testset):
-                    if data['id'] == aux_data["iIndex"]:
+            # for aux_data in dataset:
+            #     for dataid, data in enumerate(self.testset):
+            #         if data['id'] == aux_data["iIndex"]:
+            #             self.testset[dataid]["aux"] = aux_data
+            for dataid, data in  enumerate(self.trainset):
+                for aux_data in dataset:
+                    if data['id'] == int(aux_data["iIndex"]):
+                        self.trainset[dataid]["aux"] = aux_data
+                        break
+            for dataid, data in  enumerate(self.validset):
+                for aux_data in dataset:
+                    if data['id'] == int(aux_data["iIndex"]):
+                        self.validset[dataid]["aux"] = aux_data
+                        break
+            for dataid, data in  enumerate(self.testset):
+                for aux_data in dataset:
+                    if data['id'] == int(aux_data["iIndex"]):
                         self.testset[dataid]["aux"] = aux_data
+                        break
 
         if self.dataset == DatasetName.mawps:
-            for fold_t in range(5):
+            for fold_t in range(1):
                 aux_trainset_file = self.dataset_path + "/mawps_fold{}_train.orig.jsonl".format(fold_t)
                 aux_testset_file = self.dataset_path + "/mawps_fold{}_test.orig.jsonl".format(fold_t)
                 aux_trainset += read_aux_jsonl_data(aux_trainset_file)
                 aux_testset += read_aux_jsonl_data(aux_testset_file)
+            dataset = aux_trainset+aux_testset
             
-            for aux_data in aux_trainset:
-                for dataid, data in enumerate(self.trainset):
+            # for aux_data in aux_trainset:
+            #     for dataid, data in enumerate(self.trainset):
+            #         if data['original_text'].strip() == aux_data["new_text"].strip():
+            #             self.trainset[dataid]["aux"] = aux_data 
+            # for aux_data in aux_testset:
+            #     for dataid, data in enumerate(self.testset):
+            #         if data['original_text'].strip() == aux_data["new_text"].strip():
+            #             self.testset[dataid]["aux"] = aux_data
+
+            for dataid,data in enumerate(self.trainset):
+                for aux_data in dataset:
                     if data['original_text'].strip() == aux_data["new_text"].strip():
-                        self.trainset[dataid]["aux"] = aux_data 
-            for aux_data in aux_testset:
-                for dataid, data in enumerate(self.testset):
+                        self.trainset[dataid]["aux"] = aux_data
+                        break
+            for dataid,data in enumerate(self.validset):
+                for aux_data in dataset:
+                    if data['original_text'].strip() == aux_data["new_text"].strip():
+                        self.validset[dataid]["aux"] = aux_data
+                        break
+            for dataid,data in enumerate(self.testset):
+                for aux_data in dataset:
                     if data['original_text'].strip() == aux_data["new_text"].strip():
                         self.testset[dataid]["aux"] = aux_data
+                        break
+
 
         
         self.trainset, self.validset, self.testset = \

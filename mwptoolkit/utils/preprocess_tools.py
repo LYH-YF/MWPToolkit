@@ -3442,7 +3442,7 @@ def refine_formula_as_prefix(item, numbers, dataset_name):
     elif dataset_name in ['mawps']:
         template_to_number = {}
         template_to_value = {}
-        print(numbers)
+        #print(numbers)
         number_by_tokenid = {j: i for i, x in enumerate(numbers) for j in x['token']}
 
         for tokid, token in enumerate(re.sub('\\s+', ' ', item['aux']['mask_text']).strip().split(' ')):

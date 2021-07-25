@@ -60,7 +60,7 @@ class EPT(nn.Module):
             #self.out_sos_idx = config["in_word2idx"]["<SOS>"]
 
 
-        self.encoder = AutoModel.from_pretrained(config['pretrained_model'])
+        self.encoder = AutoModel.from_pretrained(config['pretrained_model_path'])
         #self.encoder = TransformerEncoder(config["embedding_size"], config["ffn_size"], config["num_encoder_layers"], \
         #                                  config["num_heads"], config["attn_dropout_ratio"], \
         #                                  config["attn_weight_dropout_ratio"], config["ffn_dropout_ratio"])

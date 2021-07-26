@@ -30,36 +30,12 @@ class PretrainDataset(AbstractDataset):
     def _preprocess(self):
         if self.dataset in [DatasetName.hmwp]:
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
-        if self.dataset == DatasetName.math23k:
-            transfer = number_transfer_math23k
-        elif self.dataset == DatasetName.ape200k:
-            transfer = number_transfer_ape200k
-        elif self.dataset == DatasetName.SVAMP:
-            transfer = number_transfer_svamp
-        elif self.dataset == DatasetName.asdiv_a:
-            transfer = number_transfer_asdiv_a
-        elif self.dataset == DatasetName.alg514:
-            transfer = num_transfer_alg514
-        elif self.dataset == DatasetName.draw:
-            transfer = num_transfer_draw
-        elif self.dataset == DatasetName.hmwp:
-            transfer = num_transfer_hmwp
-        else:
-            if self.task_type == TaskType.SingleEquation:
-                transfer = number_transfer
-            elif self.task_type == TaskType.MultiEquation:
-                transfer = num_transfer_multi
-        if self.task_type == TaskType.SingleEquation:
-            self.trainset, generate_list, train_copy_nums = transfer(self.trainset, self.mask_symbol, self.min_generate_keep)
-            self.validset, _g, valid_copy_nums = transfer(self.validset, self.mask_symbol, self.min_generate_keep)
-            self.testset, _g, test_copy_nums = transfer(self.testset, self.mask_symbol, self.min_generate_keep)
-            unk_symbol=[]
-        elif self.task_type == TaskType.MultiEquation:
-            self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.mask_symbol, self.min_generate_keep, ";")
-            self.validset, _g, valid_copy_nums, _u = transfer(self.validset, self.mask_symbol, self.min_generate_keep, ";")
-            self.testset, _g, test_copy_nums, _u = transfer(self.testset, self.mask_symbol, self.min_generate_keep, ";")
-        else:
-            raise NotImplementedError
+        transfer = number_transfer
+        
+        self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
+        self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
+        self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
+    
         
         if self.rule1:
             if self.linear and self.single:

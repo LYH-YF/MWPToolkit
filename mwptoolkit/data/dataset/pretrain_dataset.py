@@ -8,11 +8,10 @@ from transformers import RobertaTokenizer,BertTokenizer
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.enum_type import DatasetName, MaskSymbol, NumMask,TaskType,FixType,Operators,SpecialTokens
-from mwptoolkit.utils.preprocess_tools import number_transfer, number_transfer_asdiv_a, number_transfer_math23k, number_transfer_ape200k, number_transfer_svamp, write_json_data
-from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree
 from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_, preprocess_ept_dataset_
 from mwptoolkit.utils.preprocess_tools import id_reedit
+from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 
 class PretrainDataset(AbstractDataset):
     def __init__(self, config):

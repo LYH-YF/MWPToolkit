@@ -46,12 +46,12 @@ class MultiEquationDataset(AbstractDataset):
         elif self.dataset == DatasetName.draw:
             transfer = number_transfer
         elif self.dataset == DatasetName.hmwp:
-            transfer = num_transfer_hmwp
+            transfer = number_transfer
         elif self.dataset == DatasetName.mawps:
             transfer = number_transfer
         else:
             transfer = num_transfer_multi
-        if self.dataset in [DatasetName.mawps,DatasetName.alg514,DatasetName.draw]:
+        if self.dataset in [DatasetName.mawps,DatasetName.alg514,DatasetName.draw,DatasetName.hmwp]:
             self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
             self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")
             self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'multi_equation', self.mask_symbol, self.min_generate_keep,";")

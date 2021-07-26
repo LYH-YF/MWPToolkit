@@ -23,6 +23,8 @@ def number_transfer(datas,dataset_name,task_type,mask_type,min_generate_keep,equ
         transfer=num_transfer_alg514
     elif dataset_name==DatasetName.draw:
         transfer=num_transfer_draw
+    elif dataset_name==DatasetName.hmwp:
+        transfer=num_transfer_hmwp
     else:
         if task_type==TaskType.SingleEquation:
             transfer=None
@@ -294,6 +296,82 @@ def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the 
         res.append(st[p_start:p_end])
         if p_end < len(st):
             res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
+        return res
+    for ss in st:
+        if ss.isalpha():
+            res.append(ss.lower())
+        elif ss == " ":
+            continue
+        else:
+            res.append(ss)
+    return res
+def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the num
+    res = []
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)\s-\s((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    if pos_st:
+        p_start = pos_st.start() + 2
+        p_end = pos_st.end()
+        num_str = ''.join(st[p_start:p_end].split(" "))
+        if p_start > 0:
+            res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
+        st_num = num_str
+        try:
+            res.append(nums[st_num])
+        except:
+            number = str(str2float(st_num))
+            try:
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(number)
+            except:
+                res.append(number)
+        if p_end < len(st):
+            res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
+        return res
+    for n in nums_fraction:
+        if n in st:
+            p_start = st.find(n)
+            p_end = p_start + len(n)
+            if p_start > 0:
+                res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
+            try:
+                res.append(nums[n])
+            except:
+                res.append(n)
+            if p_end < len(st):
+                res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
+            return res
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
+        st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            number = str(str2float(st_num))
+            try:
+                if abs(eval(number) - eval(st_num)) < 1e-4:
+                    res.append(nums[number])
+                else:
+                    res.append(number)
+            except:
+                res.append(number)
+        if p_end < len(st):
+            res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
+        return res
+    pos_st = re.search("<BRG>", st)
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_hmwp(st[:p_start], nums_fraction, nums)
+        res.append(st[p_start:p_end])
+        if p_end < len(st):
+            res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
         return res
     for ss in st:
         if ss.isalpha():
@@ -656,6 +734,55 @@ def num_transfer_draw(data,mask_type,equ_split_symbol=";"):
         new_data["number list"] = ["-inf"]
         new_data["number position"] = [-1]
 
+    return new_data
+
+def num_transfer_hmwp(data,mask_type,equ_split_symbol=";"):
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+
+    
+    nums = OrderedDict()
+    num_pos_dict = {}
+    input_seq = []
+    seg = data["original_text"].split(" ")
+    equations = data["equation"]
+    equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
+    equations = re.sub(equ_split_symbol, SpecialTokens.BRG_TOKEN, equations)
+
+    # match and split number
+    input_seq = []
+    for s in seg:
+        pos = re.search(pattern, s)
+        if pos and pos.start() == 0:
+            #input_seq.append(s[pos.start():pos.end()])
+            input_seq.append(str(str2float(s[pos.start():pos.end()])))
+            if pos.end() < len(s):
+                input_seq.append(s[pos.end():])
+        else:
+            input_seq.append(s)
+    
+    input_seq,num_list,num_pos,all_pos,nums,num_pos_dict,nums_for_ques,nums_fraction=get_num_pos(input_seq, mask_type, pattern)
+
+    out_seq = seg_and_tag_hmwp(equations, nums_fraction, nums)
+    
+    source = deepcopy(input_seq)
+    for pos in all_pos:
+        for key, value in num_pos_dict.items():
+            if pos in value:
+                num_str = key
+                break
+        num = str(str2float(num_str))
+        source[pos] = num
+    source = ' '.join(source)
+    
+    assert len(num_list) == len(num_pos)
+    #copy data
+    new_data = data
+    new_data["question"] = input_seq
+    new_data["equation"] = out_seq
+    new_data["ques source 1"] = source
+    new_data["number list"] = num_list
+    new_data["number position"] = num_pos
+        
     return new_data
 
 

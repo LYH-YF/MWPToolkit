@@ -73,6 +73,8 @@ class SingleEquationDataset(AbstractDataset):
         self.generate_list = generate_list
         if self.symbol_for_tree:
             self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
+        elif self.model.lower() in ['saligned']:
+            self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         else:
             self.copy_nums = train_copy_nums
         self.operator_nums = len(Operators.Single)

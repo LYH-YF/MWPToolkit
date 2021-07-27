@@ -1,4 +1,5 @@
 import math
+from numpy.core.fromnumeric import mean
 import torch
 from torch import nn
 import numpy as np
@@ -7,7 +8,7 @@ from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import SalignedEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import SalignedDecoder
 from mwptoolkit.module.Environment.stack_machine import OPERATIONS,StackMachine
-from mwptoolkit.utils.enum_type import SpecialTokens,NumMask
+from mwptoolkit.utils.enum_type import SpecialTokens,NumMask,Operators
 
 
 class Saligned(nn.Module):
@@ -46,6 +47,7 @@ class Saligned(nn.Module):
         #self.ADD = dataset.out_symbol2idx['+']
         self.POWER = dataset.out_symbol2idx['^']
         self.min_CON = self.N_OPS_out = self.POWER + 1
+        #self.min_CON = self.N_OPS_out = dataset.out_symbol2idx['^']+1 if '<BRG>' not in dataset.out_symbol2idx else dataset.out_symbol2idx['<BRG>']+1
         #self.UNK = dataset.out_symbol2idx['<UNK>']
         #self.max_CON = self.min_NUM - 1
         self.fix_constants = list(dataset.out_symbol2idx.keys())[self.min_CON: self.min_NUM]
@@ -130,6 +132,7 @@ class Saligned(nn.Module):
         else:
             prev_state = None
         operands_len = torch.LongTensor(self.N_OPS + np.array(num_len)).to(self._device).unsqueeze(1).repeat(1, ops.size(1))
+        #operands_len = torch.LongTensor(self.N_OPS+ len(fix_constants) + np.array(num_len)).to(self._device).unsqueeze(1).repeat(1, ops.size(1))
         ops[(ops >= operands_len)] = self.N_OPS
         pred_logits = []
         for t in range(max(op_len)):
@@ -184,7 +187,8 @@ class Saligned(nn.Module):
 
         weights = 1
 
-        loss = (loss * weights).mean()
+        #loss = (loss * weights).mean()
+        loss = (loss/max(op_len)).mean()
         pred_logits = torch.stack(pred_logits, 1)
         #print('train pred_logits', pred_logits[0, :])
         predicts = [stack.stack_log_index for stack in stacks]

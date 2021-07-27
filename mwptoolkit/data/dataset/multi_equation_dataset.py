@@ -49,7 +49,7 @@ class MultiEquationDataset(AbstractDataset):
 
         if self.rule1:
             if self.linear and self.single:
-                self.en_rule1_process()
+                self.en_rule1_process(k=max([train_copy_nums, valid_copy_nums, test_copy_nums]))
             else:
                 warnings.warn("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
                 #raise Warning("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
@@ -77,6 +77,8 @@ class MultiEquationDataset(AbstractDataset):
 
         self.generate_list = unk_symbol + generate_list
         if self.symbol_for_tree:
+            self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
+        elif self.model.lower() in ['saligned']:
             self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         else:
             self.copy_nums = train_copy_nums

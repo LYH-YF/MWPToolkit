@@ -15,6 +15,8 @@ class OPERATIONS:
         self.BRG = out_symbol2idx['<BRG>'] if '<BRG>' in out_symbol2idx else -1
         self.EQL = out_symbol2idx['<EOS>']
         self.N_OPS = out_symbol2idx['NUM_0']
+        #self.N_OPS = self.BRG+1 if self.POWER < self.BRG else self.POWER+1
+        #self.N_OPS = self.POWER+1
 
 class StackMachine:
     """

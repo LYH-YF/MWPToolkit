@@ -22,6 +22,7 @@ def train_cross_validation(config):
     dataset = create_dataset(config)
     logger.info("start training with {} fold cross validation.".format(config["k_fold"]))
     for fold_t in dataset.cross_validation_load(config["k_fold"], start_fold_t):
+        continue
         
         config["fold_t"] = fold_t
         config["best_folds_accuracy"] = best_folds_accuracy

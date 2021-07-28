@@ -117,8 +117,12 @@ class Saligned(nn.Module):
             self.encoder.forward(seq_emb, text_len, constant_indices)
         #print('operands', fix_constants, constants, ops, op_len);  #exit()
         # print(str(batch_data).encode('utf8'))
+        number_emb=[operands[b_i] + self.encoder.get_fix_constant() for b_i in range(batch_size)]
         # initialize stacks
-        stacks = [StackMachine(self.operations, fix_constants + constants[b], operands[b], bottom,
+        # stacks = [StackMachine(self.operations, fix_constants + constants[b], operands[b], bottom,
+        #           dry_run=True)
+        #           for b in range(batch_size)]
+        stacks = [StackMachine(self.operations, constants[b] + fix_constants, number_emb[b], bottom,
                   dry_run=True)
                   for b in range(batch_size)]
 
@@ -146,7 +150,7 @@ class Saligned(nn.Module):
             op_logits, arg_logits, prev_output, prev_state = \
                 self.decoder(
                     context, text_len, operands, stacks,
-                    prev_op, prev_output, prev_state, self.N_OPS)
+                    prev_op, prev_output, prev_state, number_emb, self.N_OPS)
 
             # print('stacks[0]._equations', t, stacks[0]._equations)
             # accumulate op loss
@@ -218,9 +222,11 @@ class Saligned(nn.Module):
         #print('seq_emb', seq_emb.size(), text_len, constant_indices)
         context, state, operands = \
             self.encoder.forward(seq_emb, text_len, constant_indices)
+
+        number_emb=[operands[b_i] + self.encoder.get_fix_constant() for b_i in range(batch_size)]
         #print('operands', fix_constants + constants[0], ops); # exit()
         # initialize stacks
-        stacks = [StackMachine(self.operations, fix_constants + constants[b], operands[b], bottom)
+        stacks = [StackMachine(self.operations, constants[b] + fix_constants, number_emb[b], bottom)
                   for b in range(batch_size)]
 
         loss = torch.zeros(batch_size).to(self._device)
@@ -233,7 +239,7 @@ class Saligned(nn.Module):
             op_logits, arg_logits, prev_output, prev_state = \
                 self.decoder(
                     context, text_len, operands, stacks,
-                    prev_op, prev_output, prev_state, self.N_OPS)
+                    prev_op, prev_output, prev_state, number_emb, self.N_OPS)
 
             n_finished = 0
             for b in range(batch_size):

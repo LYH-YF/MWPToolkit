@@ -222,7 +222,7 @@ class SalignedDecoder(nn.Module):
                              torch.zeros(dim_hidden * 2))
 
     def forward(self, context, text_len, operands, stacks,
-                prev_op, prev_output, prev_state, N_OPS):
+                prev_op, prev_output, prev_state, number_emb, N_OPS):
         """
         Args:
             context (FloatTensor): Encoded context, with size
@@ -295,8 +295,8 @@ class SalignedDecoder(nn.Module):
                     prev_op[b].item(),
                     transformed)
 
-            elif prev_op[b].item() in [self.RAW_EQL, self.BRG]:
-                ret = stacks[b].apply_embed_only(prev_op[b].item(), None)
+            # elif prev_op[b].item() in [self.RAW_EQL, self.BRG]:
+            #     ret = stacks[b].apply_embed_only(prev_op[b].item(), None)
 
             elif prev_op[b].item() == self.EQL:
                 ret = stacks[b].apply_eql(prev_op[b].item())
@@ -305,7 +305,8 @@ class SalignedDecoder(nn.Module):
             else:
                 #if b == 0: print('>>> push operand', len(stacks[b]._stack))
                 stacks[b].push(prev_op[b].item() - N_OPS)
-                ret = operands[b][prev_op[b].item() - N_OPS]
+                #ret = operands[b][prev_op[b].item() - N_OPS]
+                ret = number_emb[b][prev_op[b].item() - N_OPS]
             prev_returns.append(ret)
             #exit()
 

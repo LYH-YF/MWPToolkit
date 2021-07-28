@@ -359,6 +359,8 @@ class SalignedEncoder(nn.Module):
     def initialize_fix_constant(self, con_len, device):
         self.embedding_con = [torch.nn.Parameter(
             torch.normal(torch.zeros(2 * self.dim_hidden), 0.01)).to(device) for c in range(con_len)]
+    def get_fix_constant(self):
+        return self.embedding_con
 
     def forward(self, inputs, lengths, constant_indices):
         """
@@ -390,10 +392,11 @@ class SalignedEncoder(nn.Module):
              self.mlp2(hidden_state[1]).unsqueeze(0))
 
         batch_size = outputs.size(0)
-        operands = [self.embedding_con + #[self.embedding_one, self.embedding_pi] +
-                    [outputs[b][i]
-                     for i in constant_indices[b]]
-                    for b in range(batch_size)]
+        # operands = [self.embedding_con + #[self.embedding_one, self.embedding_pi] +
+        #             [outputs[b][i]
+        #              for i in constant_indices[b]]
+        #             for b in range(batch_size)]
+        operands = [[outputs[b][i] for i in constant_indices[b]] for b in range(batch_size)]
         # operands = [[self.embedding_one, self.embedding_pi] +
         #             [self.embeddings[i]
         #              for i in range(len(constant_indices[b]))]

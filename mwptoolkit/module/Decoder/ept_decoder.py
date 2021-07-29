@@ -247,20 +247,11 @@ class DecoderModel(nn.Module):
         self.embedding_dim = 128 #self.config["embedding_dim"]
         self.hidden_dim = 768 #self.config["hidden_dim"]
         self.intermediate_dim = 3072
-        self.num_decoder_layers = 6
+        self.num_decoder_layers = self.config["num_decoder_layers"]#6
         self.layernorm_eps = 1e-12
         self.num_decoder_heads = 12
-        self.num_pointer_heads = 1
+        self.num_pointer_heads = self.config["num_pointer_heads"]#1
         self.num_hidden_layers = 6
-        self.max_arity = 2
-        self.embedding_dim = self.config["embedding_size"]
-        self.hidden_dim = 768 #self.config["hidden_dim"]
-        self.intermediate_dim = 3072
-        self.num_decoder_layers = self.config['num_decoder_layers']
-        self.layernorm_eps = 1e-12
-        self.num_decoder_heads = self.config['num_decoder_heads']
-        self.num_pointer_heads = 1
-        self.num_hidden_layers = self.config['num_hidden_layers']
         self.max_arity = 2
 
         self.training = True

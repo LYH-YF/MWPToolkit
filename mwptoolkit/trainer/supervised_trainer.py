@@ -1,4 +1,6 @@
 import time
+import math
+from itertools import groupby
 
 import torch
 from ray import tune
@@ -1715,6 +1717,10 @@ class TSNTrainer(AbstractTrainer):
 class EPTTrainer(AbstractTrainer):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__(config, model, dataloader, evaluator)
+        self._minibatch_per_epoch = int(self.dataloader.trainset_nums / self.config["train_batch_size"]) + 1
+        self._step_per_epoch = int(math.ceil(self._minibatch_per_epoch / self.config['gradient_accumulation_steps']))
+        self._steps_to_go = self._step_per_epoch * self.config["epoch_nums"]
+        
         self._build_optimizer()
         if config["resume"]:
             self._load_checkpoint()
@@ -1723,6 +1729,7 @@ class EPTTrainer(AbstractTrainer):
         check_pnt = {
             "model": self.model.state_dict(),
             "optimizer": self.optimizer.state_dict(),
+            "scheduler": self.scheduler.state_dict(),
             "start_epoch": self.epoch_i,
             "best_valid_value_accuracy": self.best_valid_value_accuracy,
             "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
@@ -1732,6 +1739,21 @@ class EPTTrainer(AbstractTrainer):
             "fold_t": self.config["fold_t"]
         }
         torch.save(check_pnt, self.config["checkpoint_path"])
+
+    def _load_checkpoint(self):
+        check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.optimizer.load_state_dict(check_pnt["optimizer"])
+        # load parameter of scheduler
+        self.scheduler.load_state_dict(check_pnt["scheduler"])
+        self.start_epoch = check_pnt["start_epoch"]
+        self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
+        self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
+        self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
+        self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _train_batch(self, batch):
         batch_loss = self.model.calculate_loss(batch)
@@ -1758,14 +1780,40 @@ class EPTTrainer(AbstractTrainer):
     def _train_epoch(self):
         epoch_start_time = time.time()
         loss_total = 0.
+        self.all_grad_applied = True
         self.model.train()
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
-            self.optimizer.step()
-            
+            self.all_grad_applied = False
+            if self.batch_idx % self.config["gradient_accumulation_steps"] == 0:
+                if self.config['gradient_clip'] > 0:
+                    # If clipping threshold is set, then clip the gradient
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config['gradient_clip'])
+
+                #if self._config.gradient_normalize:
+                #    # If normalizing gradient is set, then normalize the gradient
+                #    self._normalize_gradients(*self.model.parameters())
+
+                # Apply optimizer & scheduler
+                self.optimizer.step()
+                self.scheduler.step()
+                self.all_grad_applied = True
+        else:
+            if not self.all_grad_applied:
+                if self.config['gradient_clip'] > 0:
+                    # If clipping threshold is set, then clip the gradient
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config['gradient_clip'])
+
+                #if self._config.gradient_normalize:
+                #    # If normalizing gradient is set, then normalize the gradient
+                #    self._normalize_gradients(*self.model.parameters())
+
+                # Apply optimizer & scheduler
+                self.optimizer.step()
+                self.scheduler.step()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total, epoch_time_cost
 
@@ -1786,6 +1834,7 @@ class EPTTrainer(AbstractTrainer):
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"]:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
                     self.logger.info(
                         "---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s" \
                         % (test_total, test_equ_ac, test_val_ac, test_time_cost))
@@ -1837,30 +1886,63 @@ class EPTTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def _build_optimizer(self):
+        no_w_decay = {'bias', 'norm', 'Norm', '_embedding'}
+        
+        parameters = [((2 if 'encoder.embeddings' in n else (1 if 'encoder' in n else 0),
+                        any(t in n for t in no_w_decay)), p)
+                      for n, p in self.model.named_parameters()]
+        
+        parameters = groupby(sorted(parameters, key=lambda t: t[0]), key=lambda t: t[0])
+        optimizer_grouped_parameters = []
+        for (encoder_type_flag, is_without_wd), group in parameters:
+            group = {'params': [p for _, p in group]}
+
+            if is_without_wd:
+                group['weight_decay'] = 0.0
+
+            if encoder_type_flag == 2 and self.config['fix_encoder_embedding']:
+                group['lr'] = 0.0
+            elif encoder_type_flag == 1:
+                group['lr'] = self.config["learning_rate"]
+
+            optimizer_grouped_parameters.append(group)
         from torch_optimizer import Lamb
-        self.optimizer = Lamb(self.model.parameters(), lr=self.config["learning_rate"], eps=1e-08)
-    
-    def param_search(self):
-        train_batch_size = self.config["train_batch_size"]
-        epoch_nums = self.config["epoch_nums"]
+        from torch.optim.lr_scheduler import LambdaLR
+        self.optimizer = Lamb(optimizer_grouped_parameters, lr=self.config["learning_rate"], eps=1e-08, weight_decay=0.0)
+        
+        
+        self.warmup_steps = int(self._step_per_epoch * self.config['epoch_warmup'])
+        def lr_lambda(current_step):
+            if current_step < self.warmup_steps:
+                return float(current_step) / float(max(1, self.warmup_steps))
+            return max(
+                0.0, float(self._steps_to_go - current_step) / float(max(1, self._steps_to_go - self.warmup_steps))
+            )
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        
+        if self.warmup_steps >= 0:
+            # Build scheduler before restoration
+            self.scheduler = LambdaLR(self.optimizer, lr_lambda,  -1)
+        #self.optimizer = Lamb(self.model.parameters(), lr=self.config["learning_rate"], eps=1e-08, weight_decay=0.0)
+    def _normalize_gradients(self, *parameters):
+        """
+        Normalize gradients (as in NVLAMB optimizer)
 
-        self.logger.info("start training...")
-        for epo in range(self.start_epoch, epoch_nums):
-            self.epoch_i = epo + 1
-            self.model.train()
-            loss_total, train_time_cost = self._train_epoch()
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+        :param parameters: List of parameters whose gradient will be normalized.
+        :return: Frobenious Norm before applying normalization.
+        """
+        parameters = [p for p in parameters if p.grad is not None]
 
-            if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                #valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+        # Compute total Frobenius norm
+        total_norm = 0
+        for p in parameters:
+            total_norm += p.grad.data.norm(2.0).item() ** 2.0
+        total_norm = total_norm ** 0.5
 
-                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
-                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+        # Compute normalization constant. Set 1E-12 for minimum value to avoid inf.
+        normalizer = 1.0 / max(total_norm, 1e-12)
+        for p in parameters:
+            p.grad.data.mul_(normalizer)
 
-                tune.report(accuracy=test_val_ac)
-
+        return total_norm
                 

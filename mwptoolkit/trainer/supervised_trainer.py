@@ -1946,3 +1946,42 @@ class EPTTrainer(AbstractTrainer):
 
         return total_norm
                 
+    def param_search(self):
+        train_batch_size = self.config["train_batch_size"]
+        epoch_nums = self.config["epoch_nums"]
+
+        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+
+        self.logger.info("start training...")
+        for epo in range(self.start_epoch, epoch_nums):
+            self.epoch_i = epo + 1
+            self.model.train()
+            loss_total, train_time_cost = self._train_epoch()
+            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
+            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
+
+            if epo % self.test_step == 0 or epo > epoch_nums - 5:
+                valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+
+                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
+                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
+                test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
+
+                tune.report(accuracy=test_val_ac)
+
+                # self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                #                 %(test_total,test_equ_ac,test_val_ac,test_time_cost))
+
+                # if valid_val_ac >= self.best_valid_value_accuracy:
+                #     self.best_valid_value_accuracy = valid_val_ac
+                #     self.best_valid_equ_accuracy = valid_equ_ac
+                #     self.best_test_value_accuracy = test_val_ac
+                #     self.best_test_equ_accuracy = test_equ_ac
+                #     self._save_model()
+            # if epo % 5 == 0:
+            #     self._save_checkpoint()
+        # self.logger.info('''training finished.
+        #                     best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
+        #                     best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
+        #                     %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
+        #                         self.best_test_equ_accuracy,self.best_test_value_accuracy))

@@ -8,8 +8,9 @@ from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.enum_type import Operators, SpecialTokens, NumMask
 from mwptoolkit.data.dataloader.single_equation_dataloader import SingleEquationDataLoader
 from mwptoolkit.model.Seq2Tree.gts import GTS
+from mwptoolkit.model.Seq2Tree.tsn import TSN
 from mwptoolkit.evaluate.evaluator import PreEvaluator
-from mwptoolkit.trainer.supervised_trainer import GTSTrainer
+from mwptoolkit.trainer.supervised_trainer import GTSTrainer,TSNTrainer
 from mwptoolkit.config.configuration import Config
 from mwptoolkit.utils.logger import init_logger
 from mwptoolkit.utils.utils import init_seed
@@ -78,14 +79,19 @@ def train_cross_validation(config):
         
 
         dataloader = SingleEquationDataLoader(config, dataset)
-
-        model = GTS(config,dataset).to(config["device"])
+        if config['model'].lower() == 'gts':
+            model = GTS(config,dataset).to(config["device"])
+        elif config['model'].lower() == 'tsn':
+            model = TSN(config,dataset).to(config["device"])
         
 
         evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
         
+        if config['model'].lower() == 'gts':
+            trainer = GTSTrainer(config, model, dataloader, evaluator)
+        elif config['model'].lower() == 'tsn':
+            trainer = TSNTrainer(config, model, dataloader, evaluator)
 
-        trainer = GTSTrainer(config, model, dataloader, evaluator)
         logger.info("fold {}".format(fold_t))
         if config["test_only"]:
             trainer.test()

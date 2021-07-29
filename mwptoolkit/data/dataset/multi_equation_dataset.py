@@ -8,11 +8,11 @@ from collections import Counter
 import torch
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
-from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser
-from mwptoolkit.utils.preprocess_tools import num_transfer_draw, num_transfer_multi, num_transfer_alg514, num_transfer_hmwp
-from mwptoolkit.utils.preprocess_tools import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_, preprocess_ept_dataset_
-from mwptoolkit.utils.preprocess_tools import id_reedit,read_aux_jsonl_data
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser
+from mwptoolkit.utils.preprocess_tool.sentence_operator import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
+from mwptoolkit.utils.preprocess_tools import id_reedit,read_aux_jsonl_data
+from mwptoolkit.utils.preprocess_tools import preprocess_ept_dataset_
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName, EPT
 
 from transformers import AutoTokenizer

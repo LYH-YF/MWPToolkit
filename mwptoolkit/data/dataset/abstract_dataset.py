@@ -3,9 +3,9 @@ import os
 import copy
 import torch
 from mwptoolkit.utils.utils import read_json_data, write_json_data
-from mwptoolkit.utils.preprocess_tools import operator_mask, EN_rule1_stat, EN_rule2_
 from mwptoolkit.utils.preprocess_tools import get_group_nums, get_deprel_tree, get_span_level_deprel_tree
 from mwptoolkit.utils.preprocess_tools import id_reedit
+from mwptoolkit.utils.preprocess_tool.equation_operator import operator_mask,EN_rule1_stat,EN_rule2
 from mwptoolkit.utils.enum_type import DatasetName
 
 
@@ -128,11 +128,11 @@ class AbstractDataset(object):
 
     def en_rule2_process(self):
         for idx, data in enumerate(self.trainset):
-            self.trainset[idx]["equation"] = EN_rule2_(data["equation"])
+            self.trainset[idx]["equation"] = EN_rule2(data["equation"])
         for idx, data in enumerate(self.validset):
-            self.validset[idx]["equation"] = EN_rule2_(data["equation"])
+            self.validset[idx]["equation"] = EN_rule2(data["equation"])
         for idx, data in enumerate(self.testset):
-            self.testset[idx]["equation"] = EN_rule2_(data["equation"])
+            self.testset[idx]["equation"] = EN_rule2(data["equation"])
 
     def build_group_nums_for_graph(self):
         use_gpu = True if self.device == torch.device('cuda') else False

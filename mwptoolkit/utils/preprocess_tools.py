@@ -2302,6 +2302,7 @@ def get_span_level_deprel_tree_(train_datas, valid_datas, test_datas, path):
     return train_datas, valid_datas, test_datas, max_span_size
 
     #token_list=deprel_data['deprel']
+
 def postfix_parser(equation, memory: list) -> int:
     """
     Read Op-token postfix equation and transform it into Expression-token sequence.

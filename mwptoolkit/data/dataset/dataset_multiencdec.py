@@ -5,7 +5,7 @@ import stanza
 
 from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operators, MaskSymbol, SPECIAL_TOKENS, DatasetName, TaskType
-from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix, from_infix_to_prefix
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix
 from mwptoolkit.utils.preprocess_tools import id_reedit
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.utils import read_json_data,write_json_data

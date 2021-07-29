@@ -1,4 +1,6 @@
+import re
 import copy
+
 from word2number import w2n
 
 from mwptoolkit.utils.enum_type import NumMask
@@ -13,6 +15,8 @@ def trans_symbol_2_number(equ_list, num_list):
         else:
             new_equ_list.append(symbol)
     return new_equ_list
+
+
 def word_to_num(number_sentence):
     ['one-third', 'one-quarter', 'one-forth', 'one-fifth', 'one-sixth', 'one-seventh', 'one-eighth', 'one-ninth', 'one-tenth', 'two-third', 'two-quarter', 'two-forth', 'two-fifth', 'two-sixth', 'two-seventh', 'two-eighth', 'two-ninth', 'two-tenth', 'three-third', 'three-quarter', 'three-forth', 'three-fifth', 'three-sixth', 'three-seventh', 'three-eighth', 'three-ninth', 'three-tenth', 'four-third', 'four-quarter', 'four-forth', 'four-fifth', 'four-sixth', 'four-seventh', 'four-eighth', 'four-ninth', 'four-tenth', 'five-third', 'five-quarter', 'five-forth', 'five-fifth', 'five-sixth', 'five-seventh', 'five-eighth', 'five-ninth', 'five-tenth', 'six-third', 'six-quarter', 'six-forth', 'six-fifth', 'six-sixth', 'six-seventh', 'six-eighth', 'six-ninth', 'six-tenth', 'seven-third', 'seven-quarter', 'seven-forth', 'seven-fifth', 'seven-sixth', 'seven-seventh', 'seven-eighth', 'seven-ninth', 'seven-tenth', 'eight-third', 'eight-quarter', 'eight-forth', 'eight-fifth', 'eight-sixth', 'eight-seventh', 'eight-eighth', 'eight-ninth', 'eight-tenth', 'nine-third', 'nine-quarter', 'nine-forth', 'nine-fifth', 'nine-sixth', 'nine-seventh', 'nine-eighth', 'nine-ninth', 'nine-tenth']
     fraction={
@@ -27,6 +31,8 @@ def word_to_num(number_sentence):
         'nine-third':9/3,'nine-thirds':9/3, 'nine-quarter':9/4, 'nine-forth':9/4,'nine-fourth':9/4,'nine-fourths':9/4, 'nine-fifth':9/5, 'nine-sixth':9/6, 'nine-seventh':9/7, 'nine-eighth':9/8, 'nine-ninth':9/9, 'nine-tenth':9/10,'nine-fifths':9/5, 'nine-sixths':9/6, 'nine-sevenths':9/7, 'nine-eighths':9/8, 'nine-ninths':9/9, 'nine-tenths':9/10
     }
     return fraction[number_sentence.lower()]
+
+
 def english_word_2_num(sentence_list,fraction_acc=None):
     # bug : 4.9 million can't be matched
     match_word=[
@@ -92,4 +98,72 @@ def english_word_2_num(sentence_list,fraction_acc=None):
                 new_list.append(word)
     return new_list
 
+
+def split_number(text_list):
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
+    new_text = []
+    for s in text_list:
+        pos = re.search(pattern, s)
+        if pos and pos.start() == 0:
+            num = s[pos.start():pos.end()]
+            new_text.append(num)
+            if pos.end() < len(s):
+                new_text.append(s[pos.end():])
+        else:
+            new_text.append(s)
+    return new_text
+
+
+def joint_number(text_list):
+    new_list = []
+    i = 0
+    while i < len(text_list):
+        if text_list[i] == '(' and i + 4 < len(text_list) and text_list[i + 4] == ')':
+            sub = ''.join(text_list[i:i + 5])
+            new_list.append(sub)
+            i = i + 5
+        else:
+            new_list.append(text_list[i])
+            i += 1
+    return new_list
+
+
+def joint_number_(text_list):  # match longer fraction such as ( 1 / 1000000 )
+    new_list = []
+    i = 0
+    while i < len(text_list):
+        if text_list[i] == '(':
+            try:
+                j = text_list[i:].index(')')
+                if i + 1 == i + j:
+                    j = None
+                if "(" in text_list[i + 1:i + j + 1]:
+                    j = None
+            except:
+                j = None
+            if j:
+                stack = []
+                flag = True
+                idx = 0
+                for temp_idx, word in enumerate(text_list[i:i + j + 1]):
+                    if word in ["(", ")", "/"] or word.isdigit():
+                        stack.append(word)
+                        idx = temp_idx
+                    else:
+                        flag = False
+                        break
+                if flag:
+                    number = ''.join(stack)
+                    new_list.append(number)
+                else:
+                    for word in stack:
+                        new_list.append(word)
+                i += idx + 1
+            else:
+                new_list.append(text_list[i])
+                i += 1
+        else:
+            new_list.append(text_list[i])
+            i += 1
+    return new_list
 

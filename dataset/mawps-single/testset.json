@@ -1,0 +1,1992 @@
+[
+    {
+        "iIndex": 3320,
+        "sQuestion": "Jill invited 37 people to her birthday party. They each ate 8 pieces of pizza. How many pieces of pizza did they eat?",
+        "lEquations": [
+            "37*8=x"
+        ],
+        "lSolutions": [
+            296.0
+        ]
+    },
+    {
+        "iIndex": 3706,
+        "sQuestion": " Mrs. Snyder made 86 heart cookies. She made 36 red cookies and the rest are pink. How many pink cookies did she make?",
+        "lEquations": [
+            "X=(86.0-36.0)"
+        ],
+        "lSolutions": [
+            50.0
+        ]
+    },
+    {
+        "iIndex": 2614,
+        "sQuestion": " At a company picnic 23 managers and 7 employees decided to start a game of volleyball. If they split into 6 teams how many people would be on each team? ",
+        "lEquations": [
+            "X=((23.0+7.0)/6.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 3654,
+        "sQuestion": " There are 4 squirrels in a tree with 2 nuts. How many more squirrels are there than nuts?",
+        "lEquations": [
+            "X=(4.0-2.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 3614,
+        "sQuestion": "Martin strolled to Lawrence's house. It is 12 miles from Martin's house to Lawrence's house. It took Martin 6 hours to get there. How fast did Martin go?",
+        "lEquations": [
+            "X=(12.0/6.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 3712,
+        "sQuestion": " Misha has 34 dollars. How many more dollars does she have to earn to have 47 dollars?",
+        "lEquations": [
+            "X=(47.0-34.0)"
+        ],
+        "lSolutions": [
+            13.0
+        ]
+    },
+    {
+        "iIndex": 2798,
+        "sQuestion": " There are 17 students trying out for the school's trivia teams. If 5 of them didn't get picked for the team and the rest were put into 3 groups, how many students would be in each group? ",
+        "lEquations": [
+            "X=((17.0-5.0)/3.0)"
+        ],
+        "lSolutions": [
+            4.0
+        ]
+    },
+    {
+        "iIndex": 3108,
+        "sQuestion": "Justin needs 61 paper plates for a birthday party. He already has 26 blue plates and 7 red plates. How many more plates should Justin buy?",
+        "lEquations": [
+            "61-(26+7)=x"
+        ],
+        "lSolutions": [
+            28.0
+        ]
+    },
+    {
+        "iIndex": 3665,
+        "sQuestion": " Carson’s teacher gives out gold stars for great math work. Yesterday, Carson earned 6 gold stars. Today, he earned 9 more. How many gold  stars did Carson earn in all?",
+        "lEquations": [
+            "X=(6.0+9.0)"
+        ],
+        "lSolutions": [
+            15.0
+        ]
+    },
+    {
+        "iIndex": 2984,
+        "sQuestion": "There are 8 calories in a candy bar. How many calories are there in 3 candy bars ?",
+        "lEquations": [
+            "8*3=x"
+        ],
+        "lSolutions": [
+            24.0
+        ]
+    },
+    {
+        "iIndex": 2407,
+        "sQuestion": " Janet was playing a video game and had 47 lives. In a hard part of the game she lost 23 lives. If she got 46 more lives in the next level, how many lives would she have? ",
+        "lEquations": [
+            "X=((47.0+46.0)-23.0)"
+        ],
+        "lSolutions": [
+            70.0
+        ]
+    },
+    {
+        "iIndex": 3505,
+        "sQuestion": "There are 7 students in the class and 42 apples. If the apples are divided equally among the students, how many does each student get?",
+        "lEquations": [
+            "X=(42.0/7.0)"
+        ],
+        "lSolutions": [
+            6.0
+        ]
+    },
+    {
+        "iIndex": 293,
+        "sQuestion": "Joan 's high school played 864 baseball games this year , 128 of the games were played at night . She attended 395 games . How many baseball games did Joan miss ? ",
+        "lEquations": [
+            "X=864-395"
+        ],
+        "lSolutions": [
+            "469"
+        ]
+    },
+    {
+        "iIndex": 3470,
+        "sQuestion": "Sarah has 26 bottle caps. She buys 3 more. How many bottle caps does Sarah have in all?",
+        "lEquations": [
+            "X=(26.0+3.0)"
+        ],
+        "lSolutions": [
+            29.0
+        ]
+    },
+    {
+        "iIndex": 2995,
+        "sQuestion": "Fred earns $12.50 an hour cleaning houses. If he works for 8 hours, how much money will he make ?",
+        "lEquations": [
+            "12.50*8=x"
+        ],
+        "lSolutions": [
+            100.0
+        ]
+    },
+    {
+        "iIndex": 65,
+        "sQuestion": "There are 9 crayons in the drawer . Benny placed 3 crayons in the drawer . How many crayons are now there in total ? ",
+        "lEquations": [
+            "X=9+3"
+        ],
+        "lSolutions": [
+            "12"
+        ]
+    },
+    {
+        "iIndex": 3910,
+        "sQuestion": " John needs $2.50. He has $0.75. How much more money does he need?",
+        "lEquations": [
+            "X=(2.5-0.75)"
+        ],
+        "lSolutions": [
+            1.75
+        ]
+    },
+    {
+        "iIndex": 2292,
+        "sQuestion": " While on vacation, Rachel took 6 pictures at the zoo and 9 at the museum. If she later deleted 11 of the pictures, how many pictures from her vacation did she still have? ",
+        "lEquations": [
+            "X=((6.0+9.0)-11.0)"
+        ],
+        "lSolutions": [
+            4.0
+        ]
+    },
+    {
+        "iIndex": 3773,
+        "sQuestion": " 64 children were riding on the bus. At the bus stop, some more children got on the bus. Then there were 78 children altogether on the bus. How  many children got on the bus at the bus stop?",
+        "lEquations": [
+            "X=(78.0-64.0)"
+        ],
+        "lSolutions": [
+            14.0
+        ]
+    },
+    {
+        "iIndex": 2574,
+        "sQuestion": " Dave was helping the cafeteria workers pick up lunch trays, but he could only carry 9 trays at a time. If he had to pick up 17 trays from one table and 55 trays from another, how many trips will he make? ",
+        "lEquations": [
+            "X=((17.0+55.0)/9.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 3395,
+        "sQuestion": "Angela has 11 tickets. Annie gives Angela 4 more. How many tickets does Angela have in all?",
+        "lEquations": [
+            "X=(11.0+4.0)"
+        ],
+        "lSolutions": [
+            15.0
+        ]
+    },
+    {
+        "iIndex": 3633,
+        "sQuestion": "Lisa flew 256 miles at 32 miles per hour. How long did Lisa fly?",
+        "lEquations": [
+            "X=(256.0/32.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 3022,
+        "sQuestion": "Melanie, Benny, Sandy, and Jessica each have 9 dozen Pokemon cards.  How many Pokemon cards do they have in all ?",
+        "lEquations": [
+            "4*(9*12)=x"
+        ],
+        "lSolutions": [
+            432.0
+        ]
+    },
+    {
+        "iIndex": 2502,
+        "sQuestion": " While shopping for music online, Isabel bought 4 country albums and 5 pop albums. Each album came with a lyric sheet and had 8 songs. How many songs did Isabel buy total? ",
+        "lEquations": [
+            "X=(8.0*(4.0+5.0))"
+        ],
+        "lSolutions": [
+            72.0
+        ]
+    },
+    {
+        "iIndex": 2900,
+        "sQuestion": "There are 43 pencils in the drawer and 19 pencils on the desk. Dan placed  16 more pencils on the desk. How many pencils are now there in total ?",
+        "lEquations": [
+            "43+19+16=x"
+        ],
+        "lSolutions": [
+            78.0
+        ]
+    },
+    {
+        "iIndex": 26,
+        "sQuestion": "Sam found 18 seashells and Mary found 47 seashells on the beach . How many seashells did they find together ? ",
+        "lEquations": [
+            "X=18+47"
+        ],
+        "lSolutions": [
+            "65"
+        ]
+    },
+    {
+        "iIndex": 2611,
+        "sQuestion": " Paul made 3 dollars mowing lawns and 3 dollars weed eating. If he only spent 3 dollar a week, how long would the money last him? ",
+        "lEquations": [
+            "X=((3.0+3.0)/3.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 2440,
+        "sQuestion": " Roger had 25 books. If he sold 21 of them and used the money he earned to buy 30 new books, how many books would Roger have? ",
+        "lEquations": [
+            "X=((25.0+30.0)-21.0)"
+        ],
+        "lSolutions": [
+            34.0
+        ]
+    },
+    {
+        "iIndex": 2295,
+        "sQuestion": " At the schools book fair Sam bought 13 adventure books and 17 mystery books. If 15 of the books were used, how many new books did he buy? ",
+        "lEquations": [
+            "X=((13.0+17.0)-15.0)"
+        ],
+        "lSolutions": [
+            15.0
+        ]
+    },
+    {
+        "iIndex": 2881,
+        "sQuestion": "Sara picked 45 pears and Sally picked 11 pears from the pear tree. How many pears were picked in total ?",
+        "lEquations": [
+            "45+11=x"
+        ],
+        "lSolutions": [
+            56.0
+        ]
+    },
+    {
+        "iIndex": 2253,
+        "sQuestion": " Rachel bought two coloring books. One had 23 pictures and the other had 32. After one week she had already colored 44 of the pictures. How many pictures does she still have to color? ",
+        "lEquations": [
+            "X=((23.0+32.0)-44.0)"
+        ],
+        "lSolutions": [
+            11.0
+        ]
+    },
+    {
+        "iIndex": 2548,
+        "sQuestion": " Olivia was making baggies of cookies with 9 cookies in each bag. If she had 13 chocolate chip cookies and 41 oatmeal cookies, how many baggies could she make? ",
+        "lEquations": [
+            "X=((13.0+41.0)/9.0)"
+        ],
+        "lSolutions": [
+            6.0
+        ]
+    },
+    {
+        "iIndex": 3028,
+        "sQuestion": "Sally has 6 blue balloons. Fred has 3 times more  blue balloons than Sally. How many blue balloons does Fred have now ?",
+        "lEquations": [
+            "6*3=x"
+        ],
+        "lSolutions": [
+            18.0
+        ]
+    },
+    {
+        "iIndex": 207,
+        "sQuestion": "Eve ran 0.7 mile and walked 0.6 mile . How much farther did Eve run than walk ? ",
+        "lEquations": [
+            "X=0.7-0.6"
+        ],
+        "lSolutions": [
+            "0.1"
+        ]
+    },
+    {
+        "iIndex": 170,
+        "sQuestion": "While playing a video game , Paul scored 3103 points . He and his cousin together have a total of 5816 points . How many points does Paul 's cousin have ? ",
+        "lEquations": [
+            "X=5816.0-3103.0"
+        ],
+        "lSolutions": [
+            "2713.0"
+        ]
+    },
+    {
+        "iIndex": 2769,
+        "sQuestion": " Frank made 19 dollars mowing lawns over the summer. If he spent 11 dollars buying new mower blades, how many 2 dollar games could he buy with the money he had left? ",
+        "lEquations": [
+            "X=((19.0-11.0)/2.0)"
+        ],
+        "lSolutions": [
+            4.0
+        ]
+    },
+    {
+        "iIndex": 2453,
+        "sQuestion": " A pet store has 6 bird cages. If each cage has 6 parrots and 2 parakeets in it, how many birds does the pet store have total? ",
+        "lEquations": [
+            "X=(6.0*(6.0+2.0))"
+        ],
+        "lSolutions": [
+            48.0
+        ]
+    },
+    {
+        "iIndex": 3629,
+        "sQuestion": "James rode 80 miles at 16 miles per hour. How long did James ride?",
+        "lEquations": [
+            "X=(80.0/16.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 2648,
+        "sQuestion": " There were 11 friends playing a video game online when 5 players quit. If each player left had 5 lives, how many lives did they have total? ",
+        "lEquations": [
+            "X=(5.0*(11.0-5.0))"
+        ],
+        "lSolutions": [
+            30.0
+        ]
+    },
+    {
+        "iIndex": 2678,
+        "sQuestion": " John had 5 action figures, but needed 7 total for a complete collection. If each one costs $5, how much money would he need to finish his collection? ",
+        "lEquations": [
+            "X=(5.0*(7.0-5.0))"
+        ],
+        "lSolutions": [
+            10.0
+        ]
+    },
+    {
+        "iIndex": 80,
+        "sQuestion": "Dan has 64 violet marbles , he gave Mary 14 of the marbles . How many violet marbles does he now have ? ",
+        "lEquations": [
+            "X=64-14"
+        ],
+        "lSolutions": [
+            "50"
+        ]
+    },
+    {
+        "iIndex": 2626,
+        "sQuestion": " Paul had saved up 3 dollars. If he received another 7 dollars for his allowance, how many 5 dollar toys could he buy? ",
+        "lEquations": [
+            "X=((3.0+7.0)/5.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 2297,
+        "sQuestion": " Oliver had 35 dollars. For his birthday he got 50 more dollars but spent 84 on a new game. How much money does he have now? ",
+        "lEquations": [
+            "X=((35.0+50.0)-84.0)"
+        ],
+        "lSolutions": [
+            1.0
+        ]
+    },
+    {
+        "iIndex": 173,
+        "sQuestion": "Oscar 's bus ride to school is 0.75 mile and Charlie 's bus ride is 0.25 mile . How much longer is Oscar 's bus ride than Charlie 's ? ",
+        "lEquations": [
+            "X=0.75-0.25"
+        ],
+        "lSolutions": [
+            "0.5"
+        ]
+    },
+    {
+        "iIndex": 3127,
+        "sQuestion": "My car gets 20 miles per gallon of gas. How many miles can I drive on 5 gallons of gas?",
+        "lEquations": [
+            "20*5=x"
+        ],
+        "lSolutions": [
+            100.0
+        ]
+    },
+    {
+        "iIndex": 3871,
+        "sQuestion": " A box of books weighs 42 pounds. Each book weighs 3 pounds. How many books are there in the box?",
+        "lEquations": [
+            "X=(42.0/3.0)"
+        ],
+        "lSolutions": [
+            14.0
+        ]
+    },
+    {
+        "iIndex": 3378,
+        "sQuestion": "Teresa starts with 52 bananas. She gets 2 more from Rachel. How many bananas does Teresa end with?",
+        "lEquations": [
+            "X=(52.0+2.0)"
+        ],
+        "lSolutions": [
+            54.0
+        ]
+    },
+    {
+        "iIndex": 67,
+        "sQuestion": "Tom found 7 seashells but 4 were broken . How many unbroken seashells did Tom find ? ",
+        "lEquations": [
+            "X=7-4"
+        ],
+        "lSolutions": [
+            "3"
+        ]
+    },
+    {
+        "iIndex": 3637,
+        "sQuestion": "If Teresa jogged 25 kilometers at 5 kilometers per hour, how long was Teresa jogging?",
+        "lEquations": [
+            "X=(25.0/5.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 3667,
+        "sQuestion": " Lucy went to the grocery store. She bought 12 packs of cookies and 16  packs of noodles. How many packs of groceries did she buy in all?",
+        "lEquations": [
+            "X=(12.0+16.0)"
+        ],
+        "lSolutions": [
+            28.0
+        ]
+    },
+    {
+        "iIndex": 3381,
+        "sQuestion": "Anna starts with 5 candies. She gets 86 more from Larry. How many candies does Anna end with?",
+        "lEquations": [
+            "X=(5.0+86.0)"
+        ],
+        "lSolutions": [
+            91.0
+        ]
+    },
+    {
+        "iIndex": 133,
+        "sQuestion": "Mike bought some toys . He bought marbles for $ 9.05 , a football for $ 4.95 , and spent $ 6.52 on a baseball . In total , how much did Mike spend on toys ? ",
+        "lEquations": [
+            "X=9.05+4.95+6.52"
+        ],
+        "lSolutions": [
+            "20.52"
+        ]
+    },
+    {
+        "iIndex": 3153,
+        "sQuestion": "Scarlett made a fruit salad with 0.25 of a pound of melon and 0.375 of a pound of berries. How many pounds of fruit did Scarlett use in all?",
+        "lEquations": [
+            "0.25+0.375"
+        ],
+        "lSolutions": [
+            0.625
+        ]
+    },
+    {
+        "iIndex": 443,
+        "sQuestion": "A tennis racket that regularly sells for 135 dollars is on sale for 25 % off the regular price. What is the sale price , in dollars? ",
+        "lEquations": [
+            "x=135.0-(135.0*25*.01)"
+        ],
+        "lSolutions": [
+            101.25
+        ]
+    },
+    {
+        "iIndex": 2641,
+        "sQuestion": " Katie uploaded 30 pictures from her phone and 51 from her camera to facebook. If she sorted the pics into 9 different albums with the same amount of pics in each album, how many pictures were in each of the albums? ",
+        "lEquations": [
+            "X=((30.0+51.0)/9.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 2781,
+        "sQuestion": " There are 64 students trying out for the school's trivia teams. If 36 of them didn't get picked for the team and the rest were put into 4 groups, how many students would be in each group? ",
+        "lEquations": [
+            "X=((64.0-36.0)/4.0)"
+        ],
+        "lSolutions": [
+            7.0
+        ]
+    },
+    {
+        "iIndex": 3567,
+        "sQuestion": "Scott has 4 tickets. Ernest has with 9 tickets. Ernest finds another 72. How many tickets does Ernest end with?",
+        "lEquations": [
+            "X=(9.0+72.0)"
+        ],
+        "lSolutions": [
+            81.0
+        ]
+    },
+    {
+        "iIndex": 2310,
+        "sQuestion": " A pet store had 36 siamese cats and 18 house cats. During a sale they sold 26 cats. How many cats do they have left? ",
+        "lEquations": [
+            "X=((36.0+18.0)-26.0)"
+        ],
+        "lSolutions": [
+            28.0
+        ]
+    },
+    {
+        "iIndex": 6,
+        "sQuestion": "There were 6 roses in the vase . Mary cut some roses from her flower garden . There are now 16 roses in the vase . How many roses did she cut ? ",
+        "lEquations": [
+            "X=16-6"
+        ],
+        "lSolutions": [
+            "10"
+        ]
+    },
+    {
+        "iIndex": 2561,
+        "sQuestion": " John made 6 dollars mowing lawns and 18 dollars weed eating. If he only spent 3 dollar a week, how long would the money last him? ",
+        "lEquations": [
+            "X=((6.0+18.0)/3.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 2287,
+        "sQuestion": " Oliver had 35 dollars. For his birthday he got 50 more dollars but spent 84 on a new game. How much money does he have now? ",
+        "lEquations": [
+            "X=((35.0+50.0)-84.0)"
+        ],
+        "lSolutions": [
+            1.0
+        ]
+    },
+    {
+        "iIndex": 124,
+        "sQuestion": "Alyssa bought some toys . She bought a football for $ 5.71 , and spent $ 6.59 on marbles . In total , how much did Alyssa spend on toys ? ",
+        "lEquations": [
+            "X=5.71+6.59"
+        ],
+        "lSolutions": [
+            "12.3"
+        ]
+    },
+    {
+        "iIndex": 3616,
+        "sQuestion": "Martin strolled to Lawrence's house. It is 12 miles from Martin's house to Lawrence's house. It took Martin 6 hours to get there. How fast did Martin go?",
+        "lEquations": [
+            "X=(12.0/6.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 3236,
+        "sQuestion": "Emily collected eggs from the hen and put them into 303 baskets. She put 28 eggs into each basket. How many eggs did Emily collect?",
+        "lEquations": [
+            "303*28=x"
+        ],
+        "lSolutions": [
+            8484.0
+        ]
+    },
+    {
+        "iIndex": 2842,
+        "sQuestion": " The cafeteria had 75 apples. For lunch they handed out 19 to students and decided to use the rest to make pies. If each pie takes 8 apples, how many pies could they make? ",
+        "lEquations": [
+            "X=((75.0-19.0)/8.0)"
+        ],
+        "lSolutions": [
+            7.0
+        ]
+    },
+    {
+        "iIndex": 3524,
+        "sQuestion": "Lori has 30 marbles. If she shares them among 5 friends, how many marbles does each friend get?",
+        "lEquations": [
+            "X=(30.0/5.0)"
+        ],
+        "lSolutions": [
+            6.0
+        ]
+    },
+    {
+        "iIndex": 3730,
+        "sQuestion": " Nell collects baseball cards. She had 304 cards. She gave some of her cards to Jeff and now has 276 cards left. How many cards did Nell give  to Jeff?",
+        "lEquations": [
+            "X=(304.0-276.0)"
+        ],
+        "lSolutions": [
+            28.0
+        ]
+    },
+    {
+        "iIndex": 3471,
+        "sQuestion": "There are 3 eggs in each box. How many eggs are in 2 boxes?",
+        "lEquations": [
+            "X=(3.0*2.0)"
+        ],
+        "lSolutions": [
+            6.0
+        ]
+    },
+    {
+        "iIndex": 3034,
+        "sQuestion": "There are 9 oak trees currently in the park. Park workers had to cut down 2  oak trees that were damaged. How many oak trees will the park have when the workers are finished ?",
+        "lEquations": [
+            "9-2=x"
+        ],
+        "lSolutions": [
+            7.0
+        ]
+    },
+    {
+        "iIndex": 2805,
+        "sQuestion": " Paige had 27 files on her computer. She deleted 9 of them and put the rest into folders with 6 files in each one. How many folders did Paige end up with? ",
+        "lEquations": [
+            "X=((27.0-9.0)/6.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 3058,
+        "sQuestion": "Joan purchased a basketball game for $5.20, and a racing game for $4.23. How much did Joan spend on video games?",
+        "lEquations": [
+            "5.20+4.23=x"
+        ],
+        "lSolutions": [
+            9.43
+        ]
+    },
+    {
+        "iIndex": 3220,
+        "sQuestion": "It rained 0.9 inches on Monday. On Tuesday, it rained 0.7 inches less than on Monday. How much did it rain on Tuesday?",
+        "lEquations": [
+            "0.9-0.7"
+        ],
+        "lSolutions": [
+            0.2
+        ]
+    },
+    {
+        "iIndex": 2417,
+        "sQuestion": " Katie had 11 songs on her mp3 player. If she deleted 7 old songs from it and then added 24 new songs, how many songs does she have on her mp3 player? ",
+        "lEquations": [
+            "X=((11.0+24.0)-7.0)"
+        ],
+        "lSolutions": [
+            28.0
+        ]
+    },
+    {
+        "iIndex": 2788,
+        "sQuestion": " There are 25 students trying out for the school's trivia teams. If 15 of them didn't get picked for the team and the rest were put into 2 groups, how many students would be in each group? ",
+        "lEquations": [
+            "X=((25.0-15.0)/2.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 3059,
+        "sQuestion": "Mike joined his school's band. He bought a trumpet for $145.16, and a song book which was $5.84. How much did Mike spend at the music store?",
+        "lEquations": [
+            "145.16+5.84=x"
+        ],
+        "lSolutions": [
+            151.0
+        ]
+    },
+    {
+        "iIndex": 3301,
+        "sQuestion": "Robin has 27 packages of gum. There are 18 pieces in each package. How many pieces of gum does Robin have?",
+        "lEquations": [
+            "27*18=x"
+        ],
+        "lSolutions": [
+            486.0
+        ]
+    },
+    {
+        "iIndex": 3473,
+        "sQuestion": "Each child has 3 oranges. If there are 4 children, how many oranges are there in total?",
+        "lEquations": [
+            "X=(3.0*4.0)"
+        ],
+        "lSolutions": [
+            12.0
+        ]
+    },
+    {
+        "iIndex": 3325,
+        "sQuestion": "Mrs. Hilt needs to share $3.75 equally among 3 total people. How much money will each person get?",
+        "lEquations": [
+            "3.75/3=x"
+        ],
+        "lSolutions": [
+            1.25
+        ]
+    },
+    {
+        "iIndex": 3897,
+        "sQuestion": " Cody is 14 years old. His grandmother is 6 times as old as he is. How old is Cody’s grandmother?",
+        "lEquations": [
+            "X=(14.0*6.0)"
+        ],
+        "lSolutions": [
+            84.0
+        ]
+    },
+    {
+        "iIndex": 3857,
+        "sQuestion": " Rupert and Ronald aced their math test. So their mother bought for them a wonderful trampoline yesterday. Ronald jumped 157 times on  the trampoline. Rupert jumped 86 more times than Ronald. How many  times did they jump altogether?",
+        "lEquations": [
+            "X=(157.0+86.0)"
+        ],
+        "lSolutions": [
+            243.0
+        ]
+    },
+    {
+        "iIndex": 3789,
+        "sQuestion": " There are 261 fishbowls. Each fishbowl has 23 fish. How many fish are there?",
+        "lEquations": [
+            "X=(261.0*23.0)"
+        ],
+        "lSolutions": [
+            6003.0
+        ]
+    },
+    {
+        "iIndex": 3015,
+        "sQuestion": "Sara has saved 11 quarters from washing cars.  How many cents does Sara have ?",
+        "lEquations": [
+            "11*25=x"
+        ],
+        "lSolutions": [
+            275.0
+        ]
+    },
+    {
+        "iIndex": 3134,
+        "sQuestion": "At a pie-eating contest, Erik got through 0.6666666666666666 of a pie before time was called; Frank finished just 0.3333333333333333 of a pie. How much more pie did Erik eat than Frank?",
+        "lEquations": [
+            "0.6666666666666666-0.3333333333333333"
+        ],
+        "lSolutions": [
+            0.3333333333333333
+        ]
+    },
+    {
+        "iIndex": 3078,
+        "sQuestion": "A ship is filled with 5973 tons of cargo. It stops in the Bahamas, where sailors load 8723 more tons of cargo onboard. How many tons of cargo does the ship hold now?",
+        "lEquations": [
+            "5973+8723=x"
+        ],
+        "lSolutions": [
+            14696.0
+        ]
+    },
+    {
+        "iIndex": 315,
+        "sQuestion": "Dan spent $ 11.76 on a snake toy , and a cage cost him $ 14.54 . Dan also found a dollar bill on the ground . What was the total cost of Dan 's purchases ? ",
+        "lEquations": [
+            "X=11.76+14.54"
+        ],
+        "lSolutions": [
+            "26.3"
+        ]
+    },
+    {
+        "iIndex": 3371,
+        "sQuestion": "Bridget has 4 Skittles. Henry has 4 Skittles. If Henry gives all of his Skittles to Bridget, how many Skittles will Bridget have?",
+        "lEquations": [
+            "X=(4.0+4.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 2950,
+        "sQuestion": "Fred has 110 blue marbles. Fred has 22 times more blue marbles than Tim. How many blue marbles does Tim have?",
+        "lEquations": [
+            "110/22=x"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 3750,
+        "sQuestion": " There are 38 books on the shelf. Marta put 10 more books on the shelf. How many books are on the shelf now?",
+        "lEquations": [
+            "X=(38.0+10.0)"
+        ],
+        "lSolutions": [
+            48.0
+        ]
+    },
+    {
+        "iIndex": 3684,
+        "sQuestion": " Tessa has 4 apples. Anita gave her 5 more. She needs 10 apples to make a pie. Does she have enough to make a pie?",
+        "lEquations": [
+            "X=(4.0+5.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 3177,
+        "sQuestion": "Allie counted the leftover ice cream after a sundae party. She had 0.3333333333333333 of a carton of rocky road ice cream, 0.3333333333333333 of a carton of cookie dough ice cream, and 0.16666666666666666 of a carton of strawberry cheesecake ice cream. How many cartons of ice cream did Allie have in all?",
+        "lEquations": [
+            "0.5+0.3333333333333333+0.16666666666666666"
+        ],
+        "lSolutions": [
+            0.8333333333333334
+        ]
+    },
+    {
+        "iIndex": 597,
+        "sQuestion": "The number of inquiries the first week was 15. The number of inquiries in the fourth week was 79. Find the average rate of change in number of inquiries from the first week to the fourth week, in inquiries per week.",
+        "lEquations": [
+            "(79.0-15.0)/(4.0-1.0)=x"
+        ],
+        "lSolutions": [
+            21.3333
+        ]
+    },
+    {
+        "iIndex": 129,
+        "sQuestion": "Mary loves eating fruits . Mary paid $ 11.08 for berries , $ 14.33 for apples , and $ 9.31 for peaches . In total , how much money did she spend ? ",
+        "lEquations": [
+            "X=11.08+14.33+9.31"
+        ],
+        "lSolutions": [
+            "34.72"
+        ]
+    },
+    {
+        "iIndex": 2690,
+        "sQuestion": " At a restaurant each adult meal costs $7 and kids eat free. If a group of 13 people came in and 9 were kids, how much would it cost for the group to eat? ",
+        "lEquations": [
+            "X=(7.0*(13.0-9.0))"
+        ],
+        "lSolutions": [
+            28.0
+        ]
+    },
+    {
+        "iIndex": 2778,
+        "sQuestion": " A company invited 47 people to a luncheon, but 7 of them didn't show up. If the tables they had held 5 people each, how many tables do they need? ",
+        "lEquations": [
+            "X=((47.0-7.0)/5.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 3810,
+        "sQuestion": " Johnny practiced for the track team and ran 3 laps per minute. How many minutes did it take Johnny to run 10 laps?",
+        "lEquations": [
+            "X=(10.0/3.0)"
+        ],
+        "lSolutions": [
+            3.33333
+        ]
+    },
+    {
+        "iIndex": 2362,
+        "sQuestion": " Adam had 5 dollars. At the store he spent $2 on a new game. If he got another 5 dollars for his allowance, how much money does he have now? ",
+        "lEquations": [
+            "X=((5.0+5.0)-2.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 3617,
+        "sQuestion": "Emily sprinted to Timothy's house. It is 10 miles from Emily's house to Timothy's house. It took Emily 2 hours to get there. How fast did Emily go?",
+        "lEquations": [
+            "X=(10.0/2.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 2878,
+        "sQuestion": "There are 7 dogwood trees currently in the park. Park workers will plant 3 more dogwood trees today and 2 more dogwood trees tomorrow. How many dogwood trees will the park have when the workers are finished ?",
+        "lEquations": [
+            "7+3+2=x"
+        ],
+        "lSolutions": [
+            12.0
+        ]
+    },
+    {
+        "iIndex": 831,
+        "sQuestion": "At a sale , the cost of a pair of shoes was reduced from 42.00 dollars to 33.60 dollars. What was the percent of discount? ",
+        "lEquations": [
+            "x=((42.0-33.6)/42.0)*100.0"
+        ],
+        "lSolutions": [
+            20.0
+        ]
+    },
+    {
+        "iIndex": 2256,
+        "sQuestion": " For the school bake sale Wendy made pastries. She baked 4 cupcakes and 29 cookies. After the sale she had 24 to take back home. How many pastries did she sell? ",
+        "lEquations": [
+            "X=((4.0+29.0)-24.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 2573,
+        "sQuestion": " Nancy's class is going on a field trip to the zoo. If each van can hold 5 people and there are 12 students and 3 adults going, how many vans will they need? ",
+        "lEquations": [
+            "X=((12.0+3.0)/5.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 2551,
+        "sQuestion": " For a birthday party Jerry bought 41 regular sodas and 22 diet sodas. If his fridge would only hold 9 on each shelf, how many shelves would he fill up? ",
+        "lEquations": [
+            "X=((41.0+22.0)/9.0)"
+        ],
+        "lSolutions": [
+            7.0
+        ]
+    },
+    {
+        "iIndex": 77,
+        "sQuestion": "Mike has 87 baseball cards . Sam bought 13 of Mike 's baseball cards . How many baseball cards does Mike have now ? ",
+        "lEquations": [
+            "X=87-13"
+        ],
+        "lSolutions": [
+            "74"
+        ]
+    },
+    {
+        "iIndex": 3591,
+        "sQuestion": "Jacqueline has 4 boxes of erasers. Each box holds 10 erasers and there are 9 boxes in a case. How many erasers does Jacqueline have?",
+        "lEquations": [
+            "X=(4.0*10.0)"
+        ],
+        "lSolutions": [
+            40.0
+        ]
+    },
+    {
+        "iIndex": 2472,
+        "sQuestion": " George was working as a sacker at a grocery store where he made 5 dollars an hour. On Monday he worked 7 hours and on Tuesday he worked 2 hours. How much money did George make in those two days? ",
+        "lEquations": [
+            "X=(5.0*(7.0+2.0))"
+        ],
+        "lSolutions": [
+            45.0
+        ]
+    },
+    {
+        "iIndex": 33,
+        "sQuestion": "Sara has 31 red and 15 green balloons . Sandy has 24 red balloons . How many red balloons do they have in total ? ",
+        "lEquations": [
+            "X=31+24"
+        ],
+        "lSolutions": [
+            "55"
+        ]
+    },
+    {
+        "iIndex": 3344,
+        "sQuestion": "The value of a sport utility vehicle this year is 16000 dollars , which is 0.8 of what its value was last year. How much is the value of the vehicle last year?",
+        "lEquations": [
+            "16000.0/0.8=x"
+        ],
+        "lSolutions": [
+            20000.0
+        ]
+    },
+    {
+        "iIndex": 2637,
+        "sQuestion": " Billy was organizing his baseball cards in a binder with 5 on each page. If he had 3 new cards and 42 old cards to put in the binder, how many pages would he use? ",
+        "lEquations": [
+            "X=((3.0+42.0)/5.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 3748,
+        "sQuestion": " Megan has 19 seashells. How many more seashells does she need to find to have 25 seashells in her collection?",
+        "lEquations": [
+            "X=(25.0-19.0)"
+        ],
+        "lSolutions": [
+            6.0
+        ]
+    },
+    {
+        "iIndex": 3270,
+        "sQuestion": "Betty also bought 140 shiny blue round stones. If 14 pieces of this stone is in each bracelet, how many bracelets of blue shiny round stones will there be?",
+        "lEquations": [
+            "140/14=x"
+        ],
+        "lSolutions": [
+            10.0
+        ]
+    },
+    {
+        "iIndex": 174,
+        "sQuestion": "Karen added 0.25 cup of walnuts to a batch of trail mix . Later , she added 0.25 cup of almonds . How many cups of nuts did Karen put in the trail mix in all ? ",
+        "lEquations": [
+            "X=0.25+0.25"
+        ],
+        "lSolutions": [
+            "0.5"
+        ]
+    },
+    {
+        "iIndex": 2557,
+        "sQuestion": " A vase can hold 6 flowers. If you had 7 carnations and 47 roses, how many vases would you need to hold the flowers? ",
+        "lEquations": [
+            "X=((7.0+47.0)/6.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 3129,
+        "sQuestion": "Marlee has 12 guests coming to her Halloween party. Each table will hold 3 guests. How many tables will Marlee need?",
+        "lEquations": [
+            "12/3=x"
+        ],
+        "lSolutions": [
+            4.0
+        ]
+    },
+    {
+        "iIndex": 3870,
+        "sQuestion": " A cereal box holds 18 cups of cereal. Each serving is 2 cups. How many servings are in the whole box?",
+        "lEquations": [
+            "X=(18.0/2.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 3830,
+        "sQuestion": " Connie had some marbles. She gave 183 to Juan. Now she has 593 marbles left. How many did she have to start with?",
+        "lEquations": [
+            "X=(183.0+593.0)"
+        ],
+        "lSolutions": [
+            776.0
+        ]
+    },
+    {
+        "iIndex": 271,
+        "sQuestion": "A truck carrying 4.1 pounds of sand travels to a construction yard and loses 2.4 pounds of sand along the way . How much sand does the truck have when it arrives at the yard ? ",
+        "lEquations": [
+            "X=4.1-2.4"
+        ],
+        "lSolutions": [
+            "1.7"
+        ]
+    },
+    {
+        "iIndex": 55,
+        "sQuestion": "There are 43 pencils in the drawer and 19 pencils on the desk . Dan placed 16 pencils on the desk . How many pencils are now there in total ? ",
+        "lEquations": [
+            "X=43+19+16"
+        ],
+        "lSolutions": [
+            "78"
+        ]
+    },
+    {
+        "iIndex": 3572,
+        "sQuestion": "Evelyn has 95 marbles. She gets 9 more from Henry. Later, Evelyn buys 6 cards at the store. How many marbles does Evelyn have in all?",
+        "lEquations": [
+            "X=(95.0+9.0)"
+        ],
+        "lSolutions": [
+            104.0
+        ]
+    },
+    {
+        "iIndex": 3833,
+        "sQuestion": " Sean has 223 whistles. He has 95 more whistles that Charles. How many whistles does Charles have?",
+        "lEquations": [
+            "X=(223.0-95.0)"
+        ],
+        "lSolutions": [
+            128.0
+        ]
+    },
+    {
+        "iIndex": 3703,
+        "sQuestion": " Mrs. Sheridan has 11 cats. Mrs. Garrett has 24 cats. How many more cats does Mrs. Garrett have than Mrs. Sheridan?",
+        "lEquations": [
+            "X=(24.0-11.0)"
+        ],
+        "lSolutions": [
+            13.0
+        ]
+    },
+    {
+        "iIndex": 2531,
+        "sQuestion": " Dave was working as a sacker at a grocery store where he made 6 dollars an hour. On Monday he worked 6 hours and on Tuesday he worked 2 hours. How much money did Dave make in those two days? ",
+        "lEquations": [
+            "X=(6.0*(6.0+2.0))"
+        ],
+        "lSolutions": [
+            48.0
+        ]
+    },
+    {
+        "iIndex": 2324,
+        "sQuestion": " Kaleb started his own lawn mowing business. In the spring he made 4 dollars mowing lawns and in the summer he made 50 dollars. If he had to spend 4 dollars buying supplies, how much money did he end up with? ",
+        "lEquations": [
+            "X=((4.0+50.0)-4.0)"
+        ],
+        "lSolutions": [
+            50.0
+        ]
+    },
+    {
+        "iIndex": 3675,
+        "sQuestion": " Last Saturday, Marie sold 425 magazines and 275 newspapers. What is the total number of reading materials she sold?",
+        "lEquations": [
+            "X=(425.0+275.0)"
+        ],
+        "lSolutions": [
+            700.0
+        ]
+    },
+    {
+        "iIndex": 2767,
+        "sQuestion": " A pet store had 64 puppies. In one day they sold 28 of them and put the rest into cages with 4 in each cage. How many cages did they use? ",
+        "lEquations": [
+            "X=((64.0-28.0)/4.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 3881,
+        "sQuestion": " I have a pet golden retriever. Each year he gains 11 pounds. He is 8 years old. How many pounds does he weigh?",
+        "lEquations": [
+            "X=(11.0*8.0)"
+        ],
+        "lSolutions": [
+            88.0
+        ]
+    },
+    {
+        "iIndex": 3888,
+        "sQuestion": " You want to give your baseball cards to your 5 best friends. You have 455 baseball cards. How many would each get, if you share them  equally?",
+        "lEquations": [
+            "X=(455.0/5.0)"
+        ],
+        "lSolutions": [
+            91.0
+        ]
+    },
+    {
+        "iIndex": 2912,
+        "sQuestion": "There are 5 oak trees currently in the park. Park workers will plant 4 more oak trees today. How many oak trees will the park have when the workers are finished ?",
+        "lEquations": [
+            "5+4=x"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 2345,
+        "sQuestion": " For the school bake sale Carol made 30 cupcakes. If she sold 9 of them and then made 28 more, how many cupcakes would she have? ",
+        "lEquations": [
+            "X=((30.0+28.0)-9.0)"
+        ],
+        "lSolutions": [
+            49.0
+        ]
+    },
+    {
+        "iIndex": 3696,
+        "sQuestion": " Daniel had some noodles. He gave 12 noodles to William. Now Daniel only has 54 noodles. How many noodles did Daniel have to begin with?",
+        "lEquations": [
+            "X=(12.0+54.0)"
+        ],
+        "lSolutions": [
+            66.0
+        ]
+    },
+    {
+        "iIndex": 2787,
+        "sQuestion": " A waiter had 21 customers in his section. If 12 of them left and the rest of his tables had 3 people at each table, how many tables did he have? ",
+        "lEquations": [
+            "X=((21.0-12.0)/3.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 330,
+        "sQuestion": "Mary is baking a cake . The recipe calls for 7 cups of flour and 3 cups of sugar . She already put in 2 cups of flour . How many cups of flour does she need to add ? ",
+        "lEquations": [
+            "X=7-2"
+        ],
+        "lSolutions": [
+            "5"
+        ]
+    },
+    {
+        "iIndex": 262,
+        "sQuestion": "It rained 0.9 inches on Monday . On Tuesday , it rained 0.7 inches less than on Monday . How much did it rain on Tuesday ? ",
+        "lEquations": [
+            "X=0.9-0.7"
+        ],
+        "lSolutions": [
+            "0.2"
+        ]
+    },
+    {
+        "iIndex": 3111,
+        "sQuestion": "Luke had 20 stickers. He bought 12 stickers from a store in the mall and got 20 stickers for his birthday. Then Luke gave 5 of the stickers to his sister and used 8 to decorate a greeting card. How many stickers does Luke have left?",
+        "lEquations": [
+            "(((20+12)+20)-5)-8=x"
+        ],
+        "lSolutions": [
+            39.0
+        ]
+    },
+    {
+        "iIndex": 3310,
+        "sQuestion": "There were 3409 pieces of candy in a jar. If 145 pieces were red and the rest were blue, how many were blue?",
+        "lEquations": [
+            "3409-145=x"
+        ],
+        "lSolutions": [
+            3264.0
+        ]
+    },
+    {
+        "iIndex": 3242,
+        "sQuestion": "Lewis then went to see the oranges being harvested. Lewis found out that they harvest 83 sacks per day. How many sacks of oranges will they have after 6 days of harvest?",
+        "lEquations": [
+            "83*6=x"
+        ],
+        "lSolutions": [
+            498.0
+        ]
+    },
+    {
+        "iIndex": 2544,
+        "sQuestion": " While shopping for music online, Janet bought 6 country albums and 2 pop albums. Each album came with a lyric sheet and had 9 songs. How many songs did Janet buy total? ",
+        "lEquations": [
+            "X=(9.0*(6.0+2.0))"
+        ],
+        "lSolutions": [
+            72.0
+        ]
+    },
+    {
+        "iIndex": 48,
+        "sQuestion": "Sandy has 10 books , Benny has 24 books , and Tim has 33 books . How many books do they have together ? ",
+        "lEquations": [
+            "X=10+24+33"
+        ],
+        "lSolutions": [
+            "67"
+        ]
+    },
+    {
+        "iIndex": 2393,
+        "sQuestion": " At the arcade Victor won 46 tickets. If he spent 27 tickets on a beanie and later won 39 more tickets, how many would he have? ",
+        "lEquations": [
+            "X=((46.0+39.0)-27.0)"
+        ],
+        "lSolutions": [
+            58.0
+        ]
+    },
+    {
+        "iIndex": 3315,
+        "sQuestion": "In one week, an airplane pilot flew 1134 miles on Tuesday and 1475 miles on Thursday. If the pilot flies the same number of miles 3 weeks in a row, how many miles does the pilot fly in all?",
+        "lEquations": [
+            "3*(1134+1475)=x"
+        ],
+        "lSolutions": [
+            7827.0
+        ]
+    },
+    {
+        "iIndex": 2498,
+        "sQuestion": " A pet store has 8 bird cages. If each cage has 2 parrots and 7 parakeets in it, how many birds does the pet store have total? ",
+        "lEquations": [
+            "X=(8.0*(2.0+7.0))"
+        ],
+        "lSolutions": [
+            72.0
+        ]
+    },
+    {
+        "iIndex": 2615,
+        "sQuestion": " For a birthday party Cody bought 4 regular sodas and 44 diet sodas. If his fridge would only hold 6 on each shelf, how many shelves would he fill up? ",
+        "lEquations": [
+            "X=((4.0+44.0)/6.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 165,
+        "sQuestion": "A cell phone company has a total of 7422 customers across the world . If 723 of its customers live in the United States , how many of its customers live in other countries ? ",
+        "lEquations": [
+            "X=7422.0-723.0"
+        ],
+        "lSolutions": [
+            "6699.0"
+        ]
+    },
+    {
+        "iIndex": 102,
+        "sQuestion": "Keith grew 6 turnips . Alyssa grew 9 turnips . How many turnips did they grow in all ? ",
+        "lEquations": [
+            "X=6+9"
+        ],
+        "lSolutions": [
+            "15"
+        ]
+    },
+    {
+        "iIndex": 3510,
+        "sQuestion": "There are 72 cards in Jean's card collection. If the cards are organized into 9 groups, how big is each group?",
+        "lEquations": [
+            "X=(72.0/9.0)"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 2746,
+        "sQuestion": " A pet store had 18 puppies. In one day they sold 3 of them and put the rest into cages with 5 in each cage. How many cages did they use? ",
+        "lEquations": [
+            "X=((18.0-3.0)/5.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 3277,
+        "sQuestion": "Jane’s dad brought home 24 marble potatoes. If Jane’s mom made potato salad for lunch and served an equal amount of potatoes to Jane, herself and her husband, how many potatoes did each of them have?",
+        "lEquations": [
+            "24/3=x"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 2569,
+        "sQuestion": " For Halloween Megan received 11 pieces of candy from neighbors and 5 pieces from her older sister. If she only ate 8 pieces a day, how long would the candy last her? ",
+        "lEquations": [
+            "X=((11.0+5.0)/8.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 340,
+        "sQuestion": "Mary found 2 seashells and Keith found 5 seashells on the beach . When they cleaned them , they discovered that 9 were cracked . How many seashells did they find together ? ",
+        "lEquations": [
+            "X=2+5"
+        ],
+        "lSolutions": [
+            "7"
+        ]
+    },
+    {
+        "iIndex": 3324,
+        "sQuestion": "Mrs. Hilt baked pies last weekend for a holiday dinner. She baked 16 pecan pies and 14 apples pies. If she wants to arrange all of the pies in rows of 5 pies each, how many rows will she have?",
+        "lEquations": [
+            "(16+14)/5=x"
+        ],
+        "lSolutions": [
+            6.0
+        ]
+    },
+    {
+        "iIndex": 17,
+        "sQuestion": "Sally found 9 seashells , Tom found 7 seashells , and Jessica found 5 seashells on the beach . How many seashells did they find together ? ",
+        "lEquations": [
+            "X=9+7+5"
+        ],
+        "lSolutions": [
+            "21"
+        ]
+    },
+    {
+        "iIndex": 296,
+        "sQuestion": "A restaurant made 9 hamburgers and 4 hot dogs to serve during lunch . Only 3 hamburgers were actually served . How many hamburgers were over ? ",
+        "lEquations": [
+            "X=9-3"
+        ],
+        "lSolutions": [
+            "6"
+        ]
+    },
+    {
+        "iIndex": 3831,
+        "sQuestion": " Connie has 2315 red markers and 1028 blue markers. How many markers does she have altogether?",
+        "lEquations": [
+            "X=(2315.0+1028.0)"
+        ],
+        "lSolutions": [
+            3343.0
+        ]
+    },
+    {
+        "iIndex": 3593,
+        "sQuestion": "Rose has 9 apples and 12 erasers. If she shares the apples among 3 friends, how many apples does each friend get?",
+        "lEquations": [
+            "X=(12.0-9.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 2338,
+        "sQuestion": " While shopping, Emily bought 5 green towels and 30 white towels. If she gave her mother 26 of them, how many towels did Emily end up with? ",
+        "lEquations": [
+            "X=((5.0+30.0)-26.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 3666,
+        "sQuestion": " There were 10 students riding on the school bus. At the first stop, 3 students got off of the bus. How many students are left on the bus?",
+        "lEquations": [
+            "X=(10.0-3.0)"
+        ],
+        "lSolutions": [
+            7.0
+        ]
+    },
+    {
+        "iIndex": 2283,
+        "sQuestion": " Dave had to wash 29 short sleeve shirts and 11 long sleeve shirts before school. If he had only washed 35 of them by the time school started, how many did he not wash? ",
+        "lEquations": [
+            "X=((29.0+11.0)-35.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 2435,
+        "sQuestion": " Oliver had 11 socks. If he threw away 4 old ones that didn't fit and bought 26 new ones, how many socks would he have? ",
+        "lEquations": [
+            "X=((11.0+26.0)-4.0)"
+        ],
+        "lSolutions": [
+            33.0
+        ]
+    },
+    {
+        "iIndex": 3526,
+        "sQuestion": "The school is planning a field trip. There are 180 students and 60 seats on each school bus. How many buses are needed to take the trip?",
+        "lEquations": [
+            "X=(180.0/60.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 3817,
+        "sQuestion": " Marlee has 12 guests coming to her Halloween party. Each table will hold 3 guests. How many tables will she need?",
+        "lEquations": [
+            "X=(12.0/3.0)"
+        ],
+        "lSolutions": [
+            4.0
+        ]
+    },
+    {
+        "iIndex": 3060,
+        "sQuestion": "Alyssa bought some toys. She bought a football for $5.71, and spent $6.59 on marbles. In total, how much did Alyssa spend on toys?",
+        "lEquations": [
+            "5.71+6.59=x"
+        ],
+        "lSolutions": [
+            12.3
+        ]
+    },
+    {
+        "iIndex": 2625,
+        "sQuestion": " Nancy's old washing machine could only wash 9 pieces of clothing at a time. If she had to wash 19 shirts and 8 sweaters how many loads would she have to do? ",
+        "lEquations": [
+            "X=((19.0+8.0)/9.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 2258,
+        "sQuestion": " Katie picked 3 tulips and 9 roses to make flower bouquets. If she only used 10 of the flowers though, how many extra flowers did Katie pick? ",
+        "lEquations": [
+            "X=((3.0+9.0)-10.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 3657,
+        "sQuestion": " Mrs. Hilt reads 5 books a day. How many books does she read in 3 days?",
+        "lEquations": [
+            "X=(5.0*3.0)"
+        ],
+        "lSolutions": [
+            15.0
+        ]
+    },
+    {
+        "iIndex": 256,
+        "sQuestion": "A carpenter bought a piece of wood that was 0.41 meters long . Then she sawed 0.33 meters off the end . How long is the piece of wood now ? ",
+        "lEquations": [
+            "X=0.41-0.33"
+        ],
+        "lSolutions": [
+            "0.08"
+        ]
+    },
+    {
+        "iIndex": 3241,
+        "sQuestion": "The farmers reported that they harvest 45 sacks of apples from each of the 8 sections of the orchard daily. How many sacks are harvested every day?",
+        "lEquations": [
+            "45*8=x"
+        ],
+        "lSolutions": [
+            360.0
+        ]
+    },
+    {
+        "iIndex": 3415,
+        "sQuestion": "David removes 7 eggs from a jar. There were originally 27 eggs in the jar. How many eggs are left in the jar?",
+        "lEquations": [
+            "X=(27.0-7.0)"
+        ],
+        "lSolutions": [
+            20.0
+        ]
+    },
+    {
+        "iIndex": 3187,
+        "sQuestion": "Ellen made smoothies in the blender. She used 0.2 of a cup of strawberries, 0.1 of a cup of yogurt, and 0.2 of a cup of orange juice. How many cups of ingredients did Ellen use for the smoothies?",
+        "lEquations": [
+            "0.2+0.1+0.2"
+        ],
+        "lSolutions": [
+            0.5
+        ]
+    },
+    {
+        "iIndex": 23,
+        "sQuestion": "There are 7 dogwood trees currently in the park . Park workers will plant 3 dogwood trees today and 2 dogwood trees tomorrow . How many dogwood trees will the park have when the workers are finished ? ",
+        "lEquations": [
+            "X=7+3+2"
+        ],
+        "lSolutions": [
+            "12"
+        ]
+    },
+    {
+        "iIndex": 122,
+        "sQuestion": "Joan purchased a basketball game for $ 5.20 , and a racing game for $ 4.23 . How much did Joan spend on video games ? ",
+        "lEquations": [
+            "X=5.20+4.23"
+        ],
+        "lSolutions": [
+            "9.43"
+        ]
+    },
+    {
+        "iIndex": 3647,
+        "sQuestion": " You have collected 7 crickets. How many more crickets do you need to collect to have 11 crickets?",
+        "lEquations": [
+            "X=(11.0-7.0)"
+        ],
+        "lSolutions": [
+            4.0
+        ]
+    },
+    {
+        "iIndex": 2259,
+        "sQuestion": " Faye had 46 math problems and 9 science problems for homework. If she finished 40 of the problems at school, how many problems did she have to do for homework? ",
+        "lEquations": [
+            "X=((46.0+9.0)-40.0)"
+        ],
+        "lSolutions": [
+            15.0
+        ]
+    },
+    {
+        "iIndex": 3785,
+        "sQuestion": " The Ferris wheel in Paradise Park has 14 seats. Each seat can hold 6 people. How many people can ride the Ferris wheel at the same time?",
+        "lEquations": [
+            "X=(14.0*6.0)"
+        ],
+        "lSolutions": [
+            84.0
+        ]
+    },
+    {
+        "iIndex": 325,
+        "sQuestion": "Keith spent $ 6.51 on a rabbit toy , $ 5.79 on pet food , and a cage cost him $ 12.51 . He found a dollar bill on the ground . What was the total cost of Keith 's purchases ? ",
+        "lEquations": [
+            "X=6.51+5.79+12.51"
+        ],
+        "lSolutions": [
+            "24.81"
+        ]
+    },
+    {
+        "iIndex": 181,
+        "sQuestion": "Hannah 's Vegetarian Restaurant bought 0.3333333333333333 pound of green peppers and 0.3333333333333333 pound of red peppers . How many pounds of peppers did Hannah 's Vegetarian Restaurant buy in all ? ",
+        "lEquations": [
+            "X=0.3333333333333333+0.3333333333333333"
+        ],
+        "lSolutions": [
+            "0.6666666666666666"
+        ]
+    },
+    {
+        "iIndex": 2512,
+        "sQuestion": " Megan was organizing her book case making sure each of the shelves had exactly 7 books on it. If she had 8 shelves of mystery books and 2 shelves of picture books, how many books did she have total? ",
+        "lEquations": [
+            "X=(7.0*(8.0+2.0))"
+        ],
+        "lSolutions": [
+            70.0
+        ]
+    },
+    {
+        "iIndex": 2604,
+        "sQuestion": " Frank had saved up 3 dollars. If he received another 37 dollars for his allowance, how many 8 dollar toys could he buy? ",
+        "lEquations": [
+            "X=((3.0+37.0)/8.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 3650,
+        "sQuestion": " There are 5 flowers and 3 bees. How many fewer bees are there than flowers?",
+        "lEquations": [
+            "X=(5.0-3.0)"
+        ],
+        "lSolutions": [
+            2.0
+        ]
+    },
+    {
+        "iIndex": 2688,
+        "sQuestion": " A painter needed to paint 12 rooms in a building. Each room takes 3 hours to paint. If he already painted 4 rooms, how much longer will he take to paint the rest? ",
+        "lEquations": [
+            "X=(3.0*(12.0-4.0))"
+        ],
+        "lSolutions": [
+            24.0
+        ]
+    },
+    {
+        "iIndex": 2735,
+        "sQuestion": " At the fair Adam bought 10 tickets. After riding the ferris wheel he had 3 tickets left. If each ticket cost 9 dollars, how much money did Adam spend riding the ferris wheel? ",
+        "lEquations": [
+            "X=(9.0*(10.0-3.0))"
+        ],
+        "lSolutions": [
+            63.0
+        ]
+    },
+    {
+        "iIndex": 298,
+        "sQuestion": "There are 6 short bushes and 4 tall trees currently in the park . Park workers had to cut down 2 short bushes that were damaged . How many short bushes will the park have when the workers are finished ? ",
+        "lEquations": [
+            "X=6-2"
+        ],
+        "lSolutions": [
+            "4"
+        ]
+    },
+    {
+        "iIndex": 3874,
+        "sQuestion": " Sue’s family went on vacation. Her mom drove the car at 60 mph. They camped at a campground after traveling for 5 hours. How far was the  campground from their home?",
+        "lEquations": [
+            "X=(60.0*5.0)"
+        ],
+        "lSolutions": [
+            300.0
+        ]
+    },
+    {
+        "iIndex": 2923,
+        "sQuestion": "Sam found 35 seashells on the beach, he gave Joan 18 of the seashells. How many seashells does he now have ?",
+        "lEquations": [
+            "35-18=x"
+        ],
+        "lSolutions": [
+            17.0
+        ]
+    },
+    {
+        "iIndex": 3300,
+        "sQuestion": "Connie has 323 marbles. Juan has 175 more marbles than Connie. How many marbles does Juan have?",
+        "lEquations": [
+            "323+175=x"
+        ],
+        "lSolutions": [
+            498.0
+        ]
+    },
+    {
+        "iIndex": 2523,
+        "sQuestion": " Chloe was playing a video game where she scores 9 points for each treasure she finds. If she found 6 treasures on the first level and 3 on the second, what would her score be? ",
+        "lEquations": [
+            "X=(9.0*(6.0+3.0))"
+        ],
+        "lSolutions": [
+            81.0
+        ]
+    },
+    {
+        "iIndex": 2809,
+        "sQuestion": " A pet store had 102 puppies. In one day they sold 21 of them and put the rest into cages with 9 in each cage. How many cages did they use? ",
+        "lEquations": [
+            "X=((102.0-21.0)/9.0)"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 37,
+        "sQuestion": "Sam had 49 pennies and 24 nickels in his bank . His dad gave him 39 nickels and 31 quarters . How many nickels does he have now ? ",
+        "lEquations": [
+            "X=24+39"
+        ],
+        "lSolutions": [
+            "63"
+        ]
+    },
+    {
+        "iIndex": 3812,
+        "sQuestion": " Robin has 9 packages of gum. There are 15 pieces in each package. How many pieces of gum does Robin have?",
+        "lEquations": [
+            "X=(9.0*15.0)"
+        ],
+        "lSolutions": [
+            135.0
+        ]
+    },
+    {
+        "iIndex": 3266,
+        "sQuestion": "When relatives visit Haley and her family, she and her cousins do origami. If she has 48 origami papers to give away to her 6 cousins, how many will each receive if she gives everyone the same number of origami papers?",
+        "lEquations": [
+            "48/6=x"
+        ],
+        "lSolutions": [
+            8.0
+        ]
+    },
+    {
+        "iIndex": 2708,
+        "sQuestion": " Zoe baked 5 brownies, but needed 11 total for her party. If she used 7 cups of flour on each one, how much cups of flour does she still need? ",
+        "lEquations": [
+            "X=(7.0*(11.0-5.0))"
+        ],
+        "lSolutions": [
+            42.0
+        ]
+    },
+    {
+        "iIndex": 2506,
+        "sQuestion": " A pet store has 9 bird cages. If each cage has 2 parrots and 6 parakeets in it, how many birds does the pet store have total? ",
+        "lEquations": [
+            "X=(9.0*(2.0+6.0))"
+        ],
+        "lSolutions": [
+            72.0
+        ]
+    },
+    {
+        "iIndex": 3838,
+        "sQuestion": " The Sumata family took a 5 day vacation by car. Each day they drove 250 miles. How many total miles did they drive?",
+        "lEquations": [
+            "X=(5.0*250.0)"
+        ],
+        "lSolutions": [
+            1250.0
+        ]
+    },
+    {
+        "iIndex": 2691,
+        "sQuestion": " A trivia team had 7 members total, but during a game 2 members didn't show up. If each member that did show up scored 4 points, how many points were scored total? ",
+        "lEquations": [
+            "X=(4.0*(7.0-2.0))"
+        ],
+        "lSolutions": [
+            20.0
+        ]
+    },
+    {
+        "iIndex": 112,
+        "sQuestion": "Dan picked 9 limes and gave Sara 4 of the limes . How many limes does Dan have now ? ",
+        "lEquations": [
+            "X=9-4"
+        ],
+        "lSolutions": [
+            "5"
+        ]
+    },
+    {
+        "iIndex": 3661,
+        "sQuestion": " Mrs. Hilt ate 5 apples every hour. How many apples had she eaten at the end of 3 hours?",
+        "lEquations": [
+            "X=(5.0*3.0)"
+        ],
+        "lSolutions": [
+            15.0
+        ]
+    },
+    {
+        "iIndex": 3304,
+        "sQuestion": "Tony had $20. Tony paid $8 for a ticket to a baseball game. At the game, Tony bought a hot dog for $3. What amount of money did Tony have then?",
+        "lEquations": [
+            "20-(8+3)=x"
+        ],
+        "lSolutions": [
+            9.0
+        ]
+    },
+    {
+        "iIndex": 2594,
+        "sQuestion": " Frank had saved up 3 dollars. If he received another 37 dollars for his allowance, how many 8 dollar toys could he buy? ",
+        "lEquations": [
+            "X=((3.0+37.0)/8.0)"
+        ],
+        "lSolutions": [
+            5.0
+        ]
+    },
+    {
+        "iIndex": 3465,
+        "sQuestion": "Sara has 10 marbles. She loses 7. How many marbles will Sara have?",
+        "lEquations": [
+            "X=(10.0-7.0)"
+        ],
+        "lSolutions": [
+            3.0
+        ]
+    },
+    {
+        "iIndex": 39,
+        "sQuestion": "There are 33 walnut trees currently in the park . Park workers will plant 44 walnut trees today . How many walnut trees will the park have when the workers are finished ? ",
+        "lEquations": [
+            "X=33+44"
+        ],
+        "lSolutions": [
+            "77"
+        ]
+    },
+    {
+        "iIndex": 3120,
+        "sQuestion": "Mary has 9 yellow marbles. Joan has 3 yellow marbles. How many yellow marbles do they have in all ?",
+        "lEquations": [
+            "9+3=x"
+        ],
+        "lSolutions": [
+            12.0
+        ]
+    }
+]

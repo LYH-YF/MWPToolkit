@@ -34,6 +34,7 @@ class DatasetName:
     draw = "draw"
     SVAMP = "SVAMP"
     asdiv_a = "asdiv-a"
+    mawps_single = "mawps-single"
 
 
 class DatasetType:

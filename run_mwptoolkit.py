@@ -1,3 +1,11 @@
+'''
+Author: your name
+Date: 2021-01-26 14:00:51
+LastEditTime: 2021-07-31 14:10:56
+LastEditors: Please set LastEditors
+Description: In User Settings Edit
+FilePath: \MWPToolkit\run_mwptoolkit.py
+'''
 import argparse
 import sys
 import os

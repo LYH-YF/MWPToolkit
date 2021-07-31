@@ -666,6 +666,7 @@ def number_transfer_mawps_single(data, mask_type):
     new_data["equation"] = out_seq
     new_data["number list"] = num_list
     new_data["number position"] = num_pos
+    new_data["ans"] = data['lSolutions'][0]
 
     return new_data
 

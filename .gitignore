@@ -24,3 +24,5 @@ hms_valid.json
 x.json
 x1.json
 git_update.sh
+*.code-snippets
+get_single.py

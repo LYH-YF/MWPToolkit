@@ -1,11 +1,9 @@
-'''
-Author: your name
-Date: 2021-01-26 14:00:51
-LastEditTime: 2021-07-31 14:10:56
-LastEditors: Please set LastEditors
-Description: In User Settings Edit
-FilePath: \MWPToolkit\run_mwptoolkit.py
-'''
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/07/31 15:06:33
+# @File: run_mwptoolkit.py
+
+
 import argparse
 import sys
 import os
@@ -13,7 +11,7 @@ from os.path import abspath, dirname
 
 from mwptoolkit.quick_start import run_toolkit
 
-print (abspath(dirname(__file__)))
+print(abspath(dirname(__file__)))
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
 
 if __name__ == '__main__':

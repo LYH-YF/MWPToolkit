@@ -2,6 +2,8 @@ from logging import getLogger
 
 import torch
 
+from mwptoolkit.utils.utils import write_json_data
+
 class AbstractTrainer(object):
     def __init__(self, config, model, dataloader, evaluator):
         super().__init__()
@@ -19,6 +21,7 @@ class AbstractTrainer(object):
         self.best_test_value_accuracy = 0.
         self.start_epoch = 0
         self.epoch_i = 0
+        self.output_result=[]
 
     def _save_checkpoint(self):
         raise NotImplementedError
@@ -42,6 +45,14 @@ class AbstractTrainer(object):
             state_dict = torch.load(self.config["trained_model_path"], map_location=self.config["map_location"])
         #self.model = nn.DataParallel(self.model)
         self.model.load_state_dict(state_dict["model"],False)
+    
+    def _save_output(self):
+        if self.config['output_path']:
+            if self.config["k_fold"]:
+                path=self.config["output_path"][:-5]+"-fold{}.json".format(self.config["fold_t"])
+                write_json_data(self.output_result,path)
+            else:
+                write_json_data(self.output_result,self.config['output_path'])
 
     def _build_optimizer(self):
         raise NotImplementedError

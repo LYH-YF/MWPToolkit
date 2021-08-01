@@ -8,7 +8,7 @@ from ray import tune
 from mwptoolkit.trainer.abstract_trainer import AbstractTrainer
 from mwptoolkit.trainer.template_trainer import TemplateTrainer
 from mwptoolkit.utils.enum_type import TaskType, DatasetType, SpecialTokens
-from mwptoolkit.utils.utils import time_since
+from mwptoolkit.utils.utils import time_since,write_json_data
 
 
 class SupervisedTrainer(AbstractTrainer):
@@ -129,6 +129,7 @@ class SupervisedTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
                 else:
                     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
@@ -145,6 +146,7 @@ class SupervisedTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
@@ -382,6 +384,7 @@ class GTSTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
                 else:
                     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
@@ -398,6 +401,7 @@ class GTSTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
@@ -737,6 +741,7 @@ class TreeLSTMTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
                 else:
                     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
@@ -753,6 +758,7 @@ class TreeLSTMTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
@@ -997,14 +1003,11 @@ class TRNNTrainer(SupervisedTrainer):
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                     %(test_total,test_equ_ac,test_val_ac,test_time_cost))
 
-                    # if test_val_ac >= self.best_test_value_accuracy:
-                    #     self.best_test_value_accuracy = test_val_ac
-                    #     self.best_test_equ_accuracy = test_equ_ac
-                    #     self._save_model()
                     if test_val_ac >= self.best_test_value_accuracy:
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
                 else:
                     valid_equ_ac, valid_val_ac, _, _, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
@@ -1021,6 +1024,7 @@ class TRNNTrainer(SupervisedTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
             if epo % 5 == 0:
                 self._save_checkpoint()
         #self.test(DatasetType.Test)
@@ -1266,6 +1270,7 @@ class SalignedTrainer(SupervisedTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
                 else:
                     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
@@ -1282,6 +1287,7 @@ class SalignedTrainer(SupervisedTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
@@ -1632,6 +1638,7 @@ class TSNTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
                 else:
                     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate_teacher(DatasetType.Valid)
 
@@ -1648,6 +1655,7 @@ class TSNTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
             if epo % 5 == 0:
                 self._save_checkpoint()
 
@@ -1884,6 +1892,7 @@ class EPTTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
                 else:
                     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
@@ -1902,6 +1911,7 @@ class EPTTrainer(AbstractTrainer):
                         self.best_test_value_accuracy = test_val_ac
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
+                        self._save_output()
             if epo % 5 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.

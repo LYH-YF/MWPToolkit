@@ -108,7 +108,7 @@ class SingleEquationDataset(AbstractDataset):
                                                 self.parse_tree_path, self.language, use_gpu)
                 self.trainset, self.validset, self.testset, self.max_span_size =\
                     get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
-        if self.model.lower() in ['graph2tree']:
+        if self.model.lower() in ['graph2tree','tsn']:
             if os.path.exists(self.parse_tree_path) and not self.rebuild:
                 logger = getLogger()
                 logger.info("read deprel tree infomation from {} ...".format(self.parse_tree_path))

@@ -3062,7 +3062,7 @@ def number_transfer(data):  # transfer num into "NUM"
     return processed_datas, generate_number, copy_nums
 
 def find_ept_numbers_in_text(text: str, append_number_token: bool = False):
-
+    
     numbers = []
     new_text = []
 
@@ -3311,7 +3311,7 @@ def infix_to_postfix(equation, free_symbols: list,
                     break
                 else:
                     output_tokens.append(top)
-        elif tok in '*/+-=(':
+        elif tok in '*/+-=^(':
             # '(' has the highest precedence when in the input string.
             precedence = EPT.OPERATOR_PRECEDENCE.get(tok, 1E9)
 
@@ -3354,6 +3354,7 @@ def infix_to_postfix(equation, free_symbols: list,
 def refine_formula_as_prefix(item, numbers, dataset_name):
     if dataset_name in ['SVAMP','asdiv-a','math23k']:
         formula = item['infix equation']
+        
         formula = ["x", "="]+formula
     else:
         formula = item['infix equation']
@@ -3443,7 +3444,7 @@ def refine_formula_as_prefix(item, numbers, dataset_name):
     elif dataset_name in ['mawps']:
         template_to_number = {}
         template_to_value = {}
-        #print(numbers)
+        
         number_by_tokenid = {j: i for i, x in enumerate(numbers) for j in x['token']}
 
         for tokid, token in enumerate(re.sub('\\s+', ' ', item['aux']['mask_text']).strip().split(' ')):
@@ -3479,6 +3480,11 @@ def refine_formula_as_prefix(item, numbers, dataset_name):
         if free_symbols:
             new_formula.append((EPT.PREP_KEY_ANS, ' '.join(['X_%s' % i for i in range(len(free_symbols))])))
     else:
+        for wordid, word in enumerate(formula):
+            if word == '[' or word == '{':
+                formula[wordid] = '('
+            elif word == ']' or word == '}':
+                formula[wordid] = ')'
         formula.append("<BRG>")
         formula_list = []
         formula_string = ''
@@ -3501,8 +3507,6 @@ def refine_formula_as_prefix(item, numbers, dataset_name):
 
         if free_symbols:
             new_formula.append((EPT.PREP_KEY_ANS, ' '.join(['X_%s' % i for i in range(len(free_symbols))])))
-       
-    #print("new_formula", new_formula)
 
     return new_formula
 
@@ -3542,6 +3546,8 @@ def ept_preprocess(datas, dataset_name):
             data["ans"] = [str2float(data["ans"])]
             answer_list = [tuple(x for x in data['ans'])]
             problem = data["original_text"].strip()
+            #if '^' in data['infix equation']:
+            #    continue
         elif dataset_name == 'hmwp':
             data['original_text'] = data['ques source 1']
             answer_list = [tuple(x for x in data['ans'])]
@@ -3559,6 +3565,7 @@ def ept_preprocess(datas, dataset_name):
         data['ept']['answer'] = answer_list
         prefix_formula = refine_formula_as_prefix(data, numbers, dataset_name)
         data['ept']['expr'] = prefix_formula
+        
         datas_list.append(data)
     return datas_list
 

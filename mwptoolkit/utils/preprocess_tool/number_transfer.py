@@ -47,7 +47,8 @@ def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep
             new_data = transfer(data, mask_type, equ_split_symbol)
         else:
             raise NotImplementedError
-
+        if dataset_name == DatasetName.mawps_single and task_type == TaskType.SingleEquation and '=' in new_data["equation"]:
+            continue
         num_list = new_data["number list"]
         out_seq = new_data["equation"]
         copy_num = len(new_data["number list"])

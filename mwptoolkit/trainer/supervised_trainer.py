@@ -84,8 +84,8 @@ class SupervisedTrainer(AbstractTrainer):
             equ_acc.append(equ_ac)
             result={
                 'id':batch['id'][idx],
-                'prediction':' '.join(test_out),
-                'target':' '.join(target),
+                'prediction':' '.join(test_out[idx]),
+                'target':' '.join(target[idx]),
                 'number list':batch['num list'][idx]
             }
             self.output_result.append(result)
@@ -338,8 +338,8 @@ class GTSTrainer(AbstractTrainer):
             equ_acc.append(equ_ac)
             result={
                 'id':batch['id'][idx],
-                'prediction':' '.join(test_out),
-                'target':' '.join(target),
+                'prediction':' '.join(test_out[idx]),
+                'target':' '.join(target[idx]),
                 'number list':batch['num list'][idx]
             }
             self.output_result.append(result)
@@ -588,8 +588,8 @@ class MultiEncDecTrainer(GTSTrainer):
             equ_acc.append(equ_ac)
             result={
                 'id':batch['id'][idx],
-                'prediction':' '.join(test_out),
-                'target':' '.join(target),
+                'prediction':' '.join(test_out[idx]),
+                'target':' '.join(target[idx]),
                 'decoder':out_type,
                 'number list':batch['num list'][idx]
             }
@@ -695,8 +695,8 @@ class TreeLSTMTrainer(AbstractTrainer):
             equ_acc.append(equ_ac)
             result={
                 'id':batch['id'][idx],
-                'prediction':' '.join(test_out),
-                'target':' '.join(target),
+                'prediction':' '.join(test_out[idx]),
+                'target':' '.join(target[idx]),
                 'number list':batch['num list'][idx]
             }
             self.output_result.append(result)
@@ -856,8 +856,8 @@ class SAUSolverTrainer(GTSTrainer):
             equ_acc.append(equ_ac)
             result={
                 'id':batch['id'][idx],
-                'prediction':' '.join(test_out),
-                'target':' '.join(target),
+                'prediction':' '.join(test_out[idx]),
+                'target':' '.join(target[idx]),
                 'number list':batch['num list'][idx]
             }
             self.output_result.append(result)
@@ -1224,6 +1224,13 @@ class SalignedTrainer(SupervisedTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
+            result={
+                'id':batch['id'][idx],
+                'prediction':' '.join(test_out[idx]),
+                'target':' '.join(target[idx]),
+                'number list':batch['num list'][idx]
+            }
+            self.output_result.append(result)
         return val_acc, equ_acc
 
     def _train_epoch(self):
@@ -1824,6 +1831,13 @@ class EPTTrainer(AbstractTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
+            result={
+                'id':batch['id'][idx],
+                'prediction':' '.join(test_out[idx]),
+                'target':' '.join(target_out[idx]),
+                'number list':batch['num list'][idx]
+            }
+            self.output_result.append(result)
         return val_acc, equ_acc
 
     def _train_epoch(self):

@@ -86,7 +86,9 @@ class SupervisedTrainer(AbstractTrainer):
                 'id':batch['id'][idx],
                 'prediction':' '.join(test_out[idx]),
                 'target':' '.join(target[idx]),
-                'number list':batch['num list'][idx]
+                'number list':batch['num list'][idx],
+                'value acc':val_ac,
+                'equ acc':equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -340,7 +342,9 @@ class GTSTrainer(AbstractTrainer):
                 'id':batch['id'][idx],
                 'prediction':' '.join(test_out[idx]),
                 'target':' '.join(target[idx]),
-                'number list':batch['num list'][idx]
+                'number list':batch['num list'][idx],
+                'value acc':val_ac,
+                'equ acc':equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -591,7 +595,9 @@ class MultiEncDecTrainer(GTSTrainer):
                 'prediction':' '.join(test_out[idx]),
                 'target':' '.join(target[idx]),
                 'decoder':out_type,
-                'number list':batch['num list'][idx]
+                'number list':batch['num list'][idx],
+                'value acc':val_ac,
+                'equ acc':equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -697,7 +703,9 @@ class TreeLSTMTrainer(AbstractTrainer):
                 'id':batch['id'][idx],
                 'prediction':' '.join(test_out[idx]),
                 'target':' '.join(target[idx]),
-                'number list':batch['num list'][idx]
+                'number list':batch['num list'][idx],
+                'value acc':val_ac,
+                'equ acc':equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -858,7 +866,9 @@ class SAUSolverTrainer(GTSTrainer):
                 'id':batch['id'][idx],
                 'prediction':' '.join(test_out[idx]),
                 'target':' '.join(target[idx]),
-                'number list':batch['num list'][idx]
+                'number list':batch['num list'][idx],
+                'value acc':val_ac,
+                'equ acc':equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -1228,7 +1238,9 @@ class SalignedTrainer(SupervisedTrainer):
                 'id':batch['id'][idx],
                 'prediction':' '.join(test_out[idx]),
                 'target':' '.join(target[idx]),
-                'number list':batch['num list'][idx]
+                'number list':batch['num list'][idx],
+                'value acc':val_ac,
+                'equ acc':equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -1835,7 +1847,9 @@ class EPTTrainer(AbstractTrainer):
                 'id':batch['id'][idx],
                 'prediction':' '.join(test_out[idx]),
                 'target':' '.join(target_out[idx]),
-                'number list':batch['num list'][idx]
+                'number list':batch['num list'][idx],
+                'value acc':val_ac,
+                'equ acc':equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc

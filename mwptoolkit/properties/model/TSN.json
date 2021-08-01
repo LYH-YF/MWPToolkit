@@ -3,6 +3,7 @@
     "hidden_size":512,
     "learning_rate":1e-3,
     "rnn_cell_type":"gru",
+    "bidirectional":true,
     "num_layers":2,
     "weight_decay":1e-5,
     "epoch_nums":80,
@@ -14,5 +15,6 @@
     "share_vocab":false,
     "mask_symbol":"NUM",
     "symbol_for_tree":true,
-    "equation_fix":"prefix"
+    "equation_fix":"prefix",
+    "parse_tree_file_name":"deprel_tree_info"
 }

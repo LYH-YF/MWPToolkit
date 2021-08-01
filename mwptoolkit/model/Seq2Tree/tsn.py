@@ -1,21 +1,24 @@
 import torch
 from torch import nn
 import copy
+import itertools
 import random
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
+from mwptoolkit.module.Encoder.graph_based_encoder import GraphBasedEncoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss,masked_cross_entropy
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
-from mwptoolkit.utils.utils import copy_list
+from mwptoolkit.utils.utils import copy_list,str2float
 
 class TSN(nn.Module):
     def __init__(self,config,dataset):
         super(TSN,self).__init__()
         #parameter
         self.hidden_size = config["hidden_size"]
+        self.bidirectional = config["bidirectional"]
         self.device = config["device"]
         self.beam_size = config['beam_size']
         self.max_out_len = config['max_output_len']
@@ -50,13 +53,17 @@ class TSN(nn.Module):
             self.out_pad_token = None
 
         self.t_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
+        #self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
+        self.t_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size,self.rnn_cell_type,\
+                                        self.bidirectional,self.num_layers,self.dropout_ratio)
         self.t_decoder = TreeDecoder(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.t_node_generater = NodeGenerater(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
         self.t_merge = SubTreeMerger(self.hidden_size, self.embedding_size, self.dropout_ratio)
 
         self.s_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.s_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
+        #self.s_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
+        self.s_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size,self.rnn_cell_type,\
+                                        self.bidirectional,self.num_layers,self.dropout_ratio)
         self.s_decoder_1 = TreeDecoder(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.s_node_generater_1 = NodeGenerater(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
         self.s_merge_1 = SubTreeMerger(self.hidden_size, self.embedding_size, self.dropout_ratio)
@@ -77,6 +84,8 @@ class TSN(nn.Module):
         target = batch_data["equation"]
         target_length = batch_data["equ len"]
         equ_mask = batch_data["equ mask"]
+        group_nums = batch_data['group nums']
+        num_list = batch_data['num list']
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
@@ -94,10 +103,12 @@ class TSN(nn.Module):
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
+        graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
+
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         seq_emb = self.t_embedder(seq)
-        pade_outputs, _ = self.t_encoder(seq_emb, seq_length)
+        pade_outputs, _ = self.t_encoder(seq_emb, seq_length, graphs)
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         #print("encoder_outputs", encoder_outputs.size())
@@ -121,6 +132,8 @@ class TSN(nn.Module):
         target_length = batch_data["equ len"]
         equ_mask = batch_data["equ mask"]
         batch_id = batch_data["id"]
+        group_nums = batch_data['group nums']
+        num_list = batch_data['num list']
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
@@ -138,10 +151,12 @@ class TSN(nn.Module):
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
+        graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
+
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         seq_emb = self.s_embedder(seq)
-        pade_outputs, _ = self.s_encoder(seq_emb, seq_length)
+        pade_outputs, _ = self.s_encoder(seq_emb, seq_length, graphs)
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         #print("encoder_outputs", encoder_outputs.size())
@@ -176,6 +191,7 @@ class TSN(nn.Module):
         num_pos = batch_data["num pos"]
         target = batch_data["equation"]
         num_list = batch_data['num list']
+        group_nums = batch_data['group nums']
         #target_length=batch_data["equ len"]
         generate_nums = self.generate_nums
         num_start = self.num_start
@@ -196,10 +212,12 @@ class TSN(nn.Module):
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
+        graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
+
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         seq_emb = self.t_embedder(seq)
-        pade_outputs, _ = self.t_encoder(seq_emb, seq_length)
+        pade_outputs, _ = self.t_encoder(seq_emb, seq_length, graphs)
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         #print("encoder_outputs", encoder_outputs.size())
@@ -219,6 +237,7 @@ class TSN(nn.Module):
         num_pos = batch_data["num pos"]
         target = batch_data["equation"]
         num_list = batch_data['num list']
+        group_nums = batch_data['group nums']
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
@@ -237,10 +256,12 @@ class TSN(nn.Module):
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
+        graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
+
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         seq_emb = self.s_embedder(seq)
-        pade_outputs, _ = self.s_encoder(seq_emb, seq_length)
+        pade_outputs, _ = self.s_encoder(seq_emb, seq_length, graphs)
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
 
@@ -691,6 +712,56 @@ class TSN(nn.Module):
             if target_input[i] >= num_start:
                 target_input[i] = 0
         return torch.LongTensor(target), torch.LongTensor(target_input)
+
+    def build_graph(self, seq_length, num_list, num_pos, group_nums):
+        max_len = seq_length.max()
+        batch_size = len(seq_length)
+        batch_graph = []
+        for b_i in range(batch_size):
+            x = torch.zeros((max_len, max_len))
+            for idx in range(seq_length[b_i]):
+                x[idx, idx] = 1
+            quantity_cell_graph = torch.clone(x)
+            graph_greater = torch.clone(x)
+            graph_lower = torch.clone(x)
+            graph_quanbet = torch.clone(x)
+            graph_attbet = torch.clone(x)
+            for idx, n_pos in enumerate(num_pos[b_i]):
+                for pos in group_nums[b_i][idx]:
+                    quantity_cell_graph[n_pos, pos] = 1
+                    quantity_cell_graph[pos, n_pos] = 1
+                    graph_quanbet[n_pos, pos] = 1
+                    graph_quanbet[pos, n_pos] = 1
+                    graph_attbet[n_pos, pos] = 1
+                    graph_attbet[pos, n_pos] = 1
+            for idx_i in range(len(num_pos[b_i])):
+                for idx_j in range(len(num_pos[b_i])):
+                    num_i = str2float(num_list[b_i][idx_i])
+                    num_j = str2float(num_list[b_i][idx_j])
+                    
+                    if num_i > num_j:
+                        graph_greater[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
+                        graph_lower[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]] = 1
+                    else:
+                        graph_greater[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]] = 1
+                        graph_lower[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
+            group_num_ = itertools.chain.from_iterable(group_nums[b_i])
+            combn = itertools.permutations(group_num_, 2)
+            for idx in combn:
+                graph_quanbet[idx] = 1
+                graph_quanbet[idx] = 1
+                graph_attbet[idx] = 1
+                graph_attbet[idx] = 1
+            quantity_cell_graph = quantity_cell_graph.to(self.device)
+            graph_greater = graph_greater.to(self.device)
+            graph_lower = graph_lower.to(self.device)
+            graph_quanbet = graph_quanbet.to(self.device)
+            graph_attbet = graph_attbet.to(self.device)
+            graph = torch.stack([quantity_cell_graph, graph_greater, graph_lower, graph_quanbet, graph_attbet], dim=0)
+            batch_graph.append(graph)
+        batch_graph = torch.stack(batch_graph)
+        return batch_graph
+
 
     @torch.no_grad()
     def init_soft_target(self,batch_data):

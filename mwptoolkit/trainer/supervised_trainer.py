@@ -82,6 +82,13 @@ class SupervisedTrainer(AbstractTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
+            result={
+                'id':batch['id'][idx],
+                'prediction':' '.join(test_out),
+                'target':' '.join(target),
+                'number list':batch['num list'][idx]
+            }
+            self.output_result.append(result)
         return val_acc, equ_acc
 
     def _train_epoch(self):
@@ -151,6 +158,7 @@ class SupervisedTrainer(AbstractTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(eval_set):
@@ -326,6 +334,13 @@ class GTSTrainer(AbstractTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
+            result={
+                'id':batch['id'][idx],
+                'prediction':' '.join(test_out),
+                'target':' '.join(target),
+                'number list':batch['num list'][idx]
+            }
+            self.output_result.append(result)
         return val_acc, equ_acc
 
     def _train_epoch(self):
@@ -396,6 +411,7 @@ class GTSTrainer(AbstractTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
         for batch in self.dataloader.load_data(eval_set):
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
@@ -566,6 +582,14 @@ class MultiEncDecTrainer(GTSTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
+            result={
+                'id':batch['id'][idx],
+                'prediction':' '.join(test_out),
+                'target':' '.join(target),
+                'decoder':out_type,
+                'number list':batch['num list'][idx]
+            }
+            self.output_result.append(result)
         return val_acc, equ_acc
 
 
@@ -665,6 +689,13 @@ class TreeLSTMTrainer(AbstractTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
+            result={
+                'id':batch['id'][idx],
+                'prediction':' '.join(test_out),
+                'target':' '.join(target),
+                'number list':batch['num list'][idx]
+            }
+            self.output_result.append(result)
         return val_acc, equ_acc
 
     def _train_epoch(self):
@@ -735,6 +766,7 @@ class TreeLSTMTrainer(AbstractTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
         for batch in self.dataloader.load_data(eval_set):
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
@@ -816,6 +848,13 @@ class SAUSolverTrainer(GTSTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
+            result={
+                'id':batch['id'][idx],
+                'prediction':' '.join(test_out),
+                'target':' '.join(target),
+                'number list':batch['num list'][idx]
+            }
+            self.output_result.append(result)
         return val_acc, equ_acc
 
 
@@ -999,6 +1038,7 @@ class TRNNTrainer(SupervisedTrainer):
         template_ac = 0
         equations_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(eval_set):
@@ -1255,6 +1295,7 @@ class SalignedTrainer(SupervisedTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
         for batch_idx, batch in enumerate(self.dataloader.load_data(eval_set)):
             if batch_idx >= 3000: continue
@@ -1874,6 +1915,7 @@ class EPTTrainer(AbstractTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(eval_set):

@@ -773,6 +773,8 @@ class TSN(nn.Module):
         target = batch_data["equation"]
         target_length = batch_data["equ len"]
         ques_id = batch_data["id"]
+        group_nums = batch_data['group nums']
+        num_list = batch_data['num list']
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
@@ -790,10 +792,12 @@ class TSN(nn.Module):
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
+        graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
+
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         seq_emb = self.t_embedder(seq)
-        pade_outputs, _ = self.t_encoder(seq_emb, seq_length)
+        pade_outputs, _ = self.t_encoder(seq_emb, seq_length, graphs)
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         #print("encoder_outputs", encoder_outputs.size())

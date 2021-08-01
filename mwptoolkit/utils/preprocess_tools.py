@@ -3527,19 +3527,19 @@ def ept_preprocess(datas, dataset_name):
             problem = ' '.join(regenerated_text)
         elif dataset_name == "SVAMP":
             data["original_text"] = data["ques source 1"].strip()
-            data["ans"] = [float(data["Answer"])]
+            data["ans"] = [str2float(data["Answer"])]
             answer_list = [tuple(x for x in data['ans'])]
             problem = data["original_text"].strip()
         elif dataset_name == "asdiv-a":
             data["original_text"] = data["ques source 1"].strip()
             if 'r' in data["ans"]:
                 data["ans"] = data["ans"][:2]
-            data["ans"] = [float(data["ans"])]
+            data["ans"] = [str2float(data["ans"])]
             answer_list = [tuple(x for x in data['ans'])]
             problem = data["original_text"].strip()
         elif dataset_name == 'math23k':
             data["original_text"] = data["ques source 1"].strip()
-            data["ans"] = [float(data["ans"])]
+            data["ans"] = [str2float(data["ans"])]
             answer_list = [tuple(x for x in data['ans'])]
             problem = data["original_text"].strip()
         elif dataset_name == 'hmwp':

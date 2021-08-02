@@ -184,27 +184,28 @@ class DatasetMultiEncDec(TemplateDataset):
             pos = []
             parse_tree = []
             for token in token_list:
-                pos.append(token['xpos'])
+                #pos.append(token['xpos'])
+                pos.append(token['upos'])
                 parse_tree.append(token['head'] - 1)
-            new_datas.append({'id':data['id'],'xpos':pos,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'upos':pos,'parse tree':parse_tree})
         for data in self.validset:
             doc = nlp(data["ques source 1"])
             token_list = doc.to_dict()[0]
             pos = []
             parse_tree = []
             for token in token_list:
-                pos.append(token['xpos'])
+                pos.append(token['upos'])
                 parse_tree.append(token['head'] - 1)
-            new_datas.append({'id':data['id'],'xpos':pos,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'upos':pos,'parse tree':parse_tree})
         for data in self.testset:
             doc = nlp(data["ques source 1"])
             token_list = doc.to_dict()[0]
             pos = []
             parse_tree = []
             for token in token_list:
-                pos.append(token['xpos'])
+                pos.append(token['upos'])
                 parse_tree.append(token['head'] - 1)
-            new_datas.append({'id':data['id'],'xpos':pos,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'upos':pos,'parse tree':parse_tree})
         write_json_data(new_datas,path)
     def read_pos_from_file(self,path):
         pos_datas=read_json_data(path)
@@ -213,7 +214,7 @@ class DatasetMultiEncDec(TemplateDataset):
                 if pos_data['id']!=data['id']:
                     continue
                 else:
-                    data['pos'] = pos_data['xpos']
+                    data['pos'] = pos_data['upos']
                     data['parse tree'] = pos_data['parse tree']
                     pos_datas.remove(pos_data)
                     break
@@ -222,7 +223,7 @@ class DatasetMultiEncDec(TemplateDataset):
                 if pos_data['id']!=data['id']:
                     continue
                 else:
-                    data['pos'] = pos_data['xpos']
+                    data['pos'] = pos_data['upos']
                     data['parse tree'] = pos_data['parse tree']
                     pos_datas.remove(pos_data)
                     break
@@ -231,7 +232,7 @@ class DatasetMultiEncDec(TemplateDataset):
                 if pos_data['id']!=data['id']:
                     continue
                 else:
-                    data['pos'] = pos_data['xpos']
+                    data['pos'] = pos_data['upos']
                     data['parse tree'] = pos_data['parse tree']
                     pos_datas.remove(pos_data)
                     break

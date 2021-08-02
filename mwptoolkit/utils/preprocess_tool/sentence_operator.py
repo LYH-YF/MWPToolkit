@@ -186,7 +186,7 @@ def get_group_nums_(train_datas, valid_datas, test_datas, path):
                     if len(group_num) == 1:
                         if n_pos - 1 >= 0:
                             group_num.append(n_pos - 1)
-                        if n_pos + 1 <= sent_len:
+                        if n_pos + 1 < sent_len:
                             group_num.append(n_pos + 1)
                     group_nums.append(group_num)
                 deprel_datas.remove(deprel_data)

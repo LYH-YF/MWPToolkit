@@ -9,13 +9,14 @@ from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
-from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss,masked_cross_entropy
+from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss, masked_cross_entropy
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
-from mwptoolkit.utils.utils import copy_list,str2float
+from mwptoolkit.utils.utils import copy_list, str2float
+
 
 class TSN(nn.Module):
-    def __init__(self,config,dataset):
-        super(TSN,self).__init__()
+    def __init__(self, config, dataset):
+        super(TSN, self).__init__()
         #parameter
         self.hidden_size = config["hidden_size"]
         self.bidirectional = config["bidirectional"]
@@ -73,9 +74,9 @@ class TSN(nn.Module):
         self.s_merge_2 = SubTreeMerger(self.hidden_size, self.embedding_size, self.dropout_ratio)
 
         self.loss = MaskedCrossEntropyLoss()
-        self.soft_target={}
+        self.soft_target = {}
 
-    def teacher_calculate_loss(self,batch_data):
+    def teacher_calculate_loss(self, batch_data):
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -114,15 +115,15 @@ class TSN(nn.Module):
         #print("encoder_outputs", encoder_outputs.size())
         #print("problem_output", problem_output.size())
         UNK_TOKEN = self.unk_token
-        all_node_outputs=self.teacher_net_forward(encoder_outputs,problem_output,target,target_length,\
+        all_node_outputs,target_=self.teacher_net_forward(encoder_outputs,problem_output,target,target_length,\
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)
         self.loss.reset()
-        self.loss.eval_batch(all_node_outputs, target, equ_mask)
+        self.loss.eval_batch(all_node_outputs, target_, equ_mask)
         self.loss.backward()
         return self.loss.get_loss()
 
-    def student_calculate_loss(self,batch_data):
+    def student_calculate_loss(self, batch_data):
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -161,29 +162,29 @@ class TSN(nn.Module):
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         #print("encoder_outputs", encoder_outputs.size())
         #print("problem_output", problem_output.size())
-        encoder_outputs_mask = self.encoder_mask[:encoder_outputs.size(0),:max(seq_length),:].float()
-        encoder_outputs_ = encoder_outputs*encoder_outputs_mask.float()
+        encoder_outputs_mask = self.encoder_mask[:encoder_outputs.size(0), :max(seq_length), :].float()
+        encoder_outputs_ = encoder_outputs * encoder_outputs_mask.float()
 
         UNK_TOKEN = self.unk_token
-        all_node_output1=self.student1_net_forward(encoder_outputs,problem_output,target,target_length,\
+        all_node_output1,target1=self.student1_net_forward(encoder_outputs,problem_output,target,target_length,\
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
-        all_node_output2=self.student2_net_forward(encoder_outputs_,problem_output,target,target_length,\
+        all_node_output2,target2=self.student2_net_forward(encoder_outputs_,problem_output,target,target_length,\
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
         all_node_output1 = torch.stack(all_node_output1, dim=1).to(self.device)
         all_node_output2 = torch.stack(all_node_output2, dim=1).to(self.device)
         soft_target = self.get_soft_target(batch_id)
-        soft_target = torch.cat(soft_target,dim=0).to(self.device)
-        
-        loss1 = masked_cross_entropy(all_node_output1, target, equ_mask)
-        loss2 = self.soft_target_loss(all_node_output1,soft_target,target_length)
-        loss3 = masked_cross_entropy(all_node_output2, target, equ_mask)
-        loss4 = self.soft_target_loss(all_node_output2,soft_target,target_length)
-        cos_loss = self.cosine_loss(all_node_output1,all_node_output2,target_length)
-        loss = (1-self.alpha)*loss1 + self.alpha*loss2 + (1-self.alpha)*loss3 + self.alpha*loss4 + 0.1*cos_loss
+        soft_target = torch.cat(soft_target, dim=0).to(self.device)
+
+        loss1 = masked_cross_entropy(all_node_output1, target1, equ_mask)
+        loss2 = self.soft_target_loss(all_node_output1, soft_target, target_length)
+        loss3 = masked_cross_entropy(all_node_output2, target2, equ_mask)
+        loss4 = self.soft_target_loss(all_node_output2, soft_target, target_length)
+        cos_loss = self.cosine_loss(all_node_output1, all_node_output2, target_length)
+        loss = (1 - self.alpha) * loss1 + self.alpha * loss2 + (1 - self.alpha) * loss3 + self.alpha * loss4 + 0.1 * cos_loss
         loss.backward()
         return loss.item()
 
-    def teacher_test(self,batch_data):
+    def teacher_test(self, batch_data):
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -228,8 +229,8 @@ class TSN(nn.Module):
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
 
         return all_outputs, targets
-    
-    def student_test(self,batch_data):
+
+    def student_test(self, batch_data):
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -265,15 +266,15 @@ class TSN(nn.Module):
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
 
-        all_node_output1,score1 = self.student1_test_forward(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length)
-        all_node_output2,score2 = self.student2_test_forward(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length)
+        all_node_output1, score1 = self.student1_test_forward(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length)
+        all_node_output2, score2 = self.student2_test_forward(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length)
         all_output1 = self.convert_idx2symbol(all_node_output1, num_list[0], copy_list(nums_stack[0]))
         all_output2 = self.convert_idx2symbol(all_node_output2, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
 
-        return all_output1,score1,all_output2,score2,targets
+        return all_output1, score1, all_output2, score2, targets
 
-    def model_test(self,batch_data):
+    def model_test(self, batch_data):
         return
 
     def teacher_net_forward(self,encoder_outputs,problem_output,target,target_length,\
@@ -294,7 +295,7 @@ class TSN(nn.Module):
         embeddings_stacks = [[] for _ in range(batch_size)]  #
         for t in range(max_target_length):
             num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask,
-                                                                                                       num_mask)
+                                                                                                         num_mask)
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
             all_node_outputs.append(outputs)
@@ -303,9 +304,9 @@ class TSN(nn.Module):
             target[:, t] = target_t
             generate_input = generate_input.to(self.device)
             left_child, right_child, node_label = self.t_node_generater(current_embeddings, generate_input, current_context)
-            
+
             left_childs = []
-            
+
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:, t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
@@ -328,7 +329,7 @@ class TSN(nn.Module):
                     left_childs.append(o[-1].embedding)
                 else:
                     left_childs.append(None)
-        return all_node_outputs
+        return all_node_outputs, target
 
 
     def student1_net_forward(self,encoder_outputs,problem_output,target,target_length,\
@@ -348,8 +349,8 @@ class TSN(nn.Module):
         left_childs = [None for _ in range(batch_size)]  #
         embeddings_stacks = [[] for _ in range(batch_size)]  #
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask,
-                                                                                                       num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                                                                                                           seq_mask, num_mask)
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
             all_node_outputs.append(outputs)
@@ -364,7 +365,7 @@ class TSN(nn.Module):
             left_childs = []
             #print("target", target.size())
             #print("target[:,t]", target[:,t].size())
-            
+
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:, t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
@@ -387,7 +388,7 @@ class TSN(nn.Module):
                     left_childs.append(o[-1].embedding)
                 else:
                     left_childs.append(None)
-        return all_node_outputs
+        return all_node_outputs, target
 
     def student2_net_forward(self,encoder_outputs,problem_output,target,target_length,\
                         num_pos,nums_stack,padding_hidden,seq_mask,num_mask,unk,num_start):
@@ -406,8 +407,8 @@ class TSN(nn.Module):
         left_childs = [None for _ in range(batch_size)]  #
         embeddings_stacks = [[] for _ in range(batch_size)]  #
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask,
-                                                                                                       num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                                                                                                           seq_mask, num_mask)
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
             all_node_outputs.append(outputs)
@@ -422,7 +423,7 @@ class TSN(nn.Module):
             left_childs = []
             #print("target", target.size())
             #print("target[:,t]", target[:,t].size())
-            
+
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:, t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
@@ -445,7 +446,7 @@ class TSN(nn.Module):
                     left_childs.append(o[-1].embedding)
                 else:
                     left_childs.append(None)
-        return all_node_outputs
+        return all_node_outputs, target
 
     def teacher_test_forward(self,encoder_outputs,problem_output,padding_hidden,seq_mask,num_mask,num_pos,\
                         num_start,beam_size,max_length):
@@ -470,7 +471,7 @@ class TSN(nn.Module):
                 left_childs = b.left_childs
 
                 num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
-                                                                                                           seq_mask, num_mask)
+                                                                                                             seq_mask, num_mask)
 
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
@@ -520,7 +521,7 @@ class TSN(nn.Module):
             if flag:
                 break
         return beams[0].out
-    
+
     def student1_test_forward(self,encoder_outputs,problem_output,padding_hidden,seq_mask,num_mask,num_pos,\
                         num_start,beam_size,max_length):
         batch_size = encoder_outputs.size(0)
@@ -546,7 +547,7 @@ class TSN(nn.Module):
                 left_childs = b.left_childs
 
                 num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
-                                                                                                           seq_mask, num_mask)
+                                                                                                               seq_mask, num_mask)
 
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
@@ -595,7 +596,7 @@ class TSN(nn.Module):
                     flag = False
             if flag:
                 break
-        return beams[0].out,beams[0].score
+        return beams[0].out, beams[0].score
     def student2_test_forward(self,encoder_outputs,problem_output,padding_hidden,seq_mask,num_mask,num_pos,\
                         num_start,beam_size,max_length):
         batch_size = encoder_outputs.size(0)
@@ -621,7 +622,7 @@ class TSN(nn.Module):
                 left_childs = b.left_childs
 
                 num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
-                                                                                                           seq_mask, num_mask)
+                                                                                                               seq_mask, num_mask)
 
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
@@ -670,7 +671,7 @@ class TSN(nn.Module):
                     flag = False
             if flag:
                 break
-        return beams[0].out,beams[0].score
+        return beams[0].out, beams[0].score
 
     def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, num_size, hidden_size):
         indices = list()
@@ -738,7 +739,7 @@ class TSN(nn.Module):
                 for idx_j in range(len(num_pos[b_i])):
                     num_i = str2float(num_list[b_i][idx_i])
                     num_j = str2float(num_list[b_i][idx_j])
-                    
+
                     if num_i > num_j:
                         graph_greater[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
                         graph_lower[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]] = 1
@@ -762,9 +763,8 @@ class TSN(nn.Module):
         batch_graph = torch.stack(batch_graph)
         return batch_graph
 
-
     @torch.no_grad()
-    def init_soft_target(self,batch_data):
+    def init_soft_target(self, batch_data):
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -807,66 +807,64 @@ class TSN(nn.Module):
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
         #all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)
         all_node_outputs = torch.stack(all_node_outputs, dim=1)
-        for id_,soft_target in zip(ques_id,all_node_outputs.split(1)):
-            self.soft_target[id_]=soft_target.cpu()
+        for id_, soft_target in zip(ques_id, all_node_outputs.split(1)):
+            self.soft_target[id_] = soft_target.cpu()
 
-    def init_encoder_mask(self,batch_size):
-        encoder_mask = torch.FloatTensor(batch_size,115,self.hidden_size).uniform_() < 0.99
+    def init_encoder_mask(self, batch_size):
+        encoder_mask = torch.FloatTensor(batch_size, 115, self.hidden_size).uniform_() < 0.99
         self.encoder_mask = encoder_mask.float().to(self.device)
 
-    def get_soft_target(self,batch_id):
-        soft_tsrget=[]
+    def get_soft_target(self, batch_id):
+        soft_tsrget = []
         for id_ in batch_id:
             soft_tsrget.append(self.soft_target[id_])
         return soft_tsrget
-    
-    
-    def soft_target_loss(self,logits, soft_target,length):
+
+    def soft_target_loss(self, logits, soft_target, length):
         if torch.cuda.is_available():
             length = torch.LongTensor(length).cuda()
         else:
             length = torch.LongTensor(length)
         loss_total = []
-        for predict,label in zip(logits.split(1,dim=1),soft_target.split(1,dim=1)):
+        for predict, label in zip(logits.split(1, dim=1), soft_target.split(1, dim=1)):
             predict = predict.squeeze()
             label = label.squeeze()
-            loss_t = self.soft_cross_entropy_loss(predict,label)
+            loss_t = self.soft_cross_entropy_loss(predict, label)
             loss_total.append(loss_t)
-        loss_total = torch.stack(loss_total,dim=0).transpose(1,0)
+        loss_total = torch.stack(loss_total, dim=0).transpose(1, 0)
         #loss_total = loss_total.sum(dim=1)
         loss_total = loss_total.sum() / length.float().sum()
         return loss_total
-    
-    def soft_cross_entropy_loss(self,predict_score,label_score):
-        log_softmax = torch.nn.LogSoftmax(dim = 1)
-        softmax = torch.nn.Softmax(dim = 1)
+
+    def soft_cross_entropy_loss(self, predict_score, label_score):
+        log_softmax = torch.nn.LogSoftmax(dim=1)
+        softmax = torch.nn.Softmax(dim=1)
 
         predict_prob_log = log_softmax(predict_score).float()
         label_prob = softmax(label_score).float()
 
-
         loss_elem = -label_prob * predict_prob_log
-        loss = loss_elem.sum(dim = 1)
+        loss = loss_elem.sum(dim=1)
         return loss
-    
-    def cosine_loss(self,logits, logits_1,length):
+
+    def cosine_loss(self, logits, logits_1, length):
         if torch.cuda.is_available():
             length = torch.LongTensor(length).cuda()
         else:
             length = torch.LongTensor(length)
         loss_total = []
-        for predict,label in zip(logits.split(1,dim=1),logits_1.split(1,dim=1)):
+        for predict, label in zip(logits.split(1, dim=1), logits_1.split(1, dim=1)):
             predict = predict.squeeze()
             label = label.squeeze()
-            loss_t = self.cosine_sim(predict,label)
+            loss_t = self.cosine_sim(predict, label)
             loss_total.append(loss_t)
-        loss_total = torch.stack(loss_total,dim=0).transpose(1,0)
+        loss_total = torch.stack(loss_total, dim=0).transpose(1, 0)
         #loss_total = loss_total.sum(dim=1)
         loss_total = loss_total.sum() / length.float().sum()
         return loss_total
-    
-    def cosine_sim(self,logits, logits_1):
-        device=logits.device
+
+    def cosine_sim(self, logits, logits_1):
+        device = logits.device
         return torch.ones(logits.size(0)).to(device) + torch.cosine_similarity(logits, logits_1, dim=1).to(device)
 
     def convert_idx2symbol(self, output, num_list, num_stack):

@@ -9,6 +9,7 @@ __pycache__
 preprocess.py
 pos_info.json
 span_level_deprel_tree_info.json
+deprel_tree_info.json
 *.pth
 /pretrain/gpt2_cn
 /pretrain/gpt2_en

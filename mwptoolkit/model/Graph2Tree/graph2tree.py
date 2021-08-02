@@ -152,11 +152,11 @@ class Graph2Tree(nn.Module):
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         #encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
 
-        all_node_outputs=self.generate_node(encoder_outputs,problem_output,target,target_length,\
+        all_node_outputs,target_=self.generate_node(encoder_outputs,problem_output,target,target_length,\
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)  # B x S x N
         self.loss.reset()
-        self.loss.eval_batch(all_node_outputs, target, equ_mask)
+        self.loss.eval_batch(all_node_outputs, target_, equ_mask)
         self.loss.backward()
         return self.loss.get_loss()
 
@@ -256,7 +256,7 @@ class Graph2Tree(nn.Module):
                     left_childs.append(o[-1].embedding)
                 else:
                     left_childs.append(None)
-        return all_node_outputs
+        return all_node_outputs,target
 
     def generate_node_(self,encoder_outputs,problem_output,padding_hidden,seq_mask,num_mask,num_pos,\
                         num_start):

@@ -16,5 +16,7 @@
     "mask_symbol":"NUM",
     "symbol_for_tree":true,
     "equation_fix":"prefix",
+    "add_sos":true,
+    "add_eos":true,
     "parse_tree_file_name":"deprel_tree_info"
 }

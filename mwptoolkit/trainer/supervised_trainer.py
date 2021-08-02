@@ -187,6 +187,8 @@ class SupervisedTrainer(AbstractTrainer):
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
+        self.best_test_equ_accuracy=equation_ac/eval_total
+        self.best_test_value_accuracy=value_ac/eval_total
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
@@ -444,6 +446,8 @@ class GTSTrainer(AbstractTrainer):
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
+        self.best_test_equ_accuracy=equation_ac/eval_total
+        self.best_test_value_accuracy=value_ac/eval_total
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
@@ -804,6 +808,8 @@ class TreeLSTMTrainer(AbstractTrainer):
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
+        self.best_test_equ_accuracy=equation_ac/eval_total
+        self.best_test_value_accuracy=value_ac/eval_total
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
@@ -1083,6 +1089,8 @@ class TRNNTrainer(SupervisedTrainer):
             equation_ac += batch_equ_ac.count(True)
             ans_acc += batch_equs_acc.count(True)
             eval_total += len(batch_val_ac)
+        self.best_test_equ_accuracy=equation_ac/eval_total
+        self.best_test_value_accuracy=value_ac/eval_total
         test_time_cost = time_since(time.time() - test_start_time)
         # self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
         #                         %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
@@ -1349,6 +1357,8 @@ class SalignedTrainer(SupervisedTrainer):
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
+        self.best_test_equ_accuracy=equation_ac/eval_total
+        self.best_test_value_accuracy=value_ac/eval_total
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))

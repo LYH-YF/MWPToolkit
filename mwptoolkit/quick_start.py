@@ -49,7 +49,7 @@ def train_cross_validation(config):
         logger.info("fold {}".format(fold_t))
         if config["test_only"]:
             trainer.test()
-            return
+            best_folds_accuracy.append({"fold_t": fold_t, "best_equ_accuracy": trainer.best_test_equ_accuracy, "best_value_accuracy": trainer.best_test_value_accuracy})
         else:
             trainer.fit()
             best_folds_accuracy.append({"fold_t": fold_t, "best_equ_accuracy": trainer.best_test_equ_accuracy, "best_value_accuracy": trainer.best_test_value_accuracy})

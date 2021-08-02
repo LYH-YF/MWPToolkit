@@ -180,6 +180,7 @@ class SupervisedTrainer(AbstractTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(DatasetType.Test):
@@ -192,6 +193,7 @@ class SupervisedTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self._save_output()
 
     def param_search(self):
         train_batch_size = self.config["train_batch_size"]
@@ -439,6 +441,7 @@ class GTSTrainer(AbstractTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(DatasetType.Test):
@@ -451,6 +454,7 @@ class GTSTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self._save_output()
 
     def param_search(self):
         train_batch_size = self.config["train_batch_size"]
@@ -801,6 +805,7 @@ class TreeLSTMTrainer(AbstractTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(DatasetType.Test):
@@ -813,6 +818,7 @@ class TreeLSTMTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self._save_output()
 
     def param_search(self):
         train_batch_size = self.config["train_batch_size"]
@@ -1081,6 +1087,7 @@ class TRNNTrainer(SupervisedTrainer):
         equation_ac = 0
         eval_total = 0
         ans_acc = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(type):
@@ -1096,6 +1103,7 @@ class TRNNTrainer(SupervisedTrainer):
         #                         %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self._save_output()
 
     def param_search(self):
         train_batch_size = self.config["train_batch_size"]
@@ -1350,6 +1358,7 @@ class SalignedTrainer(SupervisedTrainer):
         value_ac = 0
         equation_ac = 0
         eval_total = 0
+        self.output_result=[]
         test_start_time = time.time()
 
         for batch in self.dataloader.load_data(DatasetType.Test):
@@ -1362,6 +1371,7 @@ class SalignedTrainer(SupervisedTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
                                 %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self._save_output()
 
 
 class HMSTrainer(GTSTrainer):

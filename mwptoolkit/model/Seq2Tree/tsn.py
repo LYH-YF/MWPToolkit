@@ -803,7 +803,7 @@ class TSN(nn.Module):
         #print("encoder_outputs", encoder_outputs.size())
         #print("problem_output", problem_output.size())
         UNK_TOKEN = self.unk_token
-        all_node_outputs=self.teacher_net_forward(encoder_outputs,problem_output,target,target_length,\
+        all_node_outputs,_=self.teacher_net_forward(encoder_outputs,problem_output,target,target_length,\
                                 num_pos,nums_stack,padding_hidden,seq_mask,num_mask,UNK_TOKEN,num_start)
         #all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)
         all_node_outputs = torch.stack(all_node_outputs, dim=1)

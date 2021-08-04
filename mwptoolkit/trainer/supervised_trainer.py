@@ -1985,6 +1985,28 @@ class EPTTrainer(AbstractTrainer):
         test_time_cost = time_since(time.time() - test_start_time)
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
+    def test(self):
+        self._load_model()
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        self.output_result=[]
+        test_start_time = time.time()
+
+        for batch in self.dataloader.load_data(DatasetType.Test):
+            batch_val_ac, batch_equ_ac = self._eval_batch(batch)
+            value_ac += batch_val_ac.count(True)
+            equation_ac += batch_equ_ac.count(True)
+            eval_total += len(batch_val_ac)
+        self.best_test_equ_accuracy=equation_ac/eval_total
+        self.best_test_value_accuracy=value_ac/eval_total
+        test_time_cost = time_since(time.time() - test_start_time)
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self._save_output()
+
+
     def _build_optimizer(self):
         no_w_decay = {'bias', 'norm', 'Norm', '_embedding'}
         

@@ -18,7 +18,9 @@ class DatasetMultiEncDec(TemplateDataset):
         if self.parse_tree_path != None:
             self.parse_tree_path = self.dataset_path+'/'+self.parse_tree_path+'.json'
             self.parse_tree_path = os.path.join(self.root,self.parse_tree_path)
-
+        self.ltp_model_path=config['ltp_model_path']
+        if not os.path.isabs(self.ltp_model_path):
+            self.ltp_model_path = os.path.join(self.root,self.ltp_model_path)
     def _preprocess(self):
         if self.dataset in [DatasetName.hmwp]:
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
@@ -57,12 +59,21 @@ class DatasetMultiEncDec(TemplateDataset):
         if os.path.exists(self.parse_tree_path) and not self.rebuild:
             logger = getLogger()
             logger.info('read pos infomation from {} ...'.format(self.parse_tree_path))
-            self.read_pos_from_file(self.parse_tree_path)
+            self.read_pos_from_file_withltp(self.parse_tree_path)
         else:
             logger = getLogger()
             logger.info('build pos infomation to {} ...'.format(self.parse_tree_path))
-            self.build_pos_to_file(self.parse_tree_path)
-            self.read_pos_from_file(self.parse_tree_path)
+            self.build_pos_to_file_withltp(self.parse_tree_path)
+            self.read_pos_from_file_withltp(self.parse_tree_path)
+        # if os.path.exists(self.parse_tree_path) and not self.rebuild:
+        #     logger = getLogger()
+        #     logger.info('read pos infomation from {} ...'.format(self.parse_tree_path))
+        #     self.read_pos_from_file(self.parse_tree_path)
+        # else:
+        #     logger = getLogger()
+        #     logger.info('build pos infomation to {} ...'.format(self.parse_tree_path))
+        #     self.build_pos_to_file(self.parse_tree_path)
+        #     self.read_pos_from_file(self.parse_tree_path)
 
     def _build_vocab(self):
         words_count_1 = {}
@@ -175,6 +186,7 @@ class DatasetMultiEncDec(TemplateDataset):
             raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
 
         self.out_idx2symbol_1 += [SpecialTokens.UNK_TOKEN]
+    
     def build_pos_to_file(self,path):
         nlp = stanza.Pipeline(self.language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
         new_datas=[]
@@ -236,3 +248,64 @@ class DatasetMultiEncDec(TemplateDataset):
                     data['parse tree'] = pos_data['parse tree']
                     pos_datas.remove(pos_data)
                     break
+    
+    def build_pos_to_file_withltp(self,path):
+        from pyltp import Postagger,Parser
+        pos_model_path = os.path.join(self.ltp_model_path, "pos.model")
+        par_model_path = os.path.join(self.ltp_model_path, 'parser.model')
+        postagger = Postagger()
+        postagger.load(pos_model_path)
+        parser = Parser()
+        parser.load(par_model_path)
+        
+        new_datas=[]
+        for data in self.trainset:
+            postags = postagger.postag(data["ques source 1"].split(' '))
+            postags = ' '.join(postags).split(' ')
+            arcs = parser.parse(data["ques source 1"].split(' '), postags)
+            parse_tree = [arc.head-1 for arc in arcs]
+            new_datas.append({'id':data['id'],'pos':postags,'parse tree':parse_tree})
+        for data in self.validset:
+            postags = postagger.postag(data["ques source 1"].split(' '))
+            postags = ' '.join(postags).split(' ')
+            arcs = parser.parse(data["ques source 1"].split(' '), postags)
+            parse_tree = [arc.head-1 for arc in arcs]
+            new_datas.append({'id':data['id'],'upos':postags,'parse tree':parse_tree})
+        for data in self.testset:
+            postags = postagger.postag(data["ques source 1"].split(' '))
+            postags = ' '.join(postags).split(' ')
+            arcs = parser.parse(data["ques source 1"].split(' '), postags)
+            parse_tree = [arc.head-1 for arc in arcs]
+            new_datas.append({'id':data['id'],'upos':postags,'parse tree':parse_tree})
+        write_json_data(new_datas,path)
+    
+    def read_pos_from_file_withltp(self,path):
+        pos_datas=read_json_data(path)
+        for data in self.trainset:
+            for pos_data in pos_datas:
+                if pos_data['id']!=data['id']:
+                    continue
+                else:
+                    data['pos'] = pos_data['pos']
+                    data['parse tree'] = pos_data['parse tree']
+                    pos_datas.remove(pos_data)
+                    break
+        for data in self.validset:
+            for pos_data in pos_datas:
+                if pos_data['id']!=data['id']:
+                    continue
+                else:
+                    data['pos'] = pos_data['pos']
+                    data['parse tree'] = pos_data['parse tree']
+                    pos_datas.remove(pos_data)
+                    break
+        for data in self.testset:
+            for pos_data in pos_datas:
+                if pos_data['id']!=data['id']:
+                    continue
+                else:
+                    data['pos'] = pos_data['pos']
+                    data['parse tree'] = pos_data['parse tree']
+                    pos_datas.remove(pos_data)
+                    break
+    

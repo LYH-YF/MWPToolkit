@@ -270,13 +270,13 @@ class DatasetMultiEncDec(TemplateDataset):
             postags = ' '.join(postags).split(' ')
             arcs = parser.parse(data["ques source 1"].split(' '), postags)
             parse_tree = [arc.head-1 for arc in arcs]
-            new_datas.append({'id':data['id'],'upos':postags,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'pos':postags,'parse tree':parse_tree})
         for data in self.testset:
             postags = postagger.postag(data["ques source 1"].split(' '))
             postags = ' '.join(postags).split(' ')
             arcs = parser.parse(data["ques source 1"].split(' '), postags)
             parse_tree = [arc.head-1 for arc in arcs]
-            new_datas.append({'id':data['id'],'upos':postags,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'pos':postags,'parse tree':parse_tree})
         write_json_data(new_datas,path)
     
     def read_pos_from_file_withltp(self,path):

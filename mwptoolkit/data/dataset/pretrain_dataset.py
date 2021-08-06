@@ -131,10 +131,10 @@ class PretrainDataset(AbstractDataset):
             tokenizer=RobertaTokenizer.from_pretrained(self.pretrained_model_path)
         else:
             raise NotImplementedError
-        if self.mask_symbol==MaskSymbol.NUM:
-            tokenizer.add_tokens(['NUM'])
-        elif self.mask_symbol==MaskSymbol.number:
-            tokenizer.add_tokens(NumMask.number[:self.copy_nums])
+        # if self.mask_symbol==MaskSymbol.NUM:
+        #     tokenizer.add_tokens(['NUM'])
+        # elif self.mask_symbol==MaskSymbol.number:
+        #     tokenizer.add_tokens(NumMask.number[:self.copy_nums])
         #tokenizer.special_tokens_map.update({'pad_token':SpecialTokens.PAD_TOKEN})
         global SpecialTokens
         SpecialTokens.PAD_TOKEN=tokenizer.pad_token

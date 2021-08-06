@@ -447,10 +447,10 @@ class MultiEncDec(nn.Module):
         if random.random() < self.teacher_force_ratio:
             # if random.random() < 0:
             # Run through decoder one time step at a time
-            decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device).view(batch_size,1)
-            decoder_inputs = torch.cat([decoder_input,target],dim=1)[:,:-1]
+            decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device).view(batch_size)
+            #decoder_inputs = torch.cat([decoder_input,target],dim=1)[:,:-1]
             for t in range(max_target_length):
-                decoder_input = decoder_inputs[:,t]
+                #decoder_input = decoder_inputs[:,t]
                 decoder_output, decoder_hidden = self.decoder(
                     decoder_input, decoder_hidden, encoder_outputs, seq_mask.squeeze(1))
                 all_decoder_outputs[:,t,:] = decoder_output
@@ -516,9 +516,9 @@ class MultiEncDec(nn.Module):
                     beam_list.append(Beam(topv[:, k], temp_input, temp_hidden, temp_output))
 
             all_decoder_outputs = beam_list[0].all_output
-        for t in range(max_target_length):
-            target[:,t] = self.generate_decoder_input(
-                target[:,t], all_decoder_outputs[:,t], nums_stack_batch)
+            for t in range(max_target_length):
+                target[:,t] = self.generate_decoder_input(
+                    target[:,t], all_decoder_outputs[:,t], nums_stack_batch)
         return all_decoder_outputs,target
 
     def evaluate_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, batch_size, padding_hidden, seq_mask, num_mask):

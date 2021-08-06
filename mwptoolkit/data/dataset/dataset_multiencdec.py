@@ -143,19 +143,19 @@ class DatasetMultiEncDec(TemplateDataset):
                 raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.generate_list))
         else:
             raise NotImplementedError("the type of masking number ({}) is not implemented".format(self.mask_symbol))
-        for data in self.trainset:
-            words_list = data["equation"]
-            for word in words_list:
-                if word in self.out_idx2symbol_2:
-                    continue
-                elif word[0].isdigit():
-                    continue
-                elif (word[0].isalpha() or word[0].isdigit()) is not True:
-                    self.out_idx2symbol_2.insert(self.num_start2, word)
-                    self.num_start2 += 1
-                    continue
-                else:
-                    self.out_idx2symbol_2.append(word)
+        # for data in self.trainset:
+        #     words_list = data["postfix equation"]
+        #     for word in words_list:
+        #         if word in self.out_idx2symbol_2:
+        #             continue
+        #         elif word[0].isdigit():
+        #             continue
+        #         elif (word[0].isalpha() or word[0].isdigit()) is not True:
+        #             self.out_idx2symbol_2.insert(self.num_start2, word)
+        #             self.num_start2 += 1
+        #             continue
+        #         else:
+        #             self.out_idx2symbol_2.append(word)
         self.out_idx2symbol_2 += [SpecialTokens.SOS_TOKEN]
         self.out_idx2symbol_2 += [SpecialTokens.UNK_TOKEN]
 

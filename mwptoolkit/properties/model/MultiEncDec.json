@@ -8,13 +8,12 @@
     "epoch_nums":80,
     "test_batch_size":1,
     "dropout_ratio":0.5,
-    "teacher_force_ratio":0.8,
-    "hop_size":3,
+    "teacher_force_ratio":0.83,
+    "hop_size":2,
     "step_size":20,
     "beam_size":5,
     "share_vocab":false,
     "mask_symbol":"NUM",
     "symbol_for_tree":true,
-    "equation_fix":"prefix",
     "parse_tree_file_name":"pos_info"
 }

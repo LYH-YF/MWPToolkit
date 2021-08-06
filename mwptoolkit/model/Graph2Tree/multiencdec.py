@@ -288,12 +288,12 @@ class MultiEncDec(nn.Module):
 
         decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
         all_output1,target1 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos_batch, num_order_pad,
-                                             num_stack1_batch)
+                                                num_stack1_batch)
 
-        all_output2,target2 = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, batch_size, seq_mask, num_stack2_batch)
+        all_output2,target2_ = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, batch_size, seq_mask, num_stack2_batch)
         self.loss.reset()
         self.loss.eval_batch(all_output1, target1, equ_mask1)
-        self.loss.eval_batch(all_output2, target2, equ_mask2)
+        self.loss.eval_batch(all_output2, target2_, equ_mask2)
         self.loss.backward()
         return self.loss.get_loss()
 
@@ -435,6 +435,7 @@ class MultiEncDec(nn.Module):
 
     def train_attn_double(self, encoder_outputs, decoder_hidden, target, target_length, batch_size, seq_mask, nums_stack_batch):
         max_target_length = max(target_length)
+        decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device)
         all_decoder_outputs = torch.zeros(batch_size, max_target_length, self.output2_size).to(self.device)
         #all_decoder_outputs = []
 
@@ -443,19 +444,21 @@ class MultiEncDec(nn.Module):
         # Move new Variables to CUDA
         # if USE_CUDA:
         #     all_decoder_outputs = all_decoder_outputs.cuda()
-
         if random.random() < self.teacher_force_ratio:
             # if random.random() < 0:
             # Run through decoder one time step at a time
-            decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device).view(batch_size)
-            #decoder_inputs = torch.cat([decoder_input,target],dim=1)[:,:-1]
+            #decoder_inputs = torch.cat([decoder_input.view(batch_size,1),target],dim=1)[:,:-1]
+            all_decoder_outputs = []
             for t in range(max_target_length):
+                #decoder_inputs[:,t]=decoder_input
                 #decoder_input = decoder_inputs[:,t]
                 decoder_output, decoder_hidden = self.decoder(
                     decoder_input, decoder_hidden, encoder_outputs, seq_mask.squeeze(1))
-                all_decoder_outputs[:,t,:] = decoder_output
-                decoder_input = self.generate_decoder_input(target[:,t], decoder_output, nums_stack_batch)
+                #all_decoder_outputs[:,t,:] = decoder_output
+                all_decoder_outputs.append(decoder_output)
+                decoder_input = self.generate_decoder_input(target[:,t].tolist(), decoder_output, nums_stack_batch)
                 target[:,t] = decoder_input
+            all_decoder_outputs = torch.stack(all_decoder_outputs,dim=1)
         else:
             decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device)
             beam_list = list()
@@ -489,7 +492,7 @@ class MultiEncDec(nn.Module):
                     repeat_dims = [1] * beam_score.dim()
                     repeat_dims[1] = score.size(1)
                     beam_score = beam_score.repeat(*repeat_dims)
-                    score += beam_score
+                    score = score + beam_score
                     beam_scores[:, b_idx * self.output2_size:(b_idx + 1) * self.output2_size] = score
                     all_hidden[:, b_idx * batch_size:(b_idx + 1) * batch_size, :] = decoder_hidden
 
@@ -518,7 +521,7 @@ class MultiEncDec(nn.Module):
             all_decoder_outputs = beam_list[0].all_output
             for t in range(max_target_length):
                 target[:,t] = self.generate_decoder_input(
-                    target[:,t], all_decoder_outputs[:,t], nums_stack_batch)
+                    target[:,t].tolist(), all_decoder_outputs[:,t], nums_stack_batch)
         return all_decoder_outputs,target
 
     def evaluate_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, batch_size, padding_hidden, seq_mask, num_mask):
@@ -669,8 +672,8 @@ class MultiEncDec(nn.Module):
                     continue
                 indices.append(i + b * sen_len)
                 masked_index.append(temp_0)
-            indices += [0 for _ in range(len(num_pos[b]), num_size)]
-            masked_index += [temp_1 for _ in range(len(num_pos[b]), num_size)]
+            indices = indices + [0 for _ in range(len(num_pos[b]), num_size)]
+            masked_index = masked_index + [temp_1 for _ in range(len(num_pos[b]), num_size)]
         # indices = torch.LongTensor(indices)
         # masked_index = torch.ByteTensor(masked_index)
         indices = torch.LongTensor(indices).to(self.device)
@@ -701,6 +704,7 @@ class MultiEncDec(nn.Module):
         # when the decoder input is copied num but the num has two pos, chose the max
         # if USE_CUDA:
         #     decoder_output = decoder_output.cpu()
+        target=torch.LongTensor(target).to(self.device)
         for i in range(target.size(0)):
             if target[i] == self.unk2:
                 num_stack = nums_stack_batch[i].pop()

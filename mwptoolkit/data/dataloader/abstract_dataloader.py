@@ -39,7 +39,10 @@ class AbstractDataLoader(object):
             if length < max_length:
                 batch_seq[idx] += [self.in_pad_token for i in range(max_length - length)]
             else:
-                batch_seq[idx] = batch_seq[idx][:max_length]
+                if self.add_sos and self.add_eos:
+                    batch_seq[idx] = [batch_seq[idx][0]] + batch_seq[idx][1:max_length-1] + [batch_seq[idx][-1]]
+                else:
+                    batch_seq[idx] = batch_seq[idx][:max_length]
         return batch_seq
 
     def _pad_output_batch(self, batch_target, batch_target_len):

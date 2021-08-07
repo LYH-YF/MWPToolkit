@@ -28,6 +28,7 @@ class TSN(nn.Module):
         self.num_layers = config["num_layers"]
         self.rnn_cell_type = config["rnn_cell_type"]
         self.alpha = 0.15
+        self.max_encoder_mask_len=128
 
         self.vocab_size = len(dataset.in_idx2word)
         self.out_symbol2idx = dataset.out_symbol2idx
@@ -811,7 +812,7 @@ class TSN(nn.Module):
             self.soft_target[id_] = soft_target.cpu()
 
     def init_encoder_mask(self, batch_size):
-        encoder_mask = torch.FloatTensor(batch_size, 115, self.hidden_size).uniform_() < 0.99
+        encoder_mask = torch.FloatTensor(batch_size, self.max_encoder_mask_len, self.hidden_size).uniform_() < 0.99
         self.encoder_mask = encoder_mask.float().to(self.device)
 
     def get_soft_target(self, batch_id):

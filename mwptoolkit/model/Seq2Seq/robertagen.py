@@ -22,6 +22,7 @@ class RobertaGen(nn.Module):
         super(RobertaGen, self).__init__()
         self.device = config["device"]
         self.pretrained_model_path = config['pretrained_model_path']
+        self.max_input_len = config['max_len']
 
         self.dataset = dataset
 
@@ -100,7 +101,10 @@ class RobertaGen(nn.Module):
 
         srcs = []
         for idx, s in enumerate(seq):
-            src = self.tokenizer.encode(seq[idx])
+            if self.max_input_len is not None:
+                src = self.tokenizer.encode(seq[idx],max_length=self.max_input_len-1)
+            else:
+                src = self.tokenizer.encode(seq[idx])
             srcs.append(src)
         src_length = max([len(_) for _ in srcs])
         for i in range(len(srcs)):

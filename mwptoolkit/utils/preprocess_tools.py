@@ -2714,6 +2714,56 @@ def id_reedit(trainset, validset, testset):
     return trainset, validset, testset
 
 
+def dataset_drop_duplication(trainset, validset, testset):
+    id_dict = {}
+    for data in trainset:
+        if not isinstance(data['id'], str):
+            data['id'] = str(data['id'])
+        try:
+            id_dict[data['id']] = id_dict[data['id']] + 1
+        except:
+            id_dict[data['id']] = 1
+    for data in validset:
+        if not isinstance(data['id'], str):
+            data['id'] = str(data['id'])
+        try:
+            id_dict[data['id']] = id_dict[data['id']] + 1
+        except:
+            id_dict[data['id']] = 1
+    for data in testset:
+        if not isinstance(data['id'], str):
+            data['id'] = str(data['id'])
+        try:
+            id_dict[data['id']] = id_dict[data['id']] + 1
+        except:
+            id_dict[data['id']] = 1
+    drop_train=[]
+    drop_valid=[]
+    drop_test=[]
+    for idx,data in enumerate(trainset):
+        old_id = data['id']
+        if id_dict[old_id] > 1:
+            drop_train.append(idx-len(drop_train))
+            id_dict[old_id] = id_dict[old_id] - 1
+    for idx,data in enumerate(validset):
+        old_id = data['id']
+        if id_dict[old_id] > 1:
+            drop_valid.append(idx-len(drop_valid))
+            id_dict[old_id] = id_dict[old_id] - 1
+    for idx,data in enumerate(testset):
+        old_id = data['id']
+        if id_dict[old_id] > 1:
+            drop_test.append(idx-len(drop_test))
+            id_dict[old_id] = id_dict[old_id] - 1
+    for idx in drop_train:
+        trainset.pop(idx)
+    for idx in drop_valid:
+        validset.pop(idx)
+    for idx in drop_test:
+        testset.pop(idx)
+    return trainset, validset, testset
+
+
 def num_transfer_draw_(data, mask_type="number", min_generate_keep=0, equ_split_symbol=";"):
     '''transfer num process
 

@@ -310,10 +310,13 @@ class SingleEquationDataLoader(AbstractDataLoader):
 
             # question word to index
             if self.add_sos:
-                ques_tensor.append(self.dataset.in_word2idx[SpecialTokens.SOS_TOKEN])
-            ques_tensor += self._word2idx(sentence)
+                #ques_tensor.append(self.dataset.in_word2idx[SpecialTokens.SOS_TOKEN])
+                sentence=[SpecialTokens.SOS_TOKEN]+sentence
+            #ques_tensor += self._word2idx(sentence)
             if self.add_eos:
-                ques_tensor.append(self.dataset.in_word2idx[SpecialTokens.EOS_TOKEN])
+                sentence=sentence+[SpecialTokens.EOS_TOKEN]
+                #ques_tensor.append(self.dataset.in_word2idx[SpecialTokens.EOS_TOKEN])
+            ques_tensor = self._word2idx(sentence)
 
             # equation symbol to index
             equ_tensor = self._equ_symbol2idx(equation)
@@ -374,6 +377,10 @@ class SingleEquationDataLoader(AbstractDataLoader):
         else:
             equ_batch = self._pad_output_batch(equ_batch, equ_len_batch)
             temp_batch = self._pad_output_batch(temp_batch, equ_len_batch)
+        
+        if self.max_len != None:
+            ques_len_batch=[self.max_len if l>self.max_len else l for l in ques_len_batch]
+
         # question mask
         ques_mask_batch = self._get_mask(ques_len_batch)
         # equation mask

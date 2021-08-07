@@ -161,6 +161,8 @@ class PretrainDataLoader(AbstractDataLoader):
 
             num_stack_batch.append(self._build_num_stack(equation, data["number list"]))
 
+        if self.max_len != None:
+            ques_len_batch=[self.max_len if l>self.max_len else l for l in ques_len_batch]
         # padding batch question
         ques_batch = self._pad_input_batch(ques_batch, ques_len_batch)
         # padding batch equation

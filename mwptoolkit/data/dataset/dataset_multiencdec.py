@@ -6,7 +6,7 @@ import stanza
 from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operators, MaskSymbol, SPECIAL_TOKENS, DatasetName, TaskType
 from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix
-from mwptoolkit.utils.preprocess_tools import id_reedit
+from mwptoolkit.utils.preprocess_tools import id_reedit,dataset_drop_duplication
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.utils import read_json_data,write_json_data
 
@@ -24,6 +24,8 @@ class DatasetMultiEncDec(TemplateDataset):
     def _preprocess(self):
         if self.dataset in [DatasetName.hmwp]:
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
+        if self.dataset in [DatasetName.draw]:
+            self.trainset,self.validset,self.testset = dataset_drop_duplication(self.trainset, self.validset, self.testset)
         transfer = number_transfer
         
         self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")

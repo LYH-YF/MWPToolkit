@@ -766,7 +766,7 @@ class MultiEncDec(nn.Module):
                 elif symbol == SpecialTokens.UNK_TOKEN:
                     try:
                         pos_list = num_stack[b_i].pop()
-                        c = num_list[pos_list[0]]
+                        c = num_list[b_i][pos_list[0]]
                         res.append(c)
                     except:
                         res.append(symbol)

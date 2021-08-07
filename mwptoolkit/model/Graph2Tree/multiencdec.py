@@ -375,8 +375,8 @@ class MultiEncDec(nn.Module):
             targets1=self.convert_idx2symbol1(target1[0],num_list[0],copy_list(num_stack1_batch[0]))
             return "tree", output1, targets1
         else:
-            output2=self.convert_idx2symbol2(torch.tensor(all_output2.all_output).view(1,-1),num_list)
-            targets2=self.convert_idx2symbol2(target2,num_list)
+            output2=self.convert_idx2symbol2(torch.tensor(all_output2.all_output).view(1,-1),num_list,copy_list(num_stack2_batch))
+            targets2=self.convert_idx2symbol2(target2,num_list,copy_list(num_stack2_batch))
             return "attn", output2, targets2
 
     def train_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, target, target_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos, num_order_pad,
@@ -745,7 +745,7 @@ class MultiEncDec(nn.Module):
         output_list.append(res)
         return output_list
 
-    def convert_idx2symbol2(self, output, num_list):
+    def convert_idx2symbol2(self, output, num_list, num_stack):
         batch_size = output.size(0)
         seq_len = output.size(1)
         output_list = []
@@ -763,6 +763,13 @@ class MultiEncDec(nn.Module):
                         res.append(symbol)
                     else:
                         res.append(num_list[b_i][num_idx])
+                elif symbol == SpecialTokens.UNK_TOKEN:
+                    try:
+                        pos_list = num_stack[b_i].pop()
+                        c = num_list[pos_list[0]]
+                        res.append(c)
+                    except:
+                        res.append(symbol)
                 else:
                     res.append(symbol)
             output_list.append(res)

@@ -191,7 +191,7 @@ def train_cross_validation(config):
         
 
         dataloader = DataLoaderMultiEncDec(config, dataset)
-        model = MultiEncDec(config,dataset)
+        model = MultiEncDec(config,dataset).to(config["device"])
 
         evaluator = MultiEncDecEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
         

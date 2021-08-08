@@ -8,5 +8,6 @@
     "linear":true,
     "language":"zh",
     "train_batch_size":64,
-    "test_batch_size":64
+    "test_batch_size":64,
+    "source_equation_fix":"infix"
 }

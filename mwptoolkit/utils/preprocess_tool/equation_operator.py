@@ -4,7 +4,7 @@ from copy import deepcopy
 from mwptoolkit.utils.enum_type import SpecialTokens,NumMask,EPT
 
 def from_infix_to_postfix(expression):
-    r"""postfix for expression
+    r"""convert infix equation to postfix equation
     """
     st = list()
     res = list()
@@ -34,7 +34,7 @@ def from_infix_to_postfix(expression):
 
 
 def from_infix_to_prefix(expression):
-    r"""prefix for expression
+    r"""convert infix equation to prefix equation
     """
     st = list()
     res = list()
@@ -63,6 +63,96 @@ def from_infix_to_prefix(expression):
     while len(st) > 0:
         res.append(st.pop())
     res.reverse()
+    return res
+
+
+def from_prefix_to_postfix(expression):
+    r"""convert prefix equation to postfix equation
+    """
+    st = list()
+    expression = deepcopy(expression)
+    expression.reverse()
+    for symbol in expression:
+        if symbol not in ['+', '-', '*', '/', '^', "=", "<BRG>"]:
+            st.append([symbol])
+        else:
+            n1 = st.pop()
+            n2 = st.pop()
+            st.append(n1 + n2 + [symbol])
+    res = st.pop()
+    return res
+
+
+def from_postfix_to_prefix(expression):
+    r"""convert postfix equation to prefix equation
+    """
+    st = list()
+    for symbol in expression:
+        if symbol not in ['+', '-', '*', '/', '^', "=", "<BRG>"]:
+            st.append([symbol])
+        else:
+            n1 = st.pop()  #2
+            n2 = st.pop()  #3
+            st.append([symbol] + n2 + n1)
+    res = st.pop()
+    return res
+
+
+def from_prefix_to_infix(expression):
+    r"""convert prefix equation to infix equation
+    """
+    st = list()
+    last_op = []
+    priority = {"<BRG>": 0, "=": 1, "+": 2, "-": 2, "*": 3, "/": 3, "^": 4}
+    expression = deepcopy(expression)
+    expression.reverse()
+    for symbol in expression:
+        if symbol not in ['+', '-', '*', '/', '^', "=", "<BRG>"]:
+            st.append([symbol])
+        else:
+            n_left = st.pop()
+            n_right = st.pop()
+            left_first = False
+            right_first = False
+            if len(n_left) > 1 and priority[last_op.pop()] < priority[symbol]:
+                left_first = True
+            if len(n_right) > 1 and priority[last_op.pop()] < priority[symbol]:
+                right_first = True
+            if left_first:
+                n_left = ['('] + n_left + [')']
+            if right_first:
+                n_right = ['('] + n_right + [')']
+            st.append(n_left + [symbol] + n_right)
+            last_op.append(symbol)
+    res = st.pop()
+    return res
+
+
+def from_postfix_to_infix(expression):
+    r"""convert postfix equation to infix equation
+    """
+    st = list()
+    last_op = []
+    priority = {"<BRG>": 0, "=": 1, "+": 2, "-": 2, "*": 3, "/": 3, "^": 4}
+    for symbol in expression:
+        if symbol not in ['+', '-', '*', '/', '^', "=", "<BRG>"]:
+            st.append([symbol])
+        else:
+            n_right = st.pop()
+            n_left = st.pop()
+            left_first = False
+            right_first = False
+            if len(n_right) > 1 and priority[last_op.pop()] < priority[symbol]:
+                right_first = True
+            if len(n_left) > 1 and priority[last_op.pop()] < priority[symbol]:
+                left_first = True
+            if left_first:
+                n_left = ['('] + n_left + [')']
+            if right_first:
+                n_right = ['('] + n_right + [')']
+            st.append(n_left + [symbol] + n_right)
+            last_op.append(symbol)
+    res = st.pop()
     return res
 
 

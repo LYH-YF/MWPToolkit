@@ -5,7 +5,7 @@ import stanza
 
 from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operators, MaskSymbol, SPECIAL_TOKENS, DatasetName, TaskType
-from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix
+from mwptoolkit.utils.preprocess_tool.equation_operator import from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
 from mwptoolkit.utils.preprocess_tools import id_reedit,dataset_drop_duplication
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.utils import read_json_data,write_json_data
@@ -31,19 +31,61 @@ class DatasetMultiEncDec(TemplateDataset):
         self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
         self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
         self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
-    
+        source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
+        if source_equation_fix==FixType.Infix:
+            to_infix=None
+            to_prefix=from_infix_to_prefix
+            to_postfix=from_infix_to_postfix
+        elif source_equation_fix==FixType.Prefix:
+            to_infix=from_prefix_to_infix
+            to_prefix=None
+            to_postfix=from_prefix_to_postfix
+        elif source_equation_fix==FixType.Postfix:
+            to_infix=from_postfix_to_infix
+            to_prefix=from_postfix_to_prefix
+            to_postfix=None
+        else:
+            raise NotImplementedError()
         for idx, data in enumerate(self.trainset):
-            self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
-            self.trainset[idx]["postfix equation"] = from_infix_to_postfix(data["equation"])
-            self.trainset[idx]["prefix equation"] = from_infix_to_prefix(data["equation"])
+            if to_infix:
+                self.trainset[idx]["infix equation"] = to_infix(data["equation"])
+            else:
+                self.trainset[idx]["infix equation"] = data["equation"]
+            if to_postfix:
+                self.trainset[idx]["postfix equation"] = to_postfix(data["equation"])
+            else:
+                self.trainset[idx]["postfix equation"] = data["equation"]
+            if to_prefix:
+                self.trainset[idx]["prefix equation"] = to_prefix(data["equation"])
+            else:
+                self.trainset[idx]["prefix equation"] = data["equation"]
         for idx, data in enumerate(self.validset):
-            self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
-            self.validset[idx]["postfix equation"] = from_infix_to_postfix(data["equation"])
-            self.validset[idx]["prefix equation"] = from_infix_to_prefix(data["equation"])
+            if to_infix:
+                self.trainset[idx]["infix equation"] = to_infix(data["equation"])
+            else:
+                self.trainset[idx]["infix equation"] = data["equation"]
+            if to_postfix:
+                self.trainset[idx]["postfix equation"] = to_postfix(data["equation"])
+            else:
+                self.trainset[idx]["postfix equation"] = data["equation"]
+            if to_prefix:
+                self.trainset[idx]["prefix equation"] = to_prefix(data["equation"])
+            else:
+                self.trainset[idx]["prefix equation"] = data["equation"]
         for idx, data in enumerate(self.testset):
-            self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
-            self.testset[idx]["postfix equation"] = from_infix_to_postfix(data["equation"])
-            self.testset[idx]["prefix equation"] = from_infix_to_prefix(data["equation"])
+            if to_infix:
+                self.trainset[idx]["infix equation"] = to_infix(data["equation"])
+            else:
+                self.trainset[idx]["infix equation"] = data["equation"]
+            if to_postfix:
+                self.trainset[idx]["postfix equation"] = to_postfix(data["equation"])
+            else:
+                self.trainset[idx]["postfix equation"] = data["equation"]
+            if to_prefix:
+                self.trainset[idx]["prefix equation"] = to_prefix(data["equation"])
+            else:
+                self.trainset[idx]["prefix equation"] = data["equation"]
+        
         self.generate_list = unk_symbol + generate_list
         if self.symbol_for_tree:
             self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])

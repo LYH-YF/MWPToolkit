@@ -10,7 +10,7 @@ from transformers import AutoTokenizer
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
-from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
 from mwptoolkit.utils.preprocess_tools import postfix_parser
 from mwptoolkit.utils.preprocess_tools import preprocess_ept_dataset_
 from mwptoolkit.utils.preprocess_tools import id_reedit,read_aux_jsonl_data
@@ -34,8 +34,16 @@ class DatasetEPT(AbstractDataset):
         self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
         self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
         self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
-    
-        fix = from_infix_to_postfix
+
+        source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
+        if source_equation_fix==FixType.Infix:
+            fix = from_infix_to_postfix
+        elif source_equation_fix==FixType.Prefix:
+            fix = from_prefix_to_postfix
+        elif source_equation_fix==FixType.Postfix:
+            fix = None
+        else:
+            raise NotImplementedError()
         self.fix_process(fix)
         self.operator_mask_process()
 

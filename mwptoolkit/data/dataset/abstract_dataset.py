@@ -29,6 +29,7 @@ class AbstractDataset(object):
         self.linear = config["linear"]
         self.device = config["device"]
         self.equation_fix = config["equation_fix"]
+        self.source_equation_fix = config["source_equation_fix"]
         self.root = config['root']
         self.rebuild = config['rebuild']
         self.max_span_size = 1

@@ -17,6 +17,7 @@ deprel_tree_info.json
 *.log
 /test.py
 /test2.py
+/test3.py
 /mwptoolkit/utils/old.py
 /dataset/math23k/span_level_deprel_tree_info.json
 /dataset/math23k/deprel_tree_info.json

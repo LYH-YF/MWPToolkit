@@ -21,6 +21,7 @@ class Operators:
 class FixType:
     Prefix = "prefix"
     Postfix = "postfix"
+    Infix = "infix"
     Nonfix = None
     MultiWayTree = "multi_way_tree"
 
@@ -35,6 +36,7 @@ class DatasetName:
     SVAMP = "SVAMP"
     asdiv_a = "asdiv-a"
     mawps_single = "mawps-single"
+    mawps_asdiv_a_svamp = "mawps_asdiv-a_svamp"
 
 
 class DatasetType:

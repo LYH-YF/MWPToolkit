@@ -9,7 +9,8 @@ from transformers import RobertaTokenizer,BertTokenizer
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.enum_type import DatasetName, MaskSymbol, NumMask,TaskType,FixType,Operators,SpecialTokens
 from mwptoolkit.utils.preprocess_tools import id_reedit
-from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_multi_way_tree
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
 from mwptoolkit.utils.preprocess_tool.sentence_operator import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 
@@ -50,13 +51,23 @@ class PretrainDataset(AbstractDataset):
                 warnings.warn("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
                 #raise UserWarning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
 
-        if self.equation_fix == FixType.Prefix:
-            fix = from_infix_to_prefix
-        elif self.equation_fix == FixType.Postfix:
-            fix = from_infix_to_postfix
-        elif self.equation_fix == FixType.Nonfix:
+        target_equation_fix=self.equation_fix if self.equation_fix else FixType.Infix
+        source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
+        if source_equation_fix == target_equation_fix:
             fix = None
-        elif self.equation_fix == FixType.MultiWayTree:
+        elif source_equation_fix == FixType.Infix and target_equation_fix == FixType.Prefix:
+            fix = from_infix_to_prefix
+        elif source_equation_fix == FixType.Infix and target_equation_fix == FixType.Postfix:
+            fix = from_infix_to_postfix
+        elif source_equation_fix == FixType.Prefix and target_equation_fix == FixType.Postfix:
+            fix = from_prefix_to_postfix
+        elif source_equation_fix == FixType.Prefix and target_equation_fix == FixType.Infix:
+            fix = from_prefix_to_infix
+        elif source_equation_fix == FixType.Postfix and target_equation_fix == FixType.Infix:
+            fix = from_postfix_to_infix
+        elif source_equation_fix == FixType.Postfix and target_equation_fix == FixType.Prefix:
+            fix = from_postfix_to_prefix
+        elif source_equation_fix == FixType.Infix and target_equation_fix == FixType.MultiWayTree:
             fix = from_infix_to_multi_way_tree
         else:
             raise NotImplementedError("the type of equation fix ({}) is not implemented.".format(self.equation_fix))

@@ -9,7 +9,8 @@ import torch
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tools import preprocess_ept_dataset_
-from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_infix_to_multi_way_tree, postfix_parser
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_multi_way_tree, postfix_parser
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
 from mwptoolkit.utils.preprocess_tool.sentence_operator import deprel_tree_to_file, get_group_nums_, span_level_deprel_tree_to_file, get_span_level_deprel_tree_, get_deprel_tree_
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.enum_type import MaskSymbol, NumMask, SpecialTokens, FixType, Operators, DatasetName, EPT
@@ -27,9 +28,6 @@ class SingleEquationDataset(AbstractDataset):
         if self.parse_tree_path != None:
             self.parse_tree_path = self.dataset_path + '/' + self.parse_tree_path + '.json'
             self.parse_tree_path = os.path.join(self.root,self.parse_tree_path)
-
-        if self.model.lower() in ['ept']:
-            self.decoder = config["decoder"]
         
         if config["pretrained_model"] != None:
             self.pretrained_model = config["pretrained_model"]
@@ -55,14 +53,23 @@ class SingleEquationDataset(AbstractDataset):
             else:
                 warnings.warn("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
                 #raise Warning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
-
-        if self.equation_fix == FixType.Prefix:
-            fix = from_infix_to_prefix
-        elif self.equation_fix == FixType.Postfix:
-            fix = from_infix_to_postfix
-        elif self.equation_fix == FixType.Nonfix:
+        target_equation_fix=self.equation_fix if self.equation_fix else FixType.Infix
+        source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
+        if source_equation_fix == target_equation_fix:
             fix = None
-        elif self.equation_fix == FixType.MultiWayTree:
+        elif source_equation_fix == FixType.Infix and target_equation_fix == FixType.Prefix:
+            fix = from_infix_to_prefix
+        elif source_equation_fix == FixType.Infix and target_equation_fix == FixType.Postfix:
+            fix = from_infix_to_postfix
+        elif source_equation_fix == FixType.Prefix and target_equation_fix == FixType.Postfix:
+            fix = from_prefix_to_postfix
+        elif source_equation_fix == FixType.Prefix and target_equation_fix == FixType.Infix:
+            fix = from_prefix_to_infix
+        elif source_equation_fix == FixType.Postfix and target_equation_fix == FixType.Infix:
+            fix = from_postfix_to_infix
+        elif source_equation_fix == FixType.Postfix and target_equation_fix == FixType.Prefix:
+            fix = from_postfix_to_prefix
+        elif source_equation_fix == FixType.Infix and target_equation_fix == FixType.MultiWayTree:
             fix = from_infix_to_multi_way_tree
         else:
             raise NotImplementedError("the type of equation fix ({}) is not implemented.".format(self.equation_fix))
@@ -121,15 +128,6 @@ class SingleEquationDataset(AbstractDataset):
                                         self.parse_tree_path, self.language, use_gpu)
                 self.trainset, self.validset, self.testset =\
                     get_group_nums_(self.trainset, self.validset, self.testset, self.parse_tree_path)
-        if self.model.lower() in ["ept"]:
-            logger = getLogger()
-            logger.info("build ept information ···")
-            self.trainset, self.validset, self.testset = \
-                preprocess_ept_dataset_(self.trainset, self.validset, self.testset, self.dataset)
-        
-        # write_json_data(self.trainset,'trainset_fold{}.json'.format(self.fold_t))
-        # write_json_data(self.testset,'testset_fold{}.json'.format(self.fold_t))
-        
 
     def _build_vocab(self):
         words_count = {}

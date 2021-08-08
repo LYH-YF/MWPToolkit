@@ -28,7 +28,10 @@ class TSN(nn.Module):
         self.num_layers = config["num_layers"]
         self.rnn_cell_type = config["rnn_cell_type"]
         self.alpha = 0.15
-        self.max_encoder_mask_len=128
+        #self.max_input_len=config['max_len']
+        self.max_encoder_mask_len=config['max_encoder_mask_len']
+        if self.max_encoder_mask_len == None:
+            self.max_encoder_mask_len=128
 
         self.vocab_size = len(dataset.in_idx2word)
         self.out_symbol2idx = dataset.out_symbol2idx

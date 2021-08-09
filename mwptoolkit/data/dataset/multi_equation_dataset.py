@@ -63,11 +63,11 @@ class MultiEquationDataset(AbstractDataset):
 
         if self.rule2:
             if source_equation_fix != FixType.Infix:
-                warnings.warn("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
+                warnings.warn("non-infix-equation datasets may not surport en rule2 process, already ignored it. ")
             elif self.linear and self.single:
                 self.en_rule2_process()
             else:
-                warnings.warn("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
+                warnings.warn("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
                 #raise Warning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
             
         if source_equation_fix == target_equation_fix:

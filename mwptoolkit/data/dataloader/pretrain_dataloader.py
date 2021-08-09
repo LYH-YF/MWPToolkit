@@ -105,7 +105,6 @@ class PretrainDataLoader(AbstractDataLoader):
             template = data["template"]
 
             # question word to index
-            print(len(data["question"]))
             #sentence=self.dataset.tokenizer.tokenize(' '.join(data["question"]))
             if self.add_sos:
                 sentence=[SpecialTokens.SOS_TOKEN]+sentence

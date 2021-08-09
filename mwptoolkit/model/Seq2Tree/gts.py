@@ -135,7 +135,6 @@ class GTS(nn.Module):
             seq_emb = self.embedder(seq,ques_mask)
         else:
             seq_emb = self.embedder(seq)
-        print(seq_length)
         pade_outputs, _ = self.encoder(seq_emb, seq_length)
         problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]

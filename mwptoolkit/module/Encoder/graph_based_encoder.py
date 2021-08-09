@@ -32,7 +32,7 @@ class GraphBasedEncoder(nn.Module):
 
     def forward(self, input_embedding, input_lengths, batch_graph, hidden=None):
         # Note: we run this all at once (over multiple batches of multiple sequences)
-        packed = torch.nn.utils.rnn.pack_padded_sequence(input_embedding, input_lengths,batch_first=True, enforce_sorted=False)
+        packed = torch.nn.utils.rnn.pack_padded_sequence(input_embedding, input_lengths,batch_first=True, enforce_sorted=True)
         pade_hidden = hidden
         pade_outputs, pade_hidden = self.encoder(packed, pade_hidden)
         pade_outputs, hidden_states = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs,batch_first=True)
@@ -289,7 +289,7 @@ class GraphBasedMultiEncoder(nn.Module):
         embedded2 = self.embedding2(input2_var)
         embedded = torch.cat((embedded1, embedded2), dim=2)
         embedded = self.em_dropout(embedded)
-        packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length, batch_first=True, enforce_sorted=False)
+        packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length, batch_first=True, enforce_sorted=True)
         pade_hidden = hidden
         pade_outputs, pade_hidden = self.gru(packed, pade_hidden)
         pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs,batch_first=True)

@@ -3591,6 +3591,11 @@ def ept_preprocess(datas, dataset_name):
             data["ans"] = [str2float(data["ans"])]
             answer_list = [tuple(x for x in data['ans'])]
             problem = data["original_text"].strip()
+        elif dataset_name == "mawps_asdiv-a_svamp":
+            data["original_text"] = data["ques source 1"].strip()
+            data['ans']=[data['ans']]
+            answer_list = [tuple(x for x in data['ans'])]
+            problem = data["original_text"].strip()
         elif dataset_name == 'math23k':
             data["original_text"] = data["ques source 1"].strip()
             data["ans"] = [str2float(data["ans"])]

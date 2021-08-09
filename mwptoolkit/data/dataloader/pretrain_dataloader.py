@@ -93,6 +93,8 @@ class PretrainDataLoader(AbstractDataLoader):
         num_stack_batch = []
 
         group_nums_batch = []
+        for data in batch_data:
+            data['question']=self.dataset.tokenizer.tokenize(' '.join(data["question"]))
         batch_data=sorted(batch_data,key=lambda x:len(x['question']),reverse=True)
         for data in batch_data:
             ques_tensor = []
@@ -104,7 +106,7 @@ class PretrainDataLoader(AbstractDataLoader):
 
             # question word to index
             print(len(data["question"]))
-            sentence=self.dataset.tokenizer.tokenize(' '.join(data["question"]))
+            #sentence=self.dataset.tokenizer.tokenize(' '.join(data["question"]))
             if self.add_sos:
                 sentence=[SpecialTokens.SOS_TOKEN]+sentence
             if self.add_eos:

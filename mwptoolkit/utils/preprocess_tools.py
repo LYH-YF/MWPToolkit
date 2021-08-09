@@ -3402,7 +3402,7 @@ def infix_to_postfix(equation, free_symbols: list,
 
 
 def refine_formula_as_prefix(item, numbers, dataset_name):
-    if dataset_name in ['SVAMP','asdiv-a','math23k']:
+    if dataset_name in ['SVAMP','asdiv-a','math23k','mawps_asdiv-a_svamp']:
         formula = item['infix equation']
         
         formula = ["x", "="]+formula

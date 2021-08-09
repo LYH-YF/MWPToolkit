@@ -5,8 +5,8 @@ import torch
 from mwptoolkit.utils.utils import read_json_data, write_json_data
 from mwptoolkit.utils.preprocess_tools import get_group_nums, get_deprel_tree, get_span_level_deprel_tree
 from mwptoolkit.utils.preprocess_tools import id_reedit
-from mwptoolkit.utils.preprocess_tool.equation_operator import operator_mask,EN_rule1_stat,EN_rule2
-from mwptoolkit.utils.enum_type import DatasetName
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_postfix_to_infix, from_prefix_to_infix, operator_mask,EN_rule1_stat,EN_rule2
+from mwptoolkit.utils.enum_type import DatasetName,FixType
 
 
 class AbstractDataset(object):
@@ -71,23 +71,54 @@ class AbstractDataset(object):
         Args:
             fix: a function to make postfix, prefix or None  
         """
+        source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
         if fix != None:
             for idx, data in enumerate(self.trainset):
-                self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+                if source_equation_fix==FixType.Prefix:
+                    self.trainset[idx]["infix equation"] = from_prefix_to_infix(data["equation"])
+                elif source_equation_fix==FixType.Postfix:
+                    self.trainset[idx]["infix equation"] = from_postfix_to_infix(data["equation"])
+                else:
+                    self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
                 self.trainset[idx]["equation"] = fix(data["equation"])
             for idx, data in enumerate(self.validset):
-                self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+                if source_equation_fix==FixType.Prefix:
+                    self.validset[idx]["infix equation"] = from_prefix_to_infix(data["equation"])
+                elif source_equation_fix==FixType.Postfix:
+                    self.validset[idx]["infix equation"] = from_postfix_to_infix(data["equation"])
+                else:
+                    self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
                 self.validset[idx]["equation"] = fix(data["equation"])
             for idx, data in enumerate(self.testset):
-                self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+                if source_equation_fix==FixType.Prefix:
+                    self.testset[idx]["infix equation"] = from_prefix_to_infix(data["equation"])
+                elif source_equation_fix==FixType.Postfix:
+                    self.testset[idx]["infix equation"] = from_postfix_to_infix(data["equation"])
+                else:
+                    self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
                 self.testset[idx]["equation"] = fix(data["equation"])
         else:
             for idx, data in enumerate(self.trainset):
-                self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+                if source_equation_fix==FixType.Prefix:
+                    self.trainset[idx]["infix equation"] = from_prefix_to_infix(data["equation"])
+                elif source_equation_fix==FixType.Postfix:
+                    self.trainset[idx]["infix equation"] = from_postfix_to_infix(data["equation"])
+                else:
+                    self.trainset[idx]["infix equation"] = copy.deepcopy(data["equation"])
             for idx, data in enumerate(self.validset):
-                self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+                if source_equation_fix==FixType.Prefix:
+                    self.validset[idx]["infix equation"] = from_prefix_to_infix(data["equation"])
+                elif source_equation_fix==FixType.Postfix:
+                    self.validset[idx]["infix equation"] = from_postfix_to_infix(data["equation"])
+                else:
+                    self.validset[idx]["infix equation"] = copy.deepcopy(data["equation"])
             for idx, data in enumerate(self.testset):
-                self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
+                if source_equation_fix==FixType.Prefix:
+                    self.testset[idx]["infix equation"] = from_prefix_to_infix(data["equation"])
+                elif source_equation_fix==FixType.Postfix:
+                    self.testset[idx]["infix equation"] = from_postfix_to_infix(data["equation"])
+                else:
+                    self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
 
     def operator_mask_process(self):
         for idx, data in enumerate(self.trainset):

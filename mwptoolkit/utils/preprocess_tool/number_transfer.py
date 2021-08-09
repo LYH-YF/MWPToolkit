@@ -91,9 +91,9 @@ def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep
 
 def seg_and_tag_single(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
-    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-(([(]\d+\.\d+[)])|([(]\d+/\d+[)]))", st)  #search negative number but filtate minus symbol
+    pos_st = re.search(r"-\d+\.\d+%?|-\d+%?", st)  #search negative number but filtate minus symbol
     if pos_st:
-        p_start = pos_st.start() + 1
+        p_start = pos_st.start()
         p_end = pos_st.end()
         if p_start > 0:
             res += seg_and_tag_single(st[:p_start], nums_fraction, nums)
@@ -131,7 +131,7 @@ def seg_and_tag_single(st, nums_fraction, nums):  # seg the equation and tag the
         except:
             res.append(st_num)
         if p_end < len(st):
-            res += seg_and_tag_math23k(st[p_end:], nums_fraction, nums)
+            res += seg_and_tag_single(st[p_end:], nums_fraction, nums)
         return res
     for ss in st:
         if ss==' ':

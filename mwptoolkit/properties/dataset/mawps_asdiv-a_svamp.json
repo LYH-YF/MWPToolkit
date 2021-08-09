@@ -8,5 +8,6 @@
     "language":"en",
     "train_batch_size":32,
     "test_batch_size":32,
-    "source_equation_fix":"prefix"
+    "source_equation_fix":"prefix",
+    "validset_divide":false
 }

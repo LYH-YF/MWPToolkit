@@ -6,5 +6,6 @@
     "test_step":2,
     "load_best_config":false,
     "supervising_mode": "fully_supervised",
-    "rebuild":false
+    "rebuild":false,
+    "validset_divide":true
 }

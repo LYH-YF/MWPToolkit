@@ -121,7 +121,7 @@ class SupervisedTrainer(AbstractTrainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"] or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
@@ -382,7 +382,7 @@ class GTSTrainer(AbstractTrainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"]  or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
@@ -747,7 +747,7 @@ class TreeLSTMTrainer(AbstractTrainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"] or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
@@ -1017,7 +1017,7 @@ class TRNNTrainer(SupervisedTrainer):
             self.logger.info("target wrong: {} target total: {}".format(self.model.wrong, self.dataloader.trainset_nums))
             self.model.wrong = 0
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"]  or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac, template_ac, equation_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | seq2seq module acc [%2.3f] | answer module acc [%2.3f]"\
@@ -1295,7 +1295,7 @@ class SalignedTrainer(SupervisedTrainer):
                                 %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"] or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
@@ -1667,7 +1667,7 @@ class TSNTrainer(AbstractTrainer):
                                 %(self.t_epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"] or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate_teacher(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
@@ -1721,7 +1721,7 @@ class TSNTrainer(AbstractTrainer):
                                 %(self.s_epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"] or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac,s1_equ_ac,s1_val_ac,s2_equ_ac,s2_val_ac, test_total, test_time_cost = self.evaluate_student(DatasetType.Test)
 
                     self.logger.info("---------- test total [%d] | student1 equ acc [%2.3f] | student1 value acc [%2.3f] | student2 equ acc [%2.3f] | student2 value acc [%2.3f]"\
@@ -1929,7 +1929,7 @@ class EPTTrainer(AbstractTrainer):
                              % (self.epoch_i, loss_total / self.train_batch_nums, train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                if self.config["k_fold"]:
+                if self.config["k_fold"] or self.config["validset_divide"] is not True:
                     test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                     self.logger.info(

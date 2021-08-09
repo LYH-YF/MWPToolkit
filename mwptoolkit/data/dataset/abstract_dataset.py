@@ -50,6 +50,9 @@ class AbstractDataset(object):
         # self.trainset = read_json_data(trainset_file)[:]
         # self.validset = read_json_data(validset_file)[:]
         # self.testset = read_json_data(testset_file)[:]
+        if self.validset_divide is not True:
+            self.testset = self.validset + self.testset
+            self.validset = []
 
         if self.dataset in [DatasetName.hmwp]:
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)

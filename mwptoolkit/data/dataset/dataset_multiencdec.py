@@ -5,7 +5,7 @@ import stanza
 
 from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operators, MaskSymbol, SPECIAL_TOKENS, DatasetName, TaskType
-from mwptoolkit.utils.preprocess_tool.equation_operator import from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
 from mwptoolkit.utils.preprocess_tools import id_reedit,dataset_drop_duplication
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.utils import read_json_data,write_json_data
@@ -61,30 +61,30 @@ class DatasetMultiEncDec(TemplateDataset):
                 self.trainset[idx]["prefix equation"] = data["equation"]
         for idx, data in enumerate(self.validset):
             if to_infix:
-                self.trainset[idx]["infix equation"] = to_infix(data["equation"])
+                self.validset[idx]["infix equation"] = to_infix(data["equation"])
             else:
-                self.trainset[idx]["infix equation"] = data["equation"]
+                self.validset[idx]["infix equation"] = data["equation"]
             if to_postfix:
-                self.trainset[idx]["postfix equation"] = to_postfix(data["equation"])
+                self.validset[idx]["postfix equation"] = to_postfix(data["equation"])
             else:
-                self.trainset[idx]["postfix equation"] = data["equation"]
+                self.validset[idx]["postfix equation"] = data["equation"]
             if to_prefix:
-                self.trainset[idx]["prefix equation"] = to_prefix(data["equation"])
+                self.validset[idx]["prefix equation"] = to_prefix(data["equation"])
             else:
-                self.trainset[idx]["prefix equation"] = data["equation"]
+                self.validset[idx]["prefix equation"] = data["equation"]
         for idx, data in enumerate(self.testset):
             if to_infix:
-                self.trainset[idx]["infix equation"] = to_infix(data["equation"])
+                self.testset[idx]["infix equation"] = to_infix(data["equation"])
             else:
-                self.trainset[idx]["infix equation"] = data["equation"]
+                self.testset[idx]["infix equation"] = data["equation"]
             if to_postfix:
-                self.trainset[idx]["postfix equation"] = to_postfix(data["equation"])
+                self.testset[idx]["postfix equation"] = to_postfix(data["equation"])
             else:
-                self.trainset[idx]["postfix equation"] = data["equation"]
+                self.testset[idx]["postfix equation"] = data["equation"]
             if to_prefix:
-                self.trainset[idx]["prefix equation"] = to_prefix(data["equation"])
+                self.testset[idx]["prefix equation"] = to_prefix(data["equation"])
             else:
-                self.trainset[idx]["prefix equation"] = data["equation"]
+                self.testset[idx]["prefix equation"] = data["equation"]
         
         self.generate_list = unk_symbol + generate_list
         if self.symbol_for_tree:

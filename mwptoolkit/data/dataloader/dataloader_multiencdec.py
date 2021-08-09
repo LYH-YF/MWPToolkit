@@ -63,6 +63,7 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
 
         id_batch=[]
         ans_batch=[]
+        batch=sorted(batch,key=lambda x:len(x['question']),reverse=True)
         for data in batch:
             input1_tensor=[]
             input2_tensor=[]

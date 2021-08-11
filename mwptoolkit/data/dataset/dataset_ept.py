@@ -6,7 +6,7 @@ from collections import Counter
 
 import torch
 import stanza
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer,AlbertTokenizer
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
@@ -191,7 +191,10 @@ class DatasetEPT(AbstractDataset):
                 self.in_idx2word.append(key)
 
         if self.pretrained_model:
-            pretrained_tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model)
+            if self.dataset in ['math23k','hmwp']:
+                pretrained_tokenizer = AlbertTokenizer.from_pretrained(self.pretrained_model)
+            else:
+                pretrained_tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model)
             self.in_idx2word = list(pretrained_tokenizer.get_vocab().keys())
             self.in_idx2word.append('[N]')
             for key, value in words_count.items():

@@ -210,7 +210,8 @@ class SupervisedTrainer(AbstractTrainer):
             #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
+                # if self.config["validset_divide"] is not True:
+                #     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
 
                 # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
                 #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))

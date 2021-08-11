@@ -7,7 +7,7 @@
     "warmup_steps": 1500,
     "share_vocab":true,
     "test_batch_size":32,
-    "epoch_nums":80,
+    "epoch_nums":200,
     "add_sos":true,
     "add_eos":true
 }

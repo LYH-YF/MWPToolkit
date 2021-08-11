@@ -3,6 +3,7 @@
     "hidden_size":512,
     "decode_hidden_size":512,
     "learning_rate":1e-3,
+    "embedding_learning_rate":1e-5,
     "decoder_rnn_cell_type":"lstm",
     "encoder_rnn_cell_type":"lstm",
     "teacher_force_ratio":0.9,

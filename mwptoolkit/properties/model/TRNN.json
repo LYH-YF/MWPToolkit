@@ -15,6 +15,7 @@
     "ans_hidden_size":512,
     "ans_dropout_ratio":0.5,
     "ans_num_layers":2,
+    "embedding_learning_rate":1e-5,
     "epoch_nums":100,
     "share_vocab":false,
     "mask_symbol":"number",

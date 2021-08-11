@@ -7,6 +7,8 @@ from torch.nn import functional as F
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder, SelfAttentionRNNEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder, AttentionalRNNDecoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.roberta_embedder import RobertaEmbedder
+from mwptoolkit.module.Embedder.bert_embedder import BertEmbedder
 from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
@@ -27,6 +29,7 @@ class MathEN(nn.Module):
         self.decoder_rnn_cell_type = config["decoder_rnn_cell_type"]
         self.self_attention = config["self_attention"]
         self.max_gen_len = config["max_output_len"]
+        self.embedding=config["embedding"]
         self.vocab_size = len(dataset.in_idx2word)
         self.symbol_size = len(dataset.out_idx2symbol)
         self.mask_list = NumMask.number
@@ -52,8 +55,12 @@ class MathEN(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-
-        self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        if config['embedding'] == 'roberta':
+            self.in_embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+        elif config['embedding'] == 'bert':
+            self.in_embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+        else:
+            self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
             self.out_embedder = self.in_embedder
         else:
@@ -124,11 +131,15 @@ class MathEN(nn.Module):
         seq = batch_data['question']
         seq_length = batch_data['ques len']
         target = batch_data['equation']
+        ques_mask = batch_data["ques mask"]
 
         batch_size = seq.size(0)
         device = seq.device
 
-        seq_emb = self.in_embedder(seq)
+        if self.embedding == 'roberta':
+            seq_emb = self.in_embedder(seq,ques_mask)
+        else:
+            seq_emb = self.in_embedder(seq)
         encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
 
         if self.self_attention:
@@ -169,11 +180,15 @@ class MathEN(nn.Module):
         seq_length = batch_data['ques len']
         num_list = batch_data['num list']
         target = batch_data['equation']
+        ques_mask = batch_data["ques mask"]
 
         batch_size = seq.size(0)
         device = seq.device
 
-        seq_emb = self.in_embedder(seq)
+        if self.embedding == 'roberta':
+            seq_emb = self.in_embedder(seq,ques_mask)
+        else:
+            seq_emb = self.in_embedder(seq)
         encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
 
         if self.self_attention:

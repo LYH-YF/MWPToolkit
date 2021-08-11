@@ -2107,3 +2107,68 @@ class EPTTrainer(AbstractTrainer):
         #                     best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
         #                     %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
         #                         self.best_test_equ_accuracy,self.best_test_value_accuracy))
+
+
+class PretrainSeq2SeqTrainer(SupervisedTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+
+    def _build_optimizer(self):
+        if self.config['share_vocab']:
+            self.optimizer = torch.optim.Adam(
+                [
+                    {"params": self.in_embedder.parameters(), "lr": self.config["embedding_learning_rate"]},
+                    {"params": self.encoder.parameters()},
+                    {"params": self.decoder.parameters()},
+                    {"params": self.model.generate_linear.parameters()}
+                ],
+                lr = self.config["learning_rate"]
+            )
+        else:
+            self.optimizer = torch.optim.Adam(
+                [
+                    {"params": self.model.in_embedder.parameters(), "lr": self.config["embedding_learning_rate"]},
+                    {"params": self.model.out_embedder.parameters()},
+                    {"params": self.model.encoder.parameters()},
+                    {"params": self.model.decoder.parameters()},
+                    {"params": self.model.generate_linear.parameters()}
+                ],
+                lr = self.config["learning_rate"]
+            )
+
+class PretrainTRNNTrainer(TRNNTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+    
+    def _build_optimizer(self):
+        if self.config['share_vocab']:
+            self.optimizer = torch.optim.Adam(
+                [
+                    {'params': self.model.seq2seq_in_embedder.parameters(),'lr':self.config["embedding_learning_rate"]}, \
+                    {'params': self.model.seq2seq_encoder.parameters()}, \
+                    {'params': self.model.seq2seq_decoder.parameters()}, \
+                    {'params': self.model.seq2seq_gen_linear.parameters()}\
+                ],
+                lr = self.config["seq2seq_learning_rate"]
+            )
+        else:
+            self.optimizer = torch.optim.Adam(
+                [
+                    {'params': self.model.seq2seq_in_embedder.parameters(),'lr':self.config["embedding_learning_rate"]}, \
+                    {'params': self.model.seq2seq_out_embedder.parameters()}, \
+                    {'params': self.model.seq2seq_encoder.parameters()}, \
+                    {'params': self.model.seq2seq_decoder.parameters()}, \
+                    {'params': self.model.seq2seq_gen_linear.parameters()}\
+                ],
+                lr = self.config["seq2seq_learning_rate"]
+            )
+
+        self.answer_module_optimizer = torch.optim.SGD(
+            [
+                {'params': self.model.answer_in_embedder.parameters(),'lr':self.config["embedding_learning_rate"]}, \
+                {'params': self.model.answer_encoder.parameters()}, \
+                {'params': self.model.answer_rnn.parameters()}\
+            ],
+            lr = self.config["ans_learning_rate"],
+            momentum = 0.9
+        )

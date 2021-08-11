@@ -139,7 +139,7 @@ def get_trainer_(task_type, model_name, sup_mode):
             'AbstractTrainer'
         )
 
-def get_trainer(task_type, model_name, sup_mode):
+def get_trainer(task_type, model_name, sup_mode, config):
     r"""Automatically select trainer class based on task type and model name
 
     Args:
@@ -151,6 +151,20 @@ def get_trainer(task_type, model_name, sup_mode):
         ~mwptoolkit.trainer.SupervisedTrainer: trainer class | ~mwptoolkit.trainer.WeaklySupervisedTrainer
     """
     if sup_mode == SupervisingMode.fully_supervised:
+        if config['embedding']:
+            try:
+                return getattr(
+                    importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                    'Pretrain' + model_name + 'Trainer'
+                )
+            except:
+                if model_name.lower() in ['mathen']:
+                    return getattr(
+                        importlib.import_module('mwptoolkit.trainer.supervised_trainer'),
+                        'PretrainSeq2SeqTrainer'
+                    )
+                else:
+                    pass
         try:
             return getattr(
                 importlib.import_module('mwptoolkit.trainer.supervised_trainer'),

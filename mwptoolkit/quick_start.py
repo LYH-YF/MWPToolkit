@@ -45,7 +45,7 @@ def train_cross_validation(config):
             evaluator = MultiEncDecEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
 
 
-        trainer = get_trainer(config["task_type"], config["model"],config["supervising_mode"])(config, model, dataloader, evaluator)
+        trainer = get_trainer(config["task_type"], config["model"],config["supervising_mode"],config)(config, model, dataloader, evaluator)
         logger.info("fold {}".format(fold_t))
         if config["test_only"]:
             trainer.test()
@@ -107,7 +107,7 @@ def run_toolkit(model_name, dataset_name, task_type, config_dict={}):
         if config['model'].lower() in ['multiencdec']:
             evaluator = MultiEncDecEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
 
-        trainer = get_trainer(config["task_type"], config["model"], config["supervising_mode"])(config, model, dataloader, evaluator)
+        trainer = get_trainer(config["task_type"], config["model"], config["supervising_mode"],config)(config, model, dataloader, evaluator)
         logger.info(model)
         if config["test_only"]:
             trainer.test()

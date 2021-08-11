@@ -14,4 +14,4 @@ class RobertaEmbedder(nn.Module):
         return output
     
     def token_resize(self,input_size):
-        self.bert.resize_token_embeddings(input_size)
+        self.roberta.resize_token_embeddings(input_size)

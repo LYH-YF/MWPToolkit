@@ -151,6 +151,8 @@ class PretrainDataset(AbstractDataset):
         # elif self.mask_symbol==MaskSymbol.number:
         #     tokenizer.add_tokens(NumMask.number[:self.copy_nums])
         #tokenizer.special_tokens_map.update({'pad_token':SpecialTokens.PAD_TOKEN})
+        if self.model.lower() in ['trnn']:
+            tokenizer.add_tokens(self.generate_list)
         global SpecialTokens
         SpecialTokens.PAD_TOKEN=tokenizer.pad_token
         SpecialTokens.SOS_TOKEN=tokenizer.bos_token
@@ -178,11 +180,11 @@ class PretrainDataset(AbstractDataset):
         #             continue
         #         else:
         #             self.in_idx2word.append(symbol)
-        for symbol in self.out_idx2symbol:
-            if symbol in self.in_idx2word:
-                continue
-            else:
-                self.in_idx2word.append(symbol)
+        # for symbol in self.out_idx2symbol:
+        #     if symbol in self.in_idx2word:
+        #         continue
+        #     else:
+        #         self.in_idx2word.append(symbol)
 
         self.in_word2idx = {}
         self.out_symbol2idx = {}

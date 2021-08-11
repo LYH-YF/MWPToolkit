@@ -14,6 +14,8 @@ from mwptoolkit.module.Layer.tree_layers import RecursiveNN
 from mwptoolkit.module.Encoder.rnn_encoder import SelfAttentionRNNEncoder, BasicRNNEncoder
 from mwptoolkit.module.Attention.seq_attention import SeqAttention
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.roberta_embedder import RobertaEmbedder
+from mwptoolkit.module.Embedder.bert_embedder import BertEmbedder
 from mwptoolkit.model.Seq2Seq.rnnencdec import RNNEncDec
 from mwptoolkit.utils.data_structure import Node, BinaryTree
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
@@ -39,6 +41,7 @@ class TRNN(nn.Module):
         self.bidirectional = config["bidirectional"]
         self.attention = True
         self.share_vocab = config["share_vocab"]
+        self.embedding=config["embedding"]
 
         self.mask_list = NumMask.number
         self.in_idx2word = dataset.in_idx2word
@@ -83,7 +86,14 @@ class TRNN(nn.Module):
             self.temp_pad_token = None
 
         # seq2seq module
-        self.seq2seq_in_embedder = BaiscEmbedder(self.vocab_size, self.seq2seq_embedding_size, self.seq2seq_dropout_ratio)
+        if config['embedding'] == 'roberta':
+            self.seq2seq_in_embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.seq2seq_in_embedder.token_resize(self.vocab_size)
+        elif config['embedding'] == 'bert':
+            self.seq2seq_in_embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.seq2seq_in_embedder.token_resize(self.vocab_size)
+        else:
+            self.seq2seq_in_embedder = BaiscEmbedder(self.vocab_size, self.seq2seq_embedding_size, self.seq2seq_dropout_ratio)
         if self.share_vocab:
             self.seq2seq_out_embedder = self.seq2seq_in_embedder
         else:
@@ -94,7 +104,14 @@ class TRNN(nn.Module):
                                                     self.num_layers,self.decoder_rnn_cell_type,self.seq2seq_dropout_ratio)
         self.seq2seq_gen_linear = nn.Linear(self.seq2seq_encode_hidden_size, self.temp_symbol_size)
         #answer module
-        self.answer_in_embedder = BaiscEmbedder(self.vocab_size, self.ans_embedding_size, self.ans_dropout_ratio)
+        if config['embedding'] == 'roberta':
+            self.answer_in_embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.answer_in_embedder.token_resize(self.vocab_size)
+        elif config['embedding'] == 'bert':
+            self.answer_in_embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.answer_in_embedder.token_resize(self.vocab_size)
+        else:
+            self.answer_in_embedder = BaiscEmbedder(self.vocab_size, self.ans_embedding_size, self.ans_dropout_ratio)
         self.answer_encoder=SelfAttentionRNNEncoder(self.ans_embedding_size,self.ans_hidden_size,self.ans_embedding_size,self.num_layers,\
                                                     self.encoder_rnn_cell_type,self.ans_dropout_ratio,self.bidirectional)
         self.answer_rnn = RecursiveNN(self.ans_embedding_size, self.operator_nums, self.operator_list)
@@ -121,6 +138,7 @@ class TRNN(nn.Module):
         seq = batch_data['question']
         seq_length = batch_data['ques len']
         target = batch_data['equation']
+        ques_mask = batch_data["ques mask"]
         num_pos = batch_data['num pos']
         num_list = batch_data["num list"]
         template_target = self.convert_temp_idx2symbol(batch_data['template'])
@@ -128,7 +146,10 @@ class TRNN(nn.Module):
         batch_size = seq.size(0)
         device = seq.device
 
-        seq_emb = self.seq2seq_in_embedder(seq)
+        if self.embedding == 'roberta':
+            seq_emb = self.seq2seq_in_embedder(seq,ques_mask)
+        else:
+            seq_emb = self.seq2seq_in_embedder(seq)
         encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
 
         if self.bidirectional:
@@ -153,7 +174,10 @@ class TRNN(nn.Module):
         template = self.convert_temp_idx2symbol(output_template)
 
         device = seq.device
-        seq_emb = self.answer_in_embedder(seq)
+        if self.embedding == 'roberta':
+            seq_emb = self.answer_in_embedder(seq,ques_mask)
+        else:
+            seq_emb = self.answer_in_embedder(seq)
         encoder_output, encoder_hidden = self.answer_encoder(seq_emb, seq_length)
 
         batch_size = encoder_output.size(0)
@@ -205,11 +229,15 @@ class TRNN(nn.Module):
         seq = batch_data['question']
         seq_length = batch_data['ques len']
         target = batch_data['template']
+        ques_mask = batch_data["ques mask"]
 
         batch_size = seq.size(0)
         device = seq.device
 
-        seq_emb = self.seq2seq_in_embedder(seq)
+        if self.embedding == 'roberta':
+            seq_emb = self.seq2seq_in_embedder(seq,ques_mask)
+        else:
+            seq_emb = self.seq2seq_in_embedder(seq)
         encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
 
         if self.bidirectional:
@@ -242,12 +270,16 @@ class TRNN(nn.Module):
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         num_pos = batch_data["num pos"]
+        ques_mask = batch_data["ques mask"]
         for idx, equ in enumerate(batch_data["equ_source"]):
             batch_data["equ_source"][idx] = equ.split(" ")
         template = batch_data["equ_source"]
 
         device = seq.device
-        seq_emb = self.answer_in_embedder(seq)
+        if self.embedding == 'roberta':
+            seq_emb = self.answer_in_embedder(seq,ques_mask)
+        else:
+            seq_emb = self.answer_in_embedder(seq)
         encoder_output, encoder_hidden = self.answer_encoder(seq_emb, seq_length)
         batch_size = encoder_output.size(0)
         generate_num = torch.tensor(self.generate_idx).to(device)

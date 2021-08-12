@@ -6,7 +6,7 @@ from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 from mwptoolkit.utils.preprocess_tools import find_ept_numbers_in_text, postfix_parser, pad_token_ept_inp, ept_equ_preprocess
 
 
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer,BertTokenizer
 
 class DataLoaderEPT(AbstractDataLoader):
     def __init__(self, config, dataset):
@@ -16,8 +16,10 @@ class DataLoaderEPT(AbstractDataLoader):
         self.validset_nums = len(dataset.validset)
         self.testset_nums = len(dataset.testset)
 
-        
-        self.pretrained_tokenzier = AutoTokenizer.from_pretrained(config["pretrained_model_path"])
+        if self.dataset in ['math23k','hmwp']:
+            pretrained_tokenizer = BertTokenizer.from_pretrained(self.pretrained_model)
+        else:
+            self.pretrained_tokenzier = AutoTokenizer.from_pretrained(config["pretrained_model_path"])
             
         self.pretrained_tokenzier.add_special_tokens({'additional_special_tokens': ['[N]']})
         

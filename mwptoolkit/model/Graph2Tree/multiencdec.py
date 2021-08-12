@@ -1869,16 +1869,19 @@ def evaluate_double(input1_batch, input2_batch, input_length, generate_num1_ids,
                     beam_size=5, english=False, max_length=30):
 
     seq_mask = torch.ByteTensor(1, input_length).fill_(0)
-    num_pos_pad = torch.LongTensor([num_pos_batch])
-    num_order_pad = torch.LongTensor([num_order_batch])
-    parse_graph_pad = torch.LongTensor(parse_graph_batch)
+    # num_pos_pad = torch.LongTensor([num_pos_batch])
+    # num_order_pad = torch.LongTensor([num_order_batch])
+    # parse_graph_pad = torch.LongTensor(parse_graph_batch)
     # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
     # input1_var = torch.LongTensor(input1_batch).transpose()
     # input2_var = torch.LongTensor(input2_batch).unsqueeze(1)
+    num_pos_pad = torch.LongTensor(num_pos_batch)
+    num_order_pad = torch.LongTensor(num_order_batch)
+    parse_graph_pad = parse_graph_batch
     input1_var = input1_batch.transpose(0,1)
     input2_var = input2_batch.transpose(0,1)
 
-    num_mask = torch.ByteTensor(1, len(num_pos_batch) + len(generate_num1_ids)).fill_(0)
+    num_mask = torch.ByteTensor(1, len(num_pos_batch[0]) + len(generate_num1_ids)).fill_(0)
 
     # Set to not-training mode to disable dropout
     encoder.eval()
@@ -1904,7 +1907,9 @@ def evaluate_double(input1_batch, input2_batch, input_length, generate_num1_ids,
     # Run words through encoder
 
     encoder_outputs, encoder_hidden = encoder(input1_var, input2_var, input_length, parse_graph_pad)
-    num_size = len(num_pos_batch)
+    copy_num_len = [len(_) for _ in num_pos_batch]
+    num_size = max(copy_num_len)
+    #num_size = len(num_pos_batch)
     num_encoder_outputs, masked_index = get_all_number_encoder_outputs(encoder_outputs, num_pos_batch, batch_size, 
                                                                         num_size, encoder.hidden_size)
     encoder_outputs, num_outputs, problem_output = numencoder(encoder_outputs, num_encoder_outputs, 

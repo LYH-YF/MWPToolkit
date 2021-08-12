@@ -16,8 +16,8 @@ class DataLoaderEPT(AbstractDataLoader):
         self.validset_nums = len(dataset.validset)
         self.testset_nums = len(dataset.testset)
 
-        if self.dataset in ['math23k','hmwp']:
-            pretrained_tokenizer = BertTokenizer.from_pretrained(self.pretrained_model)
+        if config["dataset"] in ['math23k','hmwp']:
+            self.pretrained_tokenzier = BertTokenizer.from_pretrained(config["pretrained_model_path"])
         else:
             self.pretrained_tokenzier = AutoTokenizer.from_pretrained(config["pretrained_model_path"])
             

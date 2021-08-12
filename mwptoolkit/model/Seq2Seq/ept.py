@@ -35,7 +35,10 @@ class EPT(nn.Module):
         self.teacher_force_ratio = config["teacher_force_ratio"]
         self.task_type = config['task_type']
 
-        self.in_pad_idx = dataset.in_word2idx["<pad>"]
+        try:
+            self.in_pad_idx = dataset.in_word2idx["<pad>"]
+        except:
+            self.in_pad_idx = None
         self.in_word2idx = dataset.in_word2idx
         self.in_idx2word = dataset.in_idx2word
         self.mode = config["decoder"]

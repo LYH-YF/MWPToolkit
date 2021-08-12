@@ -1992,10 +1992,14 @@ def generate_decoder_input(target, decoder_output, nums_stack_batch, num_start, 
     return target
 
 def masked_cross_entropy(logits, target, length):
-    if torch.cuda.is_available():
-        length = torch.LongTensor(length).cuda()
+    if isinstance(length,torch.Tensor):
+        if torch.cuda.is_available():
+            length = length.cuda()
     else:
-        length = torch.LongTensor(length)
+        if torch.cuda.is_available():
+            length = torch.LongTensor(length).cuda()
+        else:
+            length = torch.LongTensor(length)
     """
     Args:
         logits: A Variable containing a FloatTensor of size

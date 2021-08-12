@@ -1660,11 +1660,16 @@ def train_double(input1_batch, input2_batch, input_length, target1_batch, target
     num_stack2_batch = copy.deepcopy(num_stack_batch)
     
     # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
-    input1_var = torch.LongTensor(input1_batch).transpose(0, 1)
-    input2_var = torch.LongTensor(input2_batch).transpose(0, 1)
-    target1 = torch.LongTensor(target1_batch).transpose(0, 1)
-    target2 = torch.LongTensor(target2_batch).transpose(0, 1)
-    parse_graph_pad = torch.LongTensor(parse_graph_batch)
+    # input1_var = torch.LongTensor(input1_batch).transpose(0, 1)
+    # input2_var = torch.LongTensor(input2_batch).transpose(0, 1)
+    # target1 = torch.LongTensor(target1_batch).transpose(0, 1)
+    # target2 = torch.LongTensor(target2_batch).transpose(0, 1)
+    # parse_graph_pad = torch.LongTensor(parse_graph_batch)
+    input1_var = input1_batch.transpose(0, 1)
+    input2_var = input2_batch.transpose(0, 1)
+    target1 = target1_batch.transpose(0, 1)
+    target2 = target2_batch.transpose(0, 1)
+    parse_graph_pad = parse_graph_batch
 
     padding_hidden = torch.FloatTensor([0.0 for _ in range(predict.hidden_size)]).unsqueeze(0)
     batch_size = len(input_length)

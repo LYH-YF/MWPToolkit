@@ -1539,7 +1539,7 @@ def train_attn_double(encoder_outputs, decoder_hidden, target, target_length,
                 decoder_input, decoder_hidden, encoder_outputs, seq_mask)
             all_decoder_outputs[t] = decoder_output
             decoder_input = generate_decoder_input(
-                target[t], decoder_output, nums_stack_batch, num_start, unk)
+                target[t].cpu().tolist(), decoder_output, nums_stack_batch, num_start, unk)
             target[t] = decoder_input
     else:
         beam_list = list()
@@ -1609,7 +1609,7 @@ def train_attn_double(encoder_outputs, decoder_hidden, target, target_length,
 
         for t in range(max_target_length):
             target[t] = generate_decoder_input(
-                target[t], all_decoder_outputs[t], nums_stack_batch, num_start, unk)
+                target[t].cpu().tolist(), all_decoder_outputs[t], nums_stack_batch, num_start, unk)
     # Loss calculation and backpropagation
 
     if USE_CUDA:
@@ -1980,6 +1980,7 @@ def generate_decoder_input(target, decoder_output, nums_stack_batch, num_start, 
     # when the decoder input is copied num but the num has two pos, chose the max
     if USE_CUDA:
         decoder_output = decoder_output.cpu()
+    target = torch.LongTensor(target)
     for i in range(target.size(0)):
         if target[i] == unk:
             num_stack = nums_stack_batch[i].pop()

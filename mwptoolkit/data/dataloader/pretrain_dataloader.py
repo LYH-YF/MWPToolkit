@@ -95,7 +95,7 @@ class PretrainDataLoader(AbstractDataLoader):
         group_nums_batch = []
         for data in batch_data:
             data['question_']=self.dataset.tokenizer.tokenize(' '.join(data["question"]))
-        batch_data=sorted(batch_data,key=lambda x:len(x['question']),reverse=True)
+        batch_data=sorted(batch_data,key=lambda x:len(x['question_']),reverse=True)
         for data in batch_data:
             ques_tensor = []
             equ_tensor = []

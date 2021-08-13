@@ -94,13 +94,13 @@ class PretrainDataLoader(AbstractDataLoader):
 
         group_nums_batch = []
         for data in batch_data:
-            data['question']=self.dataset.tokenizer.tokenize(' '.join(data["question"]))
+            data['question_']=self.dataset.tokenizer.tokenize(' '.join(data["question"]))
         batch_data=sorted(batch_data,key=lambda x:len(x['question']),reverse=True)
         for data in batch_data:
             ques_tensor = []
             equ_tensor = []
             temp_tensor = []
-            sentence = data["question"]
+            sentence = data["question_"]
             equation = data["equation"]
             template = data["template"]
 

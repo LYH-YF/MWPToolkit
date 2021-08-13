@@ -141,6 +141,16 @@ class AbstractDataLoader(object):
         for idx, length in enumerate(batch_seq_len):
             batch_mask.append([1] * length + [0] * (max_length - length))
         return batch_mask
+    
+    def _get_input_mask(self, batch_seq_len):
+        if self.max_len:
+            max_length = self.max_len
+        else:
+            max_length = max(batch_seq_len)
+        batch_mask = []
+        for idx, length in enumerate(batch_seq_len):
+            batch_mask.append([1] * length + [0] * (max_length - length))
+        return batch_mask
 
     def _build_num_stack(self, equation, num_list):
         num_stack = []

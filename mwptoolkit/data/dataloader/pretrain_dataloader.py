@@ -173,7 +173,7 @@ class PretrainDataLoader(AbstractDataLoader):
             equ_batch = self._pad_output_batch(equ_batch, equ_len_batch)
             temp_batch = self._pad_output_batch(temp_batch, equ_len_batch)
         # question mask
-        ques_mask_batch = self._get_mask(ques_len_batch)
+        ques_mask_batch = self._get_input_mask(ques_len_batch)
         # equation mask
         equ_mask_batch = self._get_mask(equ_len_batch)
         # quantity count

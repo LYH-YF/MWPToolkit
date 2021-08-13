@@ -182,7 +182,10 @@ class TRNN(nn.Module):
 
         batch_size = encoder_output.size(0)
         generate_num = torch.tensor(self.generate_idx).to(device)
-        generate_emb = self.answer_in_embedder(generate_num)
+        if self.embedding == 'roberta':
+            generate_emb = self.answer_in_embedder(generate_num,None)
+        else:
+            generate_emb = self.answer_in_embedder(generate_num)
         equations = []
         ans_module_test = []
         for b_i in range(batch_size):
@@ -283,7 +286,10 @@ class TRNN(nn.Module):
         encoder_output, encoder_hidden = self.answer_encoder(seq_emb, seq_length)
         batch_size = encoder_output.size(0)
         generate_num = torch.tensor(self.generate_idx).to(device)
-        generate_emb = self.answer_in_embedder(generate_num)
+        if self.embedding == 'roberta':
+            generate_emb = self.answer_in_embedder(generate_num,None)
+        else:
+            generate_emb = self.answer_in_embedder(generate_num)
 
         batch_prob = []
         batch_target = []

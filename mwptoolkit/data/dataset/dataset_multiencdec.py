@@ -115,6 +115,7 @@ class DatasetMultiEncDec(TemplateDataset):
                     self.build_pos_to_file_with_stanza(self.parse_tree_path)
             else:
                 self.build_pos_to_file_with_stanza(self.parse_tree_path)
+            self.read_pos_from_file(self.parse_tree_path)
         # if os.path.exists(self.parse_tree_path) and not self.rebuild:
         #     logger = getLogger()
         #     logger.info('read pos infomation from {} ...'.format(self.parse_tree_path))

@@ -1,5 +1,6 @@
 import copy
 import math
+import random
 import itertools
 import torch
 import stanza
@@ -245,7 +246,10 @@ class TSN(nn.Module):
         all_node_outputs = self.teacher_test_forward(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length)
         all_outputs = self.convert_idx2symbol(all_node_outputs, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
-
+        if random.random()<0.1:
+            print(all_outputs)
+            print(targets)
+            print("----------")
         return all_outputs, targets
 
     def student_test(self, batch_data):
@@ -278,7 +282,7 @@ class TSN(nn.Module):
         graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
         seq = seq.transpose(0,1) #[S,B]
         target = target.transpose(0,1)
-        
+
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         seq_emb = self.s_embedder(seq)

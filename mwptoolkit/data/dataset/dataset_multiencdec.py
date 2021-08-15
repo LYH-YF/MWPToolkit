@@ -103,12 +103,15 @@ class DatasetMultiEncDec(TemplateDataset):
         if os.path.exists(self.parse_tree_path) and not self.rebuild:
             logger = getLogger()
             logger.info('read pos infomation from {} ...'.format(self.parse_tree_path))
-            self.read_pos_from_file_withltp(self.parse_tree_path)
+            self.read_pos_from_file(self.parse_tree_path)
         else:
             logger = getLogger()
             logger.info('build pos infomation to {} ...'.format(self.parse_tree_path))
-            self.build_pos_to_file_withltp(self.parse_tree_path)
-            self.read_pos_from_file_withltp(self.parse_tree_path)
+            try:
+                import pyltp
+                self.build_pos_to_file_with_pyltp(self.parse_tree_path)
+            except:
+                self.build_pos_to_file_with_stanza(self.parse_tree_path)
         # if os.path.exists(self.parse_tree_path) and not self.rebuild:
         #     logger = getLogger()
         #     logger.info('read pos infomation from {} ...'.format(self.parse_tree_path))
@@ -231,7 +234,7 @@ class DatasetMultiEncDec(TemplateDataset):
 
         self.out_idx2symbol_1 += [SpecialTokens.UNK_TOKEN]
     
-    def build_pos_to_file(self,path):
+    def build_pos_to_file_with_stanza(self,path):
         nlp = stanza.Pipeline(self.language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error')
         new_datas=[]
         for data in self.trainset:
@@ -243,7 +246,7 @@ class DatasetMultiEncDec(TemplateDataset):
                 #pos.append(token['xpos'])
                 pos.append(token['upos'])
                 parse_tree.append(token['head'] - 1)
-            new_datas.append({'id':data['id'],'upos':pos,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'pos':pos,'parse tree':parse_tree})
         for data in self.validset:
             doc = nlp(data["ques source 1"])
             token_list = doc.to_dict()[0]
@@ -252,7 +255,7 @@ class DatasetMultiEncDec(TemplateDataset):
             for token in token_list:
                 pos.append(token['upos'])
                 parse_tree.append(token['head'] - 1)
-            new_datas.append({'id':data['id'],'upos':pos,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'pos':pos,'parse tree':parse_tree})
         for data in self.testset:
             doc = nlp(data["ques source 1"])
             token_list = doc.to_dict()[0]
@@ -261,39 +264,10 @@ class DatasetMultiEncDec(TemplateDataset):
             for token in token_list:
                 pos.append(token['upos'])
                 parse_tree.append(token['head'] - 1)
-            new_datas.append({'id':data['id'],'upos':pos,'parse tree':parse_tree})
+            new_datas.append({'id':data['id'],'pos':pos,'parse tree':parse_tree})
         write_json_data(new_datas,path)
-    def read_pos_from_file(self,path):
-        pos_datas=read_json_data(path)
-        for data in self.trainset:
-            for pos_data in pos_datas:
-                if pos_data['id']!=data['id']:
-                    continue
-                else:
-                    data['pos'] = pos_data['upos']
-                    data['parse tree'] = pos_data['parse tree']
-                    pos_datas.remove(pos_data)
-                    break
-        for data in self.validset:
-            for pos_data in pos_datas:
-                if pos_data['id']!=data['id']:
-                    continue
-                else:
-                    data['pos'] = pos_data['upos']
-                    data['parse tree'] = pos_data['parse tree']
-                    pos_datas.remove(pos_data)
-                    break
-        for data in self.testset:
-            for pos_data in pos_datas:
-                if pos_data['id']!=data['id']:
-                    continue
-                else:
-                    data['pos'] = pos_data['upos']
-                    data['parse tree'] = pos_data['parse tree']
-                    pos_datas.remove(pos_data)
-                    break
     
-    def build_pos_to_file_withltp(self,path):
+    def build_pos_to_file_with_pyltp(self,path):
         from pyltp import Postagger,Parser
         pos_model_path = os.path.join(self.ltp_model_path, "pos.model")
         par_model_path = os.path.join(self.ltp_model_path, 'parser.model')
@@ -323,7 +297,7 @@ class DatasetMultiEncDec(TemplateDataset):
             new_datas.append({'id':data['id'],'pos':postags,'parse tree':parse_tree})
         write_json_data(new_datas,path)
     
-    def read_pos_from_file_withltp(self,path):
+    def read_pos_from_file(self,path):
         pos_datas=read_json_data(path)
         for data in self.trainset:
             for pos_data in pos_datas:

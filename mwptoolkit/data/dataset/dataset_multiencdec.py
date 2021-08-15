@@ -19,7 +19,7 @@ class DatasetMultiEncDec(TemplateDataset):
             self.parse_tree_path = self.dataset_path+'/'+self.parse_tree_path+'.json'
             self.parse_tree_path = os.path.join(self.root,self.parse_tree_path)
         self.ltp_model_path=config['ltp_model_path']
-        if not os.path.isabs(self.ltp_model_path):
+        if self.ltp_model_path and not os.path.isabs(self.ltp_model_path):
             self.ltp_model_path = os.path.join(self.root,self.ltp_model_path)
     def _preprocess(self):
         if self.dataset in [DatasetName.hmwp]:

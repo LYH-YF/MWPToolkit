@@ -12,6 +12,7 @@ class GPT2(nn.Module):
         #self.eval_generate_num = config['eval_generate_num']
         self.device=config["device"]
         self.max_out_len = config['max_output_len']
+        max_input_len =  config["max_len"]
 
         self.pretrained_model_path = config['pretrained_model_path']
 
@@ -102,7 +103,10 @@ class GPT2(nn.Module):
             srcs.append(src)
             tgts.append(tgt)
 
-        src_length = max([len(_) for _ in srcs]) + 1
+        if self.max_input_len is not None:
+            src_length=self.max_input_len - 1
+        else:
+            src_length = max([len(_) for _ in srcs]) + 1
         tgt_length = max([len(_) for _ in tgts]) + 1
 
 
@@ -111,7 +115,10 @@ class GPT2(nn.Module):
         tgts_tensor = torch.LongTensor(tgts)
 
         for i in range(len(srcs)):
-            srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] +self.tokenizer.encode(['<ans>'])
+            if src_length <= len(srcs[i]):
+                srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] +self.tokenizer.encode(['<ans>'])
+            else:
+                srcs[i] = srcs[i][:src_length] +self.tokenizer.encode(['<ans>'])
         srcs_tensor = torch.LongTensor(srcs)
         src_length+=1
 

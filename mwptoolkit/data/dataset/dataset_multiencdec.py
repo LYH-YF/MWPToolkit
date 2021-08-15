@@ -107,10 +107,13 @@ class DatasetMultiEncDec(TemplateDataset):
         else:
             logger = getLogger()
             logger.info('build pos infomation to {} ...'.format(self.parse_tree_path))
-            try:
-                import pyltp
-                self.build_pos_to_file_with_pyltp(self.parse_tree_path)
-            except:
+            if self.language == 'zh':
+                try:
+                    import pyltp
+                    self.build_pos_to_file_with_pyltp(self.parse_tree_path)
+                except:
+                    self.build_pos_to_file_with_stanza(self.parse_tree_path)
+            else:
                 self.build_pos_to_file_with_stanza(self.parse_tree_path)
         # if os.path.exists(self.parse_tree_path) and not self.rebuild:
         #     logger = getLogger()

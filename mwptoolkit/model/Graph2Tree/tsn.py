@@ -2,6 +2,7 @@ import copy
 import math
 import random
 import itertools
+from logging import getLogger
 import torch
 import stanza
 from torch import nn
@@ -247,9 +248,10 @@ class TSN(nn.Module):
         all_outputs = self.convert_idx2symbol(all_node_outputs, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         if random.random()<0.1:
-            print(all_outputs)
-            print(targets)
-            print("----------")
+            logger=getLogger()
+            logger.info(all_outputs)
+            logger.info(targets)
+            logger.info("----------")
         return all_outputs, targets
 
     def student_test(self, batch_data):

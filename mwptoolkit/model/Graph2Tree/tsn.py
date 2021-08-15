@@ -706,8 +706,8 @@ class TSN(nn.Module):
                 masked_index.append(temp_0)
             indices += [0 for _ in range(len(num_pos[b]), num_size)]
             masked_index += [temp_1 for _ in range(len(num_pos[b]), num_size)]
-        indices = torch.LongTensor(indices)
-        masked_index = torch.ByteTensor(masked_index)
+        indices = torch.LongTensor(indices).to(self.device)
+        masked_index = torch.BoolTensor(masked_index).to(self.device)
         masked_index = masked_index.view(batch_size, num_size, hidden_size)
         all_outputs = encoder_outputs.transpose(0, 1).contiguous()
         all_embedding = all_outputs.view(-1, encoder_outputs.size(2))  # S x B x H -> (B x S) x H
@@ -813,8 +813,8 @@ class TSN(nn.Module):
         batch_size = len(seq_length)
         seq_emb = self.t_embedder(seq)
         pade_outputs, _ = self.t_encoder(seq_emb, seq_length, graphs)
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
         #print("encoder_outputs", encoder_outputs.size())
         #print("problem_output", problem_output.size())
         UNK_TOKEN = self.unk_token

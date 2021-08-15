@@ -5,14 +5,15 @@ from mwptoolkit.loss.nll_loss import NLLLoss
 
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask, DatasetName
 
+
 class GPT2(nn.Module):
     def __init__(self, config, dataset):
         super().__init__()
 
         #self.eval_generate_num = config['eval_generate_num']
-        self.device=config["device"]
+        self.device = config["device"]
         self.max_out_len = config['max_output_len']
-        max_input_len =  config["max_len"]
+        self.max_input_len = config["max_len"]
 
         self.pretrained_model_path = config['pretrained_model_path']
 
@@ -23,7 +24,7 @@ class GPT2(nn.Module):
             self.eos_token = self.tokenizer.sep_token
             self.start_token = self.tokenizer.cls_token
         else:
-            self.tokenizer=GPT2Tokenizer.from_pretrained(self.pretrained_model_path)
+            self.tokenizer = GPT2Tokenizer.from_pretrained(self.pretrained_model_path)
             self.eos_token_id = self.tokenizer.eos_token_id
             self.eos_token = self.tokenizer.eos_token
             self.start_token = ''
@@ -31,8 +32,8 @@ class GPT2(nn.Module):
         self.configuration = GPT2Config.from_pretrained(self.pretrained_model_path)
 
         self.decoder = GPT2LMHeadModel.from_pretrained(self.pretrained_model_path, config=self.configuration)
-        
-        self.init_tokenizer_and_resize(dataset.generate_list,NumMask.number[:dataset.copy_nums],dataset.operator_list)
+
+        self.init_tokenizer_and_resize(dataset.generate_list, NumMask.number[:dataset.copy_nums], dataset.operator_list)
         #self.padding_token_idx = self.tokenizer.pad_token_id
 
         # config["vocab_size"] = len(self.tokenizer)
@@ -44,27 +45,27 @@ class GPT2(nn.Module):
         # config["out_idx2symbol"] = list(self.tokenizer.get_vocab().keys())
 
         self.loss = NLLLoss()
-    
-    def init_tokenizer_and_resize(self,generate_list,mask_number_list,operator_list):
+
+    def init_tokenizer_and_resize(self, generate_list, mask_number_list, operator_list):
         _ = self.tokenizer.add_tokens(operator_list)
         _ = self.tokenizer.add_tokens(generate_list)
         _ = self.tokenizer.add_tokens(mask_number_list)
         #self.tokenizer.add_special_tokens({"eos_token":SpecialTokens.EOS_TOKEN})
         #self.tokenizer.eos_token=self.tokenizer.sep_token
-        self.tokenizer.add_special_tokens({"additional_special_tokens": ["<ans>"]},)
-        SpecialTokens.PAD_TOKEN=self.tokenizer.eos_token
+        self.tokenizer.add_special_tokens({"additional_special_tokens": ["<ans>"]}, )
+        SpecialTokens.PAD_TOKEN = self.tokenizer.eos_token
         #SpecialTokens.EOS_TOKEN=self.eos_token
-        SpecialTokens.UNK_TOKEN=self.tokenizer.unk_token
+        SpecialTokens.UNK_TOKEN = self.tokenizer.unk_token
         self.decoder.resize_token_embeddings(len(self.tokenizer))
 
-    def forward(self, seq,target=None):
-        
+    def forward(self, seq, target=None):
+
         if target != None:
-            token_logits,target=self.generate_t(seq,target)
-            return token_logits,target
+            token_logits, target = self.generate_t(seq, target)
+            return token_logits, target
         else:
-            all_output=self.generate_without_t(seq)
-            return all_output,None
+            all_output = self.generate_without_t(seq)
+            return all_output, None
 
     def calculate_loss(self, batch_data):
         seq, target = batch_data["ques_source"], batch_data["equ_source"]
@@ -90,44 +91,42 @@ class GPT2(nn.Module):
         targets = self.convert_idx2symbol(target, num_list)
         return outputs, targets
 
-    def list2str(self,x):
-        y=''.join(x)
+    def list2str(self, x):
+        y = ''.join(x)
         return y
 
-    def generate_t(self,seq,target=None):
+    def generate_t(self, seq, target=None):
         srcs = []
         tgts = []
-        for idx,s in enumerate(seq):
+        for idx, s in enumerate(seq):
             src = self.tokenizer.encode(seq[idx])
             tgt = self.tokenizer.encode(target[idx])
             srcs.append(src)
             tgts.append(tgt)
 
         if self.max_input_len is not None:
-            src_length=self.max_input_len - 1
+            src_length = self.max_input_len - 1
         else:
             src_length = max([len(_) for _ in srcs]) + 1
         tgt_length = max([len(_) for _ in tgts]) + 1
-
 
         for i in range(len(tgts)):
             tgts[i] += (tgt_length - len(tgts[i])) * [self.eos_token_id]
         tgts_tensor = torch.LongTensor(tgts)
 
         for i in range(len(srcs)):
-            if src_length <= len(srcs[i]):
-                srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] +self.tokenizer.encode(['<ans>'])
+            if src_length >= len(srcs[i]):
+                srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
             else:
-                srcs[i] = srcs[i][:src_length] +self.tokenizer.encode(['<ans>'])
+                srcs[i] = srcs[i][:src_length] + self.tokenizer.encode(['<ans>'])
         srcs_tensor = torch.LongTensor(srcs)
-        src_length+=1
-
+        src_length += 1
 
         seq_mask = (tgts_tensor != self.eos_token_id)[:, :-1].float()
         seq_mask = torch.cat([torch.FloatTensor(seq_mask.shape[0], 1).fill_(1.), seq_mask], 1)
 
-        tgts_inputs_tensor = tgts_tensor[:, :-1] #'[CLS] / * num_1 num_2 num_0 [SEP]
-        tgts_outputs_tensor = tgts_tensor        #'[CLS] / * num_1 num_2 num_0 [SEP] [SEP]'
+        tgts_inputs_tensor = tgts_tensor[:, :-1]  #'[CLS] / * num_1 num_2 num_0 [SEP]
+        tgts_outputs_tensor = tgts_tensor  #'[CLS] / * num_1 num_2 num_0 [SEP] [SEP]'
 
         srcs_tensor = srcs_tensor.to(self.device)
         tgts_tensor = tgts_tensor.to(self.device)
@@ -139,19 +138,24 @@ class GPT2(nn.Module):
         logits = self.decoder(inputs)[0]
         logits = logits[:, -tgts_outputs_tensor.shape[1]:, :].contiguous()
         logits = logits.view(-1, logits.shape[-1])
-        return logits,tgts_outputs_tensor
+        return logits, tgts_outputs_tensor
 
-    def generate_without_t(self,seq):
+    def generate_without_t(self, seq):
 
         srcs = []
         for idx, s in enumerate(seq):
             src = self.tokenizer.encode(seq[idx])
             srcs.append(src)
-        src_length = max([len(_) for _ in srcs]) + 1
+        if self.max_input_len is not None:
+            src_length = self.max_input_len - 1
+        else:
+            src_length = max([len(_) for _ in srcs]) + 1
 
         for i in range(len(srcs)):
-            srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] + self.tokenizer.encode(
-                ['<ans>'])
+            if src_length >= len(srcs[i]):
+                srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
+            else:
+                srcs[i] = srcs[i][:src_length] + self.tokenizer.encode(['<ans>'])
         srcs_tensor = torch.LongTensor(srcs)
         src_length += 1
 
@@ -161,23 +165,23 @@ class GPT2(nn.Module):
         all_output = []
         for idx in range(self.max_out_len):
             outputs = self.decoder(inputs)
-            token_logit=outputs[0][:,-1,:]
-            tokens=token_logit.topk(1,dim=1)[1]
+            token_logit = outputs[0][:, -1, :]
+            tokens = token_logit.topk(1, dim=1)[1]
             # mask=tokens==self.tokenizer.pad_token_id
             all_output.append(tokens)
-            inputs=torch.cat((inputs,tokens),dim=1)
-        all_output=torch.cat(all_output,dim=1)
+            inputs = torch.cat((inputs, tokens), dim=1)
+        all_output = torch.cat(all_output, dim=1)
         all_output = self.decode_(all_output)
         # print (all_output)
         # print ("all_output:", all_output.size())
         return all_output
 
-    def decode_(self,outputs):
-        batch_size=outputs.size(0)
-        all_outputs=[]
+    def decode_(self, outputs):
+        batch_size = outputs.size(0)
+        all_outputs = []
         for b in range(batch_size):
-            symbols=self.tokenizer.decode(outputs[b])
-            symbols=self.tokenizer.tokenize(symbols)
+            symbols = self.tokenizer.decode(outputs[b])
+            symbols = self.tokenizer.tokenize(symbols)
             symbols_ = []
             for token in symbols:
                 if token == self.start_token:
@@ -197,9 +201,9 @@ class GPT2(nn.Module):
         # print (all_outputs)
         return all_outputs
 
-    def encode_(self,inputs):
-        outputs=[]
-        for idx,s in enumerate(inputs):
+    def encode_(self, inputs):
+        outputs = []
+        for idx, s in enumerate(inputs):
             out = self.tokenizer.encode(inputs[idx])
             outputs.append(out)
 
@@ -233,6 +237,7 @@ class GPT2(nn.Module):
             output_list.append(res)
         return output_list
 
+
 # class GPT2(nn.Module):
 #     def __init__(self, config):
 #         super().__init__()
@@ -243,7 +248,7 @@ class GPT2(nn.Module):
 
 #         #self.tokenizer=GPT2Tokenizer.from_pretrained(self.pretrained_model_path)
 #         self.tokenizer = BertTokenizer.from_pretrained(self.pretrained_model_path)
-        
+
 #         self.configuration = GPT2Config.from_pretrained(self.pretrained_model_path)
 
 #         self.decoder = GPT2LMHeadModel.from_pretrained(self.pretrained_model_path, config=self.configuration)
@@ -370,7 +375,6 @@ class GPT2(nn.Module):
 #             all_outputs.append(symbols)
 #         # print (all_outputs)
 #         return all_outputs
-
 
 # class GPT2(nn.Module):
 #     def __init__(self, config):

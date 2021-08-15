@@ -239,7 +239,7 @@ class TSN(nn.Module):
         batch_size = len(seq_length)
         seq_emb = self.t_embedder(seq)
         pade_outputs, _ = self.t_encoder(seq_emb, seq_length, graphs)
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         #print("encoder_outputs", encoder_outputs.size())
         #print("problem_output", problem_output.size())
@@ -289,8 +289,8 @@ class TSN(nn.Module):
         batch_size = len(seq_length)
         seq_emb = self.s_embedder(seq)
         pade_outputs, _ = self.s_encoder(seq_emb, seq_length, graphs)
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:] 
 
         all_node_output1, score1 = self.student1_test_forward(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length)
         all_node_output2, score2 = self.student2_test_forward(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length)

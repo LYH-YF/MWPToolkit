@@ -276,7 +276,9 @@ class TSN(nn.Module):
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
         graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
-
+        seq = seq.transpose(0,1) #[S,B]
+        target = target.transpose(0,1)
+        
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         seq_emb = self.s_embedder(seq)

@@ -259,7 +259,7 @@ If you don't move your dataset folder and dataset configuration file to specific
 
 ```dataset_config_path```, the default value is like ```mwptoolkit/properties/dataset/dataset_name.json```, you can set your own dataset configuration file ```--dataset_config_path=[your_dataset_configuration]``` in cmd line.
 
-## example to run hyper-parameters search
+## 3.Example to run hyper-parameters search
 
 We implemented hyper-parameter search in our framework based ```ray.tune```.
 

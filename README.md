@@ -81,7 +81,7 @@ We have implemented 18 deep learning models and we are updating some other model
 
 See two tables below.
 
-# Implemented models
+## Implemented models
 <table align="center">
     <thread>
         <tr>

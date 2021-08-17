@@ -124,4 +124,4 @@ pyltp >= 0.2.1 (optional)
 
 ## example to run hyper-parameters search
 
-```python run_hyper_search.py --model=Transformer --dataset=math23k --equation_fix=None --task_type=single_equation --k_fold=5 --cpu_per_trial=2 --gpu_per_trial=0.5 --samples=1 --search_file=search_space/Transformer.json --gpu_id=0 ```
+```python run_hyper_search.py --model=Transformer --dataset=alg514 --equation_fix=None --task_type=multi_equation --k_fold=5 --cpu_per_trial=2 --gpu_per_trial=0.5 --samples=1 --search_file=search_space/Transformer.json --gpu_id=0```

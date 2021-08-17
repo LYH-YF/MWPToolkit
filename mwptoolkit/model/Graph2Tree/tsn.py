@@ -1914,7 +1914,7 @@ def evaluate_tree_teacher(input_batch, input_length, generate_nums,embedder, enc
     # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
     input_var = input_batch.transpose(0,1)
 
-    num_mask = torch.BoolTensor(1, len(num_pos) + len(generate_nums)).fill_(0)
+    num_mask = torch.BoolTensor(1, len(num_pos[0]) + len(generate_nums)).fill_(0)
 
     # Set to not-training mode to disable dropout
     embedder.eval()
@@ -2233,7 +2233,7 @@ def evaluate_tree(input_batch, input_length, generate_nums,embedder, encoder, pr
     # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
     input_var = input_batch.transpose(0,1)
 
-    num_mask = torch.BoolTensor(1, len(num_pos) + len(generate_nums)).fill_(0)
+    num_mask = torch.BoolTensor(1, len(num_pos[0]) + len(generate_nums)).fill_(0)
 
     # Set to not-training mode to disable dropout
     embedder.train()

@@ -1,6 +1,4 @@
-<div align="center" >
-    <font size='200'>MWPToolkit</font>
-</div>
+# <center> MWPToolkit </center>
 
 MWPToolkit is a Python-based framework for math word problem, including popular datasets of math word problem, validated deep learning models and evaluators for different tasks.
 

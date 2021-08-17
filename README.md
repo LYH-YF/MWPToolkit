@@ -246,7 +246,7 @@ Set your dataset configuration, our supported dataset configuration files are sa
 
 ```mwptoolkit/properties/dataset/dataset_name.json```
 
-<strong>Finaly</strong>:
+<strong>Finally</strong>:
 
 Run:
 

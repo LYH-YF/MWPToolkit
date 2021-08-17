@@ -129,7 +129,7 @@ See two tables below.
         </tr>
         <tr>
             <td>TreeLSTM</td>
-            <td align="center"><a href="https://aclanthology.org/D19-1241/">(Liu et al., 201*)</a></td>
+            <td align="center"><a href="https://aclanthology.org/D19-1241/">(Liu et al., 2019)</a></td>
         </tr>
         <tr>
             <td>GTS</td>

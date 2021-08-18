@@ -9,12 +9,47 @@ from mwptoolkit.utils.utils import read_json_data, get_model
 
 
 class Config(object):
-    def __init__(self, model_name, dataset_name, task_type, config_dict):
+    """The class for loading pre-defined parameters.
+
+    Config will load the parameters internal config file, dataset config file, model config file, config dictionary and cmd line.
+
+    The default road path of internal config file is 'mwptoolkit/config/config.json', and it's not supported to change.
+
+    The dataset config, model config and config dictionary are called the external config. 
+    
+    According to specific dataset and model, this class will load the dataset config from default road path 'mwptoolkit/properties/dataset/dataset_name.json' 
+    and model config from default road path 'mwptoolkit/properties/model/model_name.json'.
+
+    You can set the parameters 'model_config_path' and 'dataset_config_path' to load your own model and dataset config, but note that only json file can be loaded correctly.
+    Config dictionary is a dict-like object. When you initialize the Config object, you can pass config dictionary through the code 'config = Config(config_dict=config_dict)'
+
+    Cmd line requires you keep the template --param_name=param_value to set any parameter you want.
+
+    If there are multiple values of the same parameter, the priority order is as following:
+
+    cmd line > external config > internal config
+    
+    in external config, config dictionary > model config > dataset config.
+
+    """
+    def __init__(self, model_name=None, dataset_name=None, task_type=None, config_dict={}):
+        """
+        Args:
+            model (str): the model name, default is None, if it is None, config will search the parameter 'model'
+            from the external input as the model name.
+            
+            dataset (str): the dataset name, default is None, if it is None, config will search the parameter 'dataset'
+            from the external input as the dataset name.
+            
+            task_type (str): the task type, default is None, if it is None, config will search the parameter 'task_type'
+            from the external input as the dataset name.
+            
+            config_dict (dict): the external parameter dictionaries, default is None.
+        """
         super().__init__()
         self.file_config_dict = {}
         self.cmd_config_dict = {}
         self.config_dict = {}
-        #self.variable_config_dict={}
         self.external_config_dict = {}
         self.model_config_dict = {}
         self.dataset_config_dict = {}

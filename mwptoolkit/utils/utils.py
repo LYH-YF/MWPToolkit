@@ -29,6 +29,8 @@ def read_json_data(filename):
 
 
 def read_ape200k_source(filename):
+    """specially used to read data of ape200k source file
+    """
     data_list = []
     f = open(filename, 'r', encoding="utf-8")
     for line in f:
@@ -53,17 +55,6 @@ def read_math23k_source(filename):
     return data_list
 
 
-# def copy_list(l):
-#     r = []
-#     if len(l) == 0:
-#         return r
-#     for i in l:
-#         if type(i) is list:
-#             r.append(copy_list(i))
-#         else:
-#             r.append(i)
-#     return r
-
 def copy_list(l):
     r = []
     for i in l:
@@ -74,7 +65,15 @@ def copy_list(l):
     return r
 
 
-def time_since(s):  # compute time
+def time_since(s):
+    """compute time
+
+    Args:
+        s (float): the amount of time in seconds.
+
+    Returns:
+        (str) : formatting time.
+    """
     m = math.floor(s / 60)
     s -= m * 60
     h = math.floor(m / 60)
@@ -146,6 +145,7 @@ def get_trainer(task_type, model_name, sup_mode, config):
         task_type (~mwptoolkit.utils.enum_type.TaskType): task type.
         model_name (str): model name.
         sup_mode (~mwptoolkit.utils.enum_type.SupervisingMode): supervising mode.
+        config (~mwptoolkit.config.configuration.Congig)
 
     Returns:
         ~mwptoolkit.trainer.SupervisedTrainer: trainer class | ~mwptoolkit.trainer.WeaklySupervisedTrainer
@@ -215,11 +215,14 @@ def init_seed(seed, reproducibility):
 
 
 def clones(module, N):
-    "Produce N identical layers."
+    """Produce N identical layers.
+    """
     return torch.nn.ModuleList([copy.deepcopy(module) for _ in range(N)])
 
 
 def str2float(v):
+    """convert string to float.
+    """
     if not isinstance(v,str):
         return v
     else:

@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 18:54:00
+# @File: masked_cross_entropy_loss.py
+
+
 import torch
 from torch.nn import functional
 from mwptoolkit.loss.abstract_loss import AbstractLoss
@@ -42,12 +48,25 @@ class MaskedCrossEntropyLoss(AbstractLoss):
         super().__init__(self._Name, masked_cross_entropy)
 
     def get_loss(self):
+        """return loss
+
+        Returns:
+            loss (float)
+        """
         if isinstance(self.acc_loss, int):
             return 0
         loss = self.acc_loss.item()#.data[0]
         return loss
     
     def eval_batch(self, outputs, target, mask):
-        #print (outputs.size(), target.size())
+        """calculate loss
+
+        Args:
+            outputs (Tensor): output distribution of model.
+
+            target (Tensor): target classes. 
+
+            mask (Tensor): mask to ignore loss.
+        """
         self.acc_loss += self.criterion(outputs, target,mask)
         self.norm_term += 1

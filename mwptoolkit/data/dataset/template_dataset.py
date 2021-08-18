@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:33:53
+# @File: template_dataset.py
+
+
 import copy
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset

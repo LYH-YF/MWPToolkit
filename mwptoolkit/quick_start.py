@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:31:08
+# @File: quick_start.py
+
+
 from logging import getLogger
 import torch
 

@@ -1,4 +1,9 @@
-from mwptoolkit.data.dataset.pretrain_dataset import PretrainDataset
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:35:43
+# @File: pretrain_dataloader.py
+
+
 import torch
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader

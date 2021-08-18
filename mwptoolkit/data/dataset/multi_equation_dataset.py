@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:33:23
+# @File: multi_equation_dataset.py
+
+
 import os
 import copy
 import warnings

@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:33:45
+# @File: single_equation_dataset.py
+
+
 import os
 import copy
 import warnings

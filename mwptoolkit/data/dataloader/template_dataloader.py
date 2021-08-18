@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:35:57
+# @File: template_dataloader.py
+
+
 import torch
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader

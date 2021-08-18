@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:35:50
+# @File: single_equation_dataloader.py
+
+
 import random
 import torch
 

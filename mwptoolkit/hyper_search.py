@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:36:19
+# @File: hyper_search.py
+
+
 from functools import partial
 from logging import getLogger
 import os

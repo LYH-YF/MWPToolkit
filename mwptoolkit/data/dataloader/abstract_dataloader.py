@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 11:34:06
+# @File: abstract_dataloader.py
+
+
 import random
 import torch
 from mwptoolkit.utils.enum_type import FixType, SpecialTokens

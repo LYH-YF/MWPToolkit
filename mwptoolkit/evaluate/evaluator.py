@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/18 19:19:55
+# @File: evaluator.py
+
+
 import copy
 import re
 import threading
@@ -11,17 +17,29 @@ class Solver(threading.Thread):
     """
     def __init__(self, func, equations, unk_symbol):
         super(Solver, self).__init__()
+        """
+        Args:
+            func (function): a function to solve equations.
+
+            equations (list): list of expressions.
+
+            unk_symbol (list): list of unknown symbols.
+        """
         self.func = func
         self.equations = equations
         self.unk_symbol = unk_symbol
 
     def run(self):
+        """run equation solving process
+        """
         try:
             self.result = self.func(self.equations, self.unk_symbol)
         except:
             self.result = None
 
     def get_result(self):
+        """return the result
+        """
         try:
             return self.result
         except:
@@ -57,12 +75,16 @@ class InfixEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         """
@@ -74,7 +96,7 @@ class InfixEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            if abs(self.compute_expression_by_postfix(test_exp) - self.compute_expression_by_postfix(tar_exp)) < 1e-4:
+            if abs(self._compute_expression_by_postfix(test_exp) - self._compute_expression_by_postfix(tar_exp)) < 1e-4:
                 return True, False, tar_exp, tar_exp
             else:
                 return False, False, tar_exp, tar_exp
@@ -86,12 +108,16 @@ class InfixEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if test_exp == []:
@@ -99,8 +125,8 @@ class InfixEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            test_solves, test_unk = self.compute_expression_by_postfix_multi(test_exp)
-            tar_solves, tar_unk = self.compute_expression_by_postfix_multi(tar_exp)
+            test_solves, test_unk = self._compute_expression_by_postfix_multi(test_exp)
+            tar_solves, tar_unk = self._compute_expression_by_postfix_multi(tar_exp)
             if len(test_unk) != len(tar_unk):
                 return False, False, test_exp, tar_exp
             flag = False
@@ -147,7 +173,7 @@ class InfixEvaluator(AbstractEvaluator):
         except:
             return False, False, tar_exp, tar_exp
 
-    def compute_postfix_expression(self, post_fix):
+    def _compute_postfix_expression(self, post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/"]
         for p in post_fix:
@@ -189,7 +215,7 @@ class InfixEvaluator(AbstractEvaluator):
             return st.pop()
         return None
 
-    def compute_postfix_expression_multi(self, post_fix):
+    def _compute_postfix_expression_multi(self, post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
         unk_symbols = {}
@@ -254,21 +280,21 @@ class InfixEvaluator(AbstractEvaluator):
             return result, unk_symbols
         return None, unk_symbols
 
-    def compute_expression_by_postfix(self, expression):
+    def _compute_expression_by_postfix(self, expression):
         try:
             post_exp = from_infix_to_postfix(expression)
         except:
             return None
-        return self.compute_postfix_expression(post_exp)
+        return self._compute_postfix_expression(post_exp)
 
-    def compute_expression_by_postfix_multi(self, expression):
+    def _compute_expression_by_postfix_multi(self, expression):
         r"""return solves and unknown number list
         """
         try:
             post_exp = from_infix_to_postfix(expression)
         except:
             return None, None
-        return self.compute_postfix_expression_multi(post_exp)
+        return self._compute_postfix_expression_multi(post_exp)
 
 
 class PrefixEvaluator(AbstractEvaluator):
@@ -282,12 +308,16 @@ class PrefixEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
@@ -297,7 +327,7 @@ class PrefixEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            if abs(self.compute_prefix_expression(test_exp) - self.compute_prefix_expression(tar_exp)) < 1e-4:
+            if abs(self._compute_prefix_expression(test_exp) - self._compute_prefix_expression(tar_exp)) < 1e-4:
                 return True, False, test_exp, tar_exp
             else:
                 return False, False, test_exp, tar_exp
@@ -309,12 +339,16 @@ class PrefixEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if test_exp is []:
@@ -322,8 +356,8 @@ class PrefixEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            test_solves, test_unk = self.compute_prefix_expression_multi(test_exp)
-            tar_solves, tar_unk = self.compute_prefix_expression_multi(tar_exp)
+            test_solves, test_unk = self._compute_prefix_expression_multi(test_exp)
+            tar_solves, tar_unk = self._compute_prefix_expression_multi(tar_exp)
             if len(test_unk) != len(tar_unk):
                 return False, False, test_exp, tar_exp
             flag = False
@@ -370,7 +404,7 @@ class PrefixEvaluator(AbstractEvaluator):
             return False, False, test_exp, tar_exp
         return False, False, test_exp, tar_exp
 
-    def compute_prefix_expression(self, pre_fix):
+    def _compute_prefix_expression(self, pre_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/"]
         pre_fix = copy.deepcopy(pre_fix)
@@ -418,7 +452,7 @@ class PrefixEvaluator(AbstractEvaluator):
             return st.pop()
         return None
 
-    def compute_prefix_expression_multi(self, pre_fix):
+    def _compute_prefix_expression_multi(self, pre_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
         unk_symbols = {}
@@ -500,12 +534,16 @@ class PostfixEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
@@ -515,7 +553,7 @@ class PostfixEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            if abs(self.compute_postfix_expression(test_exp) - self.compute_postfix_expression(tar_exp)) < 1e-4:
+            if abs(self._compute_postfix_expression(test_exp) - self._compute_postfix_expression(tar_exp)) < 1e-4:
                 return True, False, test_exp, tar_exp
             else:
                 return False, False, test_exp, tar_exp
@@ -527,12 +565,16 @@ class PostfixEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if test_exp is []:
@@ -540,8 +582,8 @@ class PostfixEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            test_solves, test_unk = self.compute_postfix_expression_multi(test_exp)
-            tar_solves, tar_unk = self.compute_postfix_expression_multi(tar_exp)
+            test_solves, test_unk = self._compute_postfix_expression_multi(test_exp)
+            tar_solves, tar_unk = self._compute_postfix_expression_multi(tar_exp)
             if len(test_unk) != len(tar_unk):
                 return False, False, test_exp, tar_exp
             flag = False
@@ -589,7 +631,7 @@ class PostfixEvaluator(AbstractEvaluator):
             return False, False, test_exp, tar_exp
         return False, False, test_exp, tar_exp
 
-    def compute_postfix_expression(self, post_fix):
+    def _compute_postfix_expression(self, post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/"]
         for p in post_fix:
@@ -631,7 +673,7 @@ class PostfixEvaluator(AbstractEvaluator):
             return st.pop()
         return None
 
-    def compute_postfix_expression_multi(self, post_fix):
+    def _compute_postfix_expression_multi(self, post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
         unk_symbols = {}
@@ -709,12 +751,16 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
@@ -724,7 +770,7 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            if abs(self.compute_expression_by_postfix(test_exp) - self.compute_expression_by_postfix(tar_exp)) < 1e-4:
+            if abs(self._compute_expression_by_postfix(test_exp) - self._compute_expression_by_postfix(tar_exp)) < 1e-4:
                 return True, False, tar_exp, tar_exp
             else:
                 return False, False, tar_exp, tar_exp
@@ -736,12 +782,16 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if test_exp == []:
@@ -749,8 +799,8 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            test_solves, test_unk = self.compute_expression_by_postfix_multi(test_exp)
-            tar_solves, tar_unk = self.compute_expression_by_postfix_multi(tar_exp)
+            test_solves, test_unk = self._compute_expression_by_postfix_multi(test_exp)
+            tar_solves, tar_unk = self._compute_expression_by_postfix_multi(tar_exp)
             if len(test_unk) != len(tar_unk):
                 return False, False, test_exp, tar_exp
             flag = False
@@ -797,7 +847,7 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
         except:
             return False, False, tar_exp, tar_exp
 
-    def compute_postfix_expression(self, post_fix):
+    def _compute_postfix_expression(self, post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/"]
         for p in post_fix:
@@ -839,7 +889,7 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
             return st.pop()
         return None
 
-    def compute_postfix_expression_multi(self, post_fix):
+    def _compute_postfix_expression_multi(self, post_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
         unk_symbols = {}
@@ -904,21 +954,21 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
             return result, unk_symbols
         return None, unk_symbols
 
-    def compute_expression_by_postfix(self, expression):
+    def _compute_expression_by_postfix(self, expression):
         try:
             post_exp = from_infix_to_postfix(expression)
         except:
             return None
-        return self.compute_postfix_expression(post_exp)
+        return self._compute_postfix_expression(post_exp)
 
-    def compute_expression_by_postfix_multi(self, expression):
+    def _compute_expression_by_postfix_multi(self, expression):
         r"""return solves and unknown number list
         """
         try:
             post_exp = from_infix_to_postfix(expression)
         except:
             return None, None
-        return self.compute_postfix_expression_multi(post_exp)
+        return self._compute_postfix_expression_multi(post_exp)
 
 
 class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
@@ -932,12 +982,16 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
@@ -948,7 +1002,7 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            if abs(self.compute_prefix_expression(test_exp) - self.compute_prefix_expression(tar_exp)) < 1e-4:
+            if abs(self._compute_prefix_expression(test_exp) - self._compute_prefix_expression(tar_exp)) < 1e-4:
                 return True, False, test_exp, tar_exp
             else:
                 return False, False, test_exp, tar_exp
@@ -960,12 +1014,16 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if test_exp is []:
@@ -973,8 +1031,8 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            test_solves, test_unk = self.compute_prefix_expression_multi(test_exp)
-            tar_solves, tar_unk = self.compute_prefix_expression_multi(tar_exp)
+            test_solves, test_unk = self._compute_prefix_expression_multi(test_exp)
+            tar_solves, tar_unk = self._compute_prefix_expression_multi(tar_exp)
             if len(test_unk) != len(tar_unk):
                 return False, False, test_exp, tar_exp
             flag = False
@@ -1026,12 +1084,16 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
@@ -1041,7 +1103,7 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            if abs(self.compute_postfix_expression(test_exp) - self.compute_postfix_expression(tar_exp)) < 1e-4:
+            if abs(self._compute_postfix_expression(test_exp) - self._compute_postfix_expression(tar_exp)) < 1e-4:
                 return True, False, test_exp, tar_exp
             else:
                 return False, False, test_exp, tar_exp
@@ -1053,12 +1115,16 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
 
         Args:
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
 
         Returns:
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
+            
             equ_ac (bool): the correctness of test expression compared to target expression.
+            
             test_exp (list): List of test expression.
+            
             tar_exp (list): List of target expression.
         """
         if test_exp is []:
@@ -1066,8 +1132,8 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         if test_exp == tar_exp:
             return True, True, test_exp, tar_exp
         try:
-            test_solves, test_unk = self.compute_postfix_expression_multi(test_exp)
-            tar_solves, tar_unk = self.compute_postfix_expression_multi(tar_exp)
+            test_solves, test_unk = self._compute_postfix_expression_multi(test_exp)
+            tar_solves, tar_unk = self._compute_postfix_expression_multi(tar_exp)
             if len(test_unk) != len(tar_unk):
                 return False, False, test_exp, tar_exp
             flag = False

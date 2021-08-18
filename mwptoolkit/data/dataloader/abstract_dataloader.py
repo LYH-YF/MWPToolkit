@@ -4,6 +4,7 @@ from mwptoolkit.utils.enum_type import FixType, SpecialTokens
 
 
 class AbstractDataLoader(object):
+    '''abstract dataloader'''
     def __init__(self, config, dataset):
         super().__init__()
         self.device = config["device"]

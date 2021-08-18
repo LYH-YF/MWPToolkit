@@ -4,6 +4,13 @@ from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 from mwptoolkit.utils.enum_type import FixType, NumMask
 
 class TemplateDataLoader(AbstractDataLoader):
+    """template dataloader.
+
+    you need implement:
+
+    TemplateDataLoader.load_batch
+    
+    """
     def __init__(self, config, dataset):
         super().__init__(config, dataset)
         self.trainset_nums = len(dataset.trainset)

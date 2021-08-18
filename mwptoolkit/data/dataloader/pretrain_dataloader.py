@@ -14,6 +14,8 @@ def get_num_mask(num_size_batch, generate_nums):
     return num_mask
 
 class PretrainDataLoader(AbstractDataLoader):
+    """dataloader class for pre-train model.
+    """
     def __init__(self, config, dataset):
         super().__init__(config, dataset)
         # self.dataset=PretrainDataset(config)

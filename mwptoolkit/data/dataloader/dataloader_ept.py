@@ -9,6 +9,8 @@ from mwptoolkit.utils.preprocess_tools import find_ept_numbers_in_text, postfix_
 from transformers import AutoTokenizer,BertTokenizer
 
 class DataLoaderEPT(AbstractDataLoader):
+    """dataloader class for deep-learning model EPT
+    """
     def __init__(self, config, dataset):
         super().__init__(config, dataset)
 

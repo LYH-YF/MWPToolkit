@@ -16,6 +16,8 @@ def get_num_mask(num_size_batch, generate_nums):
 
 
 class SingleEquationDataLoader(AbstractDataLoader):
+    """single-equation dataloader
+    """
     def __init__(self, config, dataset):
         super().__init__(config, dataset)
         self.trainset_nums = len(dataset.trainset)

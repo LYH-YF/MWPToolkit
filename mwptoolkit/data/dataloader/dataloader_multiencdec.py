@@ -7,6 +7,8 @@ from mwptoolkit.utils.utils import str2float
 from mwptoolkit.utils.enum_type import SpecialTokens
 
 class DataLoaderMultiEncDec(TemplateDataLoader):
+    """dataloader class for deep-learning model MultiE&D
+    """
     def __init__(self, config, dataset):
         super().__init__(config, dataset)
         try:

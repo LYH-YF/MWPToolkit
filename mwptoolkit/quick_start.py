@@ -2,7 +2,7 @@ from logging import getLogger
 import torch
 
 from mwptoolkit.config.configuration import Config
-from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator
+from mwptoolkit.evaluate.evaluator import AbstractEvaluator, InfixEvaluator, PostfixEvaluator, PrefixEvaluator, MultiWayTreeEvaluator
 from mwptoolkit.evaluate.evaluator import MultiEncDecEvaluator
 from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
@@ -31,18 +31,18 @@ def train_cross_validation(config):
         model = get_model(config["model"])(config,dataset).to(config["device"])
 
         if config["equation_fix"] == FixType.Prefix:
-            evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
-        elif config["equation_fix"] == FixType.Nonfix:
-            evaluator = SeqEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+            evaluator = PrefixEvaluator(config)
+        elif config["equation_fix"] == FixType.Nonfix or config["equation_fix"] == FixType.Infix:
+            evaluator = InfixEvaluator(config)
         elif config["equation_fix"] == FixType.Postfix:
-            evaluator = PostEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+            evaluator = PostfixEvaluator(config)
         elif config["equation_fix"] == FixType.MultiWayTree:
-            evaluator = MultiWayTreeEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+            evaluator = MultiWayTreeEvaluator(config)
         else:
             raise NotImplementedError
         
         if config['model'].lower() in ['multiencdec']:
-            evaluator = MultiEncDecEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+            evaluator = MultiEncDecEvaluator(config)
 
 
         trainer = get_trainer(config["task_type"], config["model"],config["supervising_mode"],config)(config, model, dataloader, evaluator)
@@ -77,36 +77,30 @@ def run_toolkit(model_name, dataset_name, task_type, config_dict={}):
 
     logger.info(config)
 
-    dataset = create_dataset(config)
-
     if config["k_fold"] != None:
         train_cross_validation(config)
     else:
+        dataset = create_dataset(config)
+
         dataset.dataset_load()
         
         dataloader = create_dataloader(config)(config, dataset)
 
         model = get_model(config["model"])(config,dataset).to(config["device"])
-        # if config["pretrained_model_path"]:
-        #     config["vocab_size"] = len(model.tokenizer)
-        #     config["symbol_size"] = len(model.tokenizer)
-        #     config["embedding_size"] = len(model.tokenizer)
-        #     config["in_word2idx"] = model.tokenizer.get_vocab()
-        #     config["in_idx2word"] = list(model.tokenizer.get_vocab().keys())
-        #     config["out_symbol2idx"] = model.tokenizer.get_vocab()
-        #     config["out_idx2symbol"] = list(model.tokenizer.get_vocab().keys())
-
+        
         if config["equation_fix"] == FixType.Prefix:
-            evaluator = PreEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
-        elif config["equation_fix"] == FixType.Nonfix:
-            evaluator = SeqEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+            evaluator = PrefixEvaluator(config)
+        elif config["equation_fix"] == FixType.Nonfix or config["equation_fix"] == FixType.Infix:
+            evaluator = InfixEvaluator(config)
         elif config["equation_fix"] == FixType.Postfix:
-            evaluator = PostEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+            evaluator = PostfixEvaluator(config)
+        elif config["equation_fix"] == FixType.MultiWayTree:
+            evaluator = MultiWayTreeEvaluator(config)
         else:
             raise NotImplementedError
         
         if config['model'].lower() in ['multiencdec']:
-            evaluator = MultiEncDecEvaluator(config["out_symbol2idx"], config["out_idx2symbol"], config)
+            evaluator = MultiEncDecEvaluator(config)
 
         trainer = get_trainer(config["task_type"], config["model"], config["supervising_mode"],config)(config, model, dataloader, evaluator)
         logger.info(model)

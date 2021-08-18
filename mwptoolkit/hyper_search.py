@@ -9,7 +9,8 @@ from ray.tune import CLIReporter
 from ray.tune.schedulers import ASHAScheduler, AsyncHyperBandScheduler
 
 from mwptoolkit.config.configuration import Config
-from mwptoolkit.evaluate.evaluator import AbstractEvaluator, SeqEvaluator, PostEvaluator, PreEvaluator, MultiWayTreeEvaluator, MultiEncDecEvaluator
+from mwptoolkit.evaluate.evaluator import AbstractEvaluator, InfixEvaluator, PostfixEvaluator, PrefixEvaluator, MultiWayTreeEvaluator
+from mwptoolkit.evaluate.evaluator import MultiEncDecEvaluator
 from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer, read_json_data, write_json_data
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
@@ -28,16 +29,18 @@ def train_process(search_parameter,configs):
     model = get_model(configs["model"])(configs, dataset).to(configs["device"])
 
     if configs["equation_fix"] == FixType.Prefix:
-        evaluator = PreEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
-    elif configs["equation_fix"] == FixType.Nonfix:
-        evaluator = SeqEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
+        evaluator = PrefixEvaluator(configs)
+    elif configs["equation_fix"] == FixType.Nonfix or configs["equation_fix"] == FixType.Infix:
+        evaluator = InfixEvaluator(configs)
     elif configs["equation_fix"] == FixType.Postfix:
-        evaluator = PostEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
+        evaluator = PostfixEvaluator(configs)
+    elif configs["equation_fix"] == FixType.MultiWayTree:
+        evaluator = MultiWayTreeEvaluator(configs)
     else:
         raise NotImplementedError
     
     if configs['model'].lower() in ['multiencdec']:
-        evaluator = MultiEncDecEvaluator(configs["out_symbol2idx"], configs["out_idx2symbol"], configs)
+        evaluator = MultiEncDecEvaluator(configs)
 
     trainer = get_trainer(configs["task_type"], configs["model"], configs["supervising_mode"],configs)(configs, model, dataloader, evaluator)
     trainer.param_search()
@@ -53,12 +56,6 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
     logger.info(configs)
     ray.init(num_gpus=configs['gpu_nums'])
 
-    # scheduler = ASHAScheduler(
-    #     metric="accuracy",
-    #     mode="max",
-    #     max_t=10,
-    #     grace_period=1,
-    #     reduction_factor=2)
     scheduler = AsyncHyperBandScheduler(
         metric="accuracy",
         mode="max")

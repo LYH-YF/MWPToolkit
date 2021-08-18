@@ -42,7 +42,7 @@ class Config(object):
             from the external input as the dataset name.
             
             task_type (str): the task type, default is None, if it is None, config will search the parameter 'task_type'
-            from the external input as the dataset name.
+            from the external input as the task type.
             
             config_dict (dict): the external parameter dictionaries, default is None.
         """

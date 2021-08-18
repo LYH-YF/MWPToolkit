@@ -59,6 +59,8 @@ class AbstractDataset(object):
         
 
     def _load_fold_dataset(self):
+        """read one fold of dataset from file. 
+        """
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
         testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
         self.trainset = read_json_data(trainset_file)
@@ -66,10 +68,10 @@ class AbstractDataset(object):
         self.validset = []
 
     def fix_process(self, fix):
-        r"""equation process
+        r"""equation infix/postfix/prefix process.
 
         Args:
-            fix: a function to make postfix, prefix or None  
+            fix: a function to make infix, postfix, prefix or None  
         """
         source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
         if fix != None:
@@ -121,6 +123,8 @@ class AbstractDataset(object):
                     self.testset[idx]["infix equation"] = copy.deepcopy(data["equation"])
 
     def operator_mask_process(self):
+        """operator mask process of equation.
+        """
         for idx, data in enumerate(self.trainset):
             self.trainset[idx]["template"] = operator_mask(data["equation"])
         for idx, data in enumerate(self.validset):
@@ -191,11 +195,11 @@ class AbstractDataset(object):
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation
 
-        Build folds for cross validation.Choose one of folds divided into validset and testset and other folds for trainset.
+        Build folds for cross validation.Choose one of folds for testset and other folds for trainset.
         
         Args:
             k_fold: int, the number of folds, also the cross validation parameter k.
-            start_fold_t: int|defalte 0, training start from the training of t-th time.
+            start_fold_t: int|default 0, training start from the training of t-th time.
         Return:
             Generator including current training index of cross validation.
         """

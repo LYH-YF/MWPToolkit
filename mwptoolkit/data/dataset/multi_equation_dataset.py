@@ -19,6 +19,8 @@ from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, Nu
 from transformers import AutoTokenizer
 
 class MultiEquationDataset(AbstractDataset):
+    """multiple-equation dataset.
+    """
     def __init__(self, config):
         super().__init__(config)
         self.equation_fix = config["equation_fix"]

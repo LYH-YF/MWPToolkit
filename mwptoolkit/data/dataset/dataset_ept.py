@@ -19,6 +19,8 @@ from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, Nu
 
 
 class DatasetEPT(AbstractDataset):
+    """dataset class for deep-learning model EPT.
+    """
     def __init__(self, config):
         super().__init__(config)
         self.pretrained_model=config['pretrained_model_path']

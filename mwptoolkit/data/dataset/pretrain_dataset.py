@@ -15,6 +15,8 @@ from mwptoolkit.utils.preprocess_tool.sentence_operator import deprel_tree_to_fi
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 
 class PretrainDataset(AbstractDataset):
+    """dataset class for pre-train model.
+    """
     def __init__(self, config):
         super().__init__(config)
         self.task_type=config['task_type']

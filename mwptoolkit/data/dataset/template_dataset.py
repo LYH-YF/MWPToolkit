@@ -5,7 +5,8 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operator
 
 
 class TemplateDataset(AbstractDataset):
-    """
+    """template dataset.
+
     you need implement:
 
     TemplateDataset._preprocess

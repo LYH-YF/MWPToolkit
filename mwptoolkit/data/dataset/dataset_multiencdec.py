@@ -11,6 +11,8 @@ from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.utils import read_json_data,write_json_data
 
 class DatasetMultiEncDec(TemplateDataset):
+    """dataset class for deep-learning model MultiE&D
+    """
     def __init__(self, config):
         super().__init__(config)
         self.task_type = config['task_type']

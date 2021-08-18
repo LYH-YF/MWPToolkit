@@ -18,6 +18,8 @@ from mwptoolkit.utils.enum_type import OPERATORS, SPECIAL_TOKENS
 from transformers import AutoTokenizer
 
 class SingleEquationDataset(AbstractDataset):
+    """single-equation dataset
+    """
     def __init__(self, config):
         super().__init__(config)
         self.equation_fix = config["equation_fix"]

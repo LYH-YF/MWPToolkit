@@ -852,10 +852,7 @@ class SAUSolverTrainer(GTSTrainer):
         super().__init__(config, model, dataloader, evaluator)
 
     def _train_batch(self, batch):
-        try:
-            batch_loss = self.model.calculate_loss(batch)
-        except:
-            self.logger.info('something wrong at data with id = {}'.format(batch['id']))
+        batch_loss = self.model.calculate_loss(batch)
         return batch_loss
 
     def _eval_batch(self, batch):

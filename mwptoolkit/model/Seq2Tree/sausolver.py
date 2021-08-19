@@ -178,6 +178,8 @@ class SAUSolver(nn.Module):
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.node_generater(current_embeddings, generate_input, current_context)
             left_childs = []
+            sub_tree_emb=[]
+            loss_mask = []
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
                                                 node_stacks, target[t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:

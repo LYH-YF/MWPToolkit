@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/19 11:24:52
+# @File: gts.py
+
+
 import torch
 from torch import nn
 import copy

@@ -1005,10 +1005,6 @@ class TSN(nn.Module):
 
 
 def soft_target_loss(logits, soft_target, length):
-    if torch.cuda.is_available():
-        length = torch.LongTensor(length).cuda()
-    else:
-        length = torch.LongTensor(length)
     loss_total = []
     for predict, label in zip(logits.split(1, dim=1), soft_target.split(1, dim=1)):
         predict = predict.squeeze()
@@ -1032,10 +1028,6 @@ def soft_cross_entropy_loss(predict_score, label_score):
     return loss
 
 def cosine_loss(logits, logits_1, length):
-    if torch.cuda.is_available():
-        length = torch.LongTensor(length).cuda()
-    else:
-        length = torch.LongTensor(length)
     loss_total = []
     for predict, label in zip(logits.split(1, dim=1), logits_1.split(1, dim=1)):
         predict = predict.squeeze()

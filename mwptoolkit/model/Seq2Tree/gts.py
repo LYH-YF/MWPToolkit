@@ -11,7 +11,7 @@ from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
 from mwptoolkit.module.Strategy.weakly_supervising import out_expression_list
 #from mwptoolkit.module.Strategy.weakly_supervising import Weakly_Supervising, out_expression_list
-from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
+from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss,masked_cross_entropy
 from mwptoolkit.utils.utils import copy_list, get_weakly_supervised
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
@@ -83,7 +83,7 @@ class GTS(nn.Module):
         num_start = self.num_start
         # sequence mask for attention
         unk=self.unk_token
-        
+
         '''
         input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums,
                embedder,encoder, predict, generate, merge, num_pos,batch_graph,unk,num_start
@@ -207,7 +207,9 @@ class GTS(nn.Module):
             # all_leafs = all_leafs.cuda()
             all_node_outputs = all_node_outputs.cuda()
             target = target.cuda()
-            target_length = target_length.cuda()
+            target_length = torch.LongTensor(target_length).cuda()
+        else:
+            target_length = torch.LongTensor(target_length)
 
         # op_target = target < num_start
         # loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
@@ -1027,239 +1029,4 @@ class GTS_(nn.Module):
         trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
         parameters = "\ntotal parameters : {} \ntrainable parameters : {}".format(total, trainable)
         return info + parameters
-
-class Prediction(nn.Module):
-    # a seq2tree decoder with Problem aware dynamic encoding
-
-    def __init__(self, hidden_size, op_nums, input_size, dropout=0.5):
-        super(Prediction, self).__init__()
-
-        # Keep for reference
-        self.hidden_size = hidden_size
-        self.input_size = input_size
-        self.op_nums = op_nums
-
-        # Define layers
-        self.dropout = nn.Dropout(dropout)
-
-        self.embedding_weight = nn.Parameter(torch.randn(1, input_size, hidden_size))
-
-        # for Computational symbols and Generated numbers
-        self.concat_l = nn.Linear(hidden_size, hidden_size)
-        self.concat_r = nn.Linear(hidden_size * 2, hidden_size)
-        self.concat_lg = nn.Linear(hidden_size, hidden_size)
-        self.concat_rg = nn.Linear(hidden_size * 2, hidden_size)
-
-        self.ops = nn.Linear(hidden_size * 2, op_nums)
-
-        self.attn = TreeAttn(hidden_size, hidden_size)
-        self.score = Score(hidden_size * 2, hidden_size)
-
-    def forward(self, node_stacks, left_childs, encoder_outputs, num_pades, padding_hidden, seq_mask, mask_nums):
-        current_embeddings = []
-
-        for st in node_stacks:
-            if len(st) == 0:
-                current_embeddings.append(padding_hidden)
-            else:
-                current_node = st[-1]
-                current_embeddings.append(current_node.embedding)
-
-        current_node_temp = []
-        for l, c in zip(left_childs, current_embeddings):
-            if l is None:
-                c = self.dropout(c)
-                g = torch.tanh(self.concat_l(c))
-                t = torch.sigmoid(self.concat_lg(c))
-                current_node_temp.append(g * t)
-            else:
-                ld = self.dropout(l)
-                c = self.dropout(c)
-                g = torch.tanh(self.concat_r(torch.cat((ld, c), 1)))
-                t = torch.sigmoid(self.concat_rg(torch.cat((ld, c), 1)))
-                current_node_temp.append(g * t)
-
-        current_node = torch.stack(current_node_temp)
-
-        current_embeddings = self.dropout(current_node)
-
-        current_attn = self.attn(current_embeddings.transpose(0, 1), encoder_outputs, seq_mask)
-        current_context = current_attn.bmm(encoder_outputs.transpose(0, 1))  # B x 1 x N
-
-        # the information to get the current quantity
-        batch_size = current_embeddings.size(0)
-        # predict the output (this node corresponding to output(number or operator)) with PADE
-
-        repeat_dims = [1] * self.embedding_weight.dim()
-        repeat_dims[0] = batch_size
-        embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
-        embedding_weight = torch.cat((embedding_weight, num_pades), dim=1)  # B x O x N
-
-        leaf_input = torch.cat((current_node, current_context), 2)
-        leaf_input = leaf_input.squeeze(1)
-        leaf_input = self.dropout(leaf_input)
-
-        # p_leaf = nn.functional.softmax(self.is_leaf(leaf_input), 1)
-        # max pooling the embedding_weight
-        embedding_weight_ = self.dropout(embedding_weight)
-        num_score = self.score(leaf_input.unsqueeze(1), embedding_weight_, mask_nums)
-
-        # num_score = nn.functional.softmax(num_score, 1)
-
-        op = self.ops(leaf_input)
-
-        # return p_leaf, num_score, op, current_embeddings, current_attn
-
-        return num_score, op, current_node, current_context, embedding_weight
-
-
-class GenerateNode(nn.Module):
-    def __init__(self, hidden_size, op_nums, embedding_size, dropout=0.5):
-        super(GenerateNode, self).__init__()
-
-        self.embedding_size = embedding_size
-        self.hidden_size = hidden_size
-
-        self.embeddings = nn.Embedding(op_nums, embedding_size)
-        self.em_dropout = nn.Dropout(dropout)
-        self.generate_l = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
-        self.generate_r = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
-        self.generate_lg = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
-        self.generate_rg = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
-
-    def forward(self, node_embedding, node_label, current_context):
-        node_label_ = self.embeddings(node_label)
-        node_label = self.em_dropout(node_label_)
-        node_embedding = node_embedding.squeeze(1)
-        current_context = current_context.squeeze(1)
-        node_embedding = self.em_dropout(node_embedding)
-        current_context = self.em_dropout(current_context)
-
-        l_child = torch.tanh(self.generate_l(torch.cat((node_embedding, current_context, node_label), 1)))
-        l_child_g = torch.sigmoid(self.generate_lg(torch.cat((node_embedding, current_context, node_label), 1)))
-        r_child = torch.tanh(self.generate_r(torch.cat((node_embedding, current_context, node_label), 1)))
-        r_child_g = torch.sigmoid(self.generate_rg(torch.cat((node_embedding, current_context, node_label), 1)))
-        l_child = l_child * l_child_g
-        r_child = r_child * r_child_g
-        return l_child, r_child, node_label_
-
-
-class Merge(nn.Module):
-    def __init__(self, hidden_size, embedding_size, dropout=0.5):
-        super(Merge, self).__init__()
-
-        self.embedding_size = embedding_size
-        self.hidden_size = hidden_size
-
-        self.em_dropout = nn.Dropout(dropout)
-        self.merge = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
-        self.merge_g = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
-
-    def forward(self, node_embedding, sub_tree_1, sub_tree_2):
-        sub_tree_1 = self.em_dropout(sub_tree_1)
-        sub_tree_2 = self.em_dropout(sub_tree_2)
-        node_embedding = self.em_dropout(node_embedding)
-
-        sub_tree = torch.tanh(self.merge(torch.cat((node_embedding, sub_tree_1, sub_tree_2), 1)))
-        sub_tree_g = torch.sigmoid(self.merge_g(torch.cat((node_embedding, sub_tree_1, sub_tree_2), 1)))
-        sub_tree = sub_tree * sub_tree_g
-        return sub_tree
-
-class Score(nn.Module):
-    def __init__(self, input_size, hidden_size):
-        super(Score, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.attn = nn.Linear(hidden_size + input_size, hidden_size)
-        self.score = nn.Linear(hidden_size, 1, bias=False)
-
-    def forward(self, hidden, num_embeddings, num_mask=None):
-        max_len = num_embeddings.size(1)
-        repeat_dims = [1] * hidden.dim()
-        repeat_dims[1] = max_len
-        hidden = hidden.repeat(*repeat_dims)  # B x O x H
-        # For each position of encoder outputs
-        this_batch_size = num_embeddings.size(0)
-        energy_in = torch.cat((hidden, num_embeddings), 2).view(-1, self.input_size + self.hidden_size)
-        score = self.score(torch.tanh(self.attn(energy_in)))  # (B x O) x 1
-        score = score.squeeze(1)
-        score = score.view(this_batch_size, -1)  # B x O
-        if num_mask is not None:
-            score = score.masked_fill_(num_mask.bool(), -1e12)
-        return score
-
-
-class TreeAttn(nn.Module):
-    def __init__(self, input_size, hidden_size):
-        super(TreeAttn, self).__init__()
-        self.input_size = input_size
-        self.hidden_size = hidden_size
-        self.attn = nn.Linear(hidden_size + input_size, hidden_size)
-        self.score = nn.Linear(hidden_size, 1)
-
-    def forward(self, hidden, encoder_outputs, seq_mask=None):
-        max_len = encoder_outputs.size(0)
-
-        repeat_dims = [1] * hidden.dim()
-        repeat_dims[0] = max_len
-        hidden = hidden.repeat(*repeat_dims)  # S x B x H
-        this_batch_size = encoder_outputs.size(1)
-
-        energy_in = torch.cat((hidden, encoder_outputs), 2).view(-1, self.input_size + self.hidden_size)
-
-        score_feature = torch.tanh(self.attn(energy_in))
-        attn_energies = self.score(score_feature)  # (S x B) x 1
-        attn_energies = attn_energies.squeeze(1)
-        attn_energies = attn_energies.view(max_len, this_batch_size).transpose(0, 1)  # B x S
-        if seq_mask is not None:
-            attn_energies = attn_energies.masked_fill_(seq_mask.bool(), -1e12)
-        attn_energies = nn.functional.softmax(attn_energies, dim=1)  # B x S
-
-        return attn_energies.unsqueeze(1)
-
-def sequence_mask(sequence_length, max_len=None):
-    if max_len is None:
-        max_len = sequence_length.data.max()
-    batch_size = sequence_length.size(0)
-    seq_range = torch.arange(0, max_len).long()
-    seq_range_expand = seq_range.unsqueeze(0).expand(batch_size, max_len)
-    if sequence_length.is_cuda:
-        seq_range_expand = seq_range_expand.cuda()
-    seq_length_expand = (sequence_length.unsqueeze(1).expand_as(seq_range_expand))
-    return seq_range_expand < seq_length_expand
-
-
-def masked_cross_entropy(logits, target, length):
-    """
-    Args:
-        logits: A Variable containing a FloatTensor of size
-            (batch, max_len, num_classes) which contains the
-            unnormalized probability for each class.
-        target: A Variable containing a LongTensor of size
-            (batch, max_len) which contains the index of the true
-            class for each corresponding step.
-        length: A Variable containing a LongTensor of size (batch,)
-            which contains the length of each data in a batch.
-    Returns:
-        loss: An average loss value masked by the length.
-    """
-
-    # logits_flat: (batch * max_len, num_classes)
-    logits_flat = logits.view(-1, logits.size(-1))
-    # log_probs_flat: (batch * max_len, num_classes)
-    log_probs_flat = F.log_softmax(logits_flat, dim=1)
-    # target_flat: (batch * max_len, 1)
-    target_flat = target.view(-1, 1)
-    # losses_flat: (batch * max_len, 1)
-    losses_flat = -torch.gather(log_probs_flat, dim=1, index=target_flat)
-
-    # losses: (batch, max_len)
-    losses = losses_flat.view(*target.size())
-    # mask: (batch, max_len)
-    mask = sequence_mask(sequence_length=length, max_len=target.size(1))
-    losses = losses * mask.float()
-    loss = losses.sum() / length.float().sum()
-    # if loss.item() > 10:
-    #     print(losses, target)
-    return loss
 

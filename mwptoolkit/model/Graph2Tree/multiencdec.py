@@ -340,8 +340,9 @@ class MultiEncDec(nn.Module):
             # all_leafs = all_leafs.cuda()
             all_node_outputs = all_node_outputs.cuda()
             target = target.cuda()
-            target_length = target_length.cuda()
-
+            target_length = torch.LongTensor(target_length).cuda()
+        else:
+            target_length = torch.LongTensor(target_length)
         # op_target = target < num_start
         # loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
         loss = masked_cross_entropy(all_node_outputs, target, target_length)
@@ -447,7 +448,9 @@ class MultiEncDec(nn.Module):
 
         if self.USE_CUDA:
             target = target.cuda()
-            target_length = target_length.cuda()
+            target_length = torch.LongTensor(target_length).cuda()
+        else:
+            target_length = torch.LongTensor(target_length)
 
         loss = masked_cross_entropy(
             all_decoder_outputs.transpose(0, 1).contiguous(),  # -> batch x seq

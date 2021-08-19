@@ -18,30 +18,27 @@ class GraphBasedEncoder(nn.Module):
         self.dropout_ratio = dropout_ratio
 
         if rnn_cell_type == 'lstm':
-            self.encoder = nn.LSTM(embedding_size, hidden_size, num_layers,
-                                   batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+            self.encoder = nn.LSTM(embedding_size, hidden_size, num_layers, dropout=dropout_ratio, bidirectional=bidirectional)
         elif rnn_cell_type == 'gru':
-            self.encoder = nn.GRU(embedding_size, hidden_size, num_layers,
-                                  batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+            self.encoder = nn.GRU(embedding_size, hidden_size, num_layers, dropout=dropout_ratio, bidirectional=bidirectional)
         elif rnn_cell_type == 'rnn':
-            self.encoder = nn.RNN(embedding_size, hidden_size, num_layers,
-                                  batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+            self.encoder = nn.RNN(embedding_size, hidden_size, num_layers, dropout=dropout_ratio, bidirectional=bidirectional)
         else:
             raise ValueError("The RNN type of encoder must be in ['lstm', 'gru', 'rnn'].")
         self.gcn = Graph_Module(hidden_size, hidden_size, hidden_size)
 
     def forward(self, input_embedding, input_lengths, batch_graph, hidden=None):
         # Note: we run this all at once (over multiple batches of multiple sequences)
-        packed = torch.nn.utils.rnn.pack_padded_sequence(input_embedding, input_lengths,batch_first=True, enforce_sorted=True)
+        packed = torch.nn.utils.rnn.pack_padded_sequence(input_embedding, input_lengths, enforce_sorted=True)
         pade_hidden = hidden
         pade_outputs, pade_hidden = self.encoder(packed, pade_hidden)
-        pade_outputs, hidden_states = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs,batch_first=True)
+        pade_outputs, hidden_states = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs)
 
-        #problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
-        rnn_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
-        _, graph_outputs = self.gcn(rnn_outputs, batch_graph)
-        #pade_outputs = pade_outputs.transpose(0, 1)
-        return pade_outputs, graph_outputs
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
+        pade_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
+        _, pade_outputs = self.gcn(pade_outputs, batch_graph)
+        pade_outputs = pade_outputs.transpose(0, 1)
+        return pade_outputs, problem_output
 
 class GraphEncoder(nn.Module):
     def __init__(self, vocab_size,embedding_size,hidden_size,sample_size,sample_layer,bidirectional,dropout_ratio):
@@ -263,6 +260,46 @@ class GraphEncoder(nn.Module):
         return hidden, graph_embedding, output_vector
 
 
+# class GraphBasedMultiEncoder(nn.Module):
+#     def __init__(self, input1_size, input2_size, embed_model, embedding1_size, 
+#                  embedding2_size, hidden_size, n_layers=2, hop_size=2, dropout=0.5):
+#         super(GraphBasedMultiEncoder, self).__init__()
+
+#         self.input1_size = input1_size
+#         self.input2_size = input2_size
+#         self.embedding1_size = embedding1_size
+#         self.embedding2_size = embedding2_size
+#         self.hidden_size = hidden_size
+#         self.n_layers = n_layers
+#         self.dropout = dropout
+#         self.hop_size = hop_size
+
+#         self.embedding1 = embed_model
+#         self.embedding2 = nn.Embedding(input2_size, embedding2_size, padding_idx=0)
+#         self.em_dropout = nn.Dropout(dropout)
+#         self.gru = nn.GRU(embedding1_size+embedding2_size, hidden_size, n_layers, dropout=dropout, bidirectional=True)
+#         self.parse_gnn = clones(Parse_Graph_Module(hidden_size), hop_size)
+        
+#     def forward(self, input1_var, input2_var, input_length, parse_graph, hidden=None):
+#         # Note: we run this all at once (over multiple batches of multiple sequences)
+#         embedded1 = self.embedding1(input1_var)  # S x B x E
+#         embedded2 = self.embedding2(input2_var)
+#         embedded = torch.cat((embedded1, embedded2), dim=2)
+#         embedded = self.em_dropout(embedded)
+#         packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length, batch_first=True, enforce_sorted=True)
+#         pade_hidden = hidden
+#         pade_outputs, pade_hidden = self.gru(packed, pade_hidden)
+#         pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs,batch_first=True)
+
+#         pade_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
+#         #pade_outputs = pade_outputs.transpose(0, 1)
+#         for i in range(self.hop_size):
+#             pade_outputs = self.parse_gnn[i](pade_outputs, parse_graph[:,2])
+#         #pade_outputs = pade_outputs.transpose(0, 1)
+#         #problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
+        
+#         return pade_outputs, pade_hidden
+
 class GraphBasedMultiEncoder(nn.Module):
     def __init__(self, input1_size, input2_size, embed_model, embedding1_size, 
                  embedding2_size, hidden_size, n_layers=2, hop_size=2, dropout=0.5):
@@ -289,20 +326,65 @@ class GraphBasedMultiEncoder(nn.Module):
         embedded2 = self.embedding2(input2_var)
         embedded = torch.cat((embedded1, embedded2), dim=2)
         embedded = self.em_dropout(embedded)
-        packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length, batch_first=True, enforce_sorted=True)
+        packed = torch.nn.utils.rnn.pack_padded_sequence(embedded, input_length)
         pade_hidden = hidden
         pade_outputs, pade_hidden = self.gru(packed, pade_hidden)
-        pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs,batch_first=True)
+        pade_outputs, _ = torch.nn.utils.rnn.pad_packed_sequence(pade_outputs)
 
         pade_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]  # S x B x H
-        #pade_outputs = pade_outputs.transpose(0, 1)
+        pade_outputs = pade_outputs.transpose(0, 1)
         for i in range(self.hop_size):
             pade_outputs = self.parse_gnn[i](pade_outputs, parse_graph[:,2])
-        #pade_outputs = pade_outputs.transpose(0, 1)
+        pade_outputs = pade_outputs.transpose(0, 1)
         #problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         
         return pade_outputs, pade_hidden
 
+
+# class NumEncoder(nn.Module):
+#     def __init__(self, node_dim, hop_size=2):
+#         super(NumEncoder, self).__init__()
+        
+#         self.node_dim = node_dim
+#         self.hop_size = hop_size
+#         self.num_gnn = clones(Num_Graph_Module(node_dim), hop_size)
+    
+#     def forward(self, encoder_outputs, num_encoder_outputs, num_pos_pad, num_order_pad):
+#         #torch.Size([64, 51, 512]) torch.Size([64, 9, 512]) torch.Size([64, 9]) torch.Size([64, 9])
+#         num_embedding = num_encoder_outputs.clone()
+#         batch_size = num_embedding.size(0)
+#         num_mask = (num_pos_pad > -1).long()
+#         node_mask = (num_order_pad > 0).long()
+#         greater_graph_mask = num_order_pad.unsqueeze(-1).expand(batch_size, -1, num_order_pad.size(-1)) > \
+#                         num_order_pad.unsqueeze(1).expand(batch_size, num_order_pad.size(-1), -1)
+#         lower_graph_mask = num_order_pad.unsqueeze(-1).expand(batch_size, -1, num_order_pad.size(-1)) <= \
+#                         num_order_pad.unsqueeze(1).expand(batch_size, num_order_pad.size(-1), -1)
+#         greater_graph_mask = greater_graph_mask.long()
+#         lower_graph_mask = lower_graph_mask.long()
+        
+#         diagmat = torch.diagflat(torch.ones(num_embedding.size(1), dtype=torch.long, device=num_embedding.device))
+#         diagmat = diagmat.unsqueeze(0).expand(num_embedding.size(0), -1, -1)
+#         graph_ = node_mask.unsqueeze(1) * node_mask.unsqueeze(-1) * (1-diagmat)
+#         graph_greater = graph_ * greater_graph_mask + diagmat
+#         graph_lower = graph_ * lower_graph_mask + diagmat
+        
+#         for i in range(self.hop_size):
+#             num_embedding = self.num_gnn[i](num_embedding, graph_greater, graph_lower)
+        
+#         #        gnn_info_vec = torch.zeros((batch_size, 1, encoder_outputs.size(-1)),
+#         #                                   dtype=torch.float, device=num_embedding.device)
+#         #        gnn_info_vec = torch.cat((encoder_outputs.transpose(0, 1), gnn_info_vec), dim=1)
+#         gnn_info_vec = torch.zeros((batch_size, encoder_outputs.size(1)+1, encoder_outputs.size(-1)),
+#                                    dtype=torch.float, device=num_embedding.device)
+#         clamped_number_indices = replace_masked_values(num_pos_pad, num_mask, gnn_info_vec.size(1)-1)
+#         gnn_info_vec.scatter_(1, clamped_number_indices.unsqueeze(-1).expand(-1, -1, num_embedding.size(-1)), num_embedding)
+#         gnn_info_vec = gnn_info_vec[:, :-1, :]
+#         #gnn_info_vec = gnn_info_vec.transpose(0, 1)
+#         gnn_info_vec = encoder_outputs + gnn_info_vec
+#         num_embedding = num_encoder_outputs + num_embedding
+#         problem_output = torch.max(gnn_info_vec, 1).values
+        
+#         return gnn_info_vec, num_embedding, problem_output
 class NumEncoder(nn.Module):
     def __init__(self, node_dim, hop_size=2):
         super(NumEncoder, self).__init__()
@@ -312,7 +394,6 @@ class NumEncoder(nn.Module):
         self.num_gnn = clones(Num_Graph_Module(node_dim), hop_size)
     
     def forward(self, encoder_outputs, num_encoder_outputs, num_pos_pad, num_order_pad):
-        #torch.Size([64, 51, 512]) torch.Size([64, 9, 512]) torch.Size([64, 9]) torch.Size([64, 9])
         num_embedding = num_encoder_outputs.clone()
         batch_size = num_embedding.size(0)
         num_mask = (num_pos_pad > -1).long()
@@ -336,14 +417,15 @@ class NumEncoder(nn.Module):
         #        gnn_info_vec = torch.zeros((batch_size, 1, encoder_outputs.size(-1)),
         #                                   dtype=torch.float, device=num_embedding.device)
         #        gnn_info_vec = torch.cat((encoder_outputs.transpose(0, 1), gnn_info_vec), dim=1)
-        gnn_info_vec = torch.zeros((batch_size, encoder_outputs.size(1)+1, encoder_outputs.size(-1)),
+        gnn_info_vec = torch.zeros((batch_size, encoder_outputs.size(0)+1, encoder_outputs.size(-1)),
                                    dtype=torch.float, device=num_embedding.device)
         clamped_number_indices = replace_masked_values(num_pos_pad, num_mask, gnn_info_vec.size(1)-1)
         gnn_info_vec.scatter_(1, clamped_number_indices.unsqueeze(-1).expand(-1, -1, num_embedding.size(-1)), num_embedding)
         gnn_info_vec = gnn_info_vec[:, :-1, :]
-        #gnn_info_vec = gnn_info_vec.transpose(0, 1)
+        gnn_info_vec = gnn_info_vec.transpose(0, 1)
         gnn_info_vec = encoder_outputs + gnn_info_vec
         num_embedding = num_encoder_outputs + num_embedding
-        problem_output = torch.max(gnn_info_vec, 1).values
+        problem_output = torch.max(gnn_info_vec, 0).values
         
         return gnn_info_vec, num_embedding, problem_output
+

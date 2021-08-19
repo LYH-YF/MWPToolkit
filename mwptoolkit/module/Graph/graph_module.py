@@ -163,6 +163,7 @@ class Parse_Graph_Module(nn.Module):
         
         return agg_node_info
 
+
 class Num_Graph_Module(nn.Module):
     def __init__(self, node_dim):
         super(Num_Graph_Module, self).__init__()

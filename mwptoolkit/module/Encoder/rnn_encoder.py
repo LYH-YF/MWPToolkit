@@ -17,7 +17,7 @@ class BasicRNNEncoder(nn.Module):
     r"""
     Basic Recurrent Neural Network (RNN) encoder.
     """
-    def __init__(self, embedding_size, hidden_size, num_layers, rnn_cell_type, dropout_ratio, bidirectional=True):
+    def __init__(self, embedding_size, hidden_size, num_layers, rnn_cell_type, dropout_ratio, bidirectional=True,batch_first=True):
         super(BasicRNNEncoder, self).__init__()
         self.rnn_cell_type = rnn_cell_type
         self.num_layers = num_layers
@@ -25,13 +25,14 @@ class BasicRNNEncoder(nn.Module):
         self.embedding_size = embedding_size
         self.bidirectional = bidirectional
         self.num_directions = 2 if self.bidirectional else 1
+        self.batch_first = batch_first
 
         if rnn_cell_type == 'lstm':
-            self.encoder = nn.LSTM(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+            self.encoder = nn.LSTM(embedding_size, hidden_size, num_layers, batch_first=batch_first, dropout=dropout_ratio, bidirectional=bidirectional)
         elif rnn_cell_type == 'gru':
-            self.encoder = nn.GRU(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+            self.encoder = nn.GRU(embedding_size, hidden_size, num_layers, batch_first=batch_first, dropout=dropout_ratio, bidirectional=bidirectional)
         elif rnn_cell_type == 'rnn':
-            self.encoder = nn.RNN(embedding_size, hidden_size, num_layers, batch_first=True, dropout=dropout_ratio, bidirectional=bidirectional)
+            self.encoder = nn.RNN(embedding_size, hidden_size, num_layers, batch_first=batch_first, dropout=dropout_ratio, bidirectional=bidirectional)
         else:
             raise ValueError("The RNN type of encoder must be in ['lstm', 'gru', 'rnn'].")
 
@@ -73,11 +74,11 @@ class BasicRNNEncoder(nn.Module):
         if hidden_states is None:
             hidden_states = self.init_hidden(input_embeddings)
 
-        packed_input_embeddings = torch.nn.utils.rnn.pack_padded_sequence(input_embeddings, input_length, batch_first=True, enforce_sorted=True)
+        packed_input_embeddings = torch.nn.utils.rnn.pack_padded_sequence(input_embeddings, input_length, batch_first=self.batch_first, enforce_sorted=True)
 
         outputs, hidden_states = self.encoder(packed_input_embeddings, hidden_states)
 
-        outputs, outputs_length = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=True)
+        outputs, outputs_length = torch.nn.utils.rnn.pad_packed_sequence(outputs, batch_first=self.batch_first)
 
         return outputs, hidden_states
 

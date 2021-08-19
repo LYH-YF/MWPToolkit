@@ -2,18 +2,25 @@
 
 [Doc]()|[Model]()|[Dataset]()|[Paper]()
 
-MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving task. It is a comprehensive and efficient framework which integrates **xx** popular MWP benchmark datasets and **xx** deep learning-based MWP algorithms and evaluators for different measurement metrics. 
+MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is a comprehensive framework that integrates **xx** popular MWP benchmark datasets and **xx** deep learning-based MWP algorithms and evaluators for different measurement metrics. 
 
-Our framework has the following architecture. You could ulitize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. **(YS: draw a figure about the framework architecture)**
+Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. **(YS: draw a figure about the framework architecture)**
 
 ![](https://octodex.github.com/images/yaktocat.png)
 <div align="center"> Figure: Architecture of MWP Toolkit </div>
 
-# News
+## News
 
-# Feature
+## Feature
 
-# Installation
+**(YS: can you come up with more points?)**
+
+* **Comprehensive toolkit for MWP solving task**. To our best knowledge, MWP toolkit is the first open-source library for MWP solving task, where popular benchmark datasets and advanced deep learning-based methods for MWP solving tasks are integrated into a unified framework. 
+* **Easy to be employed**. MWP toolkit is developed upon Python and Pytorch, which is commonly used in the development community. The corresponding documents make it easy for users to get started.
+* **Highly modularized framework**. MWP toolkit is designed with highly reused modules and provides convenient interfaces for users to call. Specifically, data preprocessor, data loader, encoder, decoder and evaluator form the running procedure. Each module could be developed independently.
+
+
+## Installation
 Development environment **(YS: move other libraries expect python, pytorch, transformers to requirements.txt file)**:
 ```
 python >= 3.6.0
@@ -28,13 +35,13 @@ word2number >= 1.1
 pyltp >= 0.2.1 (optional)
 ```
 
-**Method 1: Install from pip**
+### Method 1: Install from pip
 
 **(YS: figure out how to make pip install of this libraries)**
 ```
 pip install 
 ```
-**Method 2: Install from source**
+### Method 2: Install from source
 
 **(YS: check if this is correct)**
 ```
@@ -45,39 +52,33 @@ git clone https://github.com/LYH-YF/MWPToolkit.git && cd MWPToolkit
 pip install -r requirements.txt
 ```
 
-# Quick start
+## Quick Start
 
-<span style="font-family: Open Sans; font-weight: 300; font-size: 16px; font-style: normal">300 Light normal hamburgefonstiv</span>
+### Evaluate a build-in dataset with a model
 
-<span style="font-weight: 800; font-size: 20px">Evaluate a build-in dataset with a model</span>
-
-<p style="color: blue">bar</p>
-
-To have an initial try of our toolkit, you can use the provided script:
+To have an initial trial of our toolkit, you can use the provided script:
 
 ```
 python run_mwptoolkit.py --model=GTS --dataset=math23k --task_type=single_equation --equation_fix=prefix --k_fold=5 --test_step=5 --gpu_id=0
 ```
 
-Above script will run [GTS]() model on [Math23K]() dataset with 5 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation). It will take around **xx** minutes to train 5 GTS models independently and output the average scores of equation accuracy and value accuracy. The training log  can be found in the [log file](). 
+Above script will run [GTS]() model on [Math23K]() dataset with 5 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation). It will take around **xx** minutes to train 5 GTS models independently and output the average scores of equation accuracy and value accuracy. The training log can be found in the [log file](). 
 
 If you would like to change the parameters, such as ```dataset``` and ```model```, please refer to the following instructions: **(YS: check whether my following description is correct)**
 
 * ```model```: The model name you specify to apply. It should be chosen from options [].
 * ```dataset```: The dataset name you specify to evaluate. It should be chosen from options [].
 * ```task_type```: The type of generated equation. It should be chosen from options [single_equation | multi_equation]. Usually, it's up to the datasets **(YS: we can provide more details about this. Maybe for example, but we need to mention that how to know the correct choice for specific dataset)**.
-* ```equation_fix```: The type of equation generation order. It should be chosen from options [infix | postfix | prefix]. Please note some models require specific type of equation generation order, so set this parameter to avoid bad performance because of the incorrect order type **(YS: can you give more details about how to avoid bad performance?)**.
-* ```k_fold```: The fold number of cross-validation. It could be either NA value or interger. If it is NA value, it will run train-valid-test split procedure. 
+* ```equation_fix```: The type of equation generation order. It should be chosen from options [infix | postfix | prefix]. Please note some models require a specific type of equation generation order, so set this parameter to avoid bad performance because of the incorrect order type **(YS: can you give more details about how to avoid bad performance?)**.
+* ```k_fold```: The fold number of cross-validation. It could be either NA value or integer. If it is NA value, it will run train-valid-test split procedure. 
 * ```test_step```: The epoch number of training after which conducts the evaluation on test. It should be an interger.
-* ```gpu_id```: The GPU ID for training the model. It should be an integer based on your GPU configuration. Please note that we haven't tested the framework with multipul GPUs yet.
+* ```gpu_id```: The GPU ID for training the model. It should be an integer based on your GPU configuration. Please note that we haven't tested the framework with multiple GPUs yet.
 
-**Evaluate a new dataset**
+### Evaluate a new dataset
 
 Our supported datasets are all saved under the folder ```'dataset'```. Besides trying our code with these build-in datasets, we also provide the option for you to run models on your own data copies, you can follow the steps below:
 
-<strong>First</strong>:
-
-Your dataset folder (same as the dataset name) should include three json files: 
+<strong>Step 1</strong>: Organize your dataset. Your dataset folder (same as the dataset name) should include three json files for train, validation and test, respectively: 
 
 ```
 dataset_name
@@ -86,7 +87,7 @@ dataset_name
     |----testset.json
 ```
 
-Move your dataset folder to ```'dataset'``` of our framework, then the file structure will be like:
+Move your dataset folder under path ```'dataset'``` of our framework, the file structure would be like:
 
 ```
 dataset
@@ -96,56 +97,52 @@ dataset
             |----testset.json
 ```
 
-<strong>Second</strong>:
+<strong>Step 2</strong>: Setup your dataset configuration. The dataset configuration files are saved under path ```'mwptoolkit/properties/dataset/'```. You can write your own dataset configuration and save a json file under the path. The path to your json file should be ```mwptoolkit/properties/dataset/dataset_name.json```
 
-Set your dataset configuration, our supported dataset configuration files are saved at ```'mwptoolkit/properties/dataset/'```. You can create a json file under the folder. The road path will be like:
-
-```mwptoolkit/properties/dataset/dataset_name.json```
-
-<strong>Finally</strong>:
-
-Run:
+<strong>Step 3</strong>: Run code
 
 ```python run_mwptoolkit.py --model=[model_name] --dataset=[dataset_name] --task_type=[single_equation|multi_equation] --equation_fix=[infix|postfix|prefix] --k_fold=[5|None] --gpu_id=0```
 
-If you don't move your dataset folder and dataset configuration file to specific folder,these parameters can be set directly.
+If you couldn't move your dataset folder and dataset configuration file to the above folders, the following parameters can be set directly.
 
-* ```dataset_path```, the default value is like ```dataset/dataset_name```, you can set your own dataset road path ```--dataset_path=[your_dataset]``` in cmd line.
-* ```dataset_config_path```, the default value is like ```mwptoolkit/properties/dataset/dataset_name.json```, you can set your own dataset configuration file ```--dataset_config_path=[your_dataset_configuration]``` in cmd line.
+* ```dataset_path```: The path to dataset folder. The default value is ```'dataset/dataset_name'```, you can change it to your own dataset path via appending ```--dataset_path=[your_dataset]``` to cmd script.
+* ```dataset_config_path```: The path to dataset configuration file. The default value is ```'mwptoolkit/properties/dataset/dataset_name.json'```, you can change it to your own dataset configuration path via appending ```--dataset_config_path=[your_dataset_configuration]``` to cmd script.
 
-**Example to run hyper-parameters search**
+### Run Hyper-parameters Search
 
-We implemented hyper-parameter search in our framework based ```ray.tune```.
+Our toolkit also provides the option to do hyper-parameters search, which could facilitate users to obtain optimal hyper-parameters efficiently. We integrated hyper-parameter search in our framework via ```ray.tune```.
 
-You can run cmd line template below:
+You can run the script template below:
 
-```python run_hyper_search.py --model=[model_name] --dataset=[dataset_name] --task_type=[single_equation|multi_equation] --equation_fix=[infix|postfix|prefix] --k_fold=[5|None] --cpu_per_trial=2 --gpu_per_trial=0.5 --samples=1 --search_file=search_file.json --gpu_id=0```
+```
+python run_hyper_search.py --model=[model_name] --dataset=[dataset_name] --task_type=[single_equation|multi_equation] --equation_fix=[infix|postfix|prefix] --k_fold=[5|None] --cpu_per_trial=2 --gpu_per_trial=0.5 --samples=1 --search_file=search_file.json --gpu_id=0
+```
 
-* ```cpu_per_trial```, CPU resources to allocate per trial.
-* ```gpu_per_trial```, GPU resources to allocate per trial.
-* ```samples```, times to sample from the search space.
-* ```search_file```, a json file including search parameter name and space.
-* ```search_parameter```, if you don't write the search file, you can set this parameter to specify search space, e.g. ```--search_parameter=hidden_size=[256,512] --search_parameter=embedding_size=[64,128,256] --search_parameter=learning_rate='(1e-4, 1e-2)' ```
+* ```cpu_per_trial```: The CPU resources to allocate per trial.
+* ```gpu_per_trial```: The GPU resources to allocate per trial.
+* ```samples```: The number of sampling times from the search space.
+* ```search_file```: A json file including search parameter name and space**(YS: maybe we provide a code sample)**.
+* ```search_parameter```: If you don't have the search file, you can set this parameter to specify the search space. For example, ```--search_parameter=hidden_size=[256,512]```, ```--search_parameter=embedding_size=[64,128,256]``` and ```--search_parameter=learning_rate='(1e-4, 1e-2)``` **(YS: what do you mean here?)**.
 
-# Architecture
+## Architecture
 
-**Supoported Datasets**
+We have shown the overall architecture of our toolkit in the above figure. **(YS: to be completed later)**
 
-We hava deployed eight popular datasets in MWP task, these datasets are divided into two categories, single-equation dataset and multiple-equation dataset.
+### Dataset
 
-See the table below.
+We have deployed 8 popular MWP datasets in our toolkit. These datasets are divided into two categories, **Single-equation** dataset and **Multiple-equation** dataset, which can be found in the table below. We will keep updating more datasets like ape200k<a href="https://arxiv.org/abs/2009.11506">(Zhao et al., 2020)</a>, dolphin1878<a href="https://aclanthology.org/D15-1135/">(Shi et al., 2015)</a> and dolphin18k<a href="https://aclanthology.org/P16-1084/">(Huang et al., 2016)</a>. 
 
 <table align="center">
     <thread align="center">
         <tr>
             <th align="center">task</th>
             <th align="center">dataset</th>
-            <th align="center">citation</th>
+            <th align="center">reference</th>
         </tr>
     </thread>
     <tbody align="center">
         <tr>
-            <td rowspan="4" align="center">single-equation dataset</td>
+            <td rowspan="4" align="center">Single-equation dataset</td>
             <td align="center">math23k</td>
             <td align="center"><a href="https://aclanthology.org/D17-1088/">(Wang et al., 2017)</a></td>
         </tr>
@@ -162,7 +159,7 @@ See the table below.
             <td align="center"><a href="https://arxiv.org/abs/2103.07191">(Patel et al., 2021)</a></td>
         </tr>
         <tr>
-            <td rowspan="4" align="center">multiple-equation dataset</td>
+            <td rowspan="4" align="center">Multiple-equation dataset</td>
             <td align="center">alg514</td>
             <td align="center"><a href="https://aclanthology.org/P14-1026/">(Kushman et al., 2014)</a></td>
         </tr>
@@ -180,22 +177,17 @@ See the table below.
         </tr>
     </tbody>
 </table>
-Other popular datasets like ape200k<a href="https://arxiv.org/abs/2009.11506">(Zhao et al., 2020)</a>, dolphin1878<a href="https://aclanthology.org/D15-1135/">(Shi et al., 2015)</a> and dolphin18k<a href="https://aclanthology.org/P16-1084/">(Huang et al., 2016)</a> we will finish deployment soon. 
 
-**Models**
+### Model
 
-We have implemented 18 deep learning models and we are updating some other models. 
-
-See two tables below.
-
-**Implemented models** 
+We have deployed 18 deep learning MWP models in our toolkit. Based on the featured generation procedure, we categorize them into **Sequence-to-sequence**, **Sequence-to-tree**, **Graph-to-tree**, **VAE** and **Pre-trained** models. Please note Pre-trained models are simple implementation of pretrained language models on MWP solving task. The table is displayed as follows:
 
 <table align="center">
     <thread>
         <tr>
             <th align="center">type</th>
             <th align="center">model</th>
-            <th align="center">citation</th>
+            <th align="center">reference</th>
         </tr>
     </thread>
     <tbody>
@@ -279,12 +271,15 @@ See two tables below.
     </tbody>
 </table>
 
-**Updating models**
+### Updating models
+
+**(YS: can you merge the following table to above one?)**
+
 <table align="center">
     <thread>
         <tr>
             <th align="center">model</th>
-            <th align="center">citation</th>
+            <th align="center">reference</th>
         </tr>
     </thread>
     <tbody>
@@ -303,11 +298,37 @@ See two tables below.
     </tbody>
 </table>
 
-# Experiment Results
+### Evaluator
 
-# Contributing
+We have implemented two evaluators to measure the effect of MWP models. 
 
-# Reference
+<table align="center">
+    <thread>
+        <tr>
+            <th align="center">evaluator</th>
+            <th align="center">note</th>
+            <th align="center">reference</th>
+        </tr>
+    </thread>
+    <tbody>
+        <tr>
+            <td>Equ accuracy</td>
+            <td align="center">The predicted equation is exactly match the correct equation
+            <td align="center"><a href="">(xxx)</a></td>
+        </tr>
+        <tr>
+            <td>Val accuracy</td>
+            <td align="center">The predicted answer is match the correct answer
+            <td align="center"><a href="">(xxx)</a></td>
+        </tr>
+    </tbody>
+</table>
 
-# License
+## Experiment Results
+
+## Contributing
+
+## Reference
+
+## License
 

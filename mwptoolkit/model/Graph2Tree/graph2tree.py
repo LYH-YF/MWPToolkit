@@ -116,7 +116,7 @@ class Graph2Tree(nn.Module):
         num_start = self.num_start
         
         graph = self.build_graph(seq_length, num_list, num_pos, group_nums)
-        all_node_output = self.evaluate_tree(seq,seq_length,generate_nums,num_pos,num_start,self.beam_size,self.max_out_len)
+        all_node_output = self.evaluate_tree(seq,seq_length,graph,generate_nums,num_pos,num_start,self.beam_size,self.max_out_len)
         
         all_output = self.convert_idx2symbol(all_node_output, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))

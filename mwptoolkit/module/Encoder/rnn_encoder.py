@@ -45,7 +45,10 @@ class BasicRNNEncoder(nn.Module):
         Returns:
             Torch.Tensor: the initial hidden states.
         """
-        batch_size = input_embeddings.size(0)
+        if self.batch_first:
+            batch_size = input_embeddings.size(0)
+        else:
+            batch_size = input_embeddings.size(1)
         device = input_embeddings.device
         if self.rnn_cell_type == 'lstm':
             h_0 = torch.zeros(self.num_layers * self.num_directions, batch_size, self.hidden_size).to(device)

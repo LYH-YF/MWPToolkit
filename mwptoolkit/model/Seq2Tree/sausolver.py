@@ -186,6 +186,8 @@ class SAUSolver(nn.Module):
                     node = node_stack.pop()
                 else:
                     left_childs.append(None)
+                    sub_tree_emb.append(padding_hidden)
+                    loss_mask.append(torch.zeros(1,dtype=torch.float))
                     continue
 
                 if i < num_start:
@@ -210,8 +212,8 @@ class SAUSolver(nn.Module):
             
             sub_tree_emb = torch.stack(sub_tree_emb)
             loss_mask = torch.stack(loss_mask)
-            score = self.decoder.attn(sub_tree_emb, encoder_outputs, seq_mask)
-            s_aligned_vector = score.bmm(encoder_outputs)
+            score = self.decoder.attn(sub_tree_emb.transpose(0,1), encoder_outputs, seq_mask)
+            s_aligned_vector = score.bmm(encoder_outputs.transpose(0,1))
             s_aligned_a, s_aligned_d=self.decoder.Semantically_Aligned_Regularization(sub_tree_emb,s_aligned_vector)
             sub_tree_outputs.append(s_aligned_a)
             sub_tree_target.append(s_aligned_d)

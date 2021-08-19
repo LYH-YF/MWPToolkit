@@ -293,7 +293,7 @@ class SARTreeDecoder(nn.Module):
         embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
         embedding_weight = torch.cat((embedding_weight, num_pades), dim=1)  # B x O x N
 
-        leaf_input = torch.cat((current_node, current_context), 1)
+        leaf_input = torch.cat((current_node, current_context), 2)
         leaf_input = leaf_input.squeeze(1)
         leaf_input = self.dropout(leaf_input)
 

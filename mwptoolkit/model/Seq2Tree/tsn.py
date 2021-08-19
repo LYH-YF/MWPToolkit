@@ -65,14 +65,14 @@ class TSN(nn.Module):
             self.out_pad_token = None
 
         self.t_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
+        self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio,batch_first=False)
         #self.t_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size,self.num_layers,self.dropout_ratio)
         self.t_decoder = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.t_node_generater = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
         self.t_merge = Merge(self.hidden_size, self.embedding_size, self.dropout_ratio)
 
         self.s_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.s_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
+        self.s_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio,batch_first=False)
         #self.s_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size, self.num_layers,self.dropout_ratio)
         self.s_decoder_1 = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.s_node_generater_1 = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)

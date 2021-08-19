@@ -172,7 +172,7 @@ class Graph2Tree(nn.Module):
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.predict(
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(
                 node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
 
             # all_leafs.append(p_leaf)
@@ -183,7 +183,7 @@ class Graph2Tree(nn.Module):
             target[t] = target_t
             if self.USE_CUDA:
                 generate_input = generate_input.cuda()
-            left_child, right_child, node_label = self.generate(current_embeddings, generate_input, current_context)
+            left_child, right_child, node_label = self.node_generater(current_embeddings, generate_input, current_context)
             left_childs = []
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
                                                 node_stacks, target[t].tolist(), embeddings_stacks):
@@ -277,7 +277,7 @@ class Graph2Tree(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.predict(
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(
                     b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
                     seq_mask, num_mask)
 
@@ -303,7 +303,7 @@ class Graph2Tree(nn.Module):
                         generate_input = torch.LongTensor([out_token])
                         if self.USE_CUDA:
                             generate_input = generate_input.cuda()
-                        left_child, right_child, node_label = self.generate(current_embeddings, generate_input, current_context)
+                        left_child, right_child, node_label = self.node_generater(current_embeddings, generate_input, current_context)
 
                         current_node_stack[0].append(TreeNode(right_child))
                         current_node_stack[0].append(TreeNode(left_child, left_flag=True))

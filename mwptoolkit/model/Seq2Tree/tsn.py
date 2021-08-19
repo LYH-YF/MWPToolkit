@@ -19,7 +19,7 @@ from mwptoolkit.module.Strategy.beam_search import TreeBeam
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss,masked_cross_entropy
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
 from mwptoolkit.utils.utils import str2float, copy_list, clones
-USE_CUDA=torch.cuda.is_available()
+
 class TSN(nn.Module):
     def __init__(self, config, dataset):
         super(TSN, self).__init__()
@@ -27,6 +27,7 @@ class TSN(nn.Module):
         self.hidden_size = config["hidden_size"]
         self.bidirectional = config["bidirectional"]
         self.device = config["device"]
+        self.USE_CUDA = True if self.device == torch.device('cuda') else False
         self.beam_size = config['beam_size']
         self.max_out_len = config['max_output_len']
         self.embedding_size = config["embedding_size"]
@@ -149,7 +150,7 @@ class TSN(nn.Module):
         num_start = self.num_start
         # sequence mask for attention
         #graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
-        all_node_output = self.evaluate_tree_teacher(seq,seq_length,generate_nums,num_pos,num_start)
+        all_node_output = self.evaluate_tree_teacher(seq,seq_length,generate_nums,num_pos,num_start,self.beam_size,self.max_out_len)
         
         all_output = self.convert_idx2symbol(all_node_output, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
@@ -171,7 +172,7 @@ class TSN(nn.Module):
         num_start = self.num_start
         # sequence mask for attention
         #graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
-        all_node_output1,score1,all_node_output2,score2 = self.evaluate_tree(seq,seq_length,generate_nums,num_pos,num_start)
+        all_node_output1,score1,all_node_output2,score2 = self.evaluate_tree(seq,seq_length,generate_nums,num_pos,num_start,self.beam_size,self.max_out_len)
         
         all_output1 = self.convert_idx2symbol(all_node_output1, num_list[0], copy_list(nums_stack[0]))
         all_output2 = self.convert_idx2symbol(all_node_output2, num_list[0], copy_list(nums_stack[0]))
@@ -206,7 +207,7 @@ class TSN(nn.Module):
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0)
         batch_size = len(input_length)
 
-        if USE_CUDA:
+        if self.USE_CUDA:
             input_var = input_var.cuda()
             seq_mask = seq_mask.cuda()
             padding_hidden = padding_hidden.cuda()
@@ -242,9 +243,9 @@ class TSN(nn.Module):
 
             target_t, generate_input = self.generate_tree_input(target[t].tolist(), outputs, nums_stack_batch, num_start, unk)
             target[t] = target_t
-            if USE_CUDA:
+            if self.USE_CUDA:
                 generate_input = generate_input.cuda()
-            left_child, right_child, node_label = self.t_node_(current_embeddings, generate_input, current_context)
+            left_child, right_child, node_label = self.t_node_generater(current_embeddings, generate_input, current_context)
             left_childs = []
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
                                                 node_stacks, target[t].tolist(), embeddings_stacks):
@@ -274,7 +275,7 @@ class TSN(nn.Module):
         all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
 
         target = target.transpose(0, 1).contiguous()
-        if USE_CUDA:
+        if self.USE_CUDA:
             # all_leafs = all_leafs.cuda()
             all_node_outputs = all_node_outputs.cuda()
             target = target.cuda()
@@ -296,7 +297,7 @@ class TSN(nn.Module):
 
 
     def evaluate_tree_teacher(self,input_batch, input_length, generate_nums, num_pos,
-                    num_start,beam_size=5, english=False, max_length=30):
+                    num_start,beam_size=5, max_length=30, english=False):
 
         seq_mask = torch.BoolTensor(1, input_length).fill_(0)
         # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
@@ -308,7 +309,7 @@ class TSN(nn.Module):
 
         batch_size = 1
 
-        if USE_CUDA:
+        if self.USE_CUDA:
             input_var = input_var.cuda()
             seq_mask = seq_mask.cuda()
             padding_hidden = padding_hidden.cuda()
@@ -366,7 +367,7 @@ class TSN(nn.Module):
 
                     if out_token < num_start:
                         generate_input = torch.LongTensor([out_token])
-                        if USE_CUDA:
+                        if self.USE_CUDA:
                             generate_input = generate_input.cuda()
                         left_child, right_child, node_label = self.t_node_generater(current_embeddings, generate_input, current_context)
 
@@ -466,7 +467,7 @@ class TSN(nn.Module):
 
             target_t, generate_input = self.generate_tree_input(target[t].tolist(), outputs, nums_stack_batch, num_start, unk)
             target[t] = target_t
-            if USE_CUDA:
+            if self.USE_CUDA:
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.s_node_generater_1(current_embeddings, generate_input, current_context)
             left_childs = []
@@ -525,7 +526,7 @@ class TSN(nn.Module):
 
             target_t, generate_input = self.generate_tree_input(target_1[t].tolist(), outputs, nums_stack_batch, num_start, unk)
             target_1[t] = target_t
-            if USE_CUDA:
+            if self.USE_CUDA:
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.s_node_generater_2(current_embeddings, generate_input, current_context)
             left_childs_1 = []
@@ -562,7 +563,7 @@ class TSN(nn.Module):
         
         target = target.transpose(0, 1).contiguous()
         target_1 = target_1.transpose(0, 1).contiguous()
-        if USE_CUDA:
+        if self.USE_CUDA:
             # all_leafs = all_leafs.cuda()
             all_node_outputs = all_node_outputs.cuda()
             all_node_outputs_1 = all_node_outputs_1.cuda()
@@ -587,7 +588,7 @@ class TSN(nn.Module):
 
         return loss.item() # , loss_0.item(), loss_1.item()
 
-    def evaluate_tree(self,input_batch, input_length, generate_nums, num_pos,num_start, beam_size=5, english=False, max_length=30):
+    def evaluate_tree(self,input_batch, input_length, generate_nums, num_pos,num_start, beam_size=5, max_length=30, english=False):
         
         seq_mask = torch.BoolTensor(1, input_length).fill_(0)
         # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
@@ -599,7 +600,7 @@ class TSN(nn.Module):
 
         batch_size = 1
 
-        if USE_CUDA:
+        if self.USE_CUDA:
             input_var = input_var.cuda()
             seq_mask = seq_mask.cuda()
             padding_hidden = padding_hidden.cuda()
@@ -657,7 +658,7 @@ class TSN(nn.Module):
 
                     if out_token < num_start:
                         generate_input = torch.LongTensor([out_token])
-                        if USE_CUDA:
+                        if self.USE_CUDA:
                             generate_input = generate_input.cuda()
                         left_child, right_child, node_label = self.s_node_generater_1(current_embeddings, generate_input, current_context)
 
@@ -734,7 +735,7 @@ class TSN(nn.Module):
 
                     if out_token < num_start:
                         generate_input = torch.LongTensor([out_token])
-                        if USE_CUDA:
+                        if self.USE_CUDA:
                             generate_input = generate_input.cuda()
                         left_child, right_child, node_label = self.s_node_generater_2(current_embeddings, generate_input, current_context)
 
@@ -947,7 +948,7 @@ class TSN(nn.Module):
         indices = torch.LongTensor(indices)
         masked_index = torch.BoolTensor(masked_index)
         masked_index = masked_index.view(batch_size, num_size, hidden_size)
-        if USE_CUDA:
+        if self.USE_CUDA:
             indices = indices.cuda()
             masked_index = masked_index.cuda()
         all_outputs = encoder_outputs.transpose(0, 1).contiguous()

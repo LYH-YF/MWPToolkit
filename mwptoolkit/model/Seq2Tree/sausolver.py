@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/19 11:29:13
+# @File: sausolver.py
+
+
 import random
 import torch
 from torch import nn
@@ -56,7 +62,7 @@ class SAUSolver(nn.Module):
         #module
         self.embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         #self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
-        self.encoder = BasicRNNEncoder(self.embedding_size,self.hidden_size,self.num_layers,self.dropout_ratio,batch_first=False)
+        self.encoder = BasicRNNEncoder(self.embedding_size,self.hidden_size,self.num_layers,self.rnn_cell_type,self.dropout_ratio,batch_first=False)
         self.decoder = SARTreeDecoder(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.node_generater = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
         self.merge = Merge(self.hidden_size, self.embedding_size, self.dropout_ratio)
@@ -83,8 +89,7 @@ class SAUSolver(nn.Module):
                embedder,encoder, predict, generate, merge, num_pos,batch_graph,unk,num_start
         '''
         loss = self.train_tree(seq,seq_length,target,target_length,\
-            nums_stack,num_size,generate_nums,self.embedder,self.encoder,self.decoder,self.node_generater,self.merge,\
-                num_pos,unk,num_start)
+            nums_stack,num_size,generate_nums,num_pos,unk,num_start)
         return loss
     
     def model_test(self,batch_data):

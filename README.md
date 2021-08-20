@@ -1,6 +1,7 @@
 # <div align="center"> MWPToolkit </div>
 
-![Build Status](http://3.213.40.221:8080/buildStatus/icon?job=1_Load_Build_Staging)
+![](https://img.shields.io/badge/license-MIT-green)
+
 [Doc]()|[Model](#model)|[Dataset](#dataset)|[Paper]()
 
 MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 

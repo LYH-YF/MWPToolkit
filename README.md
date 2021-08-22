@@ -6,9 +6,9 @@
 
 MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 
 
-Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. **(YS: draw a figure about the framework architecture)**
+Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. 
 
-![](https://github.com/LYH-YF/MWPToolkit/blob/master/architecture.png)
+![](https://github.com/LYH-YF/MWPToolkit/blob/master/architecture1.png)
 <div align="center"> Figure: Architecture of MWP Toolkit </div>
 
 ## News
@@ -68,9 +68,9 @@ Above script will run [GTS](https://www.ijcai.org/proceedings/2019/736) model on
 
 If you would like to change the parameters, such as ```dataset``` and ```model```, please refer to the following instruction: **(YS: check whether my following description is correct, maybe we just keep the required arguments)**
 
-* ```model```*: The model name you specify to apply. You can see all options in Section [Model](#model).
-* ```dataset```*: The dataset name you specify to evaluate. You can see all options in Section [Dataset](#dataset).
-* ```task_type```*: The type of generated equation. It should be chosen from options [single_equation | multi_equation]. Usually, it's up to the datasets **(YS: we can provide more details about this. Maybe for example, but we need to mention that how to know the correct choice for specific dataset)**.
+* ```model```: The model name you specify to apply. You can see all options in Section [Model](#model).
+* ```dataset```: The dataset name you specify to evaluate. You can see all options in Section [Dataset](#dataset).
+* ```task_type```: The type of generated equation. It should be chosen from options [single_equation | multi_equation]. Usually, it's up to the datasets **(YS: we can provide more details about this. Maybe for example, but we need to mention that how to know the correct choice for specific dataset)**.
 * ```equation_fix```: The type of equation generation order. It should be chosen from options [infix | postfix | prefix]. Please note some models require a specific type of equation generation order, so set this parameter to avoid bad performance because of the incorrect order type **(YS: can you give more details about how to avoid bad performance?)**.
 * ```k_fold```: The fold number of cross-validation. It could be either NA value or an integer. If it is NA value, it will run train-valid-test split procedure. 
 * ```test_step```: The epoch number of training after which conducts the evaluation on test. It should be an interger.
@@ -116,7 +116,7 @@ Instead of moving your dataset folder and dataset configuration file to the abov
 
 ### Run Hyper-parameters Search
 
-Our toolkit also provides the option to do hyper-parameters search, which could facilitate users to obtain optimal hyper-parameters efficiently. We integrated hyper-parameter search in our framework via ```ray.tune```.
+Our toolkit also provides the option to do hyper-parameters search, which could facilitate users to obtain optimal hyper-parameters efficiently. We integrated hyper-parameter search in our framework via ```ray.tune```. Due to the search procedure, it will take longer time to train a model.
 
 You can run the cmd script template below:
 
@@ -317,17 +317,227 @@ We have implemented 2 evaluation metrics to measure the effect of MWP models.
     </thread>
     <tbody>
         <tr>
-            <td>Equ accuracy</td>
+            <td>Equ acc</td>
             <td align="center">The predicted equation is exactly match the correct equation
         </tr>
         <tr>
-            <td>Val accuracy</td>
+            <td>Val acc</td>
             <td align="center">The predicted answer is match the correct answer
         </tr>
     </tbody>
 </table>
 
 ## Experiment Results
+
+We have implemented the models on the datasets that are integrated within our toolkit. All the implementation follows the build-in configurations. All the experiments are conducted with 5 cross-validation. The experiment results(Equ acc|Val acc) are displayed in the following table.
+
+<table align="center">
+    <thread>
+        <tr>
+            <th align="center">model</th>
+            <th align="center">math23k</th>
+            <th align="center">alg514</th>
+            <th align="center">draw</th>
+            <th align="center">mawps</th>
+            <th align="center">hmwp</th>
+            <th align="center">asdiv-a</th>
+            <th align="center">mawps_asdiv-a_svamp</th>
+        </tr>
+    </thread>
+    <tbody>
+        <tr>
+            <td>DNS</td>
+            <td align="center">57.1|67.5
+            <td align="center">38.5|38.9
+            <td align="center">35.8|36.8
+            <td align="center">78.9|86.3
+            <td align="center">24.0|32.7
+            <td align="center">63.0|66.2
+            <td align="center">22.1|24.2
+        </tr>
+        <tr>
+            <td>MathEN</td>
+            <td align="center">66.7|69.5
+            <td align="center">42.4|42.8
+            <td align="center">38.2|39.5
+            <td align="center">85.9|86.4
+            <td align="center">32.4|43.7
+            <td align="center">64.3|64.7
+            <td align="center">21.8|25.0
+        </tr>
+        <tr>
+            <td>T-RNN</td>
+            <td align="center">65.0|68.1
+            <td align="center">39.1|39.5
+            <td align="center">27.4|28.9
+            <td align="center">86.0|86.5
+            <td align="center">27.2|36.8
+            <td align="center">68.9|69.3
+            <td align="center">22.6|26.1
+        </tr>
+        <tr>
+            <td>S-Aligned</td>
+            <td align="center">59.1|69.0
+            <td align="center">42.8|43.0
+            <td align="center">36.7|37.8
+            <td align="center">86.0|86.3
+            <td align="center">31.0|41.8
+            <td align="center">66.0|67.9
+            <td align="center">23.9|26.1
+        </tr>
+        <tr>
+            <td>AST-Dec</td>
+            <td align="center">56.5|65.6
+            <td align="center">24.9|25.7
+            <td align="center">26.0|26.7
+            <td align="center">84.1|84.8
+            <td align="center">24.9|32.0
+            <td align="center">54.5|56.0
+            <td align="center">21.9|24.7
+        </tr>
+        <tr>
+            <td>Group-ATT</td>
+            <td align="center">56.7|66.6
+            <td align="center">35.3|35.8
+            <td align="center">30.4|31.4
+            <td align="center">84.7|85.3
+            <td align="center">25.2|33.2
+            <td align="center">59.5|61.0
+            <td align="center">19.2|21.5
+        </tr>
+        <tr>
+            <td>GTS</td>
+            <td align="center">63.4|74.2
+            <td align="center">47.5|48.5
+            <td align="center">38.6|39.9
+            <td align="center">83.5|84.1
+            <td align="center">33.7|44.6
+            <td align="center">67.7|69.9
+            <td align="center">25.6|29.1
+        </tr>
+        <tr>
+            <td>Graph2Tree</td>
+            <td align="center">64.9|75.3
+            <td align="center">45.7|46.7
+            <td align="center">39.8|41.0
+            <td align="center">84.9|85.6
+            <td align="center">34.4|45.1
+            <td align="center">72.4|75.3
+            <td align="center">31.6|35.0
+        </tr>
+        <tr>
+            <td>TSNet</td>
+            <td align="center">73.8|74.4
+            <td align="center">46.9|47.3
+            <td align="center">39.3|40.4
+            <td align="center">84.0|84.7
+            <td align="center">34.3|44.9
+            <td align="center">68.5|71.0
+            <td align="center">25.7|29.0
+        </tr>
+        <tr>
+            <td>EPT</td>
+            <td align="center">
+        </tr>
+        <tr>
+            <td>MultiE&D</td>
+            <td align="center">65.5|76.5
+            <td align="center">39.3|39.3
+            <td align="center">38.1|39.2
+            <td align="center">83.2|84.1
+            <td align="center">23.1|31.2
+            <td align="center">70.5|72.6
+            <td align="center">29.3|32.4
+        </tr>
+        <tr>
+            <td>SAU-Solver</td>
+            <td align="center">64.6|75.1
+            <td align="center">47.3|47.7
+            <td align="center">38.4|39.2
+            <td align="center">83.4|84.0
+            <td align="center">33.1|43.7
+            <td align="center">68.5|71.2
+            <td align="center">27.1|29.7
+        </tr>
+    </tbody>
+</table>
+
+<table align="center">
+    <thread>
+        <tr>
+            <th align="center">model</th>
+            <th align="center">math23k</th>
+            <th align="center">alg514</th>
+            <th align="center">draw</th>
+            <th align="center">mawps</th>
+            <th align="center">hmwp</th>
+            <th align="center">asdiv-a</th>
+            <th align="center">mawps_asdiv-a_svamp</th>
+        </tr>
+    </thread>
+    <tbody>
+        <tr>
+            <td>Seq2Seq (LSTM)</td>
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+        </tr>
+        <tr>
+            <td>RNNVAE</td>
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+        </tr>
+        <tr>
+            <td>Transformer</td>
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+        </tr>
+        <tr>
+            <td>BERTGen</td>
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+        </tr>
+        <tr>
+            <td>RobertaGen</td>
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+        </tr>
+        <tr>
+            <td>GPT-2</td>
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+            <td align="center">
+        </tr>
+    </tbody>
+</table>
 
 ## Contributing
 

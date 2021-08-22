@@ -8,7 +8,7 @@ MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is 
 
 Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. **(YS: draw a figure about the framework architecture)**
 
-![](https://octodex.github.com/images/yaktocat.png)
+![](https://github.com/LYH-YF/MWPToolkit/blob/master/architecture.png)
 <div align="center"> Figure: Architecture of MWP Toolkit </div>
 
 ## News
@@ -132,7 +132,7 @@ python run_hyper_search.py --model=[model_name] --dataset=[dataset_name] --task_
 
 ## Architecture
 
-We have shown the overall architecture of our toolkit in the above figure. **(YS: to complete later)**
+We have shown the overall architecture of our toolkit in the above [Figure](#news). The configuration is specified via command line, external config files and internal config dictionaries. Multiple processors and dataloaders are integrated to process different forms of data. Models and evaluators take charge of doing the training and evaluation. Therefore, input datasets will get prepared and trained based on the specified configuration. You can refer to [documentation]() for more information. 
 
 ### Dataset
 
@@ -304,14 +304,14 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
     </tbody>
 </table>
 
-### Evaluator
+### Evaluation Metric
 
-We have implemented two evaluators to measure the effect of MWP models. 
+We have implemented 2 evaluation metrics to measure the effect of MWP models. 
 
 <table align="center">
     <thread>
         <tr>
-            <th align="center">evaluator</th>
+            <th align="center">measurement</th>
             <th align="center">note</th>
         </tr>
     </thread>
@@ -343,3 +343,4 @@ If you find MWP toolkit is useful for your research, please cite:
 
 ## License
 
+MWPtoolkit uses [MIT License](https://github.com/LYH-YF/MWPToolkit/blob/master/LICENSE).

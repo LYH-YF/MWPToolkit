@@ -1,10 +1,18 @@
 import random
 from copy import deepcopy
+from typing import Tuple, List, Union
 
 from mwptoolkit.utils.enum_type import SpecialTokens,NumMask,EPT
+from mwptoolkit.utils.preprocess_tool.number_operator import constant_number
 
 def from_infix_to_postfix(expression):
-    r"""convert infix equation to postfix equation
+    r"""convert infix equation to postfix equation.
+
+    Args:
+        expression (list): infix expression.
+    
+    Returns:
+        (list): postfix expression.
     """
     st = list()
     res = list()
@@ -35,6 +43,12 @@ def from_infix_to_postfix(expression):
 
 def from_infix_to_prefix(expression):
     r"""convert infix equation to prefix equation
+
+    Args:
+        expression (list): infix expression.
+    
+    Returns:
+        (list): prefix expression.
     """
     st = list()
     res = list()
@@ -68,6 +82,12 @@ def from_infix_to_prefix(expression):
 
 def from_prefix_to_postfix(expression):
     r"""convert prefix equation to postfix equation
+
+    Args:
+        expression (list): prefix expression.
+    
+    Returns:
+        (list): postfix expression.
     """
     st = list()
     expression = deepcopy(expression)
@@ -85,6 +105,12 @@ def from_prefix_to_postfix(expression):
 
 def from_postfix_to_prefix(expression):
     r"""convert postfix equation to prefix equation
+
+    Args:
+        expression (list): postfix expression.
+    
+    Returns:
+        (list): prefix expression.
     """
     st = list()
     for symbol in expression:
@@ -100,6 +126,12 @@ def from_postfix_to_prefix(expression):
 
 def from_prefix_to_infix(expression):
     r"""convert prefix equation to infix equation
+
+    Args:
+        expression (list): prefix expression.
+    
+    Returns:
+        (list): infix expression.
     """
     st = list()
     last_op = []
@@ -130,6 +162,12 @@ def from_prefix_to_infix(expression):
 
 def from_postfix_to_infix(expression):
     r"""convert postfix equation to infix equation
+
+    Args:
+        expression (list): postfix expression.
+    
+    Returns:
+        (list): infix expression.
     """
     st = list()
     last_op = []
@@ -217,6 +255,157 @@ def postfix_parser(equation, memory: list) -> int:
     return len(stack)
 
 
+def orig_infix_to_postfix(equation: Union[str, List[str]], number_token_map: dict, free_symbols: list,
+                     join_output: bool = True):
+    """
+    Read infix equation string and convert it into a postfix string
+
+    :param Union[str,List[str]] equation:
+        Either one of these.
+        - A single string of infix equation. e.g. "5 + 4"
+        - Tokenized sequence of infix equation. e.g. ["5", "+", "4"]
+    :param dict number_token_map:
+        Mapping from a number token to its anonymized representation (e.g. N_0)
+    :param list free_symbols:
+        List of free symbols (for return)
+    :param bool join_output:
+        True if the output need to be joined. Otherwise, this method will return the tokenized postfix sequence.
+    :rtype: Union[str, List[str]]
+    :return:
+        Either one of these.
+        - A single string of postfix equation. e.g. "5 4 +"
+        - Tokenized sequence of postfix equation. e.g. ["5", "4", "+"]
+    """
+    # Template in ALG514/DRAW is already tokenized, without parenthesis.
+    # Template in MAWPS is also tokenized but contains parenthesis.
+    output_tokens = []
+    postfix_stack = []
+
+    # Tokenize the string if that is not tokenized yet.
+    if type(equation) is str:
+        equation = equation.strip().split(' ')
+
+    # Read each token
+    for tok in equation:
+        # Ignore blank token
+        if not tok:
+            continue
+
+        if tok == ')':
+            # Pop until find the opening paren '('
+            while postfix_stack:
+                top = postfix_stack.pop()
+                if top == '(':
+                    # Discard the matching '('
+                    break
+                else:
+                    output_tokens.append(top)
+        elif tok in '*/+-=(':
+            # '(' has the highest precedence when in the input string.
+            precedence = EPT.OPERATOR_PRECEDENCE.get(tok, 1E9)
+
+            while postfix_stack:
+                # Pop until the top < current_precedence.
+                # '(' has the lowest precedence in the stack.
+                top = postfix_stack[-1]
+                if EPT.OPERATOR_PRECEDENCE.get(top, -1E9) < precedence:
+                    break
+                else:
+                    output_tokens.append(postfix_stack.pop())
+            postfix_stack.append(tok)
+        elif EPT.NUMBER_PATTERN.fullmatch(tok) is not None:
+            # Just output the operand.
+            positive, const_code = constant_number(tok)
+            if not positive:
+                const_code = const_code + '_NEG'
+            output_tokens.append(const_code)
+        elif tok in number_token_map:
+            # Just output the operand
+            output_tokens += number_token_map[tok]
+        else:
+            # This is a variable name
+            # Just output the operand.
+            if tok not in free_symbols:
+                free_symbols.append(tok)
+
+            tok = 'X_%s' % free_symbols.index(tok)
+            output_tokens.append(tok)
+
+    while postfix_stack:
+        output_tokens.append(postfix_stack.pop())
+
+    if join_output:
+        return ' '.join(output_tokens)
+    else:
+        return output_tokens
+
+
+def infix_to_postfix(equation, free_symbols: list,
+                     join_output: bool = True):
+
+    output_tokens = []
+    postfix_stack = []
+
+    # Tokenize the string if that is not tokenized yet.
+    if type(equation) is str:
+        equation = equation.strip().split(' ')
+
+    # Read each token
+    for tok in equation:
+        # Ignore blank token
+        if not tok:
+            continue
+
+        if tok == ')':
+            # Pop until find the opening paren '('
+            while postfix_stack:
+                top = postfix_stack.pop()
+                if top == '(':
+                    # Discard the matching '('
+                    break
+                else:
+                    output_tokens.append(top)
+        elif tok in '*/+-=^(':
+            # '(' has the highest precedence when in the input string.
+            precedence = EPT.OPERATOR_PRECEDENCE.get(tok, 1E9)
+
+            while postfix_stack:
+                # Pop until the top < current_precedence.
+                # '(' has the lowest precedence in the stack.
+                top = postfix_stack[-1]
+                if EPT.OPERATOR_PRECEDENCE.get(top, -1E9) < precedence:
+                    break
+                else:
+                    output_tokens.append(postfix_stack.pop())
+            postfix_stack.append(tok)
+        elif EPT.NUMBER_PATTERN.fullmatch(tok) is not None:
+            # Just output the operand.
+            positive, const_code = constant_number(tok)
+            if not positive:
+                const_code = const_code + '_NEG'
+            output_tokens.append(const_code)
+        elif 'NUM_' in tok:
+            output_tokens.append('N_'+tok[4:])
+
+        else:
+            # This is a variable name
+            # Just output the operand.
+            if tok not in free_symbols:
+                free_symbols.append(tok)
+
+            tok = 'X_%s' % free_symbols.index(tok)
+            output_tokens.append(tok)
+
+    while postfix_stack:
+        output_tokens.append(postfix_stack.pop())
+
+    if join_output:
+        return ' '.join(output_tokens)
+    else:
+        return output_tokens
+
+
+
 def operator_mask(expression):
     template = []
     for symbol in expression:
@@ -231,6 +420,15 @@ def operator_mask(expression):
 
 
 def trans_symbol_2_number(equ_list, num_list):
+    """transfer mask symbol in equation to number.
+
+    Args:
+        equ_list (list): equation.
+        num_list (list): number list.
+    
+    Return:
+        (list): equation.
+    """
     symbol_list = NumMask.number
     new_equ_list = []
     for symbol in equ_list:
@@ -243,6 +441,15 @@ def trans_symbol_2_number(equ_list, num_list):
 
 
 def EN_rule1_stat(datas, sample_k=100):
+    """equation norm rule1
+
+    Args:
+        datas (list): dataset.
+        sample_k (int): number of random sample.
+        
+    Returns:
+        (list): classified equations. equivalent equations will be in the same class.
+    """
     rule_1 = []
     for data in datas:
         temp_data = data
@@ -306,6 +513,14 @@ def EN_rule1_stat(datas, sample_k=100):
 
 
 def EN_rule2(equ_list):
+    """equation norm rule2
+
+    Args:
+        equ_list (list): equation.
+    
+    Returns:
+        list: equivalent equation.
+    """
     new_list = []
     i = 0
     while i < len(equ_list):

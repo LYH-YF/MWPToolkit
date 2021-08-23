@@ -3,9 +3,18 @@ import copy
 
 from word2number import w2n
 
-from mwptoolkit.utils.enum_type import NumMask
+from mwptoolkit.utils.enum_type import NumMask,EPT
 
 def trans_symbol_2_number(equ_list, num_list):
+    """transfer mask symbol in equation to number.
+
+    Args:
+        equ_list (list): equation.
+        num_list (list): number list.
+    
+    Return:
+        (list): equation.
+    """
     symbol_list = NumMask.number
     new_equ_list = []
     for symbol in equ_list:
@@ -17,8 +26,15 @@ def trans_symbol_2_number(equ_list, num_list):
     return new_equ_list
 
 
-def word_to_num(number_sentence):
-    ['one-third', 'one-quarter', 'one-forth', 'one-fifth', 'one-sixth', 'one-seventh', 'one-eighth', 'one-ninth', 'one-tenth', 'two-third', 'two-quarter', 'two-forth', 'two-fifth', 'two-sixth', 'two-seventh', 'two-eighth', 'two-ninth', 'two-tenth', 'three-third', 'three-quarter', 'three-forth', 'three-fifth', 'three-sixth', 'three-seventh', 'three-eighth', 'three-ninth', 'three-tenth', 'four-third', 'four-quarter', 'four-forth', 'four-fifth', 'four-sixth', 'four-seventh', 'four-eighth', 'four-ninth', 'four-tenth', 'five-third', 'five-quarter', 'five-forth', 'five-fifth', 'five-sixth', 'five-seventh', 'five-eighth', 'five-ninth', 'five-tenth', 'six-third', 'six-quarter', 'six-forth', 'six-fifth', 'six-sixth', 'six-seventh', 'six-eighth', 'six-ninth', 'six-tenth', 'seven-third', 'seven-quarter', 'seven-forth', 'seven-fifth', 'seven-sixth', 'seven-seventh', 'seven-eighth', 'seven-ninth', 'seven-tenth', 'eight-third', 'eight-quarter', 'eight-forth', 'eight-fifth', 'eight-sixth', 'eight-seventh', 'eight-eighth', 'eight-ninth', 'eight-tenth', 'nine-third', 'nine-quarter', 'nine-forth', 'nine-fifth', 'nine-sixth', 'nine-seventh', 'nine-eighth', 'nine-ninth', 'nine-tenth']
+def fraction_word_to_num(number_sentence):
+    """transfer english expression of fraction to number. numerator and denominator are not more than 10.
+    
+    Args:
+        number_sentence (str): english expression.
+    
+    Returns:
+        (float): number
+    """
     fraction={
         'one-third':1/3,'one-thirds':1/3,'one-quarter':1/4,'one-forth':1/4,'one-fourth':1/4,'one-fourths':1/4,'one-fifth':1/5, 'one-sixth':1/6, 'one-seventh':1/7, 'one-eighth':1/8, 'one-ninth':1/9, 'one-tenth':1/10,'one-fifths':1/5, 'one-sixths':1/6, 'one-sevenths':1/7, 'one-eighths':1/8, 'one-ninths':1/9, 'one-tenths':1/10,\
         'two-third':2/3,'two-thirds':2/3, 'two-quarter':2/4, 'two-forth':2/4,'two-fourth':2/4,'two-fourths':2/4, 'two-fifth':2/5, 'two-sixth':2/6, 'two-seventh':2/7, 'two-eighth':2/8, 'two-ninth':2/9, 'two-tenth':2/10,'two-fifths':2/5, 'two-sixths':2/6, 'two-sevenths':2/7, 'two-eighths':2/8, 'two-ninths':2/9, 'two-tenths':2/10,\
@@ -34,6 +50,15 @@ def word_to_num(number_sentence):
 
 
 def english_word_2_num(sentence_list,fraction_acc=None):
+    """transfer english word to number.
+
+    Args:
+        sentence_list (list): list of words.
+        fraction_acc (int|None): the accuracy to transfer fraction to float, if None, not to match fraction expression.
+    
+    Returns:
+        (list): transfered sentence.
+    """
     # bug : 4.9 million can't be matched
     match_word=[
         'zero','one','two','three','four','five','six','seven','eight','nine','ten',\
@@ -90,7 +115,7 @@ def english_word_2_num(sentence_list,fraction_acc=None):
         new_list=[]
         for idx,word in enumerate(sentence_list):
             if word.lower() in match_word :
-                number=word_to_num(word)
+                number=fraction_word_to_num(word)
                 number=int(number*10**fraction_acc)/10**fraction_acc
                 #number=round(number,fraction_acc)
                 new_list.append(str(number))
@@ -100,6 +125,14 @@ def english_word_2_num(sentence_list,fraction_acc=None):
 
 
 def split_number(text_list):
+    """separate number expression from other characters.
+
+    Args:
+        text_list (list): text list.
+    
+    Returns:
+        (list): processed text list.
+    """
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
     new_text = []
     for s in text_list:
@@ -115,6 +148,14 @@ def split_number(text_list):
 
 
 def joint_number(text_list):
+    """joint fraction number
+
+    Args:
+        text_list (list): text list.
+    
+    Returns:
+        (list): processed text list.
+    """
     new_list = []
     i = 0
     while i < len(text_list):
@@ -128,7 +169,7 @@ def joint_number(text_list):
     return new_list
 
 
-def joint_number_(text_list):  # match longer fraction such as ( 1 / 1000000 )
+def joint_number_(text_list):
     new_list = []
     i = 0
     while i < len(text_list):
@@ -167,3 +208,33 @@ def joint_number_(text_list):  # match longer fraction such as ( 1 / 1000000 )
             i += 1
     return new_list
 
+def constant_number(const):
+    """
+    Converts number to constant symbol string (e.g. 'C_3').
+    To avoid sympy's automatic simplification of operation over constants.
+
+    :param Union[str,int,float,Expr] const: constant value to be converted.
+    :return: (str) Constant symbol string represents given constant.
+    """
+    if type(const) is str:
+        if const in ['C_pi', 'C_e', 'const_pi', 'const_e']:
+            # Return pi, e as itself.
+            return True, const.replace('const_', 'C_')
+
+        # Otherwise, evaluate string and call this function with the evaluated number
+        const = float(const.replace('C_', '').replace('const_', '').replace('_', '.'))
+        return constant_number(const)
+    elif type(const) is int or int(const) == float(const):
+        # If the value is an integer, we trim the following zeros under decimal points.
+        return const >= 0, 'C_%s' % int(abs(const))
+    else:
+        if abs(const - 3.14) < 1E-2:  # Including from 3.14
+            return True, 'C_pi'
+        if abs(const - 2.7182) < 1E-4:  # Including from 2.7182
+            return True, 'C_e'
+
+        # If the value is not an integer, we write it and trim followed zeros.
+        # We need to use '%.15f' formatting because str() may gives string using precisions like 1.7E-3
+        # Also we will trim after four zeros under the decimal like 0.05000000074 because of float's precision.
+        return const >= 0, 'C_%s' % \
+               EPT.FOLLOWING_ZERO_PATTERN.sub('\\1', ('%.15f' % abs(const)).replace('.', '_'))

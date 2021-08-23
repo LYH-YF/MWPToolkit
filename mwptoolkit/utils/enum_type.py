@@ -14,11 +14,15 @@ PAD_TOKEN_IDX = 0
 
 
 class Operators:
+    """operators in equation.
+    """
     Single = ["+", "-", "*", "/", "^"]
     Multi = ["+", "-", "*", "/", "^", "=", "<BRG>"]
 
 
 class FixType:
+    """equation fix type
+    """
     Prefix = "prefix"
     Postfix = "postfix"
     Infix = "infix"
@@ -27,6 +31,8 @@ class FixType:
 
 
 class DatasetName:
+    """dataset name
+    """
     math23k = "math23k"
     hmwp = "hmwp"
     mawps = "mawps"
@@ -40,20 +46,28 @@ class DatasetName:
 
 
 class DatasetType:
+    """dataset type
+    """
     Train = "train"
     Test = "test"
     Valid = "valid"
 
 class DatasetLanguage:
+    """dataset language
+    """
     en="en"
     zh="zh"
 
 class TaskType:
+    """task type
+    """
     MultiEquation = "multi_equation"
     SingleEquation = "single_equation"
 
 
 class SpecialTokens:
+    """special tokens
+    """
     PAD_TOKEN = "<PAD>" # padding token
     UNK_TOKEN = "<UNK>" # unknown token
     SOS_TOKEN = "<SOS>" # start token
@@ -64,12 +78,16 @@ class SpecialTokens:
 
 
 class MaskSymbol:
+    """number mask type
+    """
     NUM = "NUM"
     alphabet = "alphabet"
     number = "number"
 
 
 class NumMask:
+    """number mask symbol list
+    """
     NUM = ["NUM"]*100
     alphabet = [
         "NUM_a", "NUM_b", "NUM_c", "NUM_d", "NUM_e", "NUM_f", "NUM_g", "NUM_h", "NUM_i", "NUM_j", "NUM_k", "NUM_l", "NUM_m", "NUM_n", "NUM_o", "NUM_p", "NUM_q", "NUM_r", "NUM_s", "NUM_t", "NUM_u",
@@ -78,6 +96,7 @@ class NumMask:
     number = ["NUM_" + str(i) for i in range(100)]
 
 class SupervisingMode:
+    """supervising mode"""
     fully_supervised="fully_supervised"
     weakly_supervised=["fix", "mafix", "reinforce", "mapo"]
 

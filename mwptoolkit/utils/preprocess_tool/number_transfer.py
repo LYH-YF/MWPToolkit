@@ -14,6 +14,19 @@ from mwptoolkit.utils.preprocess_tool.number_operator import english_word_2_num
 
 
 def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep, equ_split_symbol=';'):
+    """number transfer
+
+    Args:
+        datas (list): dataset.
+        dataset_name (str): dataset name.
+        task_type (str): [single_equation | multi_equation], task type.
+        min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
+        equ_split_symbol (str): equation split symbol, in multiple-equation dataset, symbol to split equations, this symbol will be repalced with special token SpecialTokens.BRG.
+    
+    Returns:
+        tuple(list,list,int,list):
+        processed datas, generate number list, copy number, unk symbol list.
+    """
     if dataset_name == DatasetName.math23k:
         transfer = number_transfer_math23k
     elif dataset_name == DatasetName.asdiv_a:

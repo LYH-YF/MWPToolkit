@@ -9,12 +9,7 @@ def init_logger(config):
     All the message that you want to log MUST be str.
 
     Args:
-        config (Config): An instance object of Config, used to record parameter information.
-
-    Example:
-        >>> logger = logging.getLogger(config)
-        >>> logger.debug(train_state)
-        >>> logger.info(train_result)
+        config (mwptoolkit.config.configuration.Config): An instance object of Config, used to record parameter information.
     """
     
 

@@ -5,8 +5,11 @@ import stanza
 
 from mwptoolkit.utils.data_structure import DependencyTree
 from mwptoolkit.utils.utils import write_json_data,read_json_data
+from mwptoolkit.utils.enum_type import EPT
 
 def deprel_tree_to_file(train_datas, valid_datas, test_datas, path, language, use_gpu):
+    """save deprel tree infomation to file
+    """
     nlp = stanza.Pipeline(language, processors='depparse,tokenize,pos,lemma', tokenize_pretokenized=True, logging_level='error', use_gpu=use_gpu)
     new_datas = []
     for idx, data in enumerate(train_datas):
@@ -25,6 +28,8 @@ def deprel_tree_to_file(train_datas, valid_datas, test_datas, path, language, us
 
 
 def get_group_nums_(train_datas, valid_datas, test_datas, path):
+    """get group nums infomation from file.
+    """
     deprel_datas = read_json_data(path)
     new_datas = []
     for idx, data in enumerate(train_datas):
@@ -317,6 +322,8 @@ def get_span_level_deprel_tree_(train_datas, valid_datas, test_datas, path):
 
 
 def get_deprel_tree_(train_datas, valid_datas, test_datas, path):
+    """get deprel tree infomation from file
+    """
     deprel_datas = read_json_data(path)
     deprel_tokens = []
     for idx, data in enumerate(train_datas):
@@ -520,6 +527,8 @@ def get_span_level_deprel_tree(datas, language):
 
 
 def split_sentence(text):
+    """split sentence by punctuations.
+    """
     #seps = ['，',',','。','．','. ','；','？','！','!']
     sentences = nltk.tokenize.sent_tokenize(text)
     #seps='，。(\. )．；？！!'
@@ -541,3 +550,114 @@ def split_sentence(text):
                 spans_post.append(span)
         spans_posts += spans_post
     return spans_posts
+
+def find_ept_numbers_in_text(text: str, append_number_token: bool = False):
+    
+    numbers = []
+    new_text = []
+
+    # Replace "[NON-DIGIT][SPACEs].[DIGIT]" with "[NON-DIGIT][SPACEs]0.[DIGIT]"
+    text = re.sub("([^\\d.,]+\\s*)(\\.\\d+)", "\\g<1>0\\g<2>", text)
+    # Replace space between digits or digit and special characters like ',.' with "⌒" (to preserve original token id)
+    text = re.sub("(\\d+)\\s+(\\.\\d+|,\\d{3}|\\d{3})", "\\1⌒\\2", text)
+
+    # Original token index
+    i = 0
+    prev_token = None
+    for token in text.split(' '):
+        # Increase token id and record original token indices
+        token_index = [i + j for j in range(token.count('⌒') + 1)]
+        i = max(token_index) + 1
+
+        # First, find the number patterns in the token
+        token = token.replace('⌒', '')
+        number_patterns = EPT.NUMBER_AND_FRACTION_PATTERN.findall(token)
+        if number_patterns:
+            for pattern in number_patterns:
+                # Matched patterns, listed by order of occurrence.
+                surface_form = pattern[0]
+                surface_form = surface_form.replace(',', '')
+
+                # Normalize the form: use the decimal point representation with 15-th position under the decimal point.
+                is_fraction = '/' in surface_form
+                value = eval(surface_form)
+                if type(value) is float:
+                    surface_form = EPT.FOLLOWING_ZERO_PATTERN.sub('\\1', '%.15f' % value)
+
+                numbers.append(dict(token=token_index, value=surface_form,
+                                    is_text=False, is_integer='.' not in surface_form,
+                                    is_ordinal=False, is_fraction=is_fraction,
+                                    is_single_multiple=False, is_combined_multiple=False))
+
+            new_text.append(EPT.NUMBER_AND_FRACTION_PATTERN.sub(' \\1 %s ' % EPT.NUM_TOKEN, token))
+        else:
+            # If there is no numbers in the text, then find the textual numbers.
+            # Append the token first.
+            new_text.append(token)
+
+            # Type indicator
+            is_ordinal = False
+            is_fraction = False
+            is_single_multiple = False
+            is_combined_multiple = False
+
+            subtokens = re.split('[^a-zA-Z0-9]+', token.lower())  # Split hypen-concatnated tokens like twenty-three
+            token_value = None
+            for subtoken in subtokens:
+                if not subtoken:
+                    continue
+
+                # convert to singular nouns
+                for plural, singluar in EPT.PLURAL_FORMS:
+                    if subtoken.endswith(plural):
+                        subtoken = subtoken[:-len(plural)] + singluar
+                        break
+
+                if subtoken in EPT.NUMBER_READINGS:
+                    if not token_value:
+                        # If this is the first value in the token, then set it as it is.
+                        token_value = EPT.NUMBER_READINGS[subtoken]
+
+                        is_ordinal = subtoken[-2:] in ['rd', 'th']
+                        is_single_multiple = subtoken in EPT.MULTIPLES
+
+                        if is_ordinal and prev_token == 'a':
+                            # Case like 'A third'
+                            token_value = 1 / token_value
+                    else:
+                        # If a value was set before reading this subtoken,
+                        # then treat it as multiples. (e.g. one-million, three-fifths, etc.)
+                        followed_value = EPT.NUMBER_READINGS[subtoken]
+                        is_single_multiple = False
+                        is_ordinal = False
+
+                        if followed_value >= 100 or subtoken == 'half':  # case of unit
+                            token_value *= followed_value
+                            is_combined_multiple = True
+                        elif subtoken[-2:] in ['rd', 'th']:  # case of fractions
+                            token_value /= followed_value
+                            is_fraction = True
+                        else:
+                            token_value += followed_value
+
+            # If a number is found.
+            if token_value is not None:
+                if type(token_value) is float:
+                    surface_form = EPT.FOLLOWING_ZERO_PATTERN.sub('\\1', '%.15f' % token_value)
+                else:
+                    surface_form = str(token_value)
+
+                numbers.append(dict(token=token_index, value=surface_form,
+                                    is_text=True, is_integer='.' not in surface_form,
+                                    is_ordinal=is_ordinal, is_fraction=is_fraction,
+                                    is_single_multiple=is_single_multiple,
+                                    is_combined_multiple=is_combined_multiple))
+                new_text.append(EPT.NUM_TOKEN)
+
+        prev_token = token
+
+    if append_number_token:
+        text = ' '.join(new_text)
+
+    return text, numbers
+

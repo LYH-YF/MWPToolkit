@@ -2,6 +2,8 @@ from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
 
 
 class Node():
+    """node
+    """
     def __init__(self, node_value, isleaf=True):
         self.node_value = node_value
         self.is_leaf = isleaf
@@ -28,6 +30,8 @@ class AbstractTree():
 
 
 class BinaryTree(AbstractTree):
+    """binary tree
+    """
     def __init__(self, root_node=None):
         super().__init__()
         self.root = root_node

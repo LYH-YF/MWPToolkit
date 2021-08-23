@@ -10,23 +10,53 @@ from mwptoolkit.utils.enum_type import FixType, SpecialTokens
 
 
 class AbstractDataLoader(object):
-    '''abstract dataloader'''
+    """abstract dataloader
+
+    the base class of dataloader class
+    """
     def __init__(self, config, dataset):
+        """
+        Args:
+            config (mwptoolkit.config.configuration.Config)
+
+            dataset (mwptoolit.data.dataset)
+        
+        expected that config includes these parameters below:
+
+        model (str): model name.
+
+        equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
+
+        train_batch_size (int): the training batch size.
+
+        test_batch_size (int): the testing batch size.
+
+        symbol_for_tree (bool): build output symbols for tree or not.
+
+        share_vocab (bool): encoder and decoder of the model share the same vocabulary, often seen in Seq2Seq models.
+
+        max_len (int|None): max input length.
+
+        add_sos (bool): add sos token at the head of input sequence.
+
+        add_eos (bool): add eos token at the tail of input sequence.
+        """
         super().__init__()
-        self.device = config["device"]
-        self.train_batch_size = config["train_batch_size"]
-        self.test_batch_size = config["test_batch_size"]
-        self.share_vocab = config["share_vocab"]
+        self.model = config["model"]
         self.equation_fix = config["equation_fix"]
-        self.symbol_for_tree = config["symbol_for_tree"]
         self.train_batch_size = config["train_batch_size"]
         self.test_batch_size = config["test_batch_size"]
+        self.symbol_for_tree = config["symbol_for_tree"]
+        self.share_vocab = config["share_vocab"]
+        
         self.max_len = config["max_len"]
         self.max_equ_len = config["max_equ_len"]
         self.add_sos = config["add_sos"]
         self.add_eos = config["add_eos"]
         self.filt_dirty = config["filt_dirty"]
-        self.model = config["model"]
+
+        self.device = config["device"]
+        
 
         self.dataset = dataset
         self.in_pad_token = None
@@ -180,4 +210,6 @@ class AbstractDataLoader(object):
         return num_stack
 
     def load_data(self):
+        """load data.
+        """
         raise NotImplementedError

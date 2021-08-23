@@ -16,8 +16,39 @@ from transformers import AutoTokenizer,BertTokenizer
 
 class DataLoaderEPT(AbstractDataLoader):
     """dataloader class for deep-learning model EPT
+
     """
     def __init__(self, config, dataset):
+        """
+        Args:
+            config (mwptoolkit.config.configuration.Config)
+
+            dataset (mwptoolit.data.dataset)
+        
+        expected that config includes these parameters below:
+
+        dataset (str): dataset name.
+
+        pretrained_model_path (str): road path of pretrained model.
+
+        model (str): model name.
+
+        equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
+
+        train_batch_size (int): the training batch size.
+
+        test_batch_size (int): the testing batch size.
+
+        symbol_for_tree (bool): build output symbols for tree or not.
+
+        share_vocab (bool): encoder and decoder of the model share the same vocabulary, often seen in Seq2Seq models.
+
+        max_len (int|None): max input length.
+
+        add_sos (bool): add sos token at the head of input sequence.
+
+        add_eos (bool): add eos token at the tail of input sequence.
+        """
         super().__init__(config, dataset)
 
         self.trainset_nums = len(dataset.trainset)
@@ -37,6 +68,14 @@ class DataLoaderEPT(AbstractDataLoader):
         self.decoder = config["decoder"].lower()
     
     def load_data(self, type):
+        """load batches
+
+        Args:
+            type (str): [train | valid | test], data type.
+
+        Returns:
+            (Generator[dict]): batches 
+        """
         if type == "train":
             datas = self.dataset.trainset
             batch_size = self.train_batch_size
@@ -64,10 +103,14 @@ class DataLoaderEPT(AbstractDataLoader):
     
 
     def load_batch(self, batch_data):
-        '''
-        {"question":input_seq,"equation":out_seq,"num list":nums,"num pos":num_pos,
-                            "visible matrix":d["visible matrix"],"position":d["position"],"id":d["id"]}
-        '''
+        """load one batch
+
+        Args:
+            batch_data (list[dict])
+        
+        Returns:
+            loaded batch data (dict)
+        """
     
         equ_tokens_batch = []
         ques_batch = []

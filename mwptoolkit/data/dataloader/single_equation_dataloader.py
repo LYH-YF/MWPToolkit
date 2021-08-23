@@ -25,6 +25,32 @@ class SingleEquationDataLoader(AbstractDataLoader):
     """single-equation dataloader
     """
     def __init__(self, config, dataset):
+        """
+        Args:
+            config (mwptoolkit.config.configuration.Config)
+
+            dataset (mwptoolit.data.dataset)
+        
+        expected that config includes these parameters below:
+
+        model (str): model name.
+
+        equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
+
+        train_batch_size (int): the training batch size.
+
+        test_batch_size (int): the testing batch size.
+
+        symbol_for_tree (bool): build output symbols for tree or not.
+
+        share_vocab (bool): encoder and decoder of the model share the same vocabulary, often seen in Seq2Seq models.
+
+        max_len (int|None): max input length.
+
+        add_sos (bool): add sos token at the head of input sequence.
+
+        add_eos (bool): add eos token at the tail of input sequence.
+        """
         super().__init__(config, dataset)
         self.trainset_nums = len(dataset.trainset)
         self.validset_nums = len(dataset.validset)
@@ -42,10 +68,6 @@ class SingleEquationDataLoader(AbstractDataLoader):
             self.out_pad_token = self.in_pad_token
             self.out_unk_token = dataset.out_symbol2idx[SpecialTokens.UNK_TOKEN]
             self.temp_unk_token = dataset.temp_symbol2idx[SpecialTokens.UNK_TOKEN]
-        elif config["model"].lower() in ["ept"]:
-            self.out_unk_token = dataset.out_symbol2idx[EPT.ARG_UNK]
-            self.model = config["model"].lower()
-            self.decoder = config["decoder"].lower()
 
         else:
             if self.share_vocab:
@@ -61,6 +83,14 @@ class SingleEquationDataLoader(AbstractDataLoader):
 
 
     def load_data(self, type):
+        """load batches
+
+        Args:
+            type (str): [train | valid | test], data type.
+
+        Returns:
+            (Generator[dict]): batches 
+        """
         if type == "train":
             datas = self.dataset.trainset
             batch_size = self.train_batch_size
@@ -141,10 +171,14 @@ class SingleEquationDataLoader(AbstractDataLoader):
         return spans_batch,spans_length_batch,span_nums_batch,trees_batch,span_num_pos_batch,word_num_poses_pad_batch
     
     def load_batch(self, batch_data):
-        '''
-        {"question":input_seq,"equation":out_seq,"num list":nums,"num pos":num_pos,
-                            "visible matrix":d["visible matrix"],"position":d["position"],"id":d["id"]}
-        '''
+        """load one batch
+
+        Args:
+            batch_data (list[dict])
+        
+        Returns:
+            loaded batch data (dict)
+        """
         ques_batch = []
         equ_batch = []
         temp_batch = []

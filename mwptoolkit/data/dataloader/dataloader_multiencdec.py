@@ -15,6 +15,32 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
     """dataloader class for deep-learning model MultiE&D
     """
     def __init__(self, config, dataset):
+        """
+        Args:
+            config (mwptoolkit.config.configuration.Config)
+
+            dataset (mwptoolit.data.dataset)
+        
+        expected that config includes these parameters below:
+
+        model (str): model name.
+
+        equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
+
+        train_batch_size (int): the training batch size.
+
+        test_batch_size (int): the testing batch size.
+
+        symbol_for_tree (bool): build output symbols for tree or not.
+
+        share_vocab (bool): encoder and decoder of the model share the same vocabulary, often seen in Seq2Seq models.
+
+        max_len (int|None): max input length.
+
+        add_sos (bool): add sos token at the head of input sequence.
+
+        add_eos (bool): add eos token at the tail of input sequence.
+        """
         super().__init__(config, dataset)
         try:
             self.in_unk_token1=dataset.in_word2idx_1[SpecialTokens.UNK_TOKEN]
@@ -51,6 +77,14 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
             self.out_pad_token2=None
         
     def load_batch(self, batch):
+        """load one batch
+
+        Args:
+            batch_data (list[dict])
+        
+        Returns:
+            loaded batch data (dict)
+        """
         input1_batch=[]
         input2_batch=[]
         output1_batch=[]

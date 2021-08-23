@@ -2,7 +2,7 @@
 
 ![](https://img.shields.io/badge/license-MIT-green)
 
-[Doc]()|[Model](#model)|[Dataset](#dataset)|[Paper]()
+[Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper]()
 
 MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 
 
@@ -70,8 +70,8 @@ If you would like to change the parameters, such as ```dataset``` and ```model``
 
 * ```model```: The model name you specify to apply. You can see all options in Section [Model](#model).
 * ```dataset```: The dataset name you specify to evaluate. You can see all options in Section [Dataset](#dataset).
-* ```task_type```: The type of generated equation. It should be chosen from options [single_equation | multi_equation]. Usually, it's up to the datasets **(YS: we can provide more details about this. Maybe for example, but we need to mention that how to know the correct choice for specific dataset)**.
-* ```equation_fix```: The type of equation generation order. It should be chosen from options [infix | postfix | prefix]. Please note some models require a specific type of equation generation order, so set this parameter to avoid bad performance because of the incorrect order type **(YS: can you give more details about how to avoid bad performance?)**.
+* ```task_type```: The type of generated equation. It should be chosen from options [single_equation | multi_equation]. Usually, it's up to the datasets. You can refer to [dataset](#dataset). The single-equation dataset corresponds to 'single_equation' in code and multiple-equation dataset corresponds 'multi_equation' in code.
+* ```equation_fix```: The type of equation generation order. It should be chosen from options [infix | postfix | prefix]. Please note some models require a specific type of equation generation order. Usually, the corresponding paper for model will mention which order it takes. You can look up the reference paper in Section [Model](#model).
 * ```k_fold```: The fold number of cross-validation. It could be either NA value or an integer. If it is NA value, it will run train-valid-test split procedure. 
 * ```test_step```: The epoch number of training after which conducts the evaluation on test. It should be an interger.
 * ```gpu_id```: The GPU ID for training the model. It should be an integer based on your GPU configuration. Please note that we haven't tested the framework with multiple GPUs yet.
@@ -127,8 +127,8 @@ python run_hyper_search.py --model=[model_name] --dataset=[dataset_name] --task_
 * ```cpu_per_trial```: The CPU resources to allocate per trial.
 * ```gpu_per_trial```: The GPU resources to allocate per trial.
 * ```samples```: The number of sampling times from the search space.
-* ```search_file```: A json file including search parameter name and space**(YS: maybe we provide a code sample)**.
-* ```search_parameter```: If you don't have the search file, you can set this parameter to specify the search space. For example, ```--search_parameter=hidden_size=[256,512]```, ```--search_parameter=embedding_size=[64,128,256]``` and ```--search_parameter=learning_rate='(1e-4, 1e-2)``` **(YS: what do you mean here?)**.
+* ```search_file```: A json file including search parameter name and space. For example:```["embedding_size=[64,128,256]","hidden_size=[256,512]","learning_rate=(1e-4, 1e-2)"]```
+* ```search_parameter```: If you don't have the search file, you can set this parameter in command line to specify the search space. For example:```--search_parameter=hidden_size=[256,512] --search_parameter=embedding_size=[64,128,256] --search_parameter=learning_rate='(1e-4, 1e-2)```.
 
 ## Architecture
 
@@ -227,7 +227,7 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
             <td align="center"><a href="https://arxiv.org/abs/1706.03762">(Vaswani et al., 2017)</a></td>
         </tr>
         <tr>
-            <td rowspan="4">Seq2Tree</td>
+            <td rowspan="5">Seq2Tree</td>
             <td>TRNN</td>
             <td align="center"><a href="https://ojs.aaai.org//index.php/AAAI/article/view/4697">(Wang et al., 2019)</a></td>
         </tr>
@@ -244,17 +244,17 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
             <td align="center"><a href="https://arxiv.org/abs/2010.06823">(Qin et al., 2020)</a></td>
         </tr>
         <tr>
-            <td rowspan="3">Graph2Tree</td>
-            <td>graph2tree</td>
+            <td>TSN</td>
+            <td align="center"><a href="https://www.ijcai.org/proceedings/2020/555">(Zhang et al., 2020)</a></td>
+        </tr>
+        <tr>
+            <td rowspan="2">Graph2Tree</td>
+            <td>Graph2Tree</td>
             <td align="center"><a href="https://aclanthology.org/2020.acl-main.362/">(Zhang et al., 2020)</a></td>
         </tr>
         <tr>
             <td>MultiE&D</td>
             <td align="center"><a href="https://aclanthology.org/2020.coling-main.262/">(Shen et al., 2020)</a></td>
-        </tr>
-        <tr>
-            <td>TSN</td>
-            <td align="center"><a href="https://www.ijcai.org/proceedings/2020/555">(Zhang et al., 2020)</a></td>
         </tr>
         <tr>
             <td rowspan="1">VAE</td>
@@ -274,22 +274,8 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
             <td>GPT-2</td>
             <td align="center"><a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf">(Radford et al., 2019)</a></td>
         </tr>
-    </tbody>
-</table>
-
-### Updating models
-
-**(YS: can you merge the following table to above one?)**
-
-<table align="center">
-    <thread>
         <tr>
-            <th align="center">model</th>
-            <th align="center">reference</th>
-        </tr>
-    </thread>
-    <tbody>
-        <tr>
+            <td rowspan="3">Updating</td>
             <td>KA-S2T</td>
             <td align="center"><a href="https://aclanthology.org/2020.emnlp-main.579/">(Wu et al., 2020)</a></td>
         </tr>
@@ -303,6 +289,7 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
         </tr>
     </tbody>
 </table>
+
 
 ### Evaluation Metric
 

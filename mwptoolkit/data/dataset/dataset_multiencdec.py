@@ -20,6 +20,53 @@ class DatasetMultiEncDec(TemplateDataset):
     """dataset class for deep-learning model MultiE&D
     """
     def __init__(self, config):
+        """
+        Args:
+            config (mwptoolkit.config.configuration.Config)
+        
+        expected that config includes these parameters below:
+
+        task_type (str): [single_equation | multi_equation], the type of task.
+
+        parse_tree_file_name (str|None): the name of the file to save parse tree infomation.
+
+        ltp_model_path (str|None): the road path of ltp model.
+
+        model (str): model name.
+
+        dataset (str): dataset name.
+
+        equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
+        
+        dataset_path (str): the road path of dataset folder.
+
+        language (str): a property of dataset, the language of dataset.
+
+        single (bool): a property of dataset, the equation of dataset is single or not.
+
+        linear (bool): a property of dataset, the equation of dataset is linear or not.
+
+        source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
+
+        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        mask_symbol (str): [NUM | number], the symbol to mask numbers in equation.
+        
+        min_word_keep (int): in dataset, words that count greater than the value, will be kept in input vocabulary.
+        
+        min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
+
+        symbol_for_tree (bool): build output symbols for tree or not.
+
+        share_vocab (bool): encoder and decoder of the model share the same vocabulary, often seen in Seq2Seq models.
+
+        k_fold (int|None): if it's an integer, it indicates to run k-fold cross validation. if it's None, it indicates to run trainset-validset-testset split.
+
+        read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
+
+        """
         super().__init__(config)
         self.task_type = config['task_type']
         self.parse_tree_path = config['parse_tree_file_name']
@@ -29,6 +76,7 @@ class DatasetMultiEncDec(TemplateDataset):
         self.ltp_model_path=config['ltp_model_path']
         if self.ltp_model_path and not os.path.isabs(self.ltp_model_path):
             self.ltp_model_path = os.path.join(self.root,self.ltp_model_path)
+    
     def _preprocess(self):
         if self.dataset in [DatasetName.hmwp]:
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)

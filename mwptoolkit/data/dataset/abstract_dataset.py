@@ -16,28 +16,78 @@ from mwptoolkit.utils.enum_type import DatasetName,FixType
 
 
 class AbstractDataset(object):
-    '''abstract dataset'''
+    """abstract dataset
+
+    the base class of dataset class
+    """
     def __init__(self, config):
+        """
+        Args:
+            config (mwptoolkit.config.configuration.Config)
+        
+        expected that config includes these parameters below:
+
+        model (str): model name.
+
+        dataset (str): dataset name.
+
+        equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
+        
+        dataset_path (str): the road path of dataset folder.
+
+        language (str): a property of dataset, the language of dataset.
+
+        single (bool): a property of dataset, the equation of dataset is single or not.
+
+        linear (bool): a property of dataset, the equation of dataset is linear or not.
+
+        source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
+
+        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        mask_symbol (str): [NUM | number], the symbol to mask numbers in equation.
+        
+        min_word_keep (int): in dataset, words that count greater than the value, will be kept in input vocabulary.
+        
+        min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
+
+        symbol_for_tree (bool): build output symbols for tree or not.
+
+        share_vocab (bool): encoder and decoder of the model share the same vocabulary, often seen in Seq2Seq models.
+
+        k_fold (int|None): if it's an integer, it indicates to run k-fold cross validation. if it's None, it indicates to run trainset-validset-testset split.
+
+        read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
+
+        """
         super().__init__()
-        self.validset_divide = config["validset_divide"]
-        self.dataset_path = config["dataset_path"]
-        self.min_word_keep = config["min_word_keep"]
-        self.min_generate_keep = config["min_generate_keep"]
-        self.mask_symbol = config["mask_symbol"]
-        self.symbol_for_tree = config["symbol_for_tree"]
-        self.share_vocab = config["share_vocab"]
-        self.k_fold = config["k_fold"]
-        self.dataset = config["dataset"]
         self.model = config["model"]
-        self.read_local_folds = config["read_local_folds"]
+        self.dataset = config["dataset"]
+        self.equation_fix = config["equation_fix"]
+        
+        self.dataset_path = config["dataset_path"]
         self.language = config["language"]
         self.single = config["single"]
         self.linear = config["linear"]
-        self.device = config["device"]
-        self.equation_fix = config["equation_fix"]
         self.source_equation_fix = config["source_equation_fix"]
-        self.root = config['root']
+
         self.rebuild = config['rebuild']
+        self.validset_divide = config["validset_divide"]
+        
+        self.mask_symbol = config["mask_symbol"]
+        self.min_word_keep = config["min_word_keep"]
+        self.min_generate_keep = config["min_generate_keep"]
+        self.symbol_for_tree = config["symbol_for_tree"]
+        self.share_vocab = config["share_vocab"]
+        
+        self.k_fold = config["k_fold"]
+        self.read_local_folds = config["read_local_folds"]
+        
+        self.device = config["device"]
+        
+        self.root = config['root']
         self.max_span_size = 1
 
     def _load_dataset(self):
@@ -77,7 +127,7 @@ class AbstractDataset(object):
         r"""equation infix/postfix/prefix process.
 
         Args:
-            fix: a function to make infix, postfix, prefix or None  
+            fix (function): a function to make infix, postfix, prefix or None  
         """
         source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
         if fix != None:
@@ -179,34 +229,16 @@ class AbstractDataset(object):
         for idx, data in enumerate(self.testset):
             self.testset[idx]["equation"] = EN_rule2(data["equation"])
 
-    def build_group_nums_for_graph(self):
-        use_gpu = True if self.device == torch.device('cuda') else False
-        self.trainset = get_group_nums(self.trainset, self.language, use_gpu)
-        self.validset = get_group_nums(self.validset, self.language, use_gpu)
-        self.testset = get_group_nums(self.testset, self.language, use_gpu)
-
-    def build_deprel_tree(self):
-        self.trainset, tokens = get_deprel_tree(self.trainset, self.language)
-        self.validset, _ = get_deprel_tree(self.validset, self.language)
-        self.testset, _ = get_deprel_tree(self.testset, self.language)
-
-        #self._update_vocab(tokens)
-
-    def build_span_level_deprel_tree(self):
-        self.trainset, train_span_szie = get_span_level_deprel_tree(self.trainset, self.language)
-        self.validset, valid_span_size = get_span_level_deprel_tree(self.validset, self.language)
-        self.testset, test_span_size = get_span_level_deprel_tree(self.testset, self.language)
-        self.max_span_size = max([train_span_szie, valid_span_size, test_span_size])
-
     def cross_validation_load(self, k_fold, start_fold_t=0):
         r"""dataset load for cross validation
 
-        Build folds for cross validation.Choose one of folds for testset and other folds for trainset.
+        Build folds for cross validation. Choose one of folds for testset and other folds for trainset.
         
         Args:
-            k_fold: int, the number of folds, also the cross validation parameter k.
-            start_fold_t: int|default 0, training start from the training of t-th time.
-        Return:
+            k_fold (int): the number of folds, also the cross validation parameter k.
+            start_fold_t (int): default 0, training start from the training of t-th time.
+        
+        Returns:
             Generator including current training index of cross validation.
         """
         if k_fold<=1:

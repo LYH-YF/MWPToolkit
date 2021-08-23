@@ -17,8 +17,8 @@ from transformers import AutoTokenizer,AlbertTokenizer,BertTokenizer
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
-from mwptoolkit.utils.preprocess_tools import postfix_parser
-from mwptoolkit.utils.preprocess_tools import preprocess_ept_dataset_
+from mwptoolkit.utils.preprocess_tool.equation_operator import postfix_parser
+from mwptoolkit.utils.preprocess_tool.dataset_operator import preprocess_ept_dataset_
 from mwptoolkit.utils.preprocess_tools import id_reedit,read_aux_jsonl_data
 from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName, EPT
 
@@ -28,6 +28,53 @@ class DatasetEPT(AbstractDataset):
     """dataset class for deep-learning model EPT.
     """
     def __init__(self, config):
+        """
+        Args:
+            config (mwptoolkit.config.configuration.Config)
+        
+        expected that config includes these parameters below:
+
+        task_type (str): [single_equation | multi_equation], the type of task.
+
+        pretrained_model (str|None): road path of pretrained model.
+
+        decoder (str): decoder module name.
+
+        model (str): model name.
+
+        dataset (str): dataset name.
+
+        equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
+        
+        dataset_path (str): the road path of dataset folder.
+
+        language (str): a property of dataset, the language of dataset.
+
+        single (bool): a property of dataset, the equation of dataset is single or not.
+
+        linear (bool): a property of dataset, the equation of dataset is linear or not.
+
+        source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
+
+        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        mask_symbol (str): [NUM | number], the symbol to mask numbers in equation.
+        
+        min_word_keep (int): in dataset, words that count greater than the value, will be kept in input vocabulary.
+        
+        min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
+
+        symbol_for_tree (bool): build output symbols for tree or not.
+
+        share_vocab (bool): encoder and decoder of the model share the same vocabulary, often seen in Seq2Seq models.
+
+        k_fold (int|None): if it's an integer, it indicates to run k-fold cross validation. if it's None, it indicates to run trainset-validset-testset split.
+
+        read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
+
+        """
         super().__init__(config)
         self.pretrained_model=config['pretrained_model_path']
         self.decoder=config['decoder']
@@ -474,4 +521,8 @@ class DatasetEPT(AbstractDataset):
                 index += 1
 
     def get_vocab_size(self):
+        """
+        Returns:
+            (tuple(int, int)): the length of input vocabulary and output symbols
+        """
         return len(self.in_idx2word), len(self.out_idx2symbol)

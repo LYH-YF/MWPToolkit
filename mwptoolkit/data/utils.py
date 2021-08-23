@@ -14,10 +14,10 @@ from mwptoolkit.data.dataloader.pretrain_dataloader import PretrainDataLoader
 from mwptoolkit.utils.enum_type import TaskType
 
 def create_dataset(config):
-    """Create dataset according to :attr:`config['model']` and :attr:`config['MODEL_TYPE']`.
+    """Create dataset according to config
 
     Args:
-        config (Config): An instance object of Config, used to record parameter information.
+        config (mwptoolkit.config.configuration.Config): An instance object of Config, used to record parameter information.
 
     Returns:
         Dataset: Constructed dataset.
@@ -37,6 +37,14 @@ def create_dataset(config):
         return AbstractDataset(config)
 
 def create_dataloader(config):
+    """Create dataloader according to config
+
+    Args:
+        config (mwptoolkit.config.configuration.Config): An instance object of Config, used to record parameter information.
+
+    Returns:
+        Dataloader module
+    """
     if config['model'].lower() in ['multiencdec']:
         return DataLoaderMultiEncDec
     if config['model'].lower() in ['ept']:

@@ -1,6 +1,12 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:36:54
+# @File: mathen.py
+
 import random
-import torch
 import warnings
+
+import torch
 from torch import nn
 from torch.nn import functional as F
 
@@ -14,6 +20,10 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
 class MathEN(nn.Module):
+    """
+    Reference:
+        Wang et al. "Translating a Math Word Problem to a Expression Tree" in EMNLP 2018.
+    """
     def __init__(self, config, dataset):
         super().__init__()
         self.bidirectional = config["bidirectional"]
@@ -29,7 +39,7 @@ class MathEN(nn.Module):
         self.decoder_rnn_cell_type = config["decoder_rnn_cell_type"]
         self.self_attention = config["self_attention"]
         self.max_gen_len = config["max_output_len"]
-        self.embedding=config["embedding"]
+        self.embedding = config["embedding"]
         self.vocab_size = len(dataset.in_idx2word)
         self.symbol_size = len(dataset.out_idx2symbol)
         self.mask_list = NumMask.number
@@ -56,9 +66,9 @@ class MathEN(nn.Module):
         except:
             self.out_pad_token = None
         if config['embedding'] == 'roberta':
-            self.in_embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.in_embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
         elif config['embedding'] == 'bert':
-            self.in_embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.in_embedder = BertEmbedder(self.vocab_size, config['pretrained_model_path'])
         else:
             self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
@@ -126,7 +136,13 @@ class MathEN(nn.Module):
             return all_outputs
 
     def calculate_loss(self, batch_data):
-        r"""calculate loss of a batch data.
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
         """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
@@ -137,7 +153,7 @@ class MathEN(nn.Module):
         device = seq.device
 
         if self.embedding == 'roberta':
-            seq_emb = self.in_embedder(seq,ques_mask)
+            seq_emb = self.in_embedder(seq, ques_mask)
         else:
             seq_emb = self.in_embedder(seq)
         encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
@@ -174,7 +190,13 @@ class MathEN(nn.Module):
         return self.loss.get_loss()
 
     def model_test(self, batch_data):
-        r"""predict
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
         """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
@@ -186,7 +208,7 @@ class MathEN(nn.Module):
         device = seq.device
 
         if self.embedding == 'roberta':
-            seq_emb = self.in_embedder(seq,ques_mask)
+            seq_emb = self.in_embedder(seq, ques_mask)
         else:
             seq_emb = self.in_embedder(seq)
         encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)

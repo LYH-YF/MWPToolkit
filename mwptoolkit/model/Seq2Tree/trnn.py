@@ -1,3 +1,8 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 05:00:30
+# @File: trnn.py
+
 import copy
 import random
 
@@ -22,6 +27,10 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
 class TRNN(nn.Module):
+    """
+    Reference:
+        Wang et al. "Template-Based Math Word Problem Solvers with Recursive Neural Networks" in AAAI 2019.
+    """
     def __init__(self, config, dataset):
         super(TRNN, self).__init__()
         self.seq2seq_embedding_size = config["seqseq_embedding_size"]
@@ -41,7 +50,7 @@ class TRNN(nn.Module):
         self.bidirectional = config["bidirectional"]
         self.attention = True
         self.share_vocab = config["share_vocab"]
-        self.embedding=config["embedding"]
+        self.embedding = config["embedding"]
 
         self.mask_list = NumMask.number
         self.in_idx2word = dataset.in_idx2word
@@ -87,10 +96,10 @@ class TRNN(nn.Module):
 
         # seq2seq module
         if config['embedding'] == 'roberta':
-            self.seq2seq_in_embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.seq2seq_in_embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
             self.seq2seq_in_embedder.token_resize(self.vocab_size)
         elif config['embedding'] == 'bert':
-            self.seq2seq_in_embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.seq2seq_in_embedder = BertEmbedder(self.vocab_size, config['pretrained_model_path'])
             self.seq2seq_in_embedder.token_resize(self.vocab_size)
         else:
             self.seq2seq_in_embedder = BaiscEmbedder(self.vocab_size, self.seq2seq_embedding_size, self.seq2seq_dropout_ratio)
@@ -105,10 +114,10 @@ class TRNN(nn.Module):
         self.seq2seq_gen_linear = nn.Linear(self.seq2seq_encode_hidden_size, self.temp_symbol_size)
         #answer module
         if config['embedding'] == 'roberta':
-            self.answer_in_embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.answer_in_embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
             self.answer_in_embedder.token_resize(self.vocab_size)
         elif config['embedding'] == 'bert':
-            self.answer_in_embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.answer_in_embedder = BertEmbedder(self.vocab_size, config['pretrained_model_path'])
             self.answer_in_embedder.token_resize(self.vocab_size)
         else:
             self.answer_in_embedder = BaiscEmbedder(self.vocab_size, self.ans_embedding_size, self.ans_dropout_ratio)
@@ -126,6 +135,14 @@ class TRNN(nn.Module):
         self.wrong = 0
 
     def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(float,float): seq2seq module loss and answer module loss.
+        """
         # first stage:train seq2seq
         seq2seq_loss = self.seq2seq_calculate_loss(batch_data)
 
@@ -135,6 +152,14 @@ class TRNN(nn.Module):
         return seq2seq_loss, answer_loss
 
     def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
         target = batch_data['equation']
@@ -147,7 +172,7 @@ class TRNN(nn.Module):
         device = seq.device
 
         if self.embedding == 'roberta':
-            seq_emb = self.seq2seq_in_embedder(seq,ques_mask)
+            seq_emb = self.seq2seq_in_embedder(seq, ques_mask)
         else:
             seq_emb = self.seq2seq_in_embedder(seq)
         encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
@@ -175,7 +200,7 @@ class TRNN(nn.Module):
 
         device = seq.device
         if self.embedding == 'roberta':
-            seq_emb = self.answer_in_embedder(seq,ques_mask)
+            seq_emb = self.answer_in_embedder(seq, ques_mask)
         else:
             seq_emb = self.answer_in_embedder(seq)
         encoder_output, encoder_hidden = self.answer_encoder(seq_emb, seq_length)
@@ -183,7 +208,7 @@ class TRNN(nn.Module):
         batch_size = encoder_output.size(0)
         generate_num = torch.tensor(self.generate_idx).to(device)
         if self.embedding == 'roberta':
-            generate_emb = self.answer_in_embedder(generate_num,None)
+            generate_emb = self.answer_in_embedder(generate_num, None)
         else:
             generate_emb = self.answer_in_embedder(generate_num)
         equations = []
@@ -227,7 +252,13 @@ class TRNN(nn.Module):
         return equations, targets, template, temp_t, ans_module_test, targets
 
     def seq2seq_calculate_loss(self, batch_data):
-        r"""calculate loss of a batch data.
+        """Finish forward-propagating, calculating loss and back-propagation of seq2seq module.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value of seq2seq module.
         """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
@@ -238,7 +269,7 @@ class TRNN(nn.Module):
         device = seq.device
 
         if self.embedding == 'roberta':
-            seq_emb = self.seq2seq_in_embedder(seq,ques_mask)
+            seq_emb = self.seq2seq_in_embedder(seq, ques_mask)
         else:
             seq_emb = self.seq2seq_in_embedder(seq)
         encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
@@ -270,6 +301,14 @@ class TRNN(nn.Module):
         return self.seq2seq_loss.get_loss()
 
     def ans_module_calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation of answer module.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value of answer module.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         num_pos = batch_data["num pos"]
@@ -280,14 +319,14 @@ class TRNN(nn.Module):
 
         device = seq.device
         if self.embedding == 'roberta':
-            seq_emb = self.answer_in_embedder(seq,ques_mask)
+            seq_emb = self.answer_in_embedder(seq, ques_mask)
         else:
             seq_emb = self.answer_in_embedder(seq)
         encoder_output, encoder_hidden = self.answer_encoder(seq_emb, seq_length)
         batch_size = encoder_output.size(0)
         generate_num = torch.tensor(self.generate_idx).to(device)
         if self.embedding == 'roberta':
-            generate_emb = self.answer_in_embedder(generate_num,None)
+            generate_emb = self.answer_in_embedder(generate_num, None)
         else:
             generate_emb = self.answer_in_embedder(generate_num)
 

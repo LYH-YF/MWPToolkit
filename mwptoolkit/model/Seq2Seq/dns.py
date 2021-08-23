@@ -1,5 +1,11 @@
-import random
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:35:13
+# @File: dns.py
+
 import copy
+import random
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -12,6 +18,10 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
 class DNS(nn.Module):
+    """
+    Reference:
+        Wang et al. "Deep Neural Solver for Math Word Problems" in EMNLP 2017.
+    """
     def __init__(self, config, dataset):
         super(DNS, self).__init__()
         self.device = config["device"]
@@ -112,7 +122,13 @@ class DNS(nn.Module):
             return all_outputs
 
     def calculate_loss(self, batch_data):
-        r"""calculate loss of a batch data.
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
         """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
@@ -152,7 +168,13 @@ class DNS(nn.Module):
         return self.loss.get_loss()
 
     def model_test(self, batch_data):
-        r"""predict
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
         """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
@@ -371,12 +393,12 @@ class DNS(nn.Module):
         return torch.tensor(filters).long()
 
     def rule_filter_(self, symbols, token_logit):
-        r"""
+        """
         Args:
-            symbols: torch.Tensor, [batch_size]
-            token_logit: torch.Tensor, [batch_size, symbol_size]
+            symbols (torch.Tensor): [batch_size]
+            token_logit (torch.Tensor): [batch_size, symbol_size]
         return:
-            symbols of next step : [batch_size]
+            symbols of next step (torch.Tensor): [batch_size]
         """
         device = token_logit.device
         next_symbols = []

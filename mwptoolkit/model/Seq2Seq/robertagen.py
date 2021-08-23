@@ -1,23 +1,29 @@
-import random
-from torch import nn
-import torch
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:37:24
+# @File: robertagen.py
 
+import random
+
+import torch
+from torch import nn
 from transformers import RobertaModel, RobertaTokenizer, BertModel, BertTokenizer
+
 from mwptoolkit.module.Decoder.transformer_decoder import TransformerDecoder
 from mwptoolkit.module.Embedder.position_embedder import PositionEmbedder_x as PositionEmbedder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Attention.self_attention import SelfAttentionMask
 from mwptoolkit.module.Strategy.sampling import topk_sampling
 from mwptoolkit.module.Strategy.greedy import greedy_search
-
 from mwptoolkit.loss.nll_loss import NLLLoss
-
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask, DatasetName
 
 
-
 class RobertaGen(nn.Module):
-
+    """
+    Reference:
+        Liu et al. "RoBERTa: A Robustly Optimized BERT Pretraining Approach".
+    """
     def __init__(self, config, dataset):
         super(RobertaGen, self).__init__()
         self.device = config["device"]
@@ -35,8 +41,6 @@ class RobertaGen(nn.Module):
 
         self.eos_token_id = self.tokenizer.sep_token_id
         self.eos_token = self.tokenizer.sep_token
-
-
 
         self.out_symbol2idx = dataset.out_symbol2idx
         self.out_idx2symbol = dataset.out_idx2symbol
@@ -57,11 +61,9 @@ class RobertaGen(nn.Module):
         config["in_idx2word"] = list(self.tokenizer.get_vocab().keys())
         # config["embedding_size"] = self.encoder.config.n_embd
 
-        self.in_embedder = BaiscEmbedder(config["vocab_size"], config["embedding_size"],
-                                         config["embedding_dropout_ratio"])
+        self.in_embedder = BaiscEmbedder(config["vocab_size"], config["embedding_size"], config["embedding_dropout_ratio"])
 
-        self.out_embedder = BaiscEmbedder(config["symbol_size"], config["embedding_size"],
-                                              config["embedding_dropout_ratio"])
+        self.out_embedder = BaiscEmbedder(config["symbol_size"], config["embedding_size"], config["embedding_dropout_ratio"])
 
         self.pos_embedder = PositionEmbedder(config["embedding_size"], config["max_len"])
         self.self_attentioner = SelfAttentionMask()
@@ -74,6 +76,14 @@ class RobertaGen(nn.Module):
         self.loss = NLLLoss()
 
     def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         seq, target = batch_data["ques_source"], batch_data["equ_source"]
         outputs, target = self.forward(seq, target)
         outputs = torch.nn.functional.log_softmax(outputs, dim=1)
@@ -85,6 +95,14 @@ class RobertaGen(nn.Module):
         return self.loss.get_loss()
 
     def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         seq = batch_data["ques_source"]
 
         num_list = batch_data['num list']
@@ -102,13 +120,13 @@ class RobertaGen(nn.Module):
         srcs = []
         for idx, s in enumerate(seq):
             if self.max_input_len is not None:
-                src = self.tokenizer.encode(seq[idx],max_length=self.max_input_len-1)
+                src = self.tokenizer.encode(seq[idx], max_length=self.max_input_len - 1)
             else:
                 src = self.tokenizer.encode(seq[idx])
             srcs.append(src)
         src_length = max([len(_) for _ in srcs])
         for i in range(len(srcs)):
-            srcs[i] =  [self.tokenizer.cls_token_id] + srcs[i] + (src_length - len(srcs[i])) * [self.tokenizer.pad_token_id]
+            srcs[i] = [self.tokenizer.cls_token_id] + srcs[i] + (src_length - len(srcs[i])) * [self.tokenizer.pad_token_id]
         src_length = src_length + 1
         srcs_tensor = torch.LongTensor(srcs).to(self.device)
         src_feat = self.encoder(srcs_tensor)[0]  # src_feat: torch.Size([4, 70, 768])
@@ -127,14 +145,13 @@ class RobertaGen(nn.Module):
                         # print (self.out_symbol2idx)
                         tgt.append(self.out_symbol2idx['<UNK>'])
                     else:
-                        tgt.append(self.out_symbol2idx[_] )
+                        tgt.append(self.out_symbol2idx[_])
                 # tgt = [self.out_symbol2idx[_] for _ in t]
                 tgts.append(tgt)
 
             target_length = max([len(_) for _ in tgts])
             for i in range(len(tgts)):
-                tgts[i] = tgts[i] + [self.out_eos_idx] + (target_length - len(tgts[i])) * [
-                    self.out_pad_idx]
+                tgts[i] = tgts[i] + [self.out_eos_idx] + (target_length - len(tgts[i])) * [self.out_pad_idx]
 
             tgts = torch.LongTensor(tgts).to(self.device)
 
@@ -170,10 +187,7 @@ class RobertaGen(nn.Module):
             for idx in range(seq_len):
                 self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
                 decoder_input = self.pos_embedder(self.out_embedder(input_seq))
-                decoder_outputs = self.decoder(decoder_input,
-                                               self_attn_mask=self_attn_mask,
-                                               external_states=encoder_outputs,
-                                               external_padding_mask=source_padding_mask)
+                decoder_outputs = self.decoder(decoder_input, self_attn_mask=self_attn_mask, external_states=encoder_outputs, external_padding_mask=source_padding_mask)
 
                 token_logit = self.out(decoder_outputs[:, -1, :].unsqueeze(1))
                 token_logits.append(token_logit)
@@ -202,10 +216,7 @@ class RobertaGen(nn.Module):
             self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
             # decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq)
             decoder_input = self.pos_embedder(self.out_embedder(input_seq))
-            decoder_outputs = self.decoder(decoder_input,
-                                           self_attn_mask=self_attn_mask,
-                                           external_states=encoder_outputs,
-                                           external_padding_mask=source_padding_mask)
+            decoder_outputs = self.decoder(decoder_input, self_attn_mask=self_attn_mask, external_states=encoder_outputs, external_padding_mask=source_padding_mask)
 
             token_logits = self.out(decoder_outputs[:, -1, :].unsqueeze(1))
             if self.decoding_strategy == "topk_sampling":
@@ -239,7 +250,7 @@ class RobertaGen(nn.Module):
                 #         '+' == token[1] or '-' == token[1] or '*' == token[1] or '/' == token[1]):
                 #     symbols_.append(token[0])
                 #     symbols_.append(token[1:])
-                if token =="<EOS>":
+                if token == "<EOS>":
                     break
                 else:
                     symbols_.append(token)

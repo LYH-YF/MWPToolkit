@@ -1,4 +1,10 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:37:11
+# @File: rnnencdec.py
+
 import random
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -12,6 +18,10 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
 class RNNEncDec(nn.Module):
+    """
+    Reference:
+        Sutskever et al. "Sequence to Sequence Learning with Neural Networks".
+    """
     def __init__(self, config, dataset):
         super().__init__()
         self.bidirectional = config["bidirectional"]
@@ -53,7 +63,7 @@ class RNNEncDec(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-        
+
         self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
             self.out_embedder = self.in_embedder
@@ -109,7 +119,13 @@ class RNNEncDec(nn.Module):
             return all_outputs
 
     def calculate_loss(self, batch_data):
-        r"""calculate loss of a batch data.
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
         """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
@@ -148,7 +164,13 @@ class RNNEncDec(nn.Module):
         return self.loss.get_loss()
 
     def model_test(self, batch_data):
-        r"""predict
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
         """
         seq = batch_data['question']
         seq_length = batch_data['ques len']

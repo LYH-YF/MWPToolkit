@@ -1,22 +1,25 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:37:56
+# @File: saligned.py
+
 import math
-from numpy.core.fromnumeric import mean
+
 import torch
-from torch import nn
 import numpy as np
+from torch import nn
 
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import SalignedEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import SalignedDecoder
-from mwptoolkit.module.Environment.stack_machine import OPERATIONS,StackMachine
-from mwptoolkit.utils.enum_type import SpecialTokens,NumMask,Operators
+from mwptoolkit.module.Environment.stack_machine import OPERATIONS, StackMachine
+from mwptoolkit.utils.enum_type import SpecialTokens, NumMask, Operators
 
 
 class Saligned(nn.Module):
-    """ Neural Math Word Problem Solver Machine Version 1.
-
-    Args:
-        dim_embed (int): Dimension of text embeddings.
-        dim_hidden (int): Dimension of encoder decoder hidden state.
+    """
+    Reference:
+        Chiang et al. "Semantically-Aligned Equation Generation for Solving and Reasoning Math Word Problems".
     """
     def __init__(self, config, dataset):
         super(Saligned, self).__init__()
@@ -50,10 +53,10 @@ class Saligned(nn.Module):
         #self.min_CON = self.N_OPS_out = dataset.out_symbol2idx['^']+1 if '<BRG>' not in dataset.out_symbol2idx else dataset.out_symbol2idx['<BRG>']+1
         #self.UNK = dataset.out_symbol2idx['<UNK>']
         #self.max_CON = self.min_NUM - 1
-        self.fix_constants = list(dataset.out_symbol2idx.keys())[self.min_CON: self.min_NUM]
+        self.fix_constants = list(dataset.out_symbol2idx.keys())[self.min_CON:self.min_NUM]
 
         self.mask_list = NumMask.number
-        
+
         self.out_symbol2idx = dataset.out_symbol2idx
         self.out_idx2symbol = dataset.out_idx2symbol
         try:
@@ -70,30 +73,28 @@ class Saligned(nn.Module):
             self.out_pad_token = None
         # module
         #print('vocab_size', config); #exit()
-        self.embedder=BaiscEmbedder(vocab_size,
-                                    dim_embed,
-                                    dropout_rate)
-        self.encoder = SalignedEncoder(dim_embed,
-                                   dim_hidden,
-                                   dim_hidden,
-                                   dropout_rate)
+        self.embedder = BaiscEmbedder(vocab_size, dim_embed, dropout_rate)
+        self.encoder = SalignedEncoder(dim_embed, dim_hidden, dim_hidden, dropout_rate)
         self.decoder = SalignedDecoder(operations, dim_hidden, dropout_rate, device)
-        self.embedding_one = torch.nn.Parameter(
-            torch.normal(torch.zeros(2 * dim_hidden), 0.01))
-        self.embedding_pi = torch.nn.Parameter(
-            torch.normal(torch.zeros(2 * dim_hidden), 0.01))
+        self.embedding_one = torch.nn.Parameter(torch.normal(torch.zeros(2 * dim_hidden), 0.01))
+        self.embedding_pi = torch.nn.Parameter(torch.normal(torch.zeros(2 * dim_hidden), 0.01))
         self.encoder.initialize_fix_constant(len(self.fix_constants), self._device)
 
         # make loss
-        class_weights = torch.ones(operations.N_OPS+1)
+        class_weights = torch.ones(operations.N_OPS + 1)
         #class_weights[OPERATIONS.NOOP] = 0
-        self._op_loss = torch.nn.CrossEntropyLoss(class_weights,
-                                                  size_average=False,
-                                                  reduce=False,
-                                                  ignore_index=-1)
+        self._op_loss = torch.nn.CrossEntropyLoss(class_weights, size_average=False, reduce=False, ignore_index=-1)
         self._arg_loss = torch.nn.CrossEntropyLoss()
 
     def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         text = batch_data["question"]
         ops = batch_data["equation"]
         text_len = batch_data["ques len"]
@@ -102,7 +103,7 @@ class Saligned(nn.Module):
         op_len = batch_data["equ len"]
         #print(batch_data.keys())
         num_len = batch_data["num size"]
-        fix_constants=self.fix_constants
+        fix_constants = self.fix_constants
         #batch_data["raw_equation"] = batch_data["equation"].clone()
 
         batch_size = len(text)
@@ -117,21 +118,19 @@ class Saligned(nn.Module):
             self.encoder.forward(seq_emb, text_len, constant_indices)
         #print('operands', fix_constants, constants, ops, op_len);  #exit()
         # print(str(batch_data).encode('utf8'))
-        number_emb=[operands[b_i] + self.encoder.get_fix_constant() for b_i in range(batch_size)]
+        number_emb = [operands[b_i] + self.encoder.get_fix_constant() for b_i in range(batch_size)]
         # initialize stacks
         # stacks = [StackMachine(self.operations, fix_constants + constants[b], operands[b], bottom,
         #           dry_run=True)
         #           for b in range(batch_size)]
-        stacks = [StackMachine(self.operations, constants[b] + fix_constants, number_emb[b], bottom,
-                  dry_run=True)
-                  for b in range(batch_size)]
+        stacks = [StackMachine(self.operations, constants[b] + fix_constants, number_emb[b], bottom, dry_run=True) for b in range(batch_size)]
 
         loss = torch.zeros(batch_size).to(self._device)
-        prev_op = (torch.zeros(batch_size).to(self._device) -1).type(torch.LongTensor)
+        prev_op = (torch.zeros(batch_size).to(self._device) - 1).type(torch.LongTensor)
         text_len = text_len.to(self._device)
         prev_output = None
 
-        if True: #self.use_state:
+        if True:  #self.use_state:
             prev_state = state
         else:
             prev_state = None
@@ -180,9 +179,7 @@ class Saligned(nn.Module):
                 #     continue
                 #print('arg_logits', b, arg_logits[b].size(), ops[b, t].unsqueeze(0) - self.N_OPS)
                 #print('stacks[i].stack_log', stacks[b].stack_log)
-                loss[b] += self._arg_loss(
-                    arg_logits[b].unsqueeze(0),
-                    ops[b, t].unsqueeze(0) - self.N_OPS)
+                loss[b] += self._arg_loss(arg_logits[b].unsqueeze(0), ops[b, t].unsqueeze(0) - self.N_OPS)
             #print(t, prev_op, stacks[0].stack_log_index, stacks[0].stack_log)
 
             # prev_op = torch.argmax(op_logits, dim=1) #
@@ -192,7 +189,7 @@ class Saligned(nn.Module):
         weights = 1
 
         #loss = (loss * weights).mean()
-        loss = (loss/max(op_len)).mean()
+        loss = (loss / max(op_len)).mean()
         pred_logits = torch.stack(pred_logits, 1)
         #print('train pred_logits', pred_logits[0, :])
         predicts = [stack.stack_log_index for stack in stacks]
@@ -201,6 +198,14 @@ class Saligned(nn.Module):
         return loss
 
     def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         text = batch_data["question"]
         ops = batch_data["equation"]
         text_len = batch_data["ques len"]
@@ -209,7 +214,7 @@ class Saligned(nn.Module):
         op_len = batch_data["equ len"]
         target = batch_data["equation"]
         nums_stack = batch_data["num stack"]
-        fix_constants=self.fix_constants
+        fix_constants = self.fix_constants
         batch_size = len(text)
 
         # zero embedding for the stack bottom
@@ -223,14 +228,13 @@ class Saligned(nn.Module):
         context, state, operands = \
             self.encoder.forward(seq_emb, text_len, constant_indices)
 
-        number_emb=[operands[b_i] + self.encoder.get_fix_constant() for b_i in range(batch_size)]
+        number_emb = [operands[b_i] + self.encoder.get_fix_constant() for b_i in range(batch_size)]
         #print('operands', fix_constants + constants[0], ops); # exit()
         # initialize stacks
-        stacks = [StackMachine(self.operations, constants[b] + fix_constants, number_emb[b], bottom)
-                  for b in range(batch_size)]
+        stacks = [StackMachine(self.operations, constants[b] + fix_constants, number_emb[b], bottom) for b in range(batch_size)]
 
         loss = torch.zeros(batch_size).to(self._device)
-        prev_op = (torch.zeros(batch_size).to(self._device) -1).type(torch.LongTensor)
+        prev_op = (torch.zeros(batch_size).to(self._device) - 1).type(torch.LongTensor)
         prev_output = None
         prev_state = state
         finished = [False] * batch_size
@@ -262,12 +266,8 @@ class Saligned(nn.Module):
                     op_logits[b, self.POWER] = -math.inf
                     #op_logits[b, OPERATIONS.EQL] = -math.inf
 
-            op_loss, prev_op = torch.log(
-                torch.nn.functional.softmax(op_logits, -1)
-            ).max(-1)
-            arg_loss, prev_arg = torch.log(
-                torch.nn.functional.softmax(arg_logits, -1)
-            ).max(-1)
+            op_loss, prev_op = torch.log(torch.nn.functional.softmax(op_logits, -1)).max(-1)
+            arg_loss, prev_arg = torch.log(torch.nn.functional.softmax(arg_logits, -1)).max(-1)
 
             for b in range(batch_size):
                 if prev_op[b] == self.N_OPS:
@@ -293,14 +293,15 @@ class Saligned(nn.Module):
         #print(stacks[0]._operands, stacks[0]._op_chars)
         #print(predicts_idx[0], targets[0], target);
         #predicts = self.convert_mask_num(predicts,constants)
-        predicts = self.convert_idx2symbol(torch.LongTensor(predicts_idx).to(self._device),constants)
-        targets = self.convert_idx2symbol(target,constants)
+        predicts = self.convert_idx2symbol(torch.LongTensor(predicts_idx).to(self._device), constants)
+        targets = self.convert_idx2symbol(target, constants)
         #print(predicts[0], targets[0]); exit()
 
         return predicts, targets
-    def convert_mask_num(self,batch_output,num_list):
-        output_list=[]
-        for b_i,output in enumerate(batch_output):
+
+    def convert_mask_num(self, batch_output, num_list):
+        output_list = []
+        for b_i, output in enumerate(batch_output):
             res = []
             num_len = len(num_list[b_i])
             for symbol in output:
@@ -314,7 +315,6 @@ class Saligned(nn.Module):
                     res.append(symbol)
             output_list.append(res)
         return output_list
-
 
     def convert_idx2symbol(self, output, num_list):
         batch_size = output.size(0)
@@ -338,5 +338,3 @@ class Saligned(nn.Module):
                     res.append(symbol)
             output_list.append(res)
         return output_list
-
-

@@ -1,3 +1,8 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 05:00:12
+# @File: treelstm.py
+
 import copy
 
 import torch
@@ -8,11 +13,16 @@ from mwptoolkit.module.Decoder.tree_decoder import LSTMBasedTreeDecoder
 from mwptoolkit.module.Layer.tree_layers import NodeEmbeddingLayer, TreeNode, TreeEmbedding
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
-from mwptoolkit.utils.enum_type import SpecialTokens,NumMask
+from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
 from mwptoolkit.utils.utils import copy_list
 
+
 class TreeLSTM(nn.Module):
-    def __init__(self, config,dataset):
+    """
+    Reference:
+        Liu et al. "Tree-structured Decoding for Solving Math Word Problems" in EMNLP | IJCNLP 2019.
+    """
+    def __init__(self, config, dataset):
         super().__init__()
         # parameter
         self.hidden_size = config["hidden_size"]
@@ -21,7 +31,7 @@ class TreeLSTM(nn.Module):
         self.beam_size = config['beam_size']
         self.max_out_len = config['max_output_len']
         self.num_layers = config["num_layers"]
-        self.dropout_ratio=config['dropout_ratio']
+        self.dropout_ratio = config['dropout_ratio']
 
         self.vocab_size = len(dataset.in_idx2word)
         self.symbol_size = len(dataset.out_idx2symbol)
@@ -29,10 +39,10 @@ class TreeLSTM(nn.Module):
         self.out_symbol2idx = dataset.out_symbol2idx
         self.out_idx2symbol = dataset.out_idx2symbol
         self.mask_list = NumMask.number
-        self.operator_nums=dataset.operator_nums
+        self.operator_nums = dataset.operator_nums
         generate_list = dataset.generate_list
         self.generate_nums = [self.out_symbol2idx[symbol] for symbol in generate_list]
-        self.generate_size=len(generate_list)
+        self.generate_size = len(generate_list)
         self.num_start = dataset.num_start
         self.unk_token = self.out_symbol2idx[SpecialTokens.UNK_TOKEN]
         #self.sos_token_idx = self.out_symbol2idx[SpecialTokens.SOS_TOKEN]
@@ -54,8 +64,7 @@ class TreeLSTM(nn.Module):
         self.embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         self.encoder = nn.LSTM(self.embedding_size, self.hidden_size, self.num_layers, \
                                batch_first=True, dropout=self.dropout_ratio, bidirectional=True)
-        self.decoder = LSTMBasedTreeDecoder(self.embedding_size, self.hidden_size*self.num_layers, self.operator_nums, self.generate_size,
-                                            self.dropout_ratio)
+        self.decoder = LSTMBasedTreeDecoder(self.embedding_size, self.hidden_size * self.num_layers, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.node_generater = NodeEmbeddingLayer(self.operator_nums, self.embedding_size)
         self.root = nn.Parameter(torch.randn(1, self.embedding_size))
 
@@ -91,14 +100,21 @@ class TreeLSTM(nn.Module):
                                                   num_start, initial_hidden)
             # print('all_node_outputs', all_node_outputs); exit()
         else:
-            all_node_outputs = self.generate_node_(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask,
-                                                   num_pos, num_start, beam_size, max_length, initial_hidden)
+            all_node_outputs = self.generate_node_(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length, initial_hidden)
             return all_node_outputs
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)  # B x S x N
         return all_node_outputs
 
-    def calculate_loss(self,batch_data):
+    def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -110,7 +126,6 @@ class TreeLSTM(nn.Module):
         generate_nums = self.generate_nums
         num_start = self.num_start
         UNK_TOKEN = self.unk_token
-
 
         # sequence mask for attention
         seq_mask = []
@@ -136,12 +151,21 @@ class TreeLSTM(nn.Module):
                                                   num_pos, nums_stack, padding_hidden, seq_mask, num_mask, UNK_TOKEN,
                                                   num_start, initial_hidden)
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)
+        target_length = target_length.to(self.device)
         self.loss.reset()
-        self.loss.eval_batch(all_node_outputs, target, equ_mask)
+        self.loss.eval_batch(all_node_outputs, target, target_length)
         self.loss.backward()
         return self.loss.get_loss()
 
-    def model_test(self,batch_data):
+    def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -178,8 +202,7 @@ class TreeLSTM(nn.Module):
         problem_output = torch.cat([pade_outputs[:, -1, :self.hidden_size], pade_outputs[:, 0, self.hidden_size:]], dim=1)
         encoder_outputs = pade_outputs
 
-        all_node_outputs = self.generate_node_(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask,
-                                                   num_pos, num_start, beam_size, max_length, initial_hidden)
+        all_node_outputs = self.generate_node_(encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, num_start, beam_size, max_length, initial_hidden)
         all_outputs = self.convert_idx2symbol(all_node_outputs, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
 
@@ -197,8 +220,7 @@ class TreeLSTM(nn.Module):
         # all_leafs = []
         copy_num_len = [len(_) for _ in num_pos]
         num_size = max(copy_num_len)
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(
-            encoder_outputs, num_pos, num_size, self.hidden_size*self.num_layers)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, num_size, self.hidden_size * self.num_layers)
         left_childs = [None for _ in range(batch_size)]
         embeddings_stacks = [[] for _ in range(batch_size)]
         nodes = [[] for _ in range(batch_size)]
@@ -214,31 +236,22 @@ class TreeLSTM(nn.Module):
 
         for t in range(max_target_length):
             #print('t', t, all_nums_encoder_outputs.size())
-            num_score, op, current_embeddings, current_context, current_nums_embeddings, hidden, tree_hidden = self.decoder(
-                parent, left, prev, encoder_outputs,
-                all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask, hidden, tree_hidden)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings, hidden, tree_hidden = self.decoder(parent, left, prev, encoder_outputs, all_nums_encoder_outputs,
+                                                                                                                            padding_hidden, seq_mask, num_mask, hidden, tree_hidden)
 
             outputs = torch.cat((op, num_score), 1)
             all_node_outputs.append(outputs)
 
-            target_t, generate_input = self.generate_tree_input(
-                target[:, t].tolist(), outputs, nums_stack, num_start, unk)
+            target_t, generate_input = self.generate_tree_input(target[:, t].tolist(), outputs, nums_stack, num_start, unk)
             target[:, t] = target_t
             generate_input = generate_input.to(self.device)
-            left_child, right_child, node_label = self.node_generater(
-                current_embeddings, generate_input, current_context)
+            left_child, right_child, node_label = self.node_generater(current_embeddings, generate_input, current_context)
             # print("left_child, right_child, node_label", left_child, right_child, node_label); exit()
 
             left, parent, prev, prev_idx = [], [], [], []
             left_childs = []
-            for idx, l, r, node_stack, i, o, n, n_hidden in zip(range(batch_size),
-                                                   left_child.split(1),
-                                                   right_child.split(1),
-                                                   node_stacks,
-                                                   target[:, t].tolist(),
-                                                   embeddings_stacks,
-                                                   nodes,
-                                                   nodes_hiddens):
+            for idx, l, r, node_stack, i, o, n, n_hidden in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:, t].tolist(), embeddings_stacks, nodes,
+                                                                nodes_hiddens):
                 continue_flag = False
                 if len(node_stack) != 0:
                     node = node_stack.pop()
@@ -255,8 +268,7 @@ class TreeLSTM(nn.Module):
                         node_stack.append(TreeNode(l, left_flag=True))
                         o.append(TreeEmbedding(node_label[idx].unsqueeze(0), False))
                     else:
-                        current_num = current_nums_embeddings[
-                            idx, i - num_start].unsqueeze(0)
+                        current_num = current_nums_embeddings[idx, i - num_start].unsqueeze(0)
                         while len(o) > 0 and o[-1].terminal:
                             sub_stree = o.pop()
                             op = o.pop()
@@ -292,11 +304,12 @@ class TreeLSTM(nn.Module):
                 else:
                     left.append(current_nums_embeddings[idx, n[-1] - num_start].unsqueeze(0))
                     prev.append(current_nums_embeddings[idx, n[-1] - num_start].unsqueeze(0))
-                    for i in range(len(n)-1, -1, -1):
+                    for i in range(len(n) - 1, -1, -1):
                         if n[i] < num_start:
-                            parent.append(n_hidden[i]);
+                            parent.append(n_hidden[i])
                             #if idx == 0: print('flag', n[i])
-                            parent_flag=False; break
+                            parent_flag = False
+                            break
                     if parent_flag: parent.append(hidden[0][idx].unsqueeze(0))
                     prev_idx.append(n[-1])
                 #if len(parent)
@@ -316,9 +329,7 @@ class TreeLSTM(nn.Module):
         nodes_hiddens = [[] for _ in range(batch_size)]
 
         num_size = len(num_pos[0])
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(
-            encoder_outputs, num_pos, num_size,
-            self.hidden_size*self.num_layers)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, num_size, self.hidden_size * self.num_layers)
 
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
@@ -328,9 +339,7 @@ class TreeLSTM(nn.Module):
         #tree_hidden = (torch.zeros(batch_size, self.hidden_size*self.num_layers).to(self.device), torch.zeros(batch_size, self.hidden_size*self.num_layers).to(self.device))
         tree_hidden = (initial_hidden[0][:self.num_layers].transpose(1, 0).contiguous().view(batch_size, -1), initial_hidden[1][:self.num_layers].transpose(1, 0).contiguous().view(batch_size, -1))
 
-        beams = [
-            ([hidden[0]], [self.root], [self.root], nodes, nodes_hiddens, hidden, tree_hidden, TreeBeam(0.0, node_stacks, embeddings_stacks, left_childs, []))
-        ]
+        beams = [([hidden[0]], [self.root], [self.root], nodes, nodes_hiddens, hidden, tree_hidden, TreeBeam(0.0, node_stacks, embeddings_stacks, left_childs, []))]
         for t in range(max_length):
             current_beams = []
             while len(beams) > 0:
@@ -341,13 +350,10 @@ class TreeLSTM(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings, hidden, tree_hidden = self.decoder(
-                    parent, left, prev, encoder_outputs,
-                    all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask, hidden, tree_hidden)
+                num_score, op, current_embeddings, current_context, current_nums_embeddings, hidden, tree_hidden = self.decoder(parent, left, prev, encoder_outputs, all_nums_encoder_outputs,
+                                                                                                                                padding_hidden, seq_mask, num_mask, hidden, tree_hidden)
 
-                out_score = nn.functional.log_softmax(torch.cat(
-                    (op, num_score), dim=1),
-                    dim=1)
+                out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
                 #print('out_score', out_score.size())
 
                 # out_score = p_leaf * out_score
@@ -371,26 +377,18 @@ class TreeLSTM(nn.Module):
                     if out_token < num_start:
                         current_nodes[0].append(out_token)
                         current_nodes_hidden[0].append(hidden[0])
-                        generate_input = torch.LongTensor([out_token
-                                                           ]).to(self.device)
+                        generate_input = torch.LongTensor([out_token]).to(self.device)
 
-                        left_child, right_child, node_label = self.node_generater(
-                            current_embeddings, generate_input,
-                            current_context)
+                        left_child, right_child, node_label = self.node_generater(current_embeddings, generate_input, current_context)
 
                         current_node_stack[0].append(TreeNode(right_child))
-                        current_node_stack[0].append(
-                            TreeNode(left_child, left_flag=True))
+                        current_node_stack[0].append(TreeNode(left_child, left_flag=True))
 
-                        current_embeddings_stacks[0].append(
-                            TreeEmbedding(node_label[0].unsqueeze(0), False))
+                        current_embeddings_stacks[0].append(TreeEmbedding(node_label[0].unsqueeze(0), False))
                     else:
-                        current_num = current_nums_embeddings[
-                            0, out_token - num_start].unsqueeze(0)
+                        current_num = current_nums_embeddings[0, out_token - num_start].unsqueeze(0)
 
-                        while len(
-                                current_embeddings_stacks[0]
-                        ) > 0 and current_embeddings_stacks[0][-1].terminal:
+                        while len(current_embeddings_stacks[0]) > 0 and current_embeddings_stacks[0][-1].terminal:
                             sub_stree = current_embeddings_stacks[0].pop()
                             op = current_embeddings_stacks[0].pop()
                             current_nodes[0].pop()
@@ -398,14 +396,11 @@ class TreeLSTM(nn.Module):
                             current_nodes_hidden[0].pop()
                             current_nodes_hidden[0].pop()
                             current_num = sub_stree.embedding
-                        current_embeddings_stacks[0].append(
-                            TreeEmbedding(current_num, True))
+                        current_embeddings_stacks[0].append(TreeEmbedding(current_num, True))
                         current_nodes[0].append(out_token)
                         current_nodes_hidden[0].append(hidden[0])
-                    if len(current_embeddings_stacks[0]
-                           ) > 0 and current_embeddings_stacks[0][-1].terminal:
-                        current_left_childs.append(
-                            current_embeddings_stacks[0][-1].embedding)
+                    if len(current_embeddings_stacks[0]) > 0 and current_embeddings_stacks[0][-1].terminal:
+                        current_left_childs.append(current_embeddings_stacks[0][-1].embedding)
                     else:
                         current_left_childs.append(None)
 
@@ -422,17 +417,16 @@ class TreeLSTM(nn.Module):
                     else:
                         left.append(current_nums_embeddings[0, current_nodes[0][-1] - num_start].unsqueeze(0))
                         prev.append(current_nums_embeddings[0, current_nodes[0][-1] - num_start].unsqueeze(0))
-                        for i in range(len(current_nodes[0])-1, -1, -1):
+                        for i in range(len(current_nodes[0]) - 1, -1, -1):
                             if current_nodes[0][i] < num_start:
-                                parent.append(current_nodes_hidden[0][i]);
-                                parent_flag = False; break
+                                parent.append(current_nodes_hidden[0][i])
+                                parent_flag = False
+                                break
                         if parent_flag: parent.append(hidden[0])
                         #parent = parent[:1]
 
                     current_beams.append((parent, left, prev, current_nodes, current_nodes_hidden, hidden, tree_hidden,
-                        TreeBeam(b.score + float(tv), current_node_stack,
-                                 current_embeddings_stacks,
-                                 current_left_childs, current_out)))
+                                          TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks, current_left_childs, current_out)))
             #print('current_nodes', current_nodes)
             #print('left, parent, prev', len(parent), parent[0].size(), len(left), left[0].size(), len(prev), prev[0].size())
 
@@ -536,4 +530,3 @@ class TreeLSTM(nn.Module):
         trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
         parameters = "\ntotal parameters : {} \ntrainable parameters : {}".format(total, trainable)
         return info + parameters
-

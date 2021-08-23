@@ -1,13 +1,14 @@
 # -*- encoding: utf-8 -*-
 # @Author: Yihuai Lan
-# @Time: 2021/08/19 11:24:52
+# @Time: 2021/08/21 04:59:38
 # @File: gts.py
 
+import copy
+import random
 
 import torch
 from torch import nn
-import copy
-import random
+
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Embedder.roberta_embedder import RobertaEmbedder
@@ -16,13 +17,16 @@ from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
 from mwptoolkit.module.Strategy.weakly_supervising import out_expression_list
-#from mwptoolkit.module.Strategy.weakly_supervising import Weakly_Supervising, out_expression_list
-from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss,masked_cross_entropy
+from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss, masked_cross_entropy
 from mwptoolkit.utils.utils import copy_list, get_weakly_supervised
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
 class GTS(nn.Module):
+    """
+    Reference:
+        Xie et al. "A Goal-Driven Tree-Structured Neural Model for Math Word Problems" in IJCAI 2019.
+    """
     def __init__(self, config, dataset):
         super().__init__()
         #parameter
@@ -35,7 +39,7 @@ class GTS(nn.Module):
         self.dropout_ratio = config["dropout_ratio"]
         self.num_layers = config["num_layers"]
         self.rnn_cell_type = config["rnn_cell_type"]
-        self.embedding=config['embedding']
+        self.embedding = config['embedding']
 
         self.vocab_size = len(dataset.in_idx2word)
         self.out_symbol2idx = dataset.out_symbol2idx
@@ -62,20 +66,28 @@ class GTS(nn.Module):
             self.out_pad_token = None
         #module
         if config['embedding'] == 'roberta':
-            self.embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
         elif config['embedding'] == 'bert':
-            self.embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.embedder = BertEmbedder(self.vocab_size, config['pretrained_model_path'])
         else:
             self.embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         #self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
-        self.encoder = BasicRNNEncoder(self.embedding_size,self.hidden_size,self.num_layers,self.rnn_cell_type,self.dropout_ratio,batch_first=False)
+        self.encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio, batch_first=False)
         self.decoder = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.node_generater = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
         self.merge = Merge(self.hidden_size, self.embedding_size, self.dropout_ratio)
 
         self.loss = MaskedCrossEntropyLoss()
-    
-    def calculate_loss(self,batch_data):
+
+    def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -88,17 +100,21 @@ class GTS(nn.Module):
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
-        unk=self.unk_token
+        unk = self.unk_token
 
-        '''
-        input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums,
-               embedder,encoder, predict, generate, merge, num_pos,batch_graph,unk,num_start
-        '''
         loss = self.train_tree(seq,seq_length,target,target_length,\
             nums_stack,num_size,generate_nums,num_pos,unk,num_start)
         return loss
-    
-    def model_test(self,batch_data):
+
+    def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -111,14 +127,13 @@ class GTS(nn.Module):
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
-        all_node_output = self.evaluate_tree(seq,seq_length,generate_nums,num_pos,num_start,self.beam_size,self.max_out_len)
-        
+        all_node_output = self.evaluate_tree(seq, seq_length, generate_nums, num_pos, num_start, self.beam_size, self.max_out_len)
+
         all_output = self.convert_idx2symbol(all_node_output, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
-        return all_output,targets
-    
-    def train_tree(self,input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums,
-                    num_pos,unk,num_start, english=False):
+        return all_output, targets
+
+    def train_tree(self, input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums, num_pos, unk, num_start, english=False):
         # sequence mask for attention
         seq_mask = []
         max_len = max(input_length)
@@ -151,7 +166,7 @@ class GTS(nn.Module):
         seq_emb = self.embedder(input_var)
         pade_outputs, _ = self.encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:] 
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
@@ -162,14 +177,13 @@ class GTS(nn.Module):
 
         copy_num_len = [len(_) for _ in num_pos]
         num_size = max(copy_num_len)
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size, self.hidden_size)
 
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(
-                node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask,
+                                                                                                       num_mask)
 
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
@@ -181,8 +195,7 @@ class GTS(nn.Module):
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.node_generater(current_embeddings, generate_input, current_context)
             left_childs = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
-                                                node_stacks, target[t].tolist(), embeddings_stacks):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -229,12 +242,11 @@ class GTS(nn.Module):
 
         return loss.item()  # , loss_0.item(), loss_1.item()
 
-    def evaluate_tree(self,input_batch, input_length, generate_nums, num_pos,
-                  num_start,beam_size=5, max_length=30):
+    def evaluate_tree(self, input_batch, input_length, generate_nums, num_pos, num_start, beam_size=5, max_length=30):
 
         seq_mask = torch.BoolTensor(1, input_length).fill_(0)
         # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
-        input_var = input_batch.transpose(0,1)
+        input_var = input_batch.transpose(0, 1)
 
         num_mask = torch.BoolTensor(1, len(num_pos[0]) + len(generate_nums)).fill_(0)
 
@@ -252,14 +264,13 @@ class GTS(nn.Module):
         seq_emb = self.embedder(input_var)
         pade_outputs, _ = self.encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:] 
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
 
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
         num_size = len(num_pos[0])
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size, self.hidden_size)
         # B x P x N
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
@@ -276,11 +287,9 @@ class GTS(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(
-                    b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
-                    seq_mask, num_mask)
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.decoder(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                                                                                                           seq_mask, num_mask)
 
-                
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
                 # out_score = p_leaf * out_score
@@ -320,8 +329,7 @@ class GTS(nn.Module):
                         current_left_childs.append(current_embeddings_stacks[0][-1].embedding)
                     else:
                         current_left_childs.append(None)
-                    current_beams.append(TreeBeam(b.score+float(tv), current_node_stack, current_embeddings_stacks,
-                                                current_left_childs, current_out))
+                    current_beams.append(TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks, current_left_childs, current_out))
             beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
             beams = beams[:beam_size]
             flag = True
@@ -333,7 +341,7 @@ class GTS(nn.Module):
 
         return beams[0].out
 
-    def get_all_number_encoder_outputs(self,encoder_outputs, num_pos, batch_size, num_size, hidden_size):
+    def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, batch_size, num_size, hidden_size):
         indices = list()
         sen_len = encoder_outputs.size(0)
         masked_index = []
@@ -403,7 +411,7 @@ class GTS(nn.Module):
         return output_list
 
 
-class GTS_(nn.Module):
+class _GTS_(nn.Module):
     def __init__(self, config, dataset):
         super().__init__()
         #parameter
@@ -415,7 +423,7 @@ class GTS_(nn.Module):
         self.dropout_ratio = config["dropout_ratio"]
         self.num_layers = config["num_layers"]
         self.rnn_cell_type = config["rnn_cell_type"]
-        self.embedding=config['embedding']
+        self.embedding = config['embedding']
 
         self.vocab_size = len(dataset.in_idx2word)
         self.out_symbol2idx = dataset.out_symbol2idx
@@ -442,9 +450,9 @@ class GTS_(nn.Module):
             self.out_pad_token = None
         #module
         if config['embedding'] == 'roberta':
-            self.embedder=RobertaEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
         elif config['embedding'] == 'bert':
-            self.embedder=BertEmbedder(self.vocab_size,config['pretrained_model_path'])
+            self.embedder = BertEmbedder(self.vocab_size, config['pretrained_model_path'])
         else:
             self.embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         self.encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio)
@@ -453,7 +461,7 @@ class GTS_(nn.Module):
         self.merge = SubTreeMerger(self.hidden_size, self.embedding_size, self.dropout_ratio)
 
         self.loss = MaskedCrossEntropyLoss()
-    
+
     def forward(self,seq, seq_length, nums_stack, num_size, generate_nums, num_pos,\
                 num_start,target=None, target_length=None,max_length=30,beam_size=5,UNK_TOKEN=None):
         # sequence mask for attention
@@ -520,7 +528,7 @@ class GTS_(nn.Module):
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         if self.embedding == 'roberta':
-            seq_emb = self.embedder(seq,ques_mask)
+            seq_emb = self.embedder(seq, ques_mask)
         else:
             seq_emb = self.embedder(seq)
         pade_outputs, _ = self.encoder(seq_emb, seq_length)
@@ -570,7 +578,7 @@ class GTS_(nn.Module):
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
         if self.embedding == 'roberta':
-            seq_emb = self.embedder(seq,ques_mask)
+            seq_emb = self.embedder(seq, ques_mask)
         else:
             seq_emb = self.embedder(seq)
         pade_outputs, _ = self.encoder(seq_emb, seq_length)
@@ -618,7 +626,7 @@ class GTS_(nn.Module):
             left_childs = []
             #print("target", target.size())
             #print("target[:,t]", target[:,t].size())
-            
+
             for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:, t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
@@ -1035,4 +1043,3 @@ class GTS_(nn.Module):
         trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
         parameters = "\ntotal parameters : {} \ntrainable parameters : {}".format(total, trainable)
         return info + parameters
-

@@ -1,4 +1,10 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:38:29
+# @File: transformer.py
+
 import random
+
 import torch
 from torch import nn
 
@@ -12,10 +18,14 @@ from mwptoolkit.module.Strategy.sampling import topk_sampling
 from mwptoolkit.module.Strategy.greedy import greedy_search
 from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
-
 from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder, AttentionalRNNDecoder
 
+
 class Transformer(nn.Module):
+    """
+    Reference:
+        Vaswani et al. "Attention Is All You Need".
+    """
     def __init__(self, config, dataset):
         super().__init__()
         self.max_output_len = config["max_output_len"]
@@ -75,7 +85,8 @@ class Transformer(nn.Module):
         self.loss = NLLLoss(weight, pad)
 
     def forward(self, src, target=None):
-        print('src', src); exit()
+        print('src', src)
+        exit()
         #source_embeddings = self.pos_embedder(self.in_embedder(src))
         device = src.device
         source_embeddings = self.in_embedder(src) + self.pos_embedder(src).to(device)
@@ -99,6 +110,14 @@ class Transformer(nn.Module):
         return decoder_inputs
 
     def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         src = batch_data['question']
         target = batch_data['equation']
         device = src.device
@@ -119,6 +138,14 @@ class Transformer(nn.Module):
         return self.loss.get_loss()
 
     def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         src = batch_data['question']
         target = batch_data['equation']
         num_list = batch_data['num list']
@@ -341,8 +368,6 @@ class Transformer(nn.Module):
         trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
         parameters = "\ntotal parameters : {} \ntrainable parameters : {}".format(total, trainable)
         return info + parameters
-
-
 
 
 # class Transformer(nn.Module):

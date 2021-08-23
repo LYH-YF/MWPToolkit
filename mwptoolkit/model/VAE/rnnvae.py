@@ -1,33 +1,46 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 05:05:12
+# @File: rnnvae.py
+
 import random
+
 import torch
 from torch import nn
 
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
-from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder,AttentionalRNNDecoder
+from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder, AttentionalRNNDecoder
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Strategy.sampling import topk_sampling
 from mwptoolkit.loss.nll_loss import NLLLoss
-from mwptoolkit.utils.enum_type import SpecialTokens,NumMask
+from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
+
 
 class RNNVAE(nn.Module):
-    def __init__(self, config,dataset):
+    """
+    Reference:
+        Zhang et al. "Variational Neural Machine Translation".
+    
+    We apply translation machine to math word problem.
+    """
+    def __init__(self, config, dataset):
         super(RNNVAE, self).__init__()
 
         # load parameters info
         self.max_length = config["max_output_len"]
-        self.share_vocab=config["share_vocab"]
+        self.share_vocab = config["share_vocab"]
 
         self.num_directions = 2 if config['bidirectional'] else 1
-        self.rnn_cell_type=config['rnn_cell_type']
-        self.bidirectional=config["bidirectional"]
-        self.attention=config["attention"]
-        self.embedding_size=config["embedding_size"]
+        self.rnn_cell_type = config['rnn_cell_type']
+        self.bidirectional = config["bidirectional"]
+        self.attention = config["attention"]
+        self.embedding_size = config["embedding_size"]
         self.latent_size = config['latent_size']
         self.num_encoder_layers = config['num_encoder_layers']
         self.num_decoder_layers = config['num_decoder_layers']
-        self.hidden_size=config["hidden_size"]
-        self.teacher_force_ratio=config['teacher_force_ratio']
-        self.dropout_ratio=config["dropout_ratio"]
+        self.hidden_size = config["hidden_size"]
+        self.teacher_force_ratio = config['teacher_force_ratio']
+        self.dropout_ratio = config["dropout_ratio"]
 
         self.vocab_size = len(dataset.in_idx2word)
         self.symbol_size = len(dataset.out_idx2symbol)
@@ -56,20 +69,18 @@ class RNNVAE(nn.Module):
         except:
             self.out_pad_token = None
         # define layers and loss
-        self.in_embedder = BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
+        self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
-            self.out_embedder=self.in_embedder
+            self.out_embedder = self.in_embedder
         else:
-            self.out_embedder=BaiscEmbedder(self.symbol_size,self.embedding_size,self.dropout_ratio)
+            self.out_embedder = BaiscEmbedder(self.symbol_size, self.embedding_size, self.dropout_ratio)
 
-        self.encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_encoder_layers, self.rnn_cell_type,
-                                       self.dropout_ratio, self.bidirectional)
+        self.encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_encoder_layers, self.rnn_cell_type, self.dropout_ratio, self.bidirectional)
         if self.attention:
             self.decoder=AttentionalRNNDecoder(self.embedding_size+self.latent_size,self.hidden_size,self.hidden_size,\
                                                 self.num_decoder_layers,self.rnn_cell_type,self.dropout_ratio)
         else:
-            self.decoder = BasicRNNDecoder(self.embedding_size+self.latent_size, self.hidden_size, self.num_decoder_layers, self.rnn_cell_type,
-                                       self.dropout_ratio)
+            self.decoder = BasicRNNDecoder(self.embedding_size + self.latent_size, self.hidden_size, self.num_decoder_layers, self.rnn_cell_type, self.dropout_ratio)
 
         self.dropout = nn.Dropout(self.dropout_ratio)
         self.out = nn.Linear(self.hidden_size, self.symbol_size)
@@ -89,9 +100,9 @@ class RNNVAE(nn.Module):
         pad = self.out_pad_token
         self.loss = NLLLoss(weight, pad)
 
-    def forward(self, seq,seq_length,target=None):
+    def forward(self, seq, seq_length, target=None):
         batch_size = seq.size(0)
-        device=seq.device
+        device = seq.device
 
         input_emb = self.in_embedder(seq)
         encoder_outputs, hidden_states = self.encoder(input_emb, seq_length)
@@ -131,22 +142,30 @@ class RNNVAE(nn.Module):
         #     decoder_hidden = (h_0, c_0)
         # else:
         #     decoder_hidden = hidden.unsqueeze(0).expand(self.num_decoder_layers, -1, -1).contiguous()
-        
-        decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
-        if target!=None:
-            token_logits=self.generate_t(encoder_outputs,decoder_inputs,hidden_states,z)
+
+        decoder_inputs = self.init_decoder_inputs(target, device, batch_size)
+        if target != None:
+            token_logits = self.generate_t(encoder_outputs, decoder_inputs, hidden_states, z)
             return token_logits
         else:
-            all_outputs=self.generate_without_t(encoder_outputs,decoder_inputs,hidden_states,z)
+            all_outputs = self.generate_without_t(encoder_outputs, decoder_inputs, hidden_states, z)
             return all_outputs
-    
-    def calculate_loss(self,batch_data):
+
+    def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
         target = batch_data['equation']
 
         batch_size = seq.size(0)
-        device=seq.device
+        device = seq.device
 
         input_emb = self.in_embedder(seq)
         encoder_outputs, hidden_states = self.encoder(input_emb, seq_length)
@@ -178,10 +197,10 @@ class RNNVAE(nn.Module):
                 hidden_states = (hidden_states[0][::2].contiguous(), hidden_states[1][::2].contiguous())
             else:
                 hidden_states = hidden_states[::2].contiguous()
-        
-        decoder_inputs=self.init_decoder_inputs(target,device,batch_size)
 
-        token_logits=self.generate_t(encoder_outputs,decoder_inputs,hidden_states,z)
+        decoder_inputs = self.init_decoder_inputs(target, device, batch_size)
+
+        token_logits = self.generate_t(encoder_outputs, decoder_inputs, hidden_states, z)
         if self.share_vocab:
             target = self.convert_in_idx_2_out_idx(target)
         self.loss.reset()
@@ -189,14 +208,22 @@ class RNNVAE(nn.Module):
         self.loss.backward()
         return self.loss.get_loss()
 
-    def model_test(self,batch_data):
+    def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         seq = batch_data['question']
         seq_length = batch_data['ques len']
         target = batch_data['equation']
         num_list = batch_data['num list']
 
         batch_size = seq.size(0)
-        device=seq.device
+        device = seq.device
 
         input_emb = self.in_embedder(seq)
         encoder_outputs, hidden_states = self.encoder(input_emb, seq_length)
@@ -228,78 +255,78 @@ class RNNVAE(nn.Module):
                 hidden_states = (hidden_states[0][::2].contiguous(), hidden_states[1][::2].contiguous())
             else:
                 hidden_states = hidden_states[::2].contiguous()
-        
-        decoder_inputs=self.init_decoder_inputs(None,device,batch_size)
 
-        all_outputs=self.generate_without_t(encoder_outputs,decoder_inputs,hidden_states,z)
+        decoder_inputs = self.init_decoder_inputs(None, device, batch_size)
+
+        all_outputs = self.generate_without_t(encoder_outputs, decoder_inputs, hidden_states, z)
         if self.share_vocab:
             target = self.convert_in_idx_2_out_idx(target)
         all_outputs = self.convert_idx2symbol(all_outputs, num_list)
         targets = self.convert_idx2symbol(target, num_list)
         return all_outputs, targets
 
-    def generate_t(self,encoder_outputs,decoder_inputs,decoder_hidden,z):
-        with_t=random.random()
-        if with_t<self.teacher_force_ratio:
-            decoder_inputs=torch.cat((decoder_inputs,z.unsqueeze(1).repeat(1,decoder_inputs.size(1),1)),dim=2)
-            decoder_output, hidden_states = self.decoder(input_embeddings=decoder_inputs, hidden_states=decoder_hidden,encoder_outputs=encoder_outputs)
+    def generate_t(self, encoder_outputs, decoder_inputs, decoder_hidden, z):
+        with_t = random.random()
+        if with_t < self.teacher_force_ratio:
+            decoder_inputs = torch.cat((decoder_inputs, z.unsqueeze(1).repeat(1, decoder_inputs.size(1), 1)), dim=2)
+            decoder_output, hidden_states = self.decoder(input_embeddings=decoder_inputs, hidden_states=decoder_hidden, encoder_outputs=encoder_outputs)
             token_logits = self.out(decoder_output)
-            token_logits=token_logits.view(-1, token_logits.size(-1))
-            token_logits=torch.nn.functional.log_softmax(token_logits,dim=1)
+            token_logits = token_logits.view(-1, token_logits.size(-1))
+            token_logits = torch.nn.functional.log_softmax(token_logits, dim=1)
         else:
-            seq_len=decoder_inputs.size(1)
-            decoder_input = decoder_inputs[:,0,:].unsqueeze(1)
-            decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
-            token_logits=[]
+            seq_len = decoder_inputs.size(1)
+            decoder_input = decoder_inputs[:, 0, :].unsqueeze(1)
+            decoder_input = torch.cat((decoder_input, z.unsqueeze(1).repeat(1, decoder_input.size(1), 1)), dim=2)
+            token_logits = []
             for idx in range(seq_len):
-                decoder_output, decoder_hidden = self.decoder(decoder_input,decoder_hidden,encoder_outputs)
+                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 #step_output = decoder_output.squeeze(1)
                 decoder_output = decoder_output.squeeze(1)
                 token_logit = self.out(decoder_output)
-                predict=torch.nn.functional.log_softmax(token_logit,dim=1)
+                predict = torch.nn.functional.log_softmax(token_logit, dim=1)
                 #output=topk_sampling(predict)
-                output=predict.topk(1,dim=1)[1]
+                output = predict.topk(1, dim=1)[1]
                 token_logits.append(predict)
 
                 if self.share_vocab:
-                    output=self.convert_out_idx_2_in_idx(output)
-                    decoder_input=self.out_embedder(output)
+                    output = self.convert_out_idx_2_in_idx(output)
+                    decoder_input = self.out_embedder(output)
                 else:
-                    decoder_input=self.out_embedder(output)
-                decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
-            token_logits=torch.stack(token_logits,dim=1)
-            token_logits=token_logits.view(-1,token_logits.size(-1))
+                    decoder_input = self.out_embedder(output)
+                decoder_input = torch.cat((decoder_input, z.unsqueeze(1).repeat(1, decoder_input.size(1), 1)), dim=2)
+            token_logits = torch.stack(token_logits, dim=1)
+            token_logits = token_logits.view(-1, token_logits.size(-1))
         return token_logits
-    
-    def generate_without_t(self,encoder_outputs,decoder_input,decoder_hidden,z):
-        all_outputs=[]
+
+    def generate_without_t(self, encoder_outputs, decoder_input, decoder_hidden, z):
+        all_outputs = []
         for _ in range(self.max_length):
-            decoder_input=torch.cat((decoder_input,z.unsqueeze(1).repeat(1,decoder_input.size(1),1)),dim=2)
-            decoder_output, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden,encoder_outputs=encoder_outputs)
+            decoder_input = torch.cat((decoder_input, z.unsqueeze(1).repeat(1, decoder_input.size(1), 1)), dim=2)
+            decoder_output, decoder_hidden = self.decoder(input_embeddings=decoder_input, hidden_states=decoder_hidden, encoder_outputs=encoder_outputs)
             decoder_output = decoder_output.squeeze(1)
             token_logits = self.out(decoder_output)
-            predict=torch.nn.functional.log_softmax(token_logits,dim=1)
+            predict = torch.nn.functional.log_softmax(token_logits, dim=1)
             #output = topk_sampling(predict)
-            output=predict.topk(1,dim=1)[1]
-            
+            output = predict.topk(1, dim=1)[1]
+
             all_outputs.append(output)
             if self.share_vocab:
-                output=self.convert_out_idx_2_in_idx(output)
-                decoder_input=self.out_embedder(output)
+                output = self.convert_out_idx_2_in_idx(output)
+                decoder_input = self.out_embedder(output)
             else:
-                decoder_input=self.out_embedder(output)
-        all_outputs=torch.cat(all_outputs,dim=1)
+                decoder_input = self.out_embedder(output)
+        all_outputs = torch.cat(all_outputs, dim=1)
         return all_outputs
-    
-    def init_decoder_inputs(self,target,device,batch_size):
-        pad_var = torch.LongTensor([self.sos_token_idx]*batch_size).to(device).view(batch_size,1)
+
+    def init_decoder_inputs(self, target, device, batch_size):
+        pad_var = torch.LongTensor([self.sos_token_idx] * batch_size).to(device).view(batch_size, 1)
         if target != None:
-            decoder_inputs=torch.cat((pad_var,target),dim=1)[:,:-1]
+            decoder_inputs = torch.cat((pad_var, target), dim=1)[:, :-1]
         else:
-            decoder_inputs=pad_var
-        decoder_inputs=self.out_embedder(decoder_inputs)
+            decoder_inputs = pad_var
+        decoder_inputs = self.out_embedder(decoder_inputs)
         return decoder_inputs
-    
+
     def convert_out_idx_2_in_idx(self, output):
         device = output.device
 
@@ -353,13 +380,12 @@ class RNNVAE(nn.Module):
             output_list.append(res)
         return output_list
 
+    def decode(self, output):
+        device = output.device
 
-    def decode(self,output):
-        device=output.device
-        
-        batch_size=output.size(0)
-        decoded_output=[]
+        batch_size = output.size(0)
+        decoded_output = []
         for idx in range(batch_size):
             decoded_output.append(self.in_word2idx[self.out_idx2symbol[output[idx]]])
-        decoded_output=torch.tensor(decoded_output).to(device).view(batch_size,-1)
+        decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
         return output

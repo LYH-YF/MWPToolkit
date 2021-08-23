@@ -1,8 +1,14 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 05:00:56
+# @File: tsn.py
+
 import copy
 import math
 import random
 import itertools
 from logging import getLogger
+
 import torch
 import stanza
 import numpy as np
@@ -14,13 +20,18 @@ from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import NodeGenerater, SubTreeMerger, TreeNode, TreeEmbedding
-from mwptoolkit.module.Layer.tree_layers import Prediction,GenerateNode,Merge
+from mwptoolkit.module.Layer.tree_layers import Prediction, GenerateNode, Merge
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
-from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss,masked_cross_entropy
+from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss, masked_cross_entropy
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
 from mwptoolkit.utils.utils import str2float, copy_list, clones
 
+
 class TSN(nn.Module):
+    """
+    Reference:
+        Zhang et al. "Teacher-Student Networks with Multiple Decoders for Solving Math Word Problem" in IJCAI 2020.
+    """
     def __init__(self, config, dataset):
         super(TSN, self).__init__()
         #parameter
@@ -36,9 +47,9 @@ class TSN(nn.Module):
         self.rnn_cell_type = config["rnn_cell_type"]
         self.alpha = 0.15
         #self.max_input_len=config['max_len']
-        self.max_encoder_mask_len=config['max_encoder_mask_len']
+        self.max_encoder_mask_len = config['max_encoder_mask_len']
         if self.max_encoder_mask_len == None:
-            self.max_encoder_mask_len=128
+            self.max_encoder_mask_len = 128
 
         self.vocab_size = len(dataset.in_idx2word)
         self.out_symbol2idx = dataset.out_symbol2idx
@@ -65,14 +76,14 @@ class TSN(nn.Module):
             self.out_pad_token = None
 
         self.t_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio,batch_first=False)
+        self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio, batch_first=False)
         #self.t_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size,self.num_layers,self.dropout_ratio)
         self.t_decoder = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.t_node_generater = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
         self.t_merge = Merge(self.hidden_size, self.embedding_size, self.dropout_ratio)
 
         self.s_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.s_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio,batch_first=False)
+        self.s_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio, batch_first=False)
         #self.s_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size, self.num_layers,self.dropout_ratio)
         self.s_decoder_1 = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.s_node_generater_1 = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
@@ -85,7 +96,15 @@ class TSN(nn.Module):
         self.loss = MaskedCrossEntropyLoss()
         self.soft_target = {}
 
-    def teacher_calculate_loss(self,batch_data):
+    def teacher_calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation of teacher net.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -100,15 +119,23 @@ class TSN(nn.Module):
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
-        unk=self.unk_token
-        
+        unk = self.unk_token
+
         #graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
-        
+
         loss = self.train_tree_teacher(seq,seq_length,target,target_length,\
             nums_stack,num_size,generate_nums,num_pos,unk,num_start)
         return loss
 
     def student_calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation of student net.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -123,8 +150,8 @@ class TSN(nn.Module):
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
-        unk=self.unk_token
-        
+        unk = self.unk_token
+
         #graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
         soft_target = self.get_soft_target(batch_id)
         soft_target = torch.cat(soft_target, dim=0).to(self.device)
@@ -134,7 +161,15 @@ class TSN(nn.Module):
                 unk,num_start,num_pos,soft_target,self.encoder_mask)
         return loss
 
-    def teacher_test(self,batch_data):
+    def teacher_test(self, batch_data):
+        """Teacher net test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -150,13 +185,21 @@ class TSN(nn.Module):
         num_start = self.num_start
         # sequence mask for attention
         #graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
-        all_node_output = self.evaluate_tree_teacher(seq,seq_length,generate_nums,num_pos,num_start,self.beam_size,self.max_out_len)
-        
+        all_node_output = self.evaluate_tree_teacher(seq, seq_length, generate_nums, num_pos, num_start, self.beam_size, self.max_out_len)
+
         all_output = self.convert_idx2symbol(all_node_output, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
-        return all_output,targets
+        return all_output, targets
 
-    def student_test(self,batch_data):
+    def student_test(self, batch_data):
+        """Student net test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,float,list,float,list): predicted equation1, score1, predicted equation2, score2, target equation.
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -172,19 +215,18 @@ class TSN(nn.Module):
         num_start = self.num_start
         # sequence mask for attention
         #graphs = self.build_graph(seq_length, num_list, num_pos, group_nums)
-        all_node_output1,score1,all_node_output2,score2 = self.evaluate_tree(seq,seq_length,generate_nums,num_pos,num_start,self.beam_size,self.max_out_len)
-        
+        all_node_output1, score1, all_node_output2, score2 = self.evaluate_tree(seq, seq_length, generate_nums, num_pos, num_start, self.beam_size, self.max_out_len)
+
         all_output1 = self.convert_idx2symbol(all_node_output1, num_list[0], copy_list(nums_stack[0]))
         all_output2 = self.convert_idx2symbol(all_node_output2, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
 
         return all_output1, score1, all_output2, score2, targets
 
-    def model_test(self,batch_data):
+    def model_test(self, batch_data):
         return
-    
-    def train_tree_teacher(self,input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums,
-               num_pos,unk,num_start, english=False):
+
+    def train_tree_teacher(self, input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums, num_pos, unk, num_start, english=False):
         # sequence mask for attention
         seq_mask = []
         max_len = max(input_length)
@@ -217,7 +259,7 @@ class TSN(nn.Module):
         seq_emb = self.t_embedder(input_var)
         pade_outputs, _ = self.t_encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:] 
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
@@ -228,14 +270,13 @@ class TSN(nn.Module):
 
         copy_num_len = [len(_) for _ in num_pos]
         num_size = max(copy_num_len)
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size, self.hidden_size)
 
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(
-                node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask,
+                                                                                                         num_mask)
 
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
@@ -247,8 +288,7 @@ class TSN(nn.Module):
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.t_node_generater(current_embeddings, generate_input, current_context)
             left_childs = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
-                                                node_stacks, target[t].tolist(), embeddings_stacks):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -282,7 +322,7 @@ class TSN(nn.Module):
             target_length = torch.LongTensor(target_length).cuda()
         else:
             target_length = torch.LongTensor(target_length)
-            
+
         # op_target = target < num_start
         # loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
         loss = masked_cross_entropy(all_node_outputs, target, target_length)
@@ -295,13 +335,11 @@ class TSN(nn.Module):
 
         return loss.item()  # , loss_0.item(), loss_1.item()
 
-
-    def evaluate_tree_teacher(self,input_batch, input_length, generate_nums, num_pos,
-                    num_start,beam_size=5, max_length=30, english=False):
+    def evaluate_tree_teacher(self, input_batch, input_length, generate_nums, num_pos, num_start, beam_size=5, max_length=30, english=False):
 
         seq_mask = torch.BoolTensor(1, input_length).fill_(0)
         # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
-        input_var = input_batch.transpose(0,1)
+        input_var = input_batch.transpose(0, 1)
 
         num_mask = torch.BoolTensor(1, len(num_pos[0]) + len(generate_nums)).fill_(0)
 
@@ -319,14 +357,13 @@ class TSN(nn.Module):
         seq_emb = self.t_embedder(input_var)
         pade_outputs, _ = self.t_encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:] 
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
 
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
         num_size = len(num_pos[0])
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size, self.hidden_size)
         # B x P x N
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
@@ -343,11 +380,9 @@ class TSN(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(
-                    b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
-                    seq_mask, num_mask)
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                                                                                                             seq_mask, num_mask)
 
-                
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
                 # out_score = p_leaf * out_score
@@ -387,8 +422,7 @@ class TSN(nn.Module):
                         current_left_childs.append(current_embeddings_stacks[0][-1].embedding)
                     else:
                         current_left_childs.append(None)
-                    current_beams.append(TreeBeam(b.score+float(tv), current_node_stack, current_embeddings_stacks,
-                                                current_left_childs, current_out))
+                    current_beams.append(TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks, current_left_childs, current_out))
             beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
             beams = beams[:beam_size]
             flag = True
@@ -400,10 +434,8 @@ class TSN(nn.Module):
 
         return beams[0].out
 
+    def train_tree(self, input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums, unk, num_start, num_pos, soft_target, encoder_mask, english=False):
 
-    def train_tree(self,input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums,
-               unk,num_start, num_pos, soft_target,encoder_mask, english=False):
-    
         # -------------------[Encode Stage]--------------------------------
         # sequence mask for attention
         seq_mask = []
@@ -439,8 +471,8 @@ class TSN(nn.Module):
         seq_emb = self.s_embedder(input_var)
         pade_outputs, _ = self.s_encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:] 
-        
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
+
         # -------------------[#1 Decoder Stage]--------------------------------
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
@@ -452,14 +484,13 @@ class TSN(nn.Module):
 
         copy_num_len = [len(_) for _ in num_pos]
         num_size = max(copy_num_len)
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size, self.hidden_size)
 
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(
-                node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                                                                                                           seq_mask, num_mask)
 
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
@@ -471,8 +502,7 @@ class TSN(nn.Module):
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.s_node_generater_1(current_embeddings, generate_input, current_context)
             left_childs = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
-                                                node_stacks, target[t].tolist(), embeddings_stacks):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -498,10 +528,10 @@ class TSN(nn.Module):
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         #all_node_outputs_1 = copy.copy(all_node_outputs)
         all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
-        
+
         # -------------------[#2 Decoder Stage]--------------------------------
-        encoder_outputs_1_mask = encoder_mask[:encoder_outputs.size(1),:max(input_length),:].transpose(1,0).float()
-        encoder_outputs_1 = encoder_outputs*encoder_outputs_1_mask.float()
+        encoder_outputs_1_mask = encoder_mask[:encoder_outputs.size(1), :max(input_length), :].transpose(1, 0).float()
+        encoder_outputs_1 = encoder_outputs * encoder_outputs_1_mask.float()
         # Prepare input and output variables
         problem_output_1 = problem_output
         node_stacks_1 = [[TreeNode(_)] for _ in problem_output_1.split(1, dim=0)]
@@ -511,14 +541,13 @@ class TSN(nn.Module):
 
         copy_num_len_1 = [len(_) for _ in num_pos]
         num_size_1 = max(copy_num_len_1)
-        all_nums_encoder_outputs_1 = self.get_all_number_encoder_outputs(encoder_outputs_1, num_pos, batch_size, num_size_1,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs_1 = self.get_all_number_encoder_outputs(encoder_outputs_1, num_pos, batch_size, num_size_1, self.hidden_size)
 
         embeddings_stacks_1 = [[] for _ in range(batch_size)]
         left_childs_1 = [None for _ in range(batch_size)]
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(
-                node_stacks_1, left_childs_1, encoder_outputs_1, all_nums_encoder_outputs_1, padding_hidden, seq_mask, num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(node_stacks_1, left_childs_1, encoder_outputs_1, all_nums_encoder_outputs_1, padding_hidden,
+                                                                                                           seq_mask, num_mask)
 
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
@@ -530,8 +559,7 @@ class TSN(nn.Module):
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.s_node_generater_2(current_embeddings, generate_input, current_context)
             left_childs_1 = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
-                                                node_stacks_1, target_1[t].tolist(), embeddings_stacks_1):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks_1, target_1[t].tolist(), embeddings_stacks_1):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -557,10 +585,9 @@ class TSN(nn.Module):
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         #all_node_outputs_1 = copy.copy(all_node_outputs)
         all_node_outputs_1 = torch.stack(all_node_outputs_1, dim=1)  # B x S x N
-        
+
         # -------------------[Loss Computation Stage]--------------------------------
-        
-        
+
         target = target.transpose(0, 1).contiguous()
         target_1 = target_1.transpose(0, 1).contiguous()
         if self.USE_CUDA:
@@ -578,21 +605,21 @@ class TSN(nn.Module):
         # op_target = target < num_start
         # loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
         loss1 = masked_cross_entropy(all_node_outputs, target, target_length)
-        loss2 = soft_target_loss(all_node_outputs,sf_target,target_length)
+        loss2 = soft_target_loss(all_node_outputs, sf_target, target_length)
         loss3 = masked_cross_entropy(all_node_outputs_1, target_1, target_length)
-        loss4 = soft_target_loss(all_node_outputs_1,sf_target,target_length)
-        cos_loss = cosine_loss(all_node_outputs,all_node_outputs_1,target_length)
-        
-        loss = 0.85*loss1 + 0.15*loss2 + 0.85*loss3 + 0.15*loss4 + 0.1*cos_loss
+        loss4 = soft_target_loss(all_node_outputs_1, sf_target, target_length)
+        cos_loss = cosine_loss(all_node_outputs, all_node_outputs_1, target_length)
+
+        loss = 0.85 * loss1 + 0.15 * loss2 + 0.85 * loss3 + 0.15 * loss4 + 0.1 * cos_loss
         loss.backward()
 
-        return loss.item() # , loss_0.item(), loss_1.item()
+        return loss.item()  # , loss_0.item(), loss_1.item()
 
-    def evaluate_tree(self,input_batch, input_length, generate_nums, num_pos,num_start, beam_size=5, max_length=30, english=False):
-        
+    def evaluate_tree(self, input_batch, input_length, generate_nums, num_pos, num_start, beam_size=5, max_length=30, english=False):
+
         seq_mask = torch.BoolTensor(1, input_length).fill_(0)
         # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
-        input_var = input_batch.transpose(0,1)
+        input_var = input_batch.transpose(0, 1)
 
         num_mask = torch.BoolTensor(1, len(num_pos[0]) + len(generate_nums)).fill_(0)
 
@@ -610,14 +637,13 @@ class TSN(nn.Module):
         seq_emb = self.s_embedder(input_var)
         pade_outputs, _ = self.s_encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
-        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:] 
+        encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         # ---------------------[#1 Decoder]--------------------------------------
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
         num_size = len(num_pos[0])
-        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size, self.hidden_size)
         # B x P x N
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
@@ -634,11 +660,9 @@ class TSN(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(
-                    b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
-                    seq_mask, num_mask)
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_1(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                                                                                                               seq_mask, num_mask)
 
-                
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
                 # out_score = p_leaf * out_score
@@ -678,8 +702,7 @@ class TSN(nn.Module):
                         current_left_childs.append(current_embeddings_stacks[0][-1].embedding)
                     else:
                         current_left_childs.append(None)
-                    current_beams.append(TreeBeam(b.score+float(tv), current_node_stack, current_embeddings_stacks,
-                                                current_left_childs, current_out))
+                    current_beams.append(TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks, current_left_childs, current_out))
             beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
             beams = beams[:beam_size]
             flag = True
@@ -694,8 +717,7 @@ class TSN(nn.Module):
         node_stacks_1 = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
         num_size_1 = len(num_pos[0])
-        all_nums_encoder_outputs_1 = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size_1,
-                                                                self.hidden_size)
+        all_nums_encoder_outputs_1 = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, batch_size, num_size_1, self.hidden_size)
         # B x P x N
         embeddings_stacks_1 = [[] for _ in range(batch_size)]
         left_childs_1 = [None for _ in range(batch_size)]
@@ -712,9 +734,8 @@ class TSN(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs_1 = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(
-                    b.node_stack, left_childs_1, encoder_outputs, all_nums_encoder_outputs_1, padding_hidden,
-                    seq_mask, num_mask)
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.s_decoder_2(b.node_stack, left_childs_1, encoder_outputs, all_nums_encoder_outputs_1, padding_hidden,
+                                                                                                               seq_mask, num_mask)
 
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
@@ -755,8 +776,7 @@ class TSN(nn.Module):
                         current_left_childs.append(current_embeddings_stacks[0][-1].embedding)
                     else:
                         current_left_childs.append(None)
-                    current_beams.append(TreeBeam(b.score+float(tv), current_node_stack, current_embeddings_stacks,
-                                                current_left_childs, current_out))
+                    current_beams.append(TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks, current_left_childs, current_out))
             beams_1 = sorted(current_beams, key=lambda x: x.score, reverse=True)
             beams_1 = beams_1[:beam_size]
             flag = True
@@ -765,9 +785,8 @@ class TSN(nn.Module):
                     flag = False
             if flag:
                 break
-        
-        return beams[0].out, beams[0].score, beams_1[0].out, beams_1[0].score
 
+        return beams[0].out, beams[0].score, beams_1[0].out, beams_1[0].score
 
     def build_graph(self, seq_length, num_list, num_pos, group_nums):
         max_len = seq_length.max()
@@ -821,9 +840,15 @@ class TSN(nn.Module):
     def init_encoder_mask(self, batch_size):
         encoder_mask = torch.FloatTensor(batch_size, self.max_encoder_mask_len, self.hidden_size).uniform_() < 0.99
         self.encoder_mask = encoder_mask.float().to(self.device)
-    
+
     @torch.no_grad()
     def init_soft_target(self, batch_data):
+        """Build soft target
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        """
         seq = batch_data["question"]
         seq_length = batch_data["ques len"]
         nums_stack = batch_data["num stack"]
@@ -855,8 +880,8 @@ class TSN(nn.Module):
 
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         batch_size = len(seq_length)
-        seq = seq.transpose(0,1)
-        target = target.transpose(0,1)
+        seq = seq.transpose(0, 1)
+        target = target.transpose(0, 1)
         seq_emb = self.t_embedder(seq)
         pade_outputs, _ = self.t_encoder(seq_emb, seq_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
@@ -888,8 +913,8 @@ class TSN(nn.Module):
         left_childs = [None for _ in range(batch_size)]  #
         embeddings_stacks = [[] for _ in range(batch_size)]  #
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(
-            node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.t_decoder(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask,
+                                                                                                         num_mask)
 
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
@@ -901,8 +926,7 @@ class TSN(nn.Module):
             left_child, right_child, node_label = self.t_node_generater(current_embeddings, generate_input, current_context)
 
             left_childs = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
-                                                node_stacks, target[t].tolist(), embeddings_stacks):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -926,14 +950,14 @@ class TSN(nn.Module):
                     left_childs.append(None)
 
         return all_node_outputs, target
-    
+
     def get_soft_target(self, batch_id):
         soft_tsrget = []
         for id_ in batch_id:
             soft_tsrget.append(self.soft_target[id_])
         return soft_tsrget
-    
-    def get_all_number_encoder_outputs(self,encoder_outputs, num_pos, batch_size, num_size, hidden_size):
+
+    def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, batch_size, num_size, hidden_size):
         indices = list()
         sen_len = encoder_outputs.size(0)
         masked_index = []
@@ -957,7 +981,7 @@ class TSN(nn.Module):
         all_num = all_num.view(batch_size, num_size, hidden_size)
         return all_num.masked_fill_(masked_index, 0.0)
 
-    def generate_tree_input(self,target, decoder_output, nums_stack_batch, num_start, unk):
+    def generate_tree_input(self, target, decoder_output, nums_stack_batch, num_start, unk):
         # when the decoder input is copied num but the num has two pos, chose the max
         target_input = copy.deepcopy(target)
         for i in range(len(target)):
@@ -971,7 +995,6 @@ class TSN(nn.Module):
             if target_input[i] >= num_start:
                 target_input[i] = 0
         return torch.LongTensor(target), torch.LongTensor(target_input)
-
 
     def convert_idx2symbol(self, output, num_list, num_stack):
         #batch_size=output.size(0)
@@ -1016,6 +1039,7 @@ def soft_target_loss(logits, soft_target, length):
     loss_total = loss_total.sum() / length.float().sum()
     return loss_total
 
+
 def soft_cross_entropy_loss(predict_score, label_score):
     log_softmax = torch.nn.LogSoftmax(dim=1)
     softmax = torch.nn.Softmax(dim=1)
@@ -1026,6 +1050,7 @@ def soft_cross_entropy_loss(predict_score, label_score):
     loss_elem = -label_prob * predict_prob_log
     loss = loss_elem.sum(dim=1)
     return loss
+
 
 def cosine_loss(logits, logits_1, length):
     loss_total = []
@@ -1039,8 +1064,7 @@ def cosine_loss(logits, logits_1, length):
     loss_total = loss_total.sum() / length.float().sum()
     return loss_total
 
+
 def cosine_sim(logits, logits_1):
     device = logits.device
     return torch.ones(logits.size(0)).to(device) + torch.cosine_similarity(logits, logits_1, dim=1).to(device)
-
-

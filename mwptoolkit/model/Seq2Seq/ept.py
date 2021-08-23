@@ -1,6 +1,11 @@
-import random
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:35:42
+# @File: ept.py
+
 import torch
 from torch import nn
+from transformers import AutoModel
 
 from mwptoolkit.module.Encoder.transformer_encoder import TransformerEncoder
 from mwptoolkit.module.Decoder.transformer_decoder import TransformerDecoder
@@ -14,8 +19,6 @@ from mwptoolkit.module.Strategy.greedy import greedy_search
 from mwptoolkit.loss.smoothed_cross_entropy_loss import SmoothCrossEntropyLoss
 from mwptoolkit.utils.enum_type import EPT as EPT_CON
 
-from transformers import AutoModel
-
 
 def Submodule_types(decoder_type):
     if "vall" in decoder_type:
@@ -27,6 +30,10 @@ def Submodule_types(decoder_type):
 
 
 class EPT(nn.Module):
+    """
+    Reference:
+        Kim et al. "Point to the Expression: Solving Algebraic Word Problems using the Expression-Pointer Transformer Model" in EMNLP 2020.
+    """
     def __init__(self, config, dataset):
         super().__init__()
         self.max_output_len = config["max_output_len"]
@@ -45,7 +52,7 @@ class EPT(nn.Module):
         if 'vall' in config["decoder"]:
             self.out_symbol2idx = dataset.out_symbol2idx
             self.out_idx2symbol = dataset.out_idx2symbol
-            
+
             #self.out_pad_idx = self.in_pad_idx
             #self.out_sos_idx = config["in_word2idx"]["<SOS>"]
             self.decoder = VanillaOpTransformer(config, self.out_symbol2idx, self.out_idx2symbol)
@@ -54,14 +61,13 @@ class EPT(nn.Module):
             self.out_idx2opsym = dataset.out_idx2opsymbol
             self.out_consym2idx = dataset.out_consym2idx
             self.out_idx2consym = dataset.out_idx2consymbol
-            
+
             if 'gen' in config["decoder"]:
                 self.decoder = ExpressionTransformer(config, self.out_opsym2idx, self.out_idx2opsym, self.out_consym2idx, self.out_idx2consym)
             elif 'ptr' in config["decoder"]:
                 self.decoder = ExpressionPointerTransformer(config, self.out_opsym2idx, self.out_idx2opsym, self.out_consym2idx, self.out_idx2consym)
             #self.out_pad_idx = self.in_pad_idx
             #self.out_sos_idx = config["in_word2idx"]["<SOS>"]
-
 
         self.encoder = AutoModel.from_pretrained(config['pretrained_model_path'])
         #self.encoder = TransformerEncoder(config["embedding_size"], config["ffn_size"], config["num_encoder_layers"], \
@@ -74,22 +80,30 @@ class EPT(nn.Module):
         #self.out = nn.Linear(config["embedding_size"], config["symbol_size"])
         self.loss = SmoothCrossEntropyLoss()
 
-    def forward(self, src, src_mask, num_pos, num_size,equ_len=None, target=None):
-        encoder_outputs = self.encoder(input_ids = src, attention_mask = src_mask.float())
+    def forward(self, src, src_mask, num_pos, num_size, equ_len=None, target=None):
+        encoder_outputs = self.encoder(input_ids=src, attention_mask=src_mask.float())
         encoder_output = encoder_outputs[0]
         num_size = max(num_size)
         if target != None:
             token_logits, targets = self.generate_t(target, encoder_output, num_pos, num_size, src_mask)
             return token_logits, targets
         else:
-            all_outputs,_ = self.generate_without_t(encoder_output, num_pos, num_size, src_mask, equ_len)
-            return all_outputs,_
+            all_outputs, _ = self.generate_without_t(encoder_output, num_pos, num_size, src_mask, equ_len)
+            return all_outputs, _
 
     def calculate_loss(self, batch):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         src = batch["question"]
         src_mask = batch["ques mask"]
         num_pos = batch["num pos"]
-        encoder_outputs = self.encoder(input_ids = src, attention_mask = (~src_mask).float())
+        encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())
         encoder_output = encoder_outputs[0]
         num_size = max(batch["num size"])
         max_numbers = batch["max numbers"]
@@ -97,15 +111,15 @@ class EPT(nn.Module):
             text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=max_numbers)
         else:
             text_num = text_numpad = None
-        target =  batch["equation"]
-        token_logits, targets = self.decoder(text = encoder_output,text_num = text_num, text_numpad = text_numpad,text_pad = src_mask, equation = target)
-        
+        target = batch["equation"]
+        token_logits, targets = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, equation=target)
+
         batch_size = target.size(0)
         self.loss.reset()
-       
+
         for key, result in targets.items():
-            
-            predicted = token_logits[key].flatten(0,-2)
+
+            predicted = token_logits[key].flatten(0, -2)
             result = self.shift_target(result)
             target = result.flatten()
 
@@ -113,13 +127,21 @@ class EPT(nn.Module):
         self.loss.backward()
         batch_loss = self.loss.get_loss()
         return batch_loss
-        
+
     def model_test(self, batch):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         src = batch["question"]
         src_mask = batch["ques mask"]
         num_pos = batch["num pos"]
         equ_len = batch["equation"].size(1)
-        encoder_outputs = self.encoder(input_ids = src, attention_mask = (~src_mask).float())
+        encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())
         encoder_output = encoder_outputs[0]
 
         max_numbers = max(batch["num size"])
@@ -127,16 +149,16 @@ class EPT(nn.Module):
             text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=max_numbers)
         else:
             text_num = text_numpad = None
-        all_outputs,_ = self.decoder(text = encoder_output,text_num = text_num, text_numpad = text_numpad,text_pad = src_mask,beam=1, max_len=equ_len+1)
+        all_outputs, _ = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, beam=1, max_len=equ_len + 1)
 
         shape = list(all_outputs.shape)
         seq_len = shape[2]
-        if seq_len < equ_len+1:
-            shape[2] = equ_len+1
+        if seq_len < equ_len + 1:
+            shape[2] = equ_len + 1
             tensor = torch.full(shape, fill_value=-1, dtype=torch.long)
             tensor[:, :, :seq_len] = all_outputs.cpu()
             all_outputs = tensor
-        
+
         all_outputs = self.convert_idx2symbol(all_outputs.squeeze(1), batch["num list"])
         targets = self.convert_idx2symbol(batch["equation"], batch["num list"])
         return all_outputs, targets
@@ -146,25 +168,24 @@ class EPT(nn.Module):
             text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=num_size)
         else:
             text_num = text_numpad = None
-        token_logits, targets = self.decoder(text = encoder_output,text_num = text_num, text_numpad = text_numpad,text_pad = src_mask, equation = target)
+        token_logits, targets = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, equation=target)
 
         return token_logits, targets
 
-    def generate_without_t(self, encoder_output, num_pos, num_size, src_mask, max_len=128, beam: int=1,  function_arities = None):
+    def generate_without_t(self, encoder_output, num_pos, num_size, src_mask, max_len=128, beam: int = 1, function_arities=None):
         if num_pos is not None:
             text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=num_size)
         else:
             text_num = text_numpad = None
-        all_outputs,_ = self.decoder(text = encoder_output,text_num = text_num, text_numpad = text_numpad,text_pad = src_mask,beam=1, max_len=max_len+1)
+        all_outputs, _ = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, beam=1, max_len=max_len + 1)
         shape = list(all_outputs.shape)
         seq_len = shape[2]
-        if seq_len < max_len+1:
-            shape[2] = max_len+1
+        if seq_len < max_len + 1:
+            shape[2] = max_len + 1
             tensor = torch.full(shape, fill_value=-1, dtype=torch.long)
             tensor[:, :, :seq_len] = all_outputs.cpu()
             all_outputs = tensor
-        return all_outputs,None
-
+        return all_outputs, None
 
     def decode(self, output):
         device = output.device
@@ -217,7 +238,7 @@ class EPT(nn.Module):
                     pad_mask[row, i] = False
 
         return gathered, pad_mask
-    
+
     def shift_target(self, target: torch.Tensor, fill_value=-1) -> torch.Tensor:
         """
         Shift matrix to build generation targets.
@@ -228,7 +249,7 @@ class EPT(nn.Module):
         :return: Tensor with shape [B, T], where (i, j)-entries are (i, j+1) entry of target tensor.
         """
         # Target does not require gradients.
-        
+
         with torch.no_grad():
             pad_at_end = torch.full((target.shape[0], 1), fill_value=fill_value, dtype=target.dtype, device=target.device)
             return torch.cat([target[:, 1:], pad_at_end], dim=-1).contiguous()
@@ -238,10 +259,10 @@ class EPT(nn.Module):
         '''batch_size=1'''
         output_list = []
         if "vall" in self.mode:
-            for id,single in enumerate(output):
-                output_list.append(self.out_expression_op(single,num_list[id]))
+            for id, single in enumerate(output):
+                output_list.append(self.out_expression_op(single, num_list[id]))
         else:
-            for id,single in enumerate(output):
+            for id, single in enumerate(output):
                 output_list.append(self.out_expression_expr(single, num_list[id]))
         return output_list
 
@@ -346,13 +367,12 @@ class EPT(nn.Module):
             if 'N_' in word:
                 replace_result.append(str(num_list[int(word[2:])]['value']))
             elif 'C_' in word:
-                replace_result.append(str(word[2:].replace('_','.')))
+                replace_result.append(str(word[2:].replace('_', '.')))
             else:
                 replace_result.append(word)
         if '=' in replace_result[:-1]:
             replace_result.append("<BRG>")
         return replace_result
-    
 
     def __str__(self) -> str:
         info = super().__str__()

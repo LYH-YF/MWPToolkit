@@ -1,8 +1,7 @@
 # -*- encoding: utf-8 -*-
 # @Author: Yihuai Lan
-# @Time: 2021/08/19 10:11:59
+# @Time: 2021/08/21 04:33:54
 # @File: multiencdec.py
-
 
 import copy
 import random
@@ -20,14 +19,18 @@ from mwptoolkit.module.Layer.tree_layers import NodeGenerater, SubTreeMerger, Tr
 from mwptoolkit.module.Layer.tree_layers import Prediction, GenerateNode, Merge
 from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
 from mwptoolkit.module.Strategy.beam_search import TreeBeam, Beam
-from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss,masked_cross_entropy
+from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss, masked_cross_entropy
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
 from mwptoolkit.utils.utils import copy_list
 
 
 class MultiEncDec(nn.Module):
+    """
+    Reference:
+        Shen et al. "Solving Math Word Problems with Multi-Encoders and Multi-Decoders" in COLING 2020.
+    """
     def __init__(self, config, dataset):
-        super(MultiEncDec,self).__init__()
+        super(MultiEncDec, self).__init__()
         self.device = config['device']
         self.USE_CUDA = True if self.device == torch.device('cuda') else False
         self.rnn_cell_type = config['rnn_cell_type']
@@ -86,29 +89,28 @@ class MultiEncDec(nn.Module):
             self.out_pad_token2 = None
         # Initialize models
         embedder = nn.Embedding(self.input1_size, self.embedding_size)
-        in_embedder = self._init_embedding_params(dataset.trainset,dataset.in_idx2word_1,config['embedding_size'],embedder)
-        
-        self.encoder = GraphBasedMultiEncoder(input1_size=self.input1_size, input2_size=self.input2_size, 
-                         embed_model=in_embedder, embedding1_size=self.embedding_size, embedding2_size=self.embedding_size // 4, 
-                         hidden_size=self.hidden_size, n_layers=self.n_layers, hop_size=self.hop_size)
+        in_embedder = self._init_embedding_params(dataset.trainset, dataset.in_idx2word_1, config['embedding_size'], embedder)
+
+        self.encoder = GraphBasedMultiEncoder(input1_size=self.input1_size,
+                                              input2_size=self.input2_size,
+                                              embed_model=in_embedder,
+                                              embedding1_size=self.embedding_size,
+                                              embedding2_size=self.embedding_size // 4,
+                                              hidden_size=self.hidden_size,
+                                              n_layers=self.n_layers,
+                                              hop_size=self.hop_size)
         self.numencoder = NumEncoder(node_dim=self.hidden_size, hop_size=self.hop_size)
-        self.predict = Prediction(hidden_size=self.hidden_size, op_nums=self.operator_nums,
-                            input_size=self.generate_nums)
+        self.predict = Prediction(hidden_size=self.hidden_size, op_nums=self.operator_nums, input_size=self.generate_nums)
         self.generate = GenerateNode(hidden_size=self.hidden_size, op_nums=self.operator_nums, embedding_size=self.embedding_size)
         self.merge = Merge(hidden_size=self.hidden_size, embedding_size=self.embedding_size)
-        self.decoder = TreeAttnDecoderRNN(self.hidden_size,
-                                self.embedding_size,
-                                self.output2_size,
-                                self.output2_size,
-                                self.n_layers,
-                                self.dropout_ratio)
+        self.decoder = TreeAttnDecoderRNN(self.hidden_size, self.embedding_size, self.output2_size, self.output2_size, self.n_layers, self.dropout_ratio)
 
         self.loss = MaskedCrossEntropyLoss()
 
-    def _init_embedding_params(self,train_data,vocab,embedding_size,embedder):
-        sentences=[]
+    def _init_embedding_params(self, train_data, vocab, embedding_size, embedder):
+        sentences = []
         for data in train_data:
-            sentence=[]
+            sentence = []
             for word in data['question']:
                 if word in vocab:
                     sentence.append(word)
@@ -120,16 +122,24 @@ class MultiEncDec(nn.Module):
         emb_vectors = []
         pad_idx = vocab.index(SpecialTokens.PAD_TOKEN)
         for idx in range(len(vocab)):
-            if idx!=pad_idx:
+            if idx != pad_idx:
                 emb_vectors.append(np.array(model.wv[vocab[idx]]))
             else:
                 emb_vectors.append(np.zeros((embedding_size)))
-        emb_vectors=np.array(emb_vectors)
+        emb_vectors = np.array(emb_vectors)
         embedder.weight.data.copy_(torch.from_numpy(emb_vectors))
 
         return embedder
-    
-    def calculate_loss(self,batch_data):
+
+    def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         input1_var = batch_data['input1']
         input2_var = batch_data['input2']
         input_length = batch_data['input1 len']
@@ -146,20 +156,49 @@ class MultiEncDec(nn.Module):
         equ_mask1 = batch_data['equ mask1']
         equ_mask2 = batch_data['equ mask2']
 
-        unk1=self.unk1
-        unk2=self.unk2
-        num_start1=self.num_start1
-        num_start2=self.num_start2
-        sos2=self.sos2
-        loss = self.train_double(
-                input1_var, input2_var, input_length, target1, target1_length, target2, target2_length,
-                num_stack_batch, num_size_batch, generate_list,
-                self.encoder, self.numencoder, self.predict, self.generate, self.merge, self.decoder,unk1,unk2,num_start1,num_start2,sos2
-                , num_pos_batch, num_order_batch, parse_graph, 
-                beam_size=5, use_teacher_forcing=0.83, english=False)
+        unk1 = self.unk1
+        unk2 = self.unk2
+        num_start1 = self.num_start1
+        num_start2 = self.num_start2
+        sos2 = self.sos2
+        loss = self.train_double(input1_var,
+                                 input2_var,
+                                 input_length,
+                                 target1,
+                                 target1_length,
+                                 target2,
+                                 target2_length,
+                                 num_stack_batch,
+                                 num_size_batch,
+                                 generate_list,
+                                 self.encoder,
+                                 self.numencoder,
+                                 self.predict,
+                                 self.generate,
+                                 self.merge,
+                                 self.decoder,
+                                 unk1,
+                                 unk2,
+                                 num_start1,
+                                 num_start2,
+                                 sos2,
+                                 num_pos_batch,
+                                 num_order_batch,
+                                 parse_graph,
+                                 beam_size=5,
+                                 use_teacher_forcing=0.83,
+                                 english=False)
         return loss
 
-    def model_test(self,batch_data):
+    def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(str,list,list): predicted type, predicted equation, target equation.
+        """
         input1_var = batch_data['input1']
         input2_var = batch_data['input2']
         input_length = batch_data['input1 len']
@@ -177,28 +216,61 @@ class MultiEncDec(nn.Module):
         equ_mask2 = batch_data['equ mask2']
         num_list = batch_data['num list']
 
-        unk1=self.unk1
-        unk2=self.unk2
-        num_start1=self.num_start1
-        num_start2=self.num_start2
-        sos2=self.sos2
-        eos2=self.eos2
+        unk1 = self.unk1
+        unk2 = self.unk2
+        num_start1 = self.num_start1
+        num_start2 = self.num_start2
+        sos2 = self.sos2
+        eos2 = self.eos2
 
-        result_type, test_res, score = self.evaluate_double(input1_var, input2_var, input_length, generate_list,num_start1,sos2,eos2,
-                                                        self.encoder, self.numencoder, self.predict, self.generate, self.merge, self.decoder,
-                                                        num_pos_batch, num_order_batch, parse_graph, beam_size=5)
-        if result_type=="tree":
-            output1=self.convert_idx2symbol1(test_res,num_list[0],copy_list(num_stack_batch[0]))
-            targets1=self.convert_idx2symbol1(target1[0],num_list[0],copy_list(num_stack_batch[0]))
+        result_type, test_res, score = self.evaluate_double(input1_var,
+                                                            input2_var,
+                                                            input_length,
+                                                            generate_list,
+                                                            num_start1,
+                                                            sos2,
+                                                            eos2,
+                                                            self.encoder,
+                                                            self.numencoder,
+                                                            self.predict,
+                                                            self.generate,
+                                                            self.merge,
+                                                            self.decoder,
+                                                            num_pos_batch,
+                                                            num_order_batch,
+                                                            parse_graph,
+                                                            beam_size=5)
+        if result_type == "tree":
+            output1 = self.convert_idx2symbol1(test_res, num_list[0], copy_list(num_stack_batch[0]))
+            targets1 = self.convert_idx2symbol1(target1[0], num_list[0], copy_list(num_stack_batch[0]))
             return result_type, output1, targets1
         else:
-            output2=self.convert_idx2symbol2(torch.tensor(test_res).view(1,-1),num_list,copy_list(num_stack_batch))
-            targets2=self.convert_idx2symbol2(target2,num_list,copy_list(num_stack_batch))
+            output2 = self.convert_idx2symbol2(torch.tensor(test_res).view(1, -1), num_list, copy_list(num_stack_batch))
+            targets2 = self.convert_idx2symbol2(target2, num_list, copy_list(num_stack_batch))
             return result_type, output2, targets2
-    
-    def train_double(self,input1_batch, input2_batch, input_length, target1_batch, target1_length, target2_batch, target2_length, 
-                 num_stack_batch, num_size_batch, generate_num1_ids, unk1, unk2, num_start1, num_start2, sos2, 
-                 num_pos_batch, num_order_batch, parse_graph_batch, beam_size=5, use_teacher_forcing=0.83, english=False):
+
+    def train_double(self,
+                     input1_batch,
+                     input2_batch,
+                     input_length,
+                     target1_batch,
+                     target1_length,
+                     target2_batch,
+                     target2_length,
+                     num_stack_batch,
+                     num_size_batch,
+                     generate_num1_ids,
+                     unk1,
+                     unk2,
+                     num_start1,
+                     num_start2,
+                     sos2,
+                     num_pos_batch,
+                     num_order_batch,
+                     parse_graph_batch,
+                     beam_size=5,
+                     use_teacher_forcing=0.83,
+                     english=False):
         # sequence mask for attention
         seq_mask = []
         max_len = max(input_length)
@@ -212,24 +284,24 @@ class MultiEncDec(nn.Module):
             d = i + len(generate_num1_ids)
             num_mask.append([0] * d + [1] * (max_num_size - d))
         num_mask = torch.ByteTensor(num_mask)
-        
+
         num_pos_pad = []
         max_num_pos_size = max(num_size_batch)
         for i in range(len(num_pos_batch)):
-            temp = num_pos_batch[i] + [-1] * (max_num_pos_size-len(num_pos_batch[i]))
+            temp = num_pos_batch[i] + [-1] * (max_num_pos_size - len(num_pos_batch[i]))
             num_pos_pad.append(temp)
         num_pos_pad = torch.LongTensor(num_pos_pad)
 
         num_order_pad = []
         max_num_order_size = max(num_size_batch)
         for i in range(len(num_order_batch)):
-            temp = num_order_batch[i] + [0] * (max_num_order_size-len(num_order_batch[i]))
+            temp = num_order_batch[i] + [0] * (max_num_order_size - len(num_order_batch[i]))
             num_order_pad.append(temp)
         num_order_pad = torch.LongTensor(num_order_pad)
-        
+
         num_stack1_batch = copy.deepcopy(num_stack_batch)
         num_stack2_batch = copy.deepcopy(num_stack_batch)
-        
+
         # Turn padded arrays into (batch_size x max_len) tensors, transpose into (max_len x batch_size)
         # input1_var = torch.LongTensor(input1_batch).transpose(0, 1)
         # input2_var = torch.LongTensor(input2_batch).transpose(0, 1)
@@ -256,34 +328,28 @@ class MultiEncDec(nn.Module):
             parse_graph_pad = parse_graph_pad.cuda()
 
         # Run words through encoder
-        
+
         encoder_outputs, encoder_hidden = self.encoder(input1_var, input2_var, input_length, parse_graph_pad)
         copy_num_len = [len(_) for _ in num_pos_batch]
         num_size = max(copy_num_len)
-        num_encoder_outputs, masked_index = self.get_all_number_encoder_outputs(encoder_outputs, num_pos_batch, 
-                                                                        batch_size, num_size, self.hidden_size)
-        encoder_outputs, num_outputs, problem_output = self.numencoder(encoder_outputs, num_encoder_outputs, 
-                                                                num_pos_pad, num_order_pad)
+        num_encoder_outputs, masked_index = self.get_all_number_encoder_outputs(encoder_outputs, num_pos_batch, batch_size, num_size, self.hidden_size)
+        encoder_outputs, num_outputs, problem_output = self.numencoder(encoder_outputs, num_encoder_outputs, num_pos_pad, num_order_pad)
         num_outputs = num_outputs.masked_fill_(masked_index.bool(), 0.0)
 
         decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
 
-        loss_0 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length,
-                                num_start1, batch_size, padding_hidden, seq_mask, 
-                                num_mask, num_pos_batch, num_order_pad, num_stack1_batch, unk1)
-        
-        loss_1 = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length,
-                                sos2, batch_size, seq_mask, 
-                                num_start2, num_stack2_batch, unk2, beam_size, use_teacher_forcing)
-        
+        loss_0 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length, num_start1, batch_size, padding_hidden, seq_mask, num_mask, num_pos_batch, num_order_pad,
+                                        num_stack1_batch, unk1)
+
+        loss_1 = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, sos2, batch_size, seq_mask, num_start2, num_stack2_batch, unk2, beam_size, use_teacher_forcing)
+
         loss = loss_0 + loss_1
         loss.backward()
-        
+
         return loss.item()  # , loss_0.item(), loss_1.item()
-    
-    def train_tree_double(self,encoder_outputs, problem_output, all_nums_encoder_outputs, target, target_length,
-                      num_start,batch_size, padding_hidden, seq_mask, 
-                      num_mask, num_pos, num_order_pad, nums_stack_batch, unk):
+
+    def train_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, target, target_length, num_start, batch_size, padding_hidden, seq_mask, num_mask, num_pos, num_order_pad,
+                          nums_stack_batch, unk):
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
@@ -291,12 +357,12 @@ class MultiEncDec(nn.Module):
 
         all_node_outputs = []
         # all_leafs = []
-        
+
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
         for t in range(max_target_length):
-            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.predict(
-                node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask, num_mask)
+            num_score, op, current_embeddings, current_context, current_nums_embeddings = self.predict(node_stacks, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden, seq_mask,
+                                                                                                       num_mask)
 
             # all_leafs.append(p_leaf)
             outputs = torch.cat((op, num_score), 1)
@@ -308,8 +374,7 @@ class MultiEncDec(nn.Module):
                 generate_input = generate_input.cuda()
             left_child, right_child, node_label = self.generate(current_embeddings, generate_input, current_context)
             left_childs = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1),
-                                                node_stacks, target[t].tolist(), embeddings_stacks):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -349,10 +414,7 @@ class MultiEncDec(nn.Module):
         # loss = loss_0 + loss_1
         return loss  # , loss_0.item(), loss_1.item()
 
-
-    def train_attn_double(self,encoder_outputs, decoder_hidden, target, target_length,
-                        sos, batch_size, seq_mask, 
-                        num_start, nums_stack_batch, unk, beam_size, use_teacher_forcing):
+    def train_attn_double(self, encoder_outputs, decoder_hidden, target, target_length, sos, batch_size, seq_mask, num_start, nums_stack_batch, unk, beam_size, use_teacher_forcing):
         # Prepare input and output variables
         decoder_input = torch.LongTensor([sos] * batch_size)
 
@@ -369,11 +431,9 @@ class MultiEncDec(nn.Module):
                 if self.USE_CUDA:
                     decoder_input = decoder_input.cuda()
 
-                decoder_output, decoder_hidden = self.decoder(
-                    decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask)
                 all_decoder_outputs[t] = decoder_output
-                decoder_input = self.generate_decoder_input(
-                    target[t].cpu().tolist(), decoder_output, nums_stack_batch, num_start, unk)
+                decoder_input = self.generate_decoder_input(target[t].cpu().tolist(), decoder_output, nums_stack_batch, num_start, unk)
                 target[t] = decoder_input
         else:
             beam_list = list()
@@ -396,14 +456,13 @@ class MultiEncDec(nn.Module):
                     decoder_input = beam_list[b_idx].input_var
                     decoder_hidden = beam_list[b_idx].hidden
 
-                #                rule_mask = generate_rule_mask(decoder_input, num_batch, output_lang.word2index, batch_size,
-                #                                               num_start, copy_nums, generate_nums, english)
+                    #                rule_mask = generate_rule_mask(decoder_input, num_batch, output_lang.word2index, batch_size,
+                    #                                               num_start, copy_nums, generate_nums, english)
                     if self.USE_CUDA:
                         #                    rule_mask = rule_mask.cuda()
                         decoder_input = decoder_input.cuda()
 
-                    decoder_output, decoder_hidden = self.decoder(
-                        decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+                    decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask)
 
                     #                score = f.log_softmax(decoder_output, dim=1) + rule_mask
                     score = F.log_softmax(decoder_output, dim=1)
@@ -413,7 +472,7 @@ class MultiEncDec(nn.Module):
                     repeat_dims[1] = score.size(1)
                     beam_score = beam_score.repeat(*repeat_dims)
                     score += beam_score
-                    beam_scores[:, b_idx * self.decoder.output_size: (b_idx + 1) * self.decoder.output_size] = score
+                    beam_scores[:, b_idx * self.decoder.output_size:(b_idx + 1) * self.decoder.output_size] = score
                     all_hidden[:, b_idx * batch_size:(b_idx + 1) * batch_size, :] = decoder_hidden
 
                     beam_list[b_idx].all_output[t] = decoder_output
@@ -442,8 +501,7 @@ class MultiEncDec(nn.Module):
             all_decoder_outputs = beam_list[0].all_output
 
             for t in range(max_target_length):
-                target[t] = self.generate_decoder_input(
-                    target[t].cpu().tolist(), all_decoder_outputs[t], nums_stack_batch, num_start, unk)
+                target[t] = self.generate_decoder_input(target[t].cpu().tolist(), all_decoder_outputs[t], nums_stack_batch, num_start, unk)
         # Loss calculation and backpropagation
 
         if self.USE_CUDA:
@@ -455,14 +513,24 @@ class MultiEncDec(nn.Module):
         loss = masked_cross_entropy(
             all_decoder_outputs.transpose(0, 1).contiguous(),  # -> batch x seq
             target.transpose(0, 1).contiguous(),  # -> batch x seq
-            target_length
-        )
-        
+            target_length)
+
         return loss
 
-    def evaluate_double(self,input1_batch, input2_batch, input_length, generate_num1_ids, num_start1,sos2, eos2, 
-                    num_pos_batch, num_order_batch, parse_graph_batch, 
-                    beam_size=5, english=False, max_length=30):
+    def evaluate_double(self,
+                        input1_batch,
+                        input2_batch,
+                        input_length,
+                        generate_num1_ids,
+                        num_start1,
+                        sos2,
+                        eos2,
+                        num_pos_batch,
+                        num_order_batch,
+                        parse_graph_batch,
+                        beam_size=5,
+                        english=False,
+                        max_length=30):
         seq_mask = torch.ByteTensor(1, input_length).fill_(0)
         # num_pos_pad = torch.LongTensor([num_pos_batch])
         # num_order_pad = torch.LongTensor([num_order_batch])
@@ -473,8 +541,8 @@ class MultiEncDec(nn.Module):
         num_pos_pad = torch.LongTensor(num_pos_batch)
         num_order_pad = torch.LongTensor(num_order_batch)
         parse_graph_pad = parse_graph_batch
-        input1_var = input1_batch.transpose(0,1)
-        input2_var = input2_batch.transpose(0,1)
+        input1_var = input1_batch.transpose(0, 1)
+        input2_var = input2_batch.transpose(0, 1)
 
         num_mask = torch.ByteTensor(1, len(num_pos_batch[0]) + len(generate_num1_ids)).fill_(0)
 
@@ -497,27 +565,21 @@ class MultiEncDec(nn.Module):
         copy_num_len = [len(_) for _ in num_pos_batch]
         num_size = max(copy_num_len)
         #num_size = len(num_pos_batch)
-        num_encoder_outputs, masked_index = self.get_all_number_encoder_outputs(encoder_outputs, num_pos_batch, batch_size, 
-                                                                            num_size, self.hidden_size)
-        encoder_outputs, num_outputs, problem_output = self.numencoder(encoder_outputs, num_encoder_outputs, 
-                                                                num_pos_pad, num_order_pad)
+        num_encoder_outputs, masked_index = self.get_all_number_encoder_outputs(encoder_outputs, num_pos_batch, batch_size, num_size, self.hidden_size)
+        encoder_outputs, num_outputs, problem_output = self.numencoder(encoder_outputs, num_encoder_outputs, num_pos_pad, num_order_pad)
         decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
-        
-        tree_beam = self.evaluate_tree_double(encoder_outputs, problem_output, num_outputs,
-                                        num_start1, batch_size, padding_hidden, seq_mask, num_mask, 
-                                        max_length, num_pos_batch, num_order_pad, beam_size)
-        
-        attn_beam = self.evaluate_attn_double(encoder_outputs, decoder_hidden,sos2,eos2,
-                                        batch_size, seq_mask, max_length, beam_size)
-        
+
+        tree_beam = self.evaluate_tree_double(encoder_outputs, problem_output, num_outputs, num_start1, batch_size, padding_hidden, seq_mask, num_mask, max_length, num_pos_batch, num_order_pad,
+                                              beam_size)
+
+        attn_beam = self.evaluate_attn_double(encoder_outputs, decoder_hidden, sos2, eos2, batch_size, seq_mask, max_length, beam_size)
+
         if tree_beam.score >= attn_beam.score:
             return "tree", tree_beam.out, tree_beam.score
         else:
             return "attn", attn_beam.all_output, attn_beam.score
 
-    def evaluate_tree_double(self,encoder_outputs, problem_output, all_nums_encoder_outputs, 
-                         num_start, batch_size, padding_hidden, seq_mask, num_mask, 
-                         max_length, num_pos, num_order_pad, beam_size):
+    def evaluate_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, num_start, batch_size, padding_hidden, seq_mask, num_mask, max_length, num_pos, num_order_pad, beam_size):
         # Prepare input and output variables
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
 
@@ -537,9 +599,8 @@ class MultiEncDec(nn.Module):
                 # left_childs = torch.stack(b.left_childs)
                 left_childs = b.left_childs
 
-                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.predict(
-                    b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
-                    seq_mask, num_mask)
+                num_score, op, current_embeddings, current_context, current_nums_embeddings = self.predict(b.node_stack, left_childs, encoder_outputs, all_nums_encoder_outputs, padding_hidden,
+                                                                                                           seq_mask, num_mask)
 
                 out_score = nn.functional.log_softmax(torch.cat((op, num_score), dim=1), dim=1)
 
@@ -578,8 +639,7 @@ class MultiEncDec(nn.Module):
                         current_left_childs.append(current_embeddings_stacks[0][-1].embedding)
                     else:
                         current_left_childs.append(None)
-                    current_beams.append(TreeBeam(b.score+float(tv), current_node_stack, current_embeddings_stacks,
-                                                current_left_childs, current_out))
+                    current_beams.append(TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks, current_left_childs, current_out))
             beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
             beams = beams[:beam_size]
             flag = True
@@ -591,9 +651,7 @@ class MultiEncDec(nn.Module):
 
         return beams[0]
 
-
-    def evaluate_attn_double(self,encoder_outputs, decoder_hidden, 
-                            sos,eos, batch_size, seq_mask, max_length, beam_size):
+    def evaluate_attn_double(self, encoder_outputs, decoder_hidden, sos, eos, batch_size, seq_mask, max_length, beam_size):
         # Create starting vectors for decoder
         decoder_input = torch.LongTensor([sos])  # SOS
         beam_list = list()
@@ -633,12 +691,11 @@ class MultiEncDec(nn.Module):
                     # rule_mask = rule_mask.cuda()
                     decoder_input = decoder_input.cuda()
 
-                decoder_output, decoder_hidden = self.decoder(
-                    decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask)
                 # score = f.log_softmax(decoder_output, dim=1) + rule_mask.squeeze()
                 score = F.log_softmax(decoder_output, dim=1)
                 score += beam_list[b_idx].score
-                beam_scores[current_idx * self.decoder.output_size: (current_idx + 1) * self.decoder.output_size] = score
+                beam_scores[current_idx * self.decoder.output_size:(current_idx + 1) * self.decoder.output_size] = score
                 all_hidden[current_idx] = decoder_hidden
                 all_outputs.append(beam_list[b_idx].all_output)
             topv, topi = beam_scores.topk(beam_size)
@@ -650,7 +707,7 @@ class MultiEncDec(nn.Module):
                 indices = int(word_n / self.decoder.output_size)
 
                 temp_hidden = all_hidden[indices]
-                temp_output = all_outputs[indices]+[word_input]
+                temp_output = all_outputs[indices] + [word_input]
                 temp_list.append(Beam(float(topv[k]), temp_input, temp_hidden, temp_output))
 
             temp_list = sorted(temp_list, key=lambda x: x.score, reverse=True)
@@ -661,7 +718,7 @@ class MultiEncDec(nn.Module):
                 beam_list = temp_list[:beam_size]
         return beam_list[0]
 
-    def generate_tree_input(self,target, decoder_output, nums_stack_batch, num_start, unk):
+    def generate_tree_input(self, target, decoder_output, nums_stack_batch, num_start, unk):
         # when the decoder input is copied num but the num has two pos, chose the max
         target_input = copy.deepcopy(target)
         for i in range(len(target)):
@@ -676,8 +733,7 @@ class MultiEncDec(nn.Module):
                 target_input[i] = 0
         return torch.LongTensor(target), torch.LongTensor(target_input)
 
-
-    def get_all_number_encoder_outputs(self,encoder_outputs, num_pos, batch_size, num_size, hidden_size):
+    def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, batch_size, num_size, hidden_size):
         indices = list()
         sen_len = encoder_outputs.size(0)
         masked_index = []
@@ -701,8 +757,7 @@ class MultiEncDec(nn.Module):
         all_num = all_num.view(batch_size, num_size, hidden_size)
         return all_num.masked_fill_(masked_index.bool(), 0.0), masked_index
 
-
-    def generate_decoder_input(self,target, decoder_output, nums_stack_batch, num_start, unk):
+    def generate_decoder_input(self, target, decoder_output, nums_stack_batch, num_start, unk):
         # when the decoder input is copied num but the num has two pos, chose the max
         if self.USE_CUDA:
             decoder_output = decoder_output.cpu()
@@ -778,9 +833,9 @@ class MultiEncDec(nn.Module):
         return output_list
 
 
-class MultiEncDec_(nn.Module):
+class _MultiEncDec_(nn.Module):
     def __init__(self, config, dataset):
-        super(MultiEncDec,self).__init__()
+        super(_MultiEncDec_, self).__init__()
         self.device = config['device']
         self.rnn_cell_type = config['rnn_cell_type']
         self.embedding_size = config['embedding_size']
@@ -838,7 +893,7 @@ class MultiEncDec_(nn.Module):
             self.out_pad_token2 = None
         # Initialize models
         embedder = BaiscEmbedder(self.input1_size, self.embedding_size, self.dropout_ratio)
-        in_embedder = self._init_embedding_params(dataset.trainset,dataset.in_idx2word_1,config['embedding_size'],embedder)
+        in_embedder = self._init_embedding_params(dataset.trainset, dataset.in_idx2word_1, config['embedding_size'], embedder)
 
         #self.out_embedder = BaiscEmbedder(self.output2_size,self.embedding_size,self.dropout_ratio)
 
@@ -859,14 +914,7 @@ class MultiEncDec_(nn.Module):
 
         self.merge = SubTreeMerger(hidden_size=self.hidden_size, embedding_size=self.embedding_size)
 
-        self.decoder = TreeAttnDecoderRNN(
-            self.hidden_size,
-            self.embedding_size,
-            self.output2_size,
-            self.output2_size,
-            self.n_layers,
-            self.dropout_ratio
-        )
+        self.decoder = TreeAttnDecoderRNN(self.hidden_size, self.embedding_size, self.output2_size, self.output2_size, self.n_layers, self.dropout_ratio)
 
         # self.decoder = AttentionalRNNDecoder(embedding_size=self.embedding_size,
         #                                      hidden_size=self.hidden_size,
@@ -878,10 +926,10 @@ class MultiEncDec_(nn.Module):
 
         self.loss = MaskedCrossEntropyLoss()
 
-    def _init_embedding_params(self,train_data,vocab,embedding_size,embedder):
-        sentences=[]
+    def _init_embedding_params(self, train_data, vocab, embedding_size, embedder):
+        sentences = []
         for data in train_data:
-            sentence=[]
+            sentence = []
             for word in data['question']:
                 if word in vocab:
                     sentence.append(word)
@@ -893,15 +941,15 @@ class MultiEncDec_(nn.Module):
         emb_vectors = []
         pad_idx = vocab.index(SpecialTokens.PAD_TOKEN)
         for idx in range(len(vocab)):
-            if idx!=pad_idx:
+            if idx != pad_idx:
                 emb_vectors.append(np.array(model.wv[vocab[idx]]))
             else:
                 emb_vectors.append(np.zeros((embedding_size)))
-        emb_vectors=np.array(emb_vectors)
+        emb_vectors = np.array(emb_vectors)
         embedder.embedder.weight.data.copy_(torch.from_numpy(emb_vectors))
 
         return embedder
-    
+
 
     def forward(self,input1_var, input2_var, input_length, target1, target1_length, target2, target2_length,\
                 num_stack_batch, num_size_batch,generate_list,num_pos_batch, num_order_batch, parse_graph):
@@ -1047,10 +1095,10 @@ class MultiEncDec_(nn.Module):
         num_outputs = num_outputs.masked_fill_(masked_index.bool(), 0.0)
 
         decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
-        all_output1,target1 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos_batch, num_order_pad,
-                                                num_stack1_batch)
+        all_output1, target1 = self.train_tree_double(encoder_outputs, problem_output, num_outputs, target1, target1_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos_batch,
+                                                      num_order_pad, num_stack1_batch)
 
-        all_output2,target2_ = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, batch_size, seq_mask, num_stack2_batch)
+        all_output2, target2_ = self.train_attn_double(encoder_outputs, decoder_hidden, target2, target2_length, batch_size, seq_mask, num_stack2_batch)
         self.loss.reset()
         self.loss.eval_batch(all_output1, target1, equ_mask1)
         self.loss.eval_batch(all_output2, target2_, equ_mask2)
@@ -1131,12 +1179,12 @@ class MultiEncDec_(nn.Module):
         all_output1 = self.evaluate_tree_double(encoder_outputs, problem_output, num_outputs, batch_size, padding_hidden, seq_mask, num_mask)
         all_output2 = self.evaluate_attn_double(encoder_outputs, decoder_hidden, batch_size, seq_mask)
         if all_output1.score >= all_output2.score:
-            output1=self.convert_idx2symbol1(all_output1.out,num_list[0],copy_list(num_stack1_batch[0]))
-            targets1=self.convert_idx2symbol1(target1[0],num_list[0],copy_list(num_stack1_batch[0]))
+            output1 = self.convert_idx2symbol1(all_output1.out, num_list[0], copy_list(num_stack1_batch[0]))
+            targets1 = self.convert_idx2symbol1(target1[0], num_list[0], copy_list(num_stack1_batch[0]))
             return "tree", output1, targets1
         else:
-            output2=self.convert_idx2symbol2(torch.tensor(all_output2.all_output).view(1,-1),num_list,copy_list(num_stack2_batch))
-            targets2=self.convert_idx2symbol2(target2,num_list,copy_list(num_stack2_batch))
+            output2 = self.convert_idx2symbol2(torch.tensor(all_output2.all_output).view(1, -1), num_list, copy_list(num_stack2_batch))
+            targets2 = self.convert_idx2symbol2(target2, num_list, copy_list(num_stack2_batch))
             return "attn", output2, targets2
 
     def train_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, target, target_length, batch_size, padding_hidden, seq_mask, num_mask, num_pos, num_order_pad,
@@ -1147,7 +1195,7 @@ class MultiEncDec_(nn.Module):
         max_target_length = max(target_length)
 
         all_node_outputs = []
-        
+
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
         for t in range(max_target_length):
@@ -1158,14 +1206,14 @@ class MultiEncDec_(nn.Module):
             outputs = torch.cat((op, num_score), 1)
             all_node_outputs.append(outputs)
 
-            target_t, generate_input = self.generate_tree_input(target[:,t].tolist(), outputs, nums_stack_batch)
-            target[:,t] = target_t
+            target_t, generate_input = self.generate_tree_input(target[:, t].tolist(), outputs, nums_stack_batch)
+            target[:, t] = target_t
             # if USE_CUDA:
             #     generate_input = generate_input.cuda()
             generate_input = generate_input.to(self.device)
             left_child, right_child, node_label = self.generate(current_embeddings, generate_input, current_context)
             left_childs = []
-            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:,t].tolist(), embeddings_stacks):
+            for idx, l, r, node_stack, i, o in zip(range(batch_size), left_child.split(1), right_child.split(1), node_stacks, target[:, t].tolist(), embeddings_stacks):
                 if len(node_stack) != 0:
                     node = node_stack.pop()
                 else:
@@ -1190,8 +1238,8 @@ class MultiEncDec_(nn.Module):
 
         # all_leafs = torch.stack(all_leafs, dim=1)  # B x S x 2
         all_node_outputs = torch.stack(all_node_outputs, dim=1)  # B x S x N
-        
-        return all_node_outputs,target
+
+        return all_node_outputs, target
 
     def train_attn_double(self, encoder_outputs, decoder_hidden, target, target_length, batch_size, seq_mask, nums_stack_batch):
         max_target_length = max(target_length)
@@ -1199,7 +1247,7 @@ class MultiEncDec_(nn.Module):
         all_decoder_outputs = torch.zeros(batch_size, max_target_length, self.output2_size).to(self.device)
         #all_decoder_outputs = []
 
-        seq_mask = torch.unsqueeze(seq_mask,dim=1)
+        seq_mask = torch.unsqueeze(seq_mask, dim=1)
 
         # Move new Variables to CUDA
         # if USE_CUDA:
@@ -1212,13 +1260,12 @@ class MultiEncDec_(nn.Module):
             for t in range(max_target_length):
                 #decoder_inputs[:,t]=decoder_input
                 #decoder_input = decoder_inputs[:,t]
-                decoder_output, decoder_hidden = self.decoder(
-                    decoder_input, decoder_hidden, encoder_outputs, seq_mask.squeeze(1))
+                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask.squeeze(1))
                 #all_decoder_outputs[:,t,:] = decoder_output
                 all_decoder_outputs.append(decoder_output)
-                decoder_input = self.generate_decoder_input(target[:,t].tolist(), decoder_output, nums_stack_batch)
-                target[:,t] = decoder_input
-            all_decoder_outputs = torch.stack(all_decoder_outputs,dim=1)
+                decoder_input = self.generate_decoder_input(target[:, t].tolist(), decoder_output, nums_stack_batch)
+                target[:, t] = decoder_input
+            all_decoder_outputs = torch.stack(all_decoder_outputs, dim=1)
         else:
             decoder_input = torch.LongTensor([self.sos2] * batch_size).to(self.device)
             beam_list = list()
@@ -1232,7 +1279,7 @@ class MultiEncDec_(nn.Module):
                 beam_scores = torch.zeros(batch_size, self.output2_size * beam_len).to(self.device)
                 all_hidden = torch.zeros(decoder_hidden.size(0), batch_size * beam_len, decoder_hidden.size(2)).to(self.device)
                 all_outputs = torch.zeros(batch_size * beam_len, max_target_length, self.output2_size).to(self.device)
-                
+
                 # if USE_CUDA:
                 #     beam_scores = beam_scores.cuda()
                 #     all_hidden = all_hidden.cuda()
@@ -1243,8 +1290,7 @@ class MultiEncDec_(nn.Module):
                     decoder_hidden = beam_list[b_idx].hidden
 
                     decoder_input = decoder_input.to(self.device)
-                    decoder_output, decoder_hidden = self.decoder(
-                        decoder_input, decoder_hidden, encoder_outputs, seq_mask.squeeze(1))
+                    decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask.squeeze(1))
 
                     score = F.log_softmax(decoder_output, dim=1)
                     beam_score = beam_list[b_idx].score
@@ -1256,8 +1302,8 @@ class MultiEncDec_(nn.Module):
                     beam_scores[:, b_idx * self.output2_size:(b_idx + 1) * self.output2_size] = score
                     all_hidden[:, b_idx * batch_size:(b_idx + 1) * batch_size, :] = decoder_hidden
 
-                    beam_list[b_idx].all_output[:,t,:] = decoder_output
-                    
+                    beam_list[b_idx].all_output[:, t, :] = decoder_output
+
                     all_outputs[batch_size * b_idx: batch_size * (b_idx + 1),:, :] = \
                         beam_list[b_idx].all_output
 
@@ -1280,9 +1326,8 @@ class MultiEncDec_(nn.Module):
 
             all_decoder_outputs = beam_list[0].all_output
             for t in range(max_target_length):
-                target[:,t] = self.generate_decoder_input(
-                    target[:,t].tolist(), all_decoder_outputs[:,t], nums_stack_batch)
-        return all_decoder_outputs,target
+                target[:, t] = self.generate_decoder_input(target[:, t].tolist(), all_decoder_outputs[:, t], nums_stack_batch)
+        return all_decoder_outputs, target
 
     def evaluate_tree_double(self, encoder_outputs, problem_output, all_nums_encoder_outputs, batch_size, padding_hidden, seq_mask, num_mask):
         # Prepare input and output variables
@@ -1378,7 +1423,7 @@ class MultiEncDec_(nn.Module):
             hidden_size_0 = decoder_hidden.size(0)
             hidden_size_2 = decoder_hidden.size(2)
             all_hidden = torch.zeros(beam_len, hidden_size_0, 1, hidden_size_2).to(self.device)
-            
+
             all_outputs = []
             current_idx = -1
 
@@ -1389,8 +1434,7 @@ class MultiEncDec_(nn.Module):
                 current_idx += 1
                 decoder_hidden = beam_list[b_idx].hidden
 
-                decoder_output, decoder_hidden = self.decoder(
-                    decoder_input, decoder_hidden, encoder_outputs, seq_mask)
+                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs, seq_mask)
                 #decoder_output = self.out(decoder_output).squeeze(dim=1)
                 score = F.log_softmax(decoder_output, dim=1)
                 score += beam_list[b_idx].score
@@ -1416,7 +1460,7 @@ class MultiEncDec_(nn.Module):
             else:
                 beam_list = temp_list[:self.beam_size]
         return beam_list[0]
-    
+
     def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, num_size, hidden_size):
         indices = list()
         sen_len = encoder_outputs.size(1)
@@ -1464,7 +1508,7 @@ class MultiEncDec_(nn.Module):
         # when the decoder input is copied num but the num has two pos, chose the max
         # if USE_CUDA:
         #     decoder_output = decoder_output.cpu()
-        target=torch.LongTensor(target).to(self.device)
+        target = torch.LongTensor(target).to(self.device)
         for i in range(target.size(0)):
             if target[i] == self.unk2:
                 num_stack = nums_stack_batch[i].pop()
@@ -1559,8 +1603,5 @@ class MultiEncDec_(nn.Module):
     #     return all_num.masked_fill_(masked_index, 0.0)
 
 
-
-
 # def replace_masked_values(tensor, mask, replace_with):
 #     return tensor.masked_fill((1 - mask).bool(), replace_with)
-

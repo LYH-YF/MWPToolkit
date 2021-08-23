@@ -1,12 +1,21 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/21 04:36:11
+# @File: gpt2.py
+
 import torch
 from torch import nn
 from transformers import GPT2LMHeadModel, GPT2Config, BertTokenizer, GPT2Tokenizer
-from mwptoolkit.loss.nll_loss import NLLLoss
 
+from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.utils.enum_type import SpecialTokens, NumMask, DatasetName
 
 
 class GPT2(nn.Module):
+    """
+    Reference:
+        Radford et al. "Language Models are Unsupervised Multitask Learners".
+    """
     def __init__(self, config, dataset):
         super().__init__()
 
@@ -68,6 +77,14 @@ class GPT2(nn.Module):
             return all_output, None
 
     def calculate_loss(self, batch_data):
+        """Finish forward-propagating, calculating loss and back-propagation.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            float: loss value.
+        """
         seq, target = batch_data["ques_source"], batch_data["equ_source"]
         outputs, target = self.forward(seq, target)
         outputs = torch.nn.functional.log_softmax(outputs, dim=1)
@@ -79,6 +96,14 @@ class GPT2(nn.Module):
         return self.loss.get_loss()
 
     def model_test(self, batch_data):
+        """Model test.
+        
+        Args:
+            batch_data (dict): one batch data.
+        
+        Returns:
+            tuple(list,list): predicted equation, target equation.
+        """
         seq = batch_data["ques_source"]
 
         num_list = batch_data['num list']

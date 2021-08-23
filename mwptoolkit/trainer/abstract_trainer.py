@@ -5,7 +5,41 @@ import torch
 from mwptoolkit.utils.utils import write_json_data
 
 class AbstractTrainer(object):
+    """abstract trainer
+
+    the base class of trainer class.
+    
+    example of instantiation:
+        
+        >>> trainer = AbstractTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+
+        """
         super().__init__()
         self.config = config
         self.model = model
@@ -73,4 +107,7 @@ class AbstractTrainer(object):
         raise NotImplementedError
 
     def test(self):
+        raise NotImplementedError
+
+    def param_search(self):
         raise NotImplementedError

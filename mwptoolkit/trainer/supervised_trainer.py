@@ -12,7 +12,54 @@ from mwptoolkit.utils.utils import time_since,write_json_data
 
 
 class SupervisedTrainer(AbstractTrainer):
+    """supervised trainer, used to implement training, testing, parameter searching in supervised learning.
+    
+    example of instantiation:
+        
+        >>> trainer = SupervisedTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model
+
+        train_batch_size (int): the training batch size.
+
+        epoch_nums (int): number of epochs.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
         self._build_optimizer()
         if config["resume"]:
@@ -107,6 +154,8 @@ class SupervisedTrainer(AbstractTrainer):
         return loss_total, epoch_time_cost
 
     def fit(self):
+        """train model.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
@@ -159,6 +208,15 @@ class SupervisedTrainer(AbstractTrainer):
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
     def evaluate(self, eval_set):
+        """evaluate model.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,int,str):
+            equation accuracy, value accuracy, count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -176,6 +234,8 @@ class SupervisedTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
+        """test model.
+        """
         self._load_model()
         self.model.eval()
         value_ac = 0
@@ -197,6 +257,8 @@ class SupervisedTrainer(AbstractTrainer):
         self._save_output()
 
     def param_search(self):
+        """hyper-parameter search.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
@@ -207,39 +269,66 @@ class SupervisedTrainer(AbstractTrainer):
             self.epoch_i = epo + 1
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
-
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                # if self.config["validset_divide"] is not True:
-                #     valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
-
-                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                 tune.report(accuracy=test_val_ac)
 
-                # self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
-                #                 %(test_total,test_equ_ac,test_val_ac,test_time_cost))
-
-                # if valid_val_ac >= self.best_valid_value_accuracy:
-                #     self.best_valid_value_accuracy = valid_val_ac
-                #     self.best_valid_equ_accuracy = valid_equ_ac
-                #     self.best_test_value_accuracy = test_val_ac
-                #     self.best_test_equ_accuracy = test_equ_ac
-                #     self._save_model()
-            # if epo % 5 == 0:
-            #     self._save_checkpoint()
-        # self.logger.info('''training finished.
-        #                     best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
-        #                     best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
-        #                     %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
-        #                         self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
 
 class GTSTrainer(AbstractTrainer):
+    """gts trainer, used to implement training, testing, parameter searching for deep-learning model GTS.
+    
+    example of instantiation:
+        
+        >>> trainer = GTSTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model.
+
+        embedding_learning_rate (float): learning rate of embedding module.
+
+        train_batch_size (int): the training batch size.
+
+        step_size (int): step_size of scheduler.
+
+        epoch_nums (int): number of epochs.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
         self._build_optimizer()
 
@@ -258,7 +347,7 @@ class GTSTrainer(AbstractTrainer):
         self.node_generater_optimizer = torch.optim.Adam(self.model.node_generater.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"], weight_decay=self.config["weight_decay"])
         # scheduler
-        self.embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.embedder_optimizer, step_size=self.config["step_size"], gamma=0.5)
+        self.embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.embedder_optimizer, step_size=self.config["step_size"], gamma=0.5,)
         self.encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.encoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
         self.decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.decoder_optimizer, step_size=self.config["step_size"], gamma=0.5)
         self.node_generater_scheduler = torch.optim.lr_scheduler.StepLR(self.node_generater_optimizer, step_size=self.config["step_size"], gamma=0.5)
@@ -369,6 +458,8 @@ class GTSTrainer(AbstractTrainer):
         return loss_total, epoch_time_cost
 
     def fit(self):
+        """train model.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
@@ -421,6 +512,15 @@ class GTSTrainer(AbstractTrainer):
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
     def evaluate(self, eval_set):
+        """evaluate model.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,int,str):
+            equation accuracy, value accuracy, count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -438,6 +538,8 @@ class GTSTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
+        """test model.
+        """
         self._load_model()
         self.model.eval()
         value_ac = 0
@@ -459,6 +561,8 @@ class GTSTrainer(AbstractTrainer):
         self._save_output()
 
     def param_search(self):
+        """hyper-parameter search.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
@@ -470,21 +574,63 @@ class GTSTrainer(AbstractTrainer):
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
             self._scheduler_step()
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
-
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                # valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
-
-                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                 tune.report(accuracy=test_val_ac)
 
 
 class MultiEncDecTrainer(GTSTrainer):
+    """multiencdec trainer, used to implement training, testing, parameter searching for deep-learning model MultiE&D.
+    
+    example of instantiation:
+        
+        >>> trainer = MultiEncDecTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model.
+
+        train_batch_size (int): the training batch size.
+
+        step_size (int): step_size of scheduler.
+
+        epoch_nums (int): number of epochs.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
 
     def _build_optimizer(self):
@@ -614,12 +760,112 @@ class MultiEncDecTrainer(GTSTrainer):
 
 
 class Graph2TreeTrainer(GTSTrainer):
+    """graph2tree trainer, used to implement training, testing, parameter searching for deep-learning model Graph2Tree.
+    
+    example of instantiation:
+        
+        >>> trainer = Graph2TreeTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model.
+
+        embedding_learning_rate (float): learning rate of embedding module.
+
+        train_batch_size (int): the training batch size.
+
+        step_size (int): step_size of scheduler.
+
+        epoch_nums (int): number of epochs.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
 
 
 class TreeLSTMTrainer(AbstractTrainer):
+    """treelstm trainer, used to implement training, testing, parameter searching for deep-learning model TreeLSTM.
+    
+    example of instantiation:
+        
+        >>> trainer = TreeLSTMTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model.
+
+        train_batch_size (int): the training batch size.
+
+        step_size (int): step_size of scheduler.
+
+        epoch_nums (int): number of epochs.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
         self._build_optimizer()
 
@@ -734,6 +980,8 @@ class TreeLSTMTrainer(AbstractTrainer):
         return loss_total, epoch_time_cost
 
     def fit(self):
+        """train model.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
@@ -786,6 +1034,15 @@ class TreeLSTMTrainer(AbstractTrainer):
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
     def evaluate(self, eval_set):
+        """evaluate model.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,int,str):
+            equation accuracy, value accuracy, count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -802,6 +1059,8 @@ class TreeLSTMTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
+        """test model.
+        """
         self._load_model()
         self.model.eval()
         value_ac = 0
@@ -834,21 +1093,63 @@ class TreeLSTMTrainer(AbstractTrainer):
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
             self._scheduler_step()
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
-
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                # valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
-
-                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                 tune.report(accuracy=test_val_ac)
 
 
 class SAUSolverTrainer(GTSTrainer):
+    """sausolver trainer, used to implement training, testing, parameter searching for deep-learning model SAUSolver.
+    
+    example of instantiation:
+        
+        >>> trainer = SAUSolverTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model.
+
+        train_batch_size (int): the training batch size.
+
+        step_size (int): step_size of scheduler.
+
+        epoch_nums (int): number of epochs.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
 
     def _train_batch(self, batch):
@@ -886,7 +1187,58 @@ class SAUSolverTrainer(GTSTrainer):
 
 
 class TRNNTrainer(SupervisedTrainer):
+    """trnn trainer, used to implement training, testing, parameter searching for deep-learning model TRNN.
+    
+    example of instantiation:
+        
+        >>> trainer = TRNNTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        seq2seq_learning_rate (float): learning rate of seq2seq module.
+
+        ans_learning_rate (float): learning rate of answer module.
+
+        train_batch_size (int): the training batch size.
+
+        step_size (int): step_size of scheduler.
+
+        epoch_nums (int): number of epochs.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
 
         self._build_optimizer()
@@ -916,7 +1268,7 @@ class TRNNTrainer(SupervisedTrainer):
             momentum=0.9
         )
 
-    def seq2seq_train(self):
+    def _seq2seq_train(self):
         self.model.seq2seq_in_embedder.train()
         self.model.seq2seq_out_embedder.train()
         self.model.seq2seq_encoder.train()
@@ -926,7 +1278,7 @@ class TRNNTrainer(SupervisedTrainer):
         self.model.answer_encoder.eval()
         self.model.answer_rnn.eval()
 
-    def ans_train(self):
+    def _ans_train(self):
         self.model.seq2seq_in_embedder.eval()
         self.model.seq2seq_out_embedder.eval()
         self.model.seq2seq_encoder.eval()
@@ -951,12 +1303,12 @@ class TRNNTrainer(SupervisedTrainer):
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
             self.batch_idx = batch_idx + 1
             # first stage
-            self.seq2seq_train()
+            self._seq2seq_train()
             self.model.zero_grad()
             batch_seq2seq_loss = self._train_seq2seq_batch(batch)
             self.optimizer.step()
             # second stage
-            self.ans_train()
+            self._ans_train()
             self.model.zero_grad()
             batch_ans_module_loss = self._train_ans_batch(batch)
             loss_total_seq2seq += batch_seq2seq_loss
@@ -1001,6 +1353,8 @@ class TRNNTrainer(SupervisedTrainer):
         return val_acc, equ_acc, temp_acc, equs_acc
 
     def fit(self):
+        """train model.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
@@ -1057,6 +1411,15 @@ class TRNNTrainer(SupervisedTrainer):
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
     def evaluate(self, eval_set):
+        """evaluate model.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,float,float,int,str):
+            equation accuracy, value accuracy, seq2seq module accuracy, answer module accuracy, count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -1105,6 +1468,8 @@ class TRNNTrainer(SupervisedTrainer):
         self._save_output()
 
     def param_search(self):
+        """hyper-parameter search.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
@@ -1115,20 +1480,63 @@ class TRNNTrainer(SupervisedTrainer):
             self.epoch_i = epo + 1
             self.model.train()
             seq2seq_loss_total, _, train_time_cost = self._train_epoch()
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
-
+            
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                # valid_equ_ac, valid_val_ac, _, _, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
-
-                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, _, acc, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                 tune.report(accuracy=test_val_ac)
 
 class SalignedTrainer(SupervisedTrainer):
+    """saligned trainer, used to implement training, testing, parameter searching for deep-learning model S-aligned.
+    
+    example of instantiation:
+        
+        >>> trainer = SalignedTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model
+
+        train_batch_size (int): the training batch size.
+
+        epoch_nums (int): number of epochs.
+
+        step_size (int): step_size of scheduler.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
         self._build_optimizer()
 
@@ -1279,6 +1687,8 @@ class SalignedTrainer(SupervisedTrainer):
         return loss_total, epoch_time_cost
 
     def fit(self):
+        """train model.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
@@ -1331,6 +1741,15 @@ class SalignedTrainer(SupervisedTrainer):
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
     def evaluate(self, eval_set):
+        """evaluate model.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,int,str):
+            equation accuracy, value accuracy, count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -1352,6 +1771,8 @@ class SalignedTrainer(SupervisedTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
+        """test model.
+        """
         self._load_model()
         self.model.eval()
         value_ac = 0
@@ -1420,7 +1841,56 @@ class HMSTrainer(GTSTrainer):
 
 
 class TSNTrainer(AbstractTrainer):
+    """tsn trainer, used to implement training, testing, parameter searching for deep-learning model TSN.
+    
+    example of instantiation:
+        
+        >>> trainer = TSNTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model
+
+        train_batch_size (int): the training batch size.
+
+        epoch_nums (int): number of epochs.
+
+        step_size (int): step_size of scheduler.
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
         self.t_start_epoch = 0
         self.s_start_epoch = 0
@@ -1649,6 +2119,8 @@ class TSNTrainer(AbstractTrainer):
         return loss_total, epoch_time_cost
 
     def fit(self):
+        """train model.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
         self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
@@ -1762,6 +2234,15 @@ class TSNTrainer(AbstractTrainer):
                                 self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
     def evaluate_teacher(self, eval_set):
+        """evaluate teacher net.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,int,str):
+            equation accuracy, value accuracy, count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -1777,6 +2258,18 @@ class TSNTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def evaluate_student(self, eval_set):
+        """evaluate student net.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,float,float,float,float,int,str):
+            equation accuracy, value accuracy, 
+            equation accuracy of student net 1, value accuracy of student net 1, 
+            equation accuracy of student net 2, value accuracy of student net 2, 
+            count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -1800,9 +2293,85 @@ class TSNTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total,s1_equation_ac / eval_total,s1_value_ac / eval_total,\
                 s2_equation_ac / eval_total,s2_value_ac / eval_total,eval_total, test_time_cost
 
+    def test(self):
+        """test model.
+        """
+        self._load_model()
+        self.model.eval()
+        value_ac = 0
+        equation_ac = 0
+        eval_total = 0
+        self.output_result=[]
+        test_start_time = time.time()
+
+        for batch in self.dataloader.load_data(DatasetType.Test):
+            batch_val_ac, batch_equ_ac, s1_val_ac, s1_equ_ac, s2_val_ac, s2_equ_ac = self._eval_student_net_batch(batch)
+            value_ac += batch_val_ac.count(True)
+            equation_ac += batch_equ_ac.count(True)
+            eval_total += len(batch_val_ac)
+        self.best_test_equ_accuracy=equation_ac/eval_total
+        self.best_test_value_accuracy=value_ac/eval_total
+        test_time_cost = time_since(time.time() - test_start_time)
+        self.logger.info("test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
+                                %(eval_total,equation_ac/eval_total,value_ac/eval_total,test_time_cost))
+        self._save_output()
+
 
 class EPTTrainer(AbstractTrainer):
+    """ept trainer, used to implement training, testing, parameter searching for deep-learning model EPT.
+    
+    example of instantiation:
+        
+        >>> trainer = EPTTrainer(config, model, dataloader, evaluator)
+
+        for training:
+            
+            >>> trainer.fit()
+        
+        for testing:
+            
+            >>> trainer.test()
+        
+        for parameter searching:
+
+            >>> trainer.param_search()
+    """
     def __init__(self, config, model, dataloader, evaluator):
+        """
+        Args:
+            config (config): An instance object of Config, used to record parameter information.
+            model (Model): An object of deep-learning model. 
+            dataloader (Dataloader): dataloader object.
+            evaluator (Evaluator): evaluator object.
+        
+        expected that config includes these parameters below:
+
+        learning_rate (float): learning rate of model
+
+        train_batch_size (int): the training batch size.
+
+        epoch_nums (int): number of epochs.
+
+        gradient_accumulation_steps (int): gradient accumulation steps.
+
+        epoch_warmup (int): epoch warmup.
+
+        fix_encoder_embedding (bool): whether require gradient of embedding module of encoder
+
+        trained_model_path (str): a path of file which is used to save parameters of best model.
+
+        checkpoint_path (str): a path of file which is used save checkpoint of training progress.
+
+        output_path (str|None): a path of a json file which is used to save test output infomation fo model.
+
+        resume (bool): start training from last checkpoint.
+
+        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+
+        test_step (int): the epoch number of training after which conducts the evaluation on test.
+
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        """
         super().__init__(config, model, dataloader, evaluator)
         self._minibatch_per_epoch = int(self.dataloader.trainset_nums / self.config["train_batch_size"]) + 1
         self._step_per_epoch = int(math.ceil(self._minibatch_per_epoch / self.config['gradient_accumulation_steps']))
@@ -1914,6 +2483,8 @@ class EPTTrainer(AbstractTrainer):
         return loss_total, epoch_time_cost
 
     def fit(self):
+        """train model.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
@@ -1968,6 +2539,15 @@ class EPTTrainer(AbstractTrainer):
                             self.best_test_equ_accuracy, self.best_test_value_accuracy))
 
     def evaluate(self, eval_set):
+        """evaluate model.
+
+        Args:
+            eval_set (str): [valid | test], the dataset for evaluation.
+        
+        Returns:
+            tuple(float,float,int,str):
+            equation accuracy, value accuracy, count of evaluated datas, formatted time string of evaluation time.
+        """
         self.model.eval()
         value_ac = 0
         equation_ac = 0
@@ -1985,6 +2565,8 @@ class EPTTrainer(AbstractTrainer):
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
 
     def test(self):
+        """test model.
+        """
         self._load_model()
         self.model.eval()
         value_ac = 0
@@ -2068,6 +2650,8 @@ class EPTTrainer(AbstractTrainer):
         return total_norm
                 
     def param_search(self):
+        """hyper-parameter search.
+        """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
@@ -2078,34 +2662,10 @@ class EPTTrainer(AbstractTrainer):
             self.epoch_i = epo + 1
             self.model.train()
             loss_total, train_time_cost = self._train_epoch()
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s"\
-            #                     %(self.epoch_i,loss_total/self.train_batch_nums,train_time_cost))
-
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
-                # valid_equ_ac, valid_val_ac, valid_total, valid_time_cost = self.evaluate(DatasetType.Valid)
-
-                # self.logger.info("---------- valid total [%d] | valid equ acc [%2.3f] | valid value acc [%2.3f] | valid time %s"\
-                #                 %(valid_total,valid_equ_ac,valid_val_ac,valid_time_cost))
                 test_equ_ac, test_val_ac, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                 tune.report(accuracy=test_val_ac)
-
-                # self.logger.info("---------- test total [%d] | test equ acc [%2.3f] | test value acc [%2.3f] | test time %s"\
-                #                 %(test_total,test_equ_ac,test_val_ac,test_time_cost))
-
-                # if valid_val_ac >= self.best_valid_value_accuracy:
-                #     self.best_valid_value_accuracy = valid_val_ac
-                #     self.best_valid_equ_accuracy = valid_equ_ac
-                #     self.best_test_value_accuracy = test_val_ac
-                #     self.best_test_equ_accuracy = test_equ_ac
-                #     self._save_model()
-            # if epo % 5 == 0:
-            #     self._save_checkpoint()
-        # self.logger.info('''training finished.
-        #                     best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
-        #                     best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]'''\
-        #                     %(self.best_valid_equ_accuracy,self.best_valid_value_accuracy,\
-        #                         self.best_test_equ_accuracy,self.best_test_value_accuracy))
 
 
 class PretrainSeq2SeqTrainer(SupervisedTrainer):

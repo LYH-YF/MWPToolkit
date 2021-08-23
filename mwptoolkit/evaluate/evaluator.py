@@ -74,18 +74,20 @@ class InfixEvaluator(AbstractEvaluator):
         """evaluate single equation.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): iist of target expression.
 
         """
         if (self.single and self.linear) != True:  # single but non-linear
@@ -107,18 +109,20 @@ class InfixEvaluator(AbstractEvaluator):
         """evaluate multiple euqations.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if test_exp == []:
             return False, False, test_exp, tar_exp
@@ -307,18 +311,20 @@ class PrefixEvaluator(AbstractEvaluator):
         """evaluate single equation.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
 
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
             return self.result_multi(test_exp, tar_exp)
@@ -338,18 +344,20 @@ class PrefixEvaluator(AbstractEvaluator):
         """evaluate multiple euqations.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if test_exp is []:
             return False, False, test_exp, tar_exp
@@ -533,18 +541,20 @@ class PostfixEvaluator(AbstractEvaluator):
         """evaluate single equation.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
             return self.result_multi(test_exp, tar_exp)
@@ -564,18 +574,20 @@ class PostfixEvaluator(AbstractEvaluator):
         """evaluate multiple euqations.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if test_exp is []:
             return False, False, test_exp, tar_exp
@@ -750,18 +762,20 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
         """evaluate single equation.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
             return self.result_multi(test_exp, tar_exp)
@@ -781,18 +795,20 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
         r"""evaluate multiple euqations.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if test_exp == []:
             return False, False, test_exp, tar_exp
@@ -981,18 +997,20 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         """evaluate single prefix equation.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
             return self.prefix_result_multi(test_exp, tar_exp)
@@ -1013,18 +1031,20 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         """evaluate multiple prefix euqations.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if test_exp is []:
             return False, False, test_exp, tar_exp
@@ -1083,18 +1103,20 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         """evaluate single postfix equation.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if (self.single and self.linear) != True:  # single but non-linear
             return self.postfix_result_multi(test_exp, tar_exp)
@@ -1114,18 +1136,20 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
         """evaluate multiple postfix euqations.
 
         Args:
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
 
         Returns:
+            (tuple(bool,bool,list,list))
+            
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
             
             equ_ac (bool): the correctness of test expression compared to target expression.
             
-            test_exp (list): List of test expression.
+            test_exp (list): list of test expression.
             
-            tar_exp (list): List of target expression.
+            tar_exp (list): list of target expression.
         """
         if test_exp is []:
             return False, False, test_exp, tar_exp

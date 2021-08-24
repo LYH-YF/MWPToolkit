@@ -215,10 +215,6 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
             <td align="center"><a href="https://aclanthology.org/P19-1619/">(Li et al., 2019)</a></td>
         </tr>
         <tr>
-            <td>EPT</td>
-            <td align="center"><a href="https://aclanthology.org/2020.emnlp-main.308/">(Kim et al., 2020)</a></td>
-        </tr>
-        <tr>
             <td>RNN</td>
             <td align="center"><a href="https://arxiv.org/abs/1409.3215">(Sutskever et al., 2014)</a></td>
         </tr>

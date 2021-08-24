@@ -198,7 +198,7 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
     </thread>
     <tbody>
         <tr>
-            <td rowspan="7">Seq2Seq</td>
+            <td rowspan="6">Seq2Seq</td>
             <td>DNS</td>
             <td align="center"><a href="https://aclanthology.org/D17-1088/">(Wang et al., 2017)</a></td>
         </tr>

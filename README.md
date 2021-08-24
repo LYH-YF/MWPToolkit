@@ -423,10 +423,6 @@ We have implemented the models on the datasets that are integrated within our to
             <td align="center">25.7|29.0
         </tr>
         <tr>
-            <td>EPT</td>
-            <td align="center">
-        </tr>
-        <tr>
             <td>MultiE&D</td>
             <td align="center">65.5|76.5
             <td align="center">39.3|39.3

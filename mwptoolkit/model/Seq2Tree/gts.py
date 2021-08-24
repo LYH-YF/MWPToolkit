@@ -163,7 +163,11 @@ class GTS(nn.Module):
             num_mask = num_mask.cuda()
 
         # Run words through encoder
-        seq_emb = self.embedder(input_var)
+        if self.embedding == 'roberta':
+            seq_emb = self.embedder(input_var, seq_mask)
+        else:
+            seq_emb = self.embedder(input_var)
+        #seq_emb = self.embedder(input_var)
         pade_outputs, _ = self.encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
@@ -260,8 +264,11 @@ class GTS(nn.Module):
             padding_hidden = padding_hidden.cuda()
             num_mask = num_mask.cuda()
         # Run words through encoder
-
-        seq_emb = self.embedder(input_var)
+        if self.embedding == 'roberta':
+            seq_emb = self.embedder(input_var, seq_mask)
+        else:
+            seq_emb = self.embedder(input_var)
+        #seq_emb = self.embedder(input_var)
         pade_outputs, _ = self.encoder(seq_emb, input_length)
         problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]

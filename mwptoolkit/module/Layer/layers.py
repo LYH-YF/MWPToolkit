@@ -121,7 +121,7 @@ class TreeAttnDecoderRNN(nn.Module):
         self.concat = nn.Linear(hidden_size * 2, hidden_size)
         self.out = nn.Linear(hidden_size, output_size)
         # Choose attention model
-        self.attn = Attn(hidden_size)
+        self.attn = Attn(hidden_size,hidden_size)
 
     def forward(self, input_seq, last_hidden, encoder_outputs, seq_mask):
         # Get the embedding of the current input word (last output word)

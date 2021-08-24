@@ -171,12 +171,6 @@ class MultiEncDec(nn.Module):
                                  num_stack_batch,
                                  num_size_batch,
                                  generate_list,
-                                 self.encoder,
-                                 self.numencoder,
-                                 self.predict,
-                                 self.generate,
-                                 self.merge,
-                                 self.decoder,
                                  unk1,
                                  unk2,
                                  num_start1,
@@ -230,16 +224,10 @@ class MultiEncDec(nn.Module):
                                                             num_start1,
                                                             sos2,
                                                             eos2,
-                                                            self.encoder,
-                                                            self.numencoder,
-                                                            self.predict,
-                                                            self.generate,
-                                                            self.merge,
-                                                            self.decoder,
                                                             num_pos_batch,
                                                             num_order_batch,
                                                             parse_graph,
-                                                            beam_size=5)
+                                                            beam_size=5,)
         if result_type == "tree":
             output1 = self.convert_idx2symbol1(test_res, num_list[0], copy_list(num_stack_batch[0]))
             targets1 = self.convert_idx2symbol1(target1[0], num_list[0], copy_list(num_stack_batch[0]))

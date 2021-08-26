@@ -503,7 +503,7 @@ class GTSTrainer(AbstractTrainer):
                         self.best_test_equ_accuracy = test_equ_ac
                         self._save_model()
                         self._save_output()
-            if epo % 5 == 0:
+            if epo % 1 == 0:
                 self._save_checkpoint()
         self.logger.info('''training finished.
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]

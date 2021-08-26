@@ -182,6 +182,8 @@ class MultiEncDec(nn.Module):
                                  beam_size=5,
                                  use_teacher_forcing=0.83,
                                  english=False)
+        if self.USE_CUDA:
+            torch.cuda.empty_cache()
         return loss
 
     def model_test(self, batch_data):
@@ -231,10 +233,14 @@ class MultiEncDec(nn.Module):
         if result_type == "tree":
             output1 = self.convert_idx2symbol1(test_res, num_list[0], copy_list(num_stack_batch[0]))
             targets1 = self.convert_idx2symbol1(target1[0], num_list[0], copy_list(num_stack_batch[0]))
+            if self.USE_CUDA:
+                torch.cuda.empty_cache()
             return result_type, output1, targets1
         else:
             output2 = self.convert_idx2symbol2(torch.tensor(test_res).view(1, -1), num_list, copy_list(num_stack_batch))
             targets2 = self.convert_idx2symbol2(target2, num_list, copy_list(num_stack_batch))
+            if self.USE_CUDA:
+                torch.cuda.empty_cache()
             return result_type, output2, targets2
 
     def train_double(self,

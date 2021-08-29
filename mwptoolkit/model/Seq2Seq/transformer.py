@@ -27,7 +27,7 @@ class Transformer(nn.Module):
         Vaswani et al. "Attention Is All You Need".
     """
     def __init__(self, config, dataset):
-        super().__init__()
+        super(Transformer, self).__init__()
         self.max_output_len = config["max_output_len"]
         self.share_vocab = config["share_vocab"]
         self.decoding_strategy = config["decoding_strategy"]

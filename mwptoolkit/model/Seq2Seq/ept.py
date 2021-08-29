@@ -35,7 +35,7 @@ class EPT(nn.Module):
         Kim et al. "Point to the Expression: Solving Algebraic Word Problems using the Expression-Pointer Transformer Model" in EMNLP 2020.
     """
     def __init__(self, config, dataset):
-        super().__init__()
+        super(EPT, self).__init__()
         self.max_output_len = config["max_output_len"]
         self.share_vocab = config["share_vocab"]
         self.decoding_strategy = config["decoding_strategy"]

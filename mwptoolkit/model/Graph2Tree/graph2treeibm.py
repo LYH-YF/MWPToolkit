@@ -6,7 +6,7 @@ from torch import nn
 from mwptoolkit.module.Encoder.graph_based_encoder import GraphEncoder
 from mwptoolkit.module.Attention.separate_attention import SeparateAttention
 from mwptoolkit.module.Decoder.tree_decoder import RNNBasedTreeDecoder
-from mwptoolkit.module.Layer.tree_layers import Tree
+from mwptoolkit.utils.data_structure import Tree
 
 
 class Graph2TreeIBM(nn.Module):

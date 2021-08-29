@@ -23,7 +23,7 @@ class RNNEncDec(nn.Module):
         Sutskever et al. "Sequence to Sequence Learning with Neural Networks".
     """
     def __init__(self, config, dataset):
-        super().__init__()
+        super(RNNEncDec, self).__init__()
         self.bidirectional = config["bidirectional"]
         self.embedding_size = config["embedding_size"]
         self.hidden_size = config["hidden_size"]

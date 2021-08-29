@@ -17,7 +17,7 @@ class GPT2(nn.Module):
         Radford et al. "Language Models are Unsupervised Multitask Learners".
     """
     def __init__(self, config, dataset):
-        super().__init__()
+        super(GPT2, self).__init__()
 
         #self.eval_generate_num = config['eval_generate_num']
         self.device = config["device"]

@@ -43,10 +43,7 @@ class HMS(nn.Module):
         except:
             self.out_pad_token = None
         embedder=BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
-        # if self.share_vacab:
-        #     self.out_embedder=self.in_embedder
-        # else:
-        #     self.out_embedder=BaiscEmbedder(self.symbol_size,self.embedding_size,self.dropout_ratio)
+        
         self.encoder=HWCPEncoder(embedder,self.embedding_size,self.hidden_size,self.span_size,self.dropout_ratio)
         self.decoder=HMSDecoder(embedder,self.hidden_size,self.dropout_ratio,self.operator_list,self.in_word2idx,self.out_idx2symbol,self.device)
         

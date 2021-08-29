@@ -23,7 +23,7 @@ class TreeLSTM(nn.Module):
         Liu et al. "Tree-structured Decoding for Solving Math Word Problems" in EMNLP | IJCNLP 2019.
     """
     def __init__(self, config, dataset):
-        super().__init__()
+        super(TreeLSTM, self).__init__()
         # parameter
         self.hidden_size = config["hidden_size"]
         self.embedding_size = config["embedding_size"]

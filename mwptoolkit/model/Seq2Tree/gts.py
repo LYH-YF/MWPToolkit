@@ -28,7 +28,7 @@ class GTS(nn.Module):
         Xie et al. "A Goal-Driven Tree-Structured Neural Model for Math Word Problems" in IJCAI 2019.
     """
     def __init__(self, config, dataset):
-        super().__init__()
+        super(GTS, self).__init__()
         #parameter
         self.hidden_size = config["hidden_size"]
         self.device = config["device"]

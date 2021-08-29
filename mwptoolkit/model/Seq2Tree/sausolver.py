@@ -26,7 +26,7 @@ class SAUSolver(nn.Module):
         Qin et al. "Semantically-Aligned Universal Tree-Structured Solver for Math Word Problems" in EMNLP 2020.
     """
     def __init__(self, config, dataset):
-        super().__init__()
+        super(SAUSolver,self).__init__()
         #parameter
         self.hidden_size = config["hidden_size"]
         self.device = config["device"]

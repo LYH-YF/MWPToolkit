@@ -14,7 +14,6 @@ from mwptoolkit.loss.nll_loss import NLLLoss
 import torch
 from torch import nn
 
-#from mwptoolkit.module.Layer.tree_layers import Node,BinaryTree
 from mwptoolkit.module.Layer.tree_layers import RecursiveNN
 from mwptoolkit.module.Encoder.rnn_encoder import SelfAttentionRNNEncoder, BasicRNNEncoder
 from mwptoolkit.module.Attention.seq_attention import SeqAttention

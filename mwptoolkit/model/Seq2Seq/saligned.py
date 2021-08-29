@@ -223,13 +223,10 @@ class Saligned(nn.Module):
 
         # deal with device
         seq_emb = self.embedder(text)
-        #print(str(batch_data).encode('utf8'))
-        #print('seq_emb', seq_emb.size(), text_len, constant_indices)
         context, state, operands = \
             self.encoder.forward(seq_emb, text_len, constant_indices)
 
         number_emb = [operands[b_i] + self.encoder.get_fix_constant() for b_i in range(batch_size)]
-        #print('operands', fix_constants + constants[0], ops); # exit()
         # initialize stacks
         stacks = [StackMachine(self.operations, constants[b] + fix_constants, number_emb[b], bottom) for b in range(batch_size)]
 
@@ -247,12 +244,8 @@ class Saligned(nn.Module):
 
             n_finished = 0
             for b in range(batch_size):
-                #print('stacks[b]', stacks[b])
-
-                #print(stacks[b].stack_log_index)
                 if (len(stacks[b].stack_log_index) and stacks[b].stack_log_index[-1] == self.EQL):
                     finished[b] = True
-                    #print('should break'); exit()
 
                 if finished[b]:
                     op_logits[b, self.PAD] = math.inf
@@ -264,7 +257,6 @@ class Saligned(nn.Module):
                     op_logits[b, self.MUL] = -math.inf
                     op_logits[b, self.DIV] = -math.inf
                     op_logits[b, self.POWER] = -math.inf
-                    #op_logits[b, OPERATIONS.EQL] = -math.inf
 
             op_loss, prev_op = torch.log(torch.nn.functional.softmax(op_logits, -1)).max(-1)
             arg_loss, prev_arg = torch.log(torch.nn.functional.softmax(arg_logits, -1)).max(-1)
@@ -283,19 +275,12 @@ class Saligned(nn.Module):
         predicts = [None] * batch_size
         predicts_idx = [None] * batch_size
         targets = [None] * batch_size
-        #pred_logits = torch.stack(pred_logits, 1)
-        # print(pred_logits[:, :5], ops[:, :5])
+
         for i in range(batch_size):
-            #print('stacks[i].stack_log', stacks[i].stack_log_index)
-            #predicts[i] = [w for w in stacks[i].stack_log if w not in [SpecialTokens.EOS_TOKEN,SpecialTokens.PAD_TOKEN]]
             predicts_idx[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD]]
             targets[i] = list(batch_data["equation"][i].cpu().numpy())
-        #print(stacks[0]._operands, stacks[0]._op_chars)
-        #print(predicts_idx[0], targets[0], target);
-        #predicts = self.convert_mask_num(predicts,constants)
         predicts = self.convert_idx2symbol(torch.LongTensor(predicts_idx).to(self._device), constants)
         targets = self.convert_idx2symbol(target, constants)
-        #print(predicts[0], targets[0]); exit()
 
         return predicts, targets
 

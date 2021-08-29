@@ -11,6 +11,30 @@ import sympy as sym
 from mwptoolkit.utils.enum_type import SpecialTokens, OPERATORS, NumMask, MaskSymbol
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
 
+def get_evaluator(config):
+    """build evaluator 
+
+    Args:
+        config (Config): An instance object of Config, used to record parameter information.
+    
+    Returns:
+        Evaluator: Constructed evaluator.
+    """
+    if config["equation_fix"] == FixType.Prefix:
+        evaluator = PrefixEvaluator(config)
+    elif config["equation_fix"] == FixType.Nonfix or config["equation_fix"] == FixType.Infix:
+        evaluator = InfixEvaluator(config)
+    elif config["equation_fix"] == FixType.Postfix:
+        evaluator = PostfixEvaluator(config)
+    elif config["equation_fix"] == FixType.MultiWayTree:
+        evaluator = MultiWayTreeEvaluator(config)
+    else:
+        raise NotImplementedError
+    
+    if config['model'].lower() in ['multiencdec']:
+        evaluator = MultiEncDecEvaluator(config)
+    
+    return evaluator
 
 class Solver(threading.Thread):
     r"""time-limited equation-solving machanism based threading.

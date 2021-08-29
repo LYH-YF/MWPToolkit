@@ -3,7 +3,10 @@
 # @Time: 2021/08/29 11:10:10
 # @File: group_attention.py
 
-
+r"""
+Group Attention
+########################
+"""
 import math
 import numpy as np
 import torch

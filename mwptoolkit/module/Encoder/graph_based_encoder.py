@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 21:48:33
+# @File: graph_based_encoder.py
+
+
 import torch
 from torch import nn
 from torch.nn import functional as F

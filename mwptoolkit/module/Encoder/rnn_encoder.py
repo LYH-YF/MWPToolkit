@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 21:48:46
+# @File: rnn_encoder.py
+
+
 from copy import deepcopy
 
 import torch

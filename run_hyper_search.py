@@ -1,7 +1,6 @@
 import argparse
 import sys
 import os
-from os.path import abspath, dirname
 
 from ray import tune
 
@@ -9,10 +8,6 @@ from mwptoolkit.hyper_search import hyper_search_process
 from mwptoolkit.utils.utils import read_json_data
 
 
-print (abspath(dirname(__file__)))
-x=os.getcwd()
-x1=os.path.join(os.getcwd(), ".")
-x2=os.path.abspath(os.path.join(os.getcwd(), "."))
 sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
 
 if __name__ == '__main__':
@@ -22,7 +17,6 @@ if __name__ == '__main__':
     parser.add_argument('--task_type', '-t', type=str, default='single_equation', help='name of tasks')
     parser.add_argument('--search_parameter', '-s', type=str, action='append', default=[])
     parser.add_argument('--search_file','-f',type=str,default=None)
-    #parser.add_argument('--config_files', type=str, default=None, help='config files')
 
     args, _ = parser.parse_known_args()
     config_dict = {}

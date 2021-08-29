@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 11:10:20
+# @File: multi_head_attention.py
+
+
 import numpy as np
 import torch
 from torch import nn
@@ -7,9 +13,6 @@ from mwptoolkit.utils.enum_type import EPT
 class MultiHeadAttention(nn.Module):
     r"""Multi-head Attention is proposed in the following paper:
             Attention Is All You Need.
-
-    Reference:
-        https://arxiv.org/abs/1706.03762
     """
     def __init__(self, embedding_size, num_heads, dropout_ratio=0.0):
         super(MultiHeadAttention, self).__init__()
@@ -34,32 +37,21 @@ class MultiHeadAttention(nn.Module):
 
         self.weight_dropout = nn.Dropout(dropout_ratio)
 
-        # self.reset_parameters()
-
-    # def reset_parameters(self):
-    #     nn.init.normal_(self.query_proj.weight, std=0.02)
-    #     nn.init.normal_(self.key_proj.weight, std=0.02)
-    #     nn.init.normal_(self.value_proj.weight, std=0.02)
-    #     nn.init.normal_(self.out_proj.weight, std=0.02)
-    #     nn.init.constant_(self.query_proj.bias, 0.)
-    #     nn.init.constant_(self.key_proj.bias, 0.)
-    #     nn.init.constant_(self.value_proj.bias, 0.)
-    #     nn.init.constant_(self.out_proj.bias, 0.)
-
     def forward(self, query, key, value, key_padding_mask=None, attn_mask=None):
         r"""
         Multi-head attention
 
         Args:
-            query: shape: [batch_size, tgt_len, embedding_size]
-            key and value: shape: [batch_size, src_len, embedding_size]
-            key_padding_mask: shape: [batch_size, src_len]
-            attn_mask: shape: [batch_size, tgt_len, src_len]
+            query (torch.Tensor): shape [batch_size, tgt_len, embedding_size].
+            key (torch.Tensor): shape [batch_size, src_len, embedding_size].
+            value (torch.Tensor): shape [batch_size, src_len, embedding_size].
+            key_padding_mask (torch.Tensor): shape [batch_size, src_len].
+            attn_mask (torch.BoolTensor): shape [batch_size, tgt_len, src_len].
 
         Return:
-            tuple:
-                - attn_repre: shape: [batch_size, tgt_len, embedding_size]
-                - attn_weights: shape: [batch_size, tgt_len, src_len]
+            tuple(torch.Tensor, torch.Tensor):
+                attn_repre, shape [batch_size, tgt_len, embedding_size].
+                attn_weights, shape [batch_size, tgt_len, src_len].
         """
         device=query.device
         batch_size, tgt_len, embedding_size = query.size()
@@ -107,9 +99,6 @@ class EPTMultiHeadAttentionWeights(nn.Module):
     Class for computing multi-head attention weights (follows the paper, 'Attention is all you need')
 
     This class computes dot-product between query Q and key K, i.e.
-
-    .. math::
-        \\frac{Q^\\top K}{\\sqrt{D}}
     """
 
     def __init__(self, **config):
@@ -140,27 +129,19 @@ class EPTMultiHeadAttentionWeights(nn.Module):
                 attention_mask: torch.Tensor = None, head_at_last: bool = True) -> torch.Tensor:
         """
         Compute multi-head attention weights
-
-        :param torch.Tensor query:
-            FloatTensor representing the query matrix Q with shape [B, S, H],
-            where B = batch size, S = query sequence length, and H = vector dimension of hidden states.
-        :param torch.Tensor key:
-            FloatTensor representing the key matrix K with shape [B, T, H] or [1, T, H], where T = key sequence length
-            By default, this is `None` (Use query matrix Q as a key matrix)
-        :param torch.Tensor key_ignorance_mask:
-            BoolTensor representing the mask for ignoring column vector in matrix K, with shape [B, T].
-            If an element at (b, t) is `True,` then all return elements at B=b, T=t will set to be -Infinity.
-            By default, this is `None` (There's no mask to apply)
-        :param torch.Tensor attention_mask:
-            BoolTensor representing Attention mask for ignoring a key for each query item, with shape [S, T].
-            If an element at (s, t) is `True,` then all return elements at S=s, T=t will set to be -Infinity.
-            By default, this is `None` (There's no mask to apply)
-        :param bool head_at_last:
-            Use `True` to make shape of return value be [B, S, T, N], where N = number of attention heads.
-            If `False,` this method will return [B, N, S, T].
-            By default, this is `True`
-        :rtype: torch.FloatTensor
-        :return: FloatTensor of Multi-head Attention weights
+        
+        Args:
+            query (torch.Tensor): FloatTensor representing the query matrix with shape [batch_size, query_sequence_length, hidden_size].
+            key (torch.Tensor): FloatTensor representing the key matrix with shape [batch_size, key_sequence_length, hidden_size] or [1, key_sequence_length, hidden_size]. By default, this is `None` (Use query matrix as a key matrix)
+            key_ignorance_mask (torch.Tensor): BoolTensor representing the mask for ignoring column vector in key matrix, with shape [batch_size, key_sequence_length]. 
+                If an element at (b, t) is `True,` then all return elements at batch_size=b, key_sequence_length=t will set to be -Infinity. By default, this is `None` (There's no mask to apply).
+            attention_mask (torch.Tensor): BoolTensor representing Attention mask for ignoring a key for each query item, with shape [query_sequence_length, key_sequence_length].
+                If an element at (s, t) is `True,` then all return elements at sequence_length=s, T=t will set to be -Infinity. By default, this is `None` (There's no mask to apply).
+            head_at_last (bool): Use `True` to make shape of return value be [batch_size, query_sequence_length, key_sequence_length, head_nums].
+                If `False,` this method will return [batch_size, head_nums, sequence_length, key_sequence_length]. By default, this is `True`
+        
+        Returns:
+            torch.FloatTensor: FloatTensor of Multi-head Attention weights.
         """
 
         # If key is None, reuse query matrix Q.
@@ -240,8 +221,6 @@ class EPTMultiHeadAttention(nn.Module):
 
     This class computes attention over K-V pairs with query Q, i.e.
 
-    .. math::
-        \\textrm{softmax}\\left(\\frac{Q^\\top K}{\\sqrt{D}}\\right) V
     """
 
     def __init__(self, **config):
@@ -268,29 +247,21 @@ class EPTMultiHeadAttention(nn.Module):
         """
         Compute multi-head attention
 
-        :param torch.Tensor query:
-            FloatTensor representing the query matrix Q with shape [B, S, H],
-            where B = batch size, S = query sequence length, and H = vector dimension of hidden states.
-        :param torch.Tensor key_value:
-            FloatTensor representing the key matrix K or value matrix V with shape [B, T, H] or [1, T, H],
-            where T = key sequence length.
-            By default, this is `None` (Use query matrix Q as a key matrix)
-        :param torch.Tensor key_ignorance_mask:
-            BoolTensor representing the mask for ignoring column vector in matrix K, with shape [B, T].
-            If an element at (b, t) is `True,` then all return elements at B=b, T=t will set to be -Infinity.
-            By default, this is `None` (There's no mask to apply)
-        :param torch.Tensor attention_mask:
-            BoolTensor representing Attention mask for ignoring a key for each query item, with shape [S, T].
-            If an element at (s, t) is `True,` then all return elements at S=s, T=t will set to be -Infinity.
-            By default, this is `None` (There's no mask to apply)
-        :param bool return_weights:
-            Use `True` to return attention weights. By default, this is `True.`
-        :rtype: Union[torch.FloatTensor, Tuple[torch.FloatTensor, torch.FloatTensor]]
-        :return:
-            If head_at_last is True, return (Attention Output, Attention Weights).
-            Otherwise, return only the Attention Output
-            - Attention Output: Shape [B, S, H].
-            - Attention Weights: Shape [B, S, T, N].
+        Args:
+            query (torch.Tensor): FloatTensor representing the query matrix with shape [batch_size, query_sequence_length, hidden_size].
+            key_value (torch.Tensor): FloatTensor representing the key matrix or value matrix with shape [batch_size, key_sequence_length, hidden_size] or [1, key_sequence_length, hidden_size].
+                By default, this is `None` (Use query matrix as a key matrix).
+            key_ignorance_mask (torch.Tensor): BoolTensor representing the mask for ignoring column vector in key matrix, with shape [batch_size, key_sequence_length].
+                If an element at (b, t) is `True,` then all return elements at batch_size=b, key_sequence_length=t will set to be -Infinity. By default, this is `None` (There's no mask to apply).
+            attention_mask (torch.Tensor): BoolTensor representing Attention mask for ignoring a key for each query item, with shape [query_sequence_length, key_sequence_length].
+                If an element at (s, t) is `True,` then all return elements at query_sequence_length=s, key_sequence_length=t will set to be -Infinity. By default, this is `None` (There's no mask to apply).
+            return_weights (bool): Use `True` to return attention weights. By default, this is `True.`
+        
+        Returns:
+            Union[torch.FloatTensor, Tuple[torch.FloatTensor, torch.FloatTensor]]:
+                If head_at_last is True, return (Attention Output, Attention Weights). Otherwise, return only the Attention Output.
+                Attention Output: Shape [batch_size, query_sequence_length, hidden_size].
+                Attention Weights: Shape [batch_size, query_sequence_length, key_sequence_length, head_nums].
         """
         # If key_value is None, reuse query matrix Q.
         if key_value is None:

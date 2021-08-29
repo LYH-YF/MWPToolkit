@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 11:10:10
+# @File: group_attention.py
+
+
 import math
 import numpy as np
 import torch
@@ -99,7 +105,18 @@ def src_to_mask(src, vocab_dict):
     return np.array(batch_data_mask_tok)
 
 def attention(query, key, value, mask=None, dropout=None):
-    "Compute 'Scaled Dot Product Attention'"
+    """Compute Scaled Dot Product Attention
+    
+    Args:
+        query (torch.Tensor): shape [batch_size, sequence_length, hidden_size].
+        key (torch.Tensor): shape [batch_size, sequence_length, hidden_size].
+        value (torch.Tensor): shape [batch_size, sequence_length, hidden_size].
+        mask (torch.Tensor): group attention mask, shape [batch_size, 4, sequence_length, sequence_length].
+    
+    Returns:
+        tuple(torch.Tensor, torch.Tensor):
+
+    """
 
     d_k = query.size(-1)
     scores = torch.matmul(query, key.transpose(-2, -1)) \
@@ -125,6 +142,15 @@ class GroupAttention(nn.Module):
         #self.split_list=split_list
 
     def get_mask(self, src, split_list, pad=0):
+        """
+        Args:
+            src (torch.Tensor): source sequence, shape [batch_size, sequence_length].
+            split_list (list): group split index.
+            pad (int): pad token index.
+        
+        Returns:
+            torch.Tensor: group attention mask, shape [batch_size, 4, sequence_length, sequence_length].
+        """
         device = src.device
         mask = self.src_to_mask(src, split_list)
         self.src_mask_self = torch.from_numpy(group_mask(mask,"self",pad).astype('uint8')).unsqueeze(1)
@@ -136,9 +162,16 @@ class GroupAttention(nn.Module):
         return self.final.to(device)
 
     def forward(self, query, key, value, mask=None):
-        #print("query",query,"\nkey",key,"\nvalue",value)
-        "Implements Figure 2"
-
+        """
+        Args:
+            query (torch.Tensor): shape [batch_size, head_nums, sequence_length, dim_k].
+            key (torch.Tensor): shape [batch_size, head_nums, sequence_length, dim_k].
+            value (torch.Tensor): shape [batch_size, head_nums, sequence_length, dim_k].
+            mask (torch.Tensor): group attention mask, shape [batch_size, head_nums, sequence_length, sequence_length].
+        
+        Returns:
+            torch.Tensor: shape [batch_size, sequence_length, hidden_size].
+        """
         if mask is not None and len(mask.shape)<4:
             # Same mask applied to all h heads.
             mask = mask.unsqueeze(1)

@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 09:10:50
+# @File: seq_attention.py
+
+
 import math
 
 import torch
@@ -12,29 +18,32 @@ class SeqAttention(nn.Module):
 
         self.linear_out = nn.Linear(hidden_size*2, context_size)
 
-    def forward(self, output, encoder_outputs,mask):
-        r'''
+    def forward(self, inputs, encoder_outputs,mask):
+        """
         Args:
-            hidden: shape [batch_size, 1, hidden_size].
-            encoder_outputs: shape [batch_size, sequence_length, hidden_size].
-        '''
-        batch_size = output.size(0)
+            inputs (torch.Tensor): shape [batch_size, 1, hidden_size].
+            encoder_outputs (torch.Tensor): shape [batch_size, sequence_length, hidden_size].
+
+        Returns:
+            tuple(torch.Tensor, torch.Tensor):
+                output, shape [batch_size, 1, context_size].
+                attention, shape [batch_size, 1, sequence_length].
+        """
+        batch_size = inputs.size(0)
         seq_length = encoder_outputs.size(1)
         
-        attn = torch.bmm(output, encoder_outputs.transpose(1,2))
+        attn = torch.bmm(inputs, encoder_outputs.transpose(1,2))
         if mask is not None:
             attn.data.masked_fill_(mask, -float('inf'))
         attn = F.softmax(attn.view(-1, seq_length), dim=1).view(batch_size, -1, seq_length)
 
         mix = torch.bmm(attn, encoder_outputs)
 
-        combined = torch.cat((mix, output), dim=2)
+        combined = torch.cat((mix, inputs), dim=2)
 
         output = torch.tanh(self.linear_out(combined.view(-1, 2*self.hidden_size)))\
                             .view(batch_size, -1, self.context_size)
 
-        # output: (b, o, dim)
-        # attn  : (b, o, i)
         return output, attn
 
 class Attention(nn.Module):
@@ -55,15 +64,12 @@ class Attention(nn.Module):
         """ Generate variable embedding with attention.
 
         Args:
-            query (FloatTensor): Current hidden state, with size
-                (batch_size, dim_query).
-            value (FloatTensor): Sequence to be attented, with size
-                (batch_size, seq_len, dim_value).
+            query (FloatTensor): Current hidden state, with size [batch_size, dim_query].
+            value (FloatTensor): Sequence to be attented, with size [batch_size, seq_len, dim_value].
             lens (list of int): Lengths of values in a batch.
 
         Return:
-            FloatTensor: Calculated attention, with size
-                (batch_size, dim_value).
+            FloatTensor: Calculated attention, with size [batch_size, dim_value].
         """
         relevant_scores = self.relevant_score(value, query, lens)
         e_relevant_scores = torch.exp(relevant_scores)
@@ -92,15 +98,12 @@ class MaskedRelevantScore(nn.Module):
         """ Choose candidate from candidates.
 
         Args:
-            query (FloatTensor): Current hidden state, with size
-                (batch_size, dim_query).
-            value (FloatTensor): Sequence to be attented, with size
-                (batch_size, seq_len, dim_value).
+            query (torch.FloatTensor): Current hidden state, with size [batch_size, dim_query].
+            value (torch.FloatTensor): Sequence to be attented, with size [batch_size, seq_len, dim_value].
             lens (list of int): Lengths of values in a batch.
 
         Return:
-            tensor: Activation for each operand, with size
-                (batch, max([len(os) for os in operands])).
+            torch.Tensor: Activation for each operand, with size [batch, max([len(os) for os in operands])].
         """
         relevant_scores = self.relevant_score(value, query)
 
@@ -129,8 +132,8 @@ class RelevantScore(nn.Module):
     def forward(self, value, query):
         """
         Args:
-            value (FloatTensor): (batch, seq_len, dim_value).
-            query (FloatTensor): (batch, dim_query).
+            value (torch.FloatTensor): shape [batch, seq_len, dim_value].
+            query (torch.FloatTensor): shape [batch, dim_query].
         """
         u = self.tanh(self.dropout(
             self.lW1(value)

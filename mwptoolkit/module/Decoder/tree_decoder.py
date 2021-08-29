@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 11:11:31
+# @File: tree_decoder.py
+
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -96,125 +102,9 @@ class TreeDecoder(nn.Module):
         return num_score, op, current_node, current_context, embedding_weight
 
 
-# class  SARTreeDecoder(nn.Module):
-#     r'''
-#     Seq2tree decoder with  Semantically-Aligned Regularization
-#     '''
-#     def __init__(self, hidden_size, op_nums, generate_size, dropout=0.5):
-#         super(SARTreeDecoder, self).__init__()
-
-#         # Keep for reference
-#         self.hidden_size = hidden_size
-#         self.generate_size = generate_size
-#         self.op_nums = op_nums
-
-#         # Define layers
-#         self.dropout = nn.Dropout(dropout)
-
-#         self.embedding_weight = nn.Parameter(torch.randn(1, generate_size, hidden_size))
-
-#         # for Computational symbols and Generated numbers
-#         self.concat_l = nn.Linear(hidden_size, hidden_size)
-#         self.concat_r = nn.Linear(hidden_size * 2, hidden_size)
-#         self.concat_lg = nn.Linear(hidden_size, hidden_size)
-#         self.concat_rg = nn.Linear(hidden_size * 2, hidden_size)
-
-#         self.ops = nn.Linear(hidden_size * 2, op_nums)
-
-#         self.attn = TreeAttention(hidden_size, hidden_size)
-#         self.score = Score(hidden_size * 2, hidden_size)
-
-#         self.R1=nn.Linear(hidden_size,hidden_size)
-#         self.R2=nn.Linear(hidden_size,hidden_size)
-
-
-#     def forward(self, node_stacks, left_childs, encoder_outputs, num_pades, padding_hidden, seq_mask, nums_mask):
-#         current_embeddings = []
-
-#         for st in node_stacks:
-#             if len(st) == 0:
-#                 current_embeddings.append(padding_hidden)
-#             else:
-#                 current_node = st[-1]
-#                 current_embeddings.append(current_node.embedding)
-
-#         current_node_temp = []
-#         # sub_tree_flag=[]
-#         # sub_tree_emb=[]
-#         for l, c in zip(left_childs, current_embeddings):
-#             if l is None:
-#                 c = self.dropout(c)
-#                 g = torch.tanh(self.concat_l(c))
-#                 t = torch.sigmoid(self.concat_lg(c))
-#                 current_node_temp.append(g * t)
-#                 # sub_tree_flag.append(False)
-#                 # sub_tree_emb.append(padding_hidden)
-#             else:
-#                 ld = self.dropout(l)
-#                 c = self.dropout(c)
-#                 g = torch.tanh(self.concat_r(torch.cat((ld, c), 1)))
-#                 t = torch.sigmoid(self.concat_rg(torch.cat((ld, c), 1)))
-#                 node_emb=g * t
-#                 current_node_temp.append(node_emb)
-#                 # sub_tree_flag.append(True)
-#                 # sub_tree_emb.append(node_emb)
-
-#         current_node = torch.stack(current_node_temp)
-#         #sub_tree_emb = torch.stack(sub_tree_emb)
-
-#         current_embeddings = self.dropout(current_node)
-
-#         current_attn = self.attn(current_embeddings, encoder_outputs, seq_mask)
-#         current_context = current_attn.bmm(encoder_outputs)  # B x 1 x N
-#         #s_aligned_vector=self.attn(current_embeddings, encoder_outputs, seq_mask)
-
-#         # the information to get the current quantity
-#         batch_size = current_embeddings.size(0)
-#         # predict the output (this node corresponding to output(number or operator)) with PADE
-
-#         repeat_dims = [1] * self.embedding_weight.dim()
-#         repeat_dims[0] = batch_size
-#         embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
-#         embedding_weight = torch.cat((embedding_weight, num_pades), dim=1)  # B x O x N
-
-#         leaf_input = torch.cat((current_node, current_context), 2)
-#         leaf_input = leaf_input.squeeze(1)
-#         leaf_input = self.dropout(leaf_input)
-
-#         # p_leaf = nn.functional.softmax(self.is_leaf(leaf_input), 1)
-#         # max pooling the embedding_weight        
-#         embedding_weight_ = self.dropout(embedding_weight)
-#         num_score = self.score(leaf_input.unsqueeze(1), embedding_weight_, nums_mask)
-
-#         # num_score = nn.functional.softmax(num_score, 1)
-
-#         op = self.ops(leaf_input)
-
-#         # return p_leaf, num_score, op, current_embeddings, current_attn
-#         # s_aligned_vector=[]
-#         # mask = []
-#         # for idx,flag in enumerate(sub_tree_flag):
-#         #     if flag:
-#         #         s_aligned_vector.append(current_context[idx])
-#         #         mask.append(torch.ones(1,dtype=torch.float))
-#         #     else:
-#         #         s_aligned_vector.append(padding_hidden)
-#         #         mask.append(torch.zeros(1,dtype=torch.float))
-#         # s_aligned_vector = torch.stack(s_aligned_vector)
-#         # sub_tree_emb = torch.stack(sub_tree_emb)
-#         # mask = torch.stack(mask)
-#         # s_aligned_a,s_aligned_d=self.Semantically_Aligned_Regularization(sub_tree_emb,s_aligned_vector)
-
-#         return num_score, op, current_node, current_context, embedding_weight
-
-#     def Semantically_Aligned_Regularization(self,subtree_emb, s_aligned_vector):
-#         s_aligned_a=self.R2(torch.tanh(self.R1(s_aligned_vector)))
-#         s_aligned_d=self.R2(torch.tanh(self.R1(subtree_emb)))
-#         return s_aligned_a,s_aligned_d
-
 class SARTreeDecoder(nn.Module):
     r'''
-    Seq2tree decoder with  Semantically-Aligned Regularization
+    Seq2tree decoder with Semantically-Aligned Regularization
     '''
     def __init__(self, hidden_size, op_nums, generate_size, dropout=0.5):
         super(SARTreeDecoder, self).__init__()
@@ -245,6 +135,24 @@ class SARTreeDecoder(nn.Module):
 
 
     def forward(self, node_stacks, left_childs, encoder_outputs, num_pades, padding_hidden, seq_mask, nums_mask):
+        """
+        Args:
+            node_stacks (list): node stacks.
+            left_childs (list): representation of left childs.
+            encoder_outputs (torch.Tensor): output from encoder, shape [sequence_length, batch_size, hidden_size].
+            num_pades (torch.Tensor): number representation, shape [batch_size, number_size, hidden_size].
+            padding_hidden (torch.Tensor): padding hidden, shape [1,hidden_size].
+            seq_mask (torch.BoolTensor): sequence mask, shape [batch_size, sequence_length].
+            mask_nums (torch.BoolTensor): number mask, shape [batch_size, number_size]
+        
+        Returns:
+            tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor):
+                num_score, number score, shape [batch_size, number_size].
+                op, operator score, shape [batch_size, operator_size].
+                current_node, current node representation, shape [batch_size, 1, hidden_size].
+                current_context, current context representation, shape [batch_size, 1, hidden_size].
+                embedding_weight, embedding weight, shape [batch_size, number_size, hidden_size].
+        """
         current_embeddings = []
 
         for st in node_stacks:
@@ -255,16 +163,12 @@ class SARTreeDecoder(nn.Module):
                 current_embeddings.append(current_node.embedding)
 
         current_node_temp = []
-        # sub_tree_flag=[]
-        # sub_tree_emb=[]
         for l, c in zip(left_childs, current_embeddings):
             if l is None:
                 c = self.dropout(c)
                 g = torch.tanh(self.concat_l(c))
                 t = torch.sigmoid(self.concat_lg(c))
                 current_node_temp.append(g * t)
-                # sub_tree_flag.append(False)
-                # sub_tree_emb.append(padding_hidden)
             else:
                 ld = self.dropout(l)
                 c = self.dropout(c)
@@ -272,8 +176,6 @@ class SARTreeDecoder(nn.Module):
                 t = torch.sigmoid(self.concat_rg(torch.cat((ld, c), 1)))
                 node_emb=g * t
                 current_node_temp.append(node_emb)
-                # sub_tree_flag.append(True)
-                # sub_tree_emb.append(node_emb)
 
         current_node = torch.stack(current_node_temp)
         #sub_tree_emb = torch.stack(sub_tree_emb)
@@ -309,6 +211,16 @@ class SARTreeDecoder(nn.Module):
         return num_score, op, current_node, current_context, embedding_weight
 
     def Semantically_Aligned_Regularization(self,subtree_emb, s_aligned_vector):
+        """
+        Args:
+            subtree_emb (torch.Tensor):
+            s_aligned_vector (torch.Tensor):
+
+        Returns:
+            tuple(torch.Tensor, torch.Tensor):
+                s_aligned_a
+                s_aligned_d
+        """
         s_aligned_a=self.R2(torch.tanh(self.R1(s_aligned_vector)))
         s_aligned_d=self.R2(torch.tanh(self.R1(subtree_emb)))
         return s_aligned_a,s_aligned_d
@@ -653,7 +565,29 @@ class LSTMBasedTreeDecoder(nn.Module):
 
     def forward(self, parent_embed, left_embed, prev_embed, encoder_outputs, num_pades, padding_hidden,
                 seq_mask, nums_mask, hidden, tree_hidden):
-
+        """
+        Args:
+            parent_embed (list): parent embedding, length [batch_size], list of torch.Tensor with shape [1, 2 * hidden_size].
+            left_embed (list): left embedding, length [batch_size], list of torch.Tensor with shape [1, embedding_size].
+            prev_embed (list): previous embedding, length [batch_size], list of torch.Tensor with shape [1, embedding_size].
+            encoder_outputs (torch.Tensor): output from encoder, shape [batch_size, sequence_length, hidden_size].
+            num_pades (torch.Tensor): number representation, shape [batch_size, number_size, hidden_size].
+            padding_hidden (torch.Tensor): padding hidden, shape [1,hidden_size].
+            seq_mask (torch.BoolTensor): sequence mask, shape [batch_size, sequence_length].
+            mask_nums (torch.BoolTensor): number mask, shape [batch_size, number_size].
+            hidden (tuple(torch.Tensor, torch.Tensor)): hidden states, shape [batch_size, num_directions * hidden_size].
+            tree_hidden (tuple(torch.Tensor, torch.Tensor)): tree hidden states, shape [batch_size, num_directions * hidden_size].
+        
+        Returns:
+            tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor):
+                num_score, number score, shape [batch_size, number_size].
+                op, operator score, shape [batch_size, operator_size].
+                current_embeddings, current node representation, shape [batch_size, 1, num_directions * hidden_size].
+                current_context, current context representation, shape [batch_size, 1, num_directions * hidden_size].
+                embedding_weight, embedding weight, shape [batch_size, number_size, embedding_size].
+                hidden (tuple(torch.Tensor, torch.Tensor)): hidden states, shape [batch_size, num_directions * hidden_size].
+                tree_hidden (tuple(torch.Tensor, torch.Tensor)): tree hidden states, shape [batch_size, num_directions * hidden_size].
+        """
         parent_embed = torch.cat(parent_embed, dim=0)
         left_embed = torch.cat(left_embed, dim=0)
         prev_embed = torch.cat(prev_embed, dim=0)
@@ -672,24 +606,23 @@ class LSTMBasedTreeDecoder(nn.Module):
         tree_hidden_h, tree_hidden_c = self.tree_rnn(embedded, tree_hidden)
         tree_hidden = (tree_hidden_h, tree_hidden_c)
         output = self.linear(torch.cat((hidden_h, tree_hidden_h), dim=-1)).unsqueeze(1)
-        #output = hidden_h.unsqueeze(1)
-
-        #print('output', output.size(), encoder_outputs.size())
+        
         if encoder_outputs.size(0) != batch_size:
             repeat_dims = [1] * encoder_outputs.dim()
             repeat_dims[0] = batch_size
             encoder_outputs = encoder_outputs.repeat(*repeat_dims)
-        current_attn = self.attention(output, encoder_outputs, seq_mask)
+        
+        current_attn = self.attention(output.transpose(0,1), encoder_outputs.transpose(0,1), seq_mask)
         output = current_attn.bmm(encoder_outputs)
 
         repeat_dims = [1] * self.embedding_weight.dim()
         repeat_dims[0] = batch_size
         embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
-        #print('embedding_weight', embedding_weight.size(), num_pades.size(), self.generate_size, self.op_nums)
+        
         embedding_weight = torch.cat((embedding_weight, self.trans(num_pades)), dim=1)  # B x O x N
 
         embedding_weight_ = self.dropout(embedding_weight)
-        #print('output', output.size(), embedding_weight_.size())
+        
         num_score = self.score(output, embedding_weight_, nums_mask)
         op = self.ops(output.squeeze(1))
 

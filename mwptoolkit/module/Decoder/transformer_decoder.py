@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 11:11:19
+# @File: transformer_decoder.py
+
+
 import torch
 from torch import nn
 import torch.nn.functional as F
@@ -31,15 +37,15 @@ class TransformerDecoder(nn.Module):
         r""" Implement the decoding process step by step.
 
         Args:
-            x (Torch.Tensor): target sequence embedding, shape: [batch_size, sequence_length, embedding_size].
-            kv (Torch.Tensor): the cached history latent vector, shape: [batch_size, sequence_length, embedding_size], default: None.
-            self_padding_mask (Torch.Tensor): padding mask of target sequence, shape: [batch_size, sequence_length], default: None.
-            self_attn_mask (Torch.Tensor): diagonal attention mask matrix of target sequence, shape: [batch_size, sequence_length, sequence_length], default: None.
-            external_states (Torch.Tensor): output features of encoder, shape: [batch_size, sequence_length, feature_size], default: None.
-            external_padding_mask (Torch.Tensor): padding mask of source sequence, shape: [batch_size, sequence_length], default: None.
+            x (torch.Tensor): target sequence embedding, shape: [batch_size, sequence_length, embedding_size].
+            kv (torch.Tensor): the cached history latent vector, shape: [batch_size, sequence_length, embedding_size], default: None.
+            self_padding_mask (torch.Tensor): padding mask of target sequence, shape: [batch_size, sequence_length], default: None.
+            self_attn_mask (torch.Tensor): diagonal attention mask matrix of target sequence, shape: [batch_size, sequence_length, sequence_length], default: None.
+            external_states (torch.Tensor): output features of encoder, shape: [batch_size, sequence_length, feature_size], default: None.
+            external_padding_mask (torch.Tensor): padding mask of source sequence, shape: [batch_size, sequence_length], default: None.
 
         Returns:
-            Torch.Tensor: output features, shape: [batch_size, sequence_length, ffn_size].
+            torch.Tensor: output features, shape: [batch_size, sequence_length, ffn_size].
         """
         for idx, layer in enumerate(self.transformer_layers):
             x, _, _ = layer(x, kv, self_padding_mask, self_attn_mask, external_states, external_padding_mask)

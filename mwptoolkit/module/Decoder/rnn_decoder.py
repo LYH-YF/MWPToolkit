@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 11:11:07
+# @File: rnn_decoder.py
+
+
 import torch
 from torch import nn
 
@@ -34,10 +40,10 @@ class BasicRNNDecoder(nn.Module):
         r""" Initialize initial hidden states of RNN.
 
         Args:
-            input_embeddings (Torch.Tensor): input sequence embedding, shape: [batch_size, sequence_length, embedding_size].
+            input_embeddings (torch.Tensor): input sequence embedding, shape: [batch_size, sequence_length, embedding_size].
 
         Returns:
-            Torch.Tensor: the initial hidden states.
+            torch.Tensor: the initial hidden states.
         """
         batch_size = input_embeddings.size(0)
         device = input_embeddings.device
@@ -55,13 +61,13 @@ class BasicRNNDecoder(nn.Module):
         r""" Implement the decoding process.
 
         Args:
-            input_embeddings (Torch.Tensor): target sequence embedding, shape: [batch_size, sequence_length, embedding_size].
-            hidden_states (Torch.Tensor): initial hidden states, default: None.
+            input_embeddings (torch.Tensor): target sequence embedding, shape: [batch_size, sequence_length, embedding_size].
+            hidden_states (torch.Tensor): initial hidden states, default: None.
 
         Returns:
-            tuple:
-                - Torch.Tensor: output features, shape: [batch_size, sequence_length, num_directions * hidden_size].
-                - Torch.Tensor: hidden states, shape: [batch_size, num_layers * num_directions, hidden_size].
+            tuple(torch.Tensor, torch.Tensor):
+                output features, shape: [batch_size, sequence_length, num_directions * hidden_size].
+                hidden states, shape: [batch_size, num_layers * num_directions, hidden_size].
         """
         if hidden_states is None:
             hidden_states = self.init_hidden(input_embeddings)
@@ -105,10 +111,10 @@ class AttentionalRNNDecoder(nn.Module):
         r""" Initialize initial hidden states of RNN.
 
         Args:
-            input_embeddings (Torch.Tensor): input sequence embedding, shape: [batch_size, sequence_length, embedding_size].
+            input_embeddings (torch.Tensor): input sequence embedding, shape: [batch_size, sequence_length, embedding_size].
 
         Returns:
-            Torch.Tensor: the initial hidden states.
+            torch.Tensor: the initial hidden states.
         """
         batch_size = input_embeddings.size(0)
         device = input_embeddings.device
@@ -126,15 +132,15 @@ class AttentionalRNNDecoder(nn.Module):
         r""" Implement the attention-based decoding process.
 
         Args:
-            input_embeddings (Torch.Tensor): source sequence embedding, shape: [batch_size, sequence_length, embedding_size].
-            hidden_states (Torch.Tensor): initial hidden states, default: None.
-            encoder_outputs (Torch.Tensor): encoder output features, shape: [batch_size, sequence_length, hidden_size], default: None.
-            encoder_masks (Torch.Tensor): encoder state masks, shape: [batch_size, sequence_length], default: None.
+            input_embeddings (torch.Tensor): source sequence embedding, shape: [batch_size, sequence_length, embedding_size].
+            hidden_states (torch.Tensor): initial hidden states, default: None.
+            encoder_outputs (torch.Tensor): encoder output features, shape: [batch_size, sequence_length, hidden_size], default: None.
+            encoder_masks (torch.Tensor): encoder state masks, shape: [batch_size, sequence_length], default: None.
 
         Returns:
-            tuple:
-                - Torch.Tensor: output features, shape: [batch_size, sequence_length, num_directions * hidden_size].
-                - Torch.Tensor: hidden states, shape: [batch_size, num_layers * num_directions, hidden_size].
+            tuple(torch.Tensor, torch.Tensor):
+                output features, shape: [batch_size, sequence_length, num_directions * hidden_size].
+                hidden states, shape: [batch_size, num_layers * num_directions, hidden_size].
         """
         if hidden_states is None:
             hidden_states = self.init_hidden(input_embeddings)
@@ -225,27 +231,21 @@ class SalignedDecoder(nn.Module):
                 prev_op, prev_output, prev_state, number_emb, N_OPS):
         """
         Args:
-            context (FloatTensor): Encoded context, with size
-                (batch_size, text_len, dim_hidden).
-            text_len (LongTensor): Text length for each problem in the batch.
-            operands (list of FloatTensor): List of operands embeddings for
-                each problem in the batch. Each element in the list is of size
-                (n_operands, dim_hidden).
-            stacks (list of StackMachine): List of stack machines used for each
-                problem.
-            prev_op (LongTensor): Previous operation, with size (batch, 1).
-            prev_arg (LongTensor): Previous argument indices, with size
-                (batch, 1). Can be None for the first step.
-            prev_output (FloatTensor): Previous decoder RNN outputs, with size
-                (batch, dim_hidden). Can be None for the first step.
-            prev_state (FloatTensor): Previous decoder RNN state, with size
-                (batch, dim_hidden). Can be None for the first step.
+            context (torch.Tensor): Encoded context, with size [batch_size, text_len, dim_hidden].
+            text_len (torch.Tensor): Text length for each problem in the batch.
+            operands (list of torch.Tensor): List of operands embeddings for each problem in the batch. Each element in the list is of size [n_operands, dim_hidden].
+            stacks (list of StackMachine): List of stack machines used for each problem.
+            prev_op (torch.LongTensor): Previous operation, with size [batch, 1].
+            prev_arg (torch.LongTensor): Previous argument indices, with size [batch, 1]. Can be None for the first step.
+            prev_output (torch.Tensor): Previous decoder RNN outputs, with size [batch, dim_hidden]. Can be None for the first step.
+            prev_state (torch.Tensor): Previous decoder RNN state, with size [batch, dim_hidden]. Can be None for the first step.
 
         Returns:
-            op_logits (FloatTensor): Logits of operation selection.
-            arg_logits (FloatTensor): Logits of argument choosing.
-            outputs (FloatTensor): Outputs of decoder RNN.
-            state (FloatTensor): Hidden state of decoder RNN.
+            tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor):
+            op_logits: Logits of operation selection.
+            arg_logits: Logits of argument choosing.
+            outputs: Outputs of decoder RNN.
+            state: Hidden state of decoder RNN.
         """
         batch_size = context.size(0)
 

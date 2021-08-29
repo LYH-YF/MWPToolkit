@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 11:07:49
+# @File: ept_decoder.py
+
+
 from pathlib import Path
 from typing import Dict, Tuple, Union
 
@@ -27,13 +33,15 @@ class AveragePooling(nn.Module):
         self.dim = dim
         self.keepdim = keepdim
 
-    def forward(self, tensor: torch.Tensor) -> torch.Tensor:
+    def forward(self, tensor: torch.Tensor):# -> torch.Tensor:
         """
         Do average pooling over a sequence
 
-        :param torch.Tensor tensor: FloatTensor to be averaged
-        :rtype: torch.FloatTensor
-        :return: Averaged result
+        Args:
+            tensor (torch.Tensor): FloatTensor to be averaged.
+        
+        Returns:
+            torch.FloatTensor: Averaged result.
         """
         return tensor.mean(dim=self.dim, keepdim=self.keepdim)
 
@@ -56,13 +64,15 @@ class Squeeze(nn.Module):
         super().__init__()
         self.dim = dim
 
-    def forward(self, tensor: torch.Tensor) -> torch.Tensor:
+    def forward(self, tensor: torch.Tensor):# -> torch.Tensor:
         """
         Do squeezing
 
-        :param torch.Tensor tensor: FloatTensor to be squeezed
-        :rtype: torch.FloatTensor
-        :return: Squeezed result
+        Args:
+            tensor (torch.Tensor): FloatTensor to be squeezed.
+        
+        Returns: 
+            torch.FloatTensor: Squeezed result.
         """
         return tensor.squeeze(dim=self.dim)
 
@@ -70,28 +80,23 @@ class Squeeze(nn.Module):
         # Extra representation for repr()
         return 'dim={dim}'.format(**self.__dict__)
 
-def apply_module_dict(modules: nn.ModuleDict, encoded: torch.Tensor, **kwargs) -> torch.Tensor:
+def apply_module_dict(modules: nn.ModuleDict, encoded: torch.Tensor, **kwargs):# -> torch.Tensor:
     """
     Predict next entry using given module and equation.
 
-    :param nn.ModuleDict modules:
-        Dictionary of modules to be applied. Modules will be applied with ascending order of keys.
-        We expect three types of modules: nn.Linear, nn.LayerNorm and MultiheadAttention.
-    :param torch.Tensor encoded:
-        Float Tensor that represents encoded vectors.
-        Shape [B, T, H], where B = batch size, T = length of equation, and H = hidden dimension.
-    :keyword torch.Tensor key_value:
-        Float Tensor that represents key and value vectors when computing attention.
-        Shape [B, K, H], where K = length of keys
-    :keyword torch.Tensor key_ignorance_mask:
-        Bool Tensor whose True values at (b, k) make attention layer ignore k-th key on b-th item in the batch.
-        Shape [B, K].
-    :keyword attention_mask:
-        Bool Tensor whose True values at (t, k) make attention layer ignore k-th key when computing t-th query.
-        Shape [T, K].
-    :rtype: torch.Tensor
-    :return:
-        Float Tensor that indicates the scores under given information. Shape will be [B, T, ?]
+    Args:
+        modules (nn.ModuleDict): Dictionary of modules to be applied. Modules will be applied with ascending order of keys.
+            We expect three types of modules: nn.Linear, nn.LayerNorm and MultiheadAttention.
+        
+        encoded (torch.Tensor): Float Tensor that represents encoded vectors. Shape [batch_size, equation_length, hidden_size].
+        key_value (torch.Tensor): Float Tensor that represents key and value vectors when computing attention. Shape [batch_size, key_size, hidden_size].
+
+        key_ignorance_mask (torch.Tensor):Bool Tensor whose True values at (b, k) make attention layer ignore k-th key on b-th item in the batch. Shape [batch_size, key_size].
+        
+        attention_mask (torch.BoolTensor): Bool Tensor whose True values at (t, k) make attention layer ignore k-th key when computing t-th query. Shape [equation_length, key_size].
+    
+    Returns:
+        torch.Tensor: Float Tensor that indicates the scores under given information. Shape will be [batch_size, equation_length, ?]
     """
     output = encoded
     keys = sorted(modules.keys())
@@ -106,21 +111,23 @@ def apply_module_dict(modules: nn.ModuleDict, encoded: torch.Tensor, **kwargs) -
 
     return output
 
-def apply_across_dim(function, dim=1, shared_keys=None, **tensors) -> Dict[str, torch.Tensor]:
+def apply_across_dim(function, dim=1, shared_keys=None, **tensors):# -> Dict[str, torch.Tensor]:
     """
     Apply a function repeatedly for each tensor slice through the given dimension.
-    For example, we have tensor [B, X, S] and dim = 1, then we will concatenate the following matrices on dim=1.
+    For example, we have tensor [batch_size, X, input_sequence_length] and dim = 1, then we will concatenate the following matrices on dim=1.
     - function([:, 0, :])
     - function([:, 1, :])
     - ...
     - function([:, X-1, :]).
 
-    :param function: Function to apply.
-    :param int dim: Dimension through which we'll apply function. (1 by default)
-    :param set shared_keys: Set of keys representing tensors to be shared. (None by default)
-    :param torch.Tensor tensors: Keyword arguments of tensors to compute. Dimension should >= `dim`.
-    :rtype: Dict[str, torch.Tensor]
-    :return: Dictionary of tensors, whose keys are corresponding to the output of the function.
+    Args:
+        function (function): Function to apply.
+        dim (int): Dimension through which we'll apply function. (1 by default)
+        shared_keys (set): Set of keys representing tensors to be shared. (None by default)
+        tensors (torch.Tensor): Keyword arguments of tensors to compute. Dimension should >= `dim`.
+    
+    Returns:
+        Dict[str, torch.Tensor]: Dictionary of tensors, whose keys are corresponding to the output of the function.
     """
     # Separate shared and non-shared tensors
     shared_arguments = {}
@@ -165,15 +172,17 @@ def apply_across_dim(function, dim=1, shared_keys=None, **tensors) -> Dict[str, 
 
 
 def get_embedding_without_pad(embedding: Union[nn.Embedding, torch.Tensor],
-                              tokens: torch.Tensor, ignore_index=-1) -> torch.Tensor:
+                              tokens: torch.Tensor, ignore_index=-1):# -> torch.Tensor:
     """
     Get embedding vectors of given token tensor with ignored indices are zero-filled.
 
-    :param nn.Embedding embedding: An embedding instance
-    :param torch.Tensor tokens: A Long Tensor to build embedding vectors.
-    :param int ignore_index: Index to be ignored. `PAD_ID` by default.
-    :rtype: torch.Tensor
-    :return: Embedding vector of given token tensor.
+    Args:
+        embedding (nn.Embedding): An embedding instance
+        tokens (torch.Tensor): A Long Tensor to build embedding vectors.
+        ignore_index (int): Index to be ignored. `PAD_ID` by default.
+    
+    Returns:
+        torch.Tensor: Embedding vector of given token tensor.
     """
     # Clone tokens and fill masked values as zeros.
     tokens = tokens.clone()
@@ -198,13 +207,15 @@ class LogSoftmax(nn.LogSoftmax):
     LogSoftmax layer that can handle infinity values.
     """
 
-    def forward(self, tensor: torch.Tensor) -> torch.Tensor:
+    def forward(self, tensor: torch.Tensor):# -> torch.Tensor:
         """
         Compute log(softmax(tensor))
 
-        :param torch.Tensor tensor: FloatTensor whose log-softmax value will be computed
-        :rtype: torch.FloatTensor
-        :return: LogSoftmax result.
+        Args:
+            tensor torch.Tensor: FloatTensor whose log-softmax value will be computed
+        
+        Returns:
+            torch.FloatTensor: LogSoftmax result.
         """
         # Find maximum values
         max_t = tensor.max(dim=self.dim, keepdim=True).values
@@ -218,14 +229,17 @@ class LogSoftmax(nn.LogSoftmax):
 
         # Forward nn.LogSoftmax.
         return super().forward(tensor)
-def mask_forward(sz: int, diagonal: int = 1) -> torch.Tensor:
+
+def mask_forward(sz: int, diagonal: int = 1):# -> torch.Tensor:
     """
     Generate a mask that ignores future words. Each (i, j)-entry will be True if j >= i + diagonal
 
-    :param int sz: Length of the sequence.
-    :param int diagonal: Amount of shift for diagonal entries.
-    :rtype: torch.Tensor
-    :return: Mask tensor with shape [sz, sz].
+    Args:
+        sz (int): Length of the sequence.
+        diagonal (int): Amount of shift for diagonal entries.
+    
+    Returns: 
+        torch.Tensor: Mask tensor with shape [sz, sz].
     """
     return torch.ones(sz, sz, dtype=torch.bool, requires_grad=False).triu(diagonal=diagonal).contiguous()
 
@@ -256,10 +270,10 @@ class DecoderModel(nn.Module):
 
         self.training = True
 
-    def init_factor(self) -> float:
+    def init_factor(self):# -> float:
         """
-        :rtype: float
-        :return: Standard deviation of normal distribution that will be used for initializing weights.
+        Returns:
+            float: Standard deviation of normal distribution that will be used for initializing weights.
         """
         return 0.02
 
@@ -325,14 +339,14 @@ class DecoderModel(nn.Module):
 
     def forward(self, text: torch.Tensor = None, text_pad: torch.Tensor = None, text_num: torch.Tensor = None,
                         text_numpad:torch.Tensor = None, equation: torch.Tensor = None, beam: int = 1, max_len: int = 128,
-                function_arities: Dict[int, int] = None) -> Dict[str, torch.Tensor]:
+                function_arities: Dict[int, int] = None):# -> Dict[str, torch.Tensor]:
         """
         Forward computation of decoder model
 
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of tensors
-            - If this model is currently on training phase, values will be accuracy or loss tensors
-            - Otherwise, values will be tensors representing predicted distribution of output
+        Returns:
+            Dict[str, torch.Tensor]: Dictionary of tensors.
+                If this model is currently on training phase, values will be accuracy or loss tensors
+                Otherwise, values will be tensors representing predicted distribution of output
         """
 
         if equation is not None:
@@ -645,21 +659,16 @@ class ExpressionDecoderModel(DecoderModel):
         """
         raise NotImplementedError()
 
-    def _build_decoder_input(self, ids: torch.Tensor, nums: torch.Tensor) -> torch.Tensor:
+    def _build_decoder_input(self, ids: torch.Tensor, nums: torch.Tensor):# -> torch.Tensor:
         """
-        Compute input of the decoder, i.e. Equation 1 in the paper.
+        Compute input of the decoder
 
-        :param torch.Tensor ids:
-            LongTensor containing index-type information of an operator and its operands
-            (This corresponds to f_i and a_ij in the paper)
-            Shape: [B, T, 1+2A], where B = batch size, T = length of expression sequence, and A = maximum arity.
-        :param torch.Tensor nums:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape: [B, N, H],
-            where N = maximum number of written numbers in the batch, and H = dimension of hidden state.
-        :rtype: torch.Tensor
-        :return: A FloatTensor representing input vector v_i in Equation 1. Shape [B, T, H].
+        Args:
+            ids (torch.Tensor): LongTensor containing index-type information of an operator and its operands. Shape: [batch_size, equation_length, 1+2*arity_size]
+            nums (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape: [batch_size, num_size, hidden_size].
+        
+        Returns:
+            torch.Tensor: A FloatTensor representing input vector. Shape [batch_size, equation_length, hidden_size].
         """
         # Operator embedding: [B, T, H] (Equation 2)
         # - compute E_f first
@@ -684,24 +693,18 @@ class ExpressionDecoderModel(DecoderModel):
         return self.embed_to_hidden(operator_operands)
 
     def _build_decoder_context(self, embedding: torch.Tensor, embedding_pad: torch.Tensor = None,
-                               text: torch.Tensor = None, text_pad: torch.Tensor = None) -> torch.Tensor:
+                               text: torch.Tensor = None, text_pad: torch.Tensor = None):# -> torch.Tensor:
         """
-        Compute decoder's hidden state vectors, i.e. d_i in the paper
+        Compute decoder's hidden state vectors
 
-        :param torch.Tensor embedding:
-            FloatTensor containing input vectors v_i. Shape [B, T, H],
-            where B = batch size, T = length of decoding sequence, and H = dimension of input embedding
-        :param torch.Tensor embedding_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the decoding sequence
-            Shape [B, T]
-        :param torch.Tensor text:
-            FloatTensor containing encoder's hidden states e_i. Shape [B, S, H],
-            where S = length of input sequence.
-        :param torch.Tensor text_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the input sequence
-            Shape [B, S]
-        :rtype: torch.Tensor
-        :return: A FloatTensor of shape [B, T, H], which contains decoder's hidden states.
+        Args:
+            embedding (torch.Tensor): FloatTensor containing input vectors. Shape [batch_size, equation_length, hidden_size],
+            embedding_pad (torch.Tensor):BoolTensor, whose values are True if corresponding position is PAD in the decoding sequence, Shape [batch_size, equation_length]
+            text (torch.Tensor): FloatTensor containing encoder's hidden states. Shape [batch_size, input_sequence_length, hidden_size].
+            text_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the input sequence. Shape [batch_size, input_sequence_length]
+        
+        Returns: 
+            torch.Tensor: A FloatTensor of shape [batch_size, equation_length, hidden_size], which contains decoder's hidden states.
         """
         # Build forward mask
         mask = mask_forward(embedding.shape[1]).to(embedding.device)
@@ -714,31 +717,22 @@ class ExpressionDecoderModel(DecoderModel):
         return output
 
     def _forward_single(self, text: torch.Tensor = None, text_pad: torch.Tensor = None, text_num: torch.Tensor = None,
-                        text_numpad:torch.Tensor = None, equation: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+                        text_numpad:torch.Tensor = None, equation: torch.Tensor = None):# -> Dict[str, torch.Tensor]:
         """
         Forward computation of a single beam
 
-        :param torch.Tensor text:
-            FloatTensor containing encoder's hidden states e_i. Shape [B, S, H],
-            where B = batch size, T = length of input sequence, and H = dimension of input embedding.
-        :param torch.Tensor text_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the input sequence
-            Shape [B, S]
-        :param torch.Tensor text_num:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape: [B, N, H], where N = maximum number of written numbers in the batch.
-        :param torch.Tensor equation:
-            LongTensor containing index-type information of an operator and its operands
-            (This corresponds to f_i and a_ij in the paper)
-            Shape: [B, T, 1+2A], where B = batch size, T = length of expression sequence, and A = maximum arity.
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of followings
-            - 'operator': Log probability of next operators (i.e. Equation 6 without argmax).
-                FloatTensor with shape [B, T, F], where F = size of operator vocabulary.
-            - '_out': Decoder's hidden states. FloatTensor with shape [B, T, H]
-            - '_not_usable': Indicating positions that corresponding output values are not usable in the operands.
-                BoolTensor with Shape [B, T].
+        Args:
+            text (torch.Tensor): FloatTensor containing encoder's hidden states. Shape [batch_size, input_sequence_length, hidden_size].
+            text_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the input sequence. Shape [batch_size, input_sequence_length]
+            text_num (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape: [batch_size, num_size, hidden_size].
+            equation (torch.Tensor): LongTensor containing index-type information of an operator and its operands.
+                Shape: [batch_size, equation_length, 1+2*arity_size].
+        
+        Returns:
+            Dict[str, torch.Tensor]: Dictionary of followings
+                'operator': Log probability of next operators. FloatTensor with shape [batch_size, equation_length, operator_size].
+                '_out': Decoder's hidden states. FloatTensor with shape [batch_size, equation_length, hidden_size].
+                '_not_usable': Indicating positions that corresponding output values are not usable in the operands. BoolTensor with Shape [batch_size, equation_length].
         """
         # Embedding: [B, T, H]
         operator_ids = equation.select(dim=2, index=0)
@@ -805,24 +799,17 @@ class ExpressionTransformer(ExpressionDecoderModel):
         """
         return 'gen'
 
-    def _build_operand_embed(self, ids: torch.Tensor, mem_pos: torch.Tensor, nums: torch.Tensor) -> torch.Tensor:
+    def _build_operand_embed(self, ids: torch.Tensor, mem_pos: torch.Tensor, nums: torch.Tensor):# -> torch.Tensor:
         """
-        Build operand embedding a_ij in the paper.
+        Build operand embedding.
 
-        :param torch.Tensor ids:
-            LongTensor containing source-content information of operands. (This corresponds to a_ij in the paper)
-            Shape [B, T, 1+2A], where B = batch size, T = length of expression sequence, and A = maximum arity.
-        :param torch.Tensor mem_pos:
-            FloatTensor containing positional encoding used so far. (i.e. PE(.) in the paper)
-            Shape [B, T, H], where H = dimension of hidden state
-        :param torch.Tensor nums:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape [B, N, H], where N = Maximum number of written numbers in the batch.
-        :rtype: torch.Tensor
-        :return:
-            A FloatTensor representing operand embedding vector a_ij in Equation 3, 4, 5
-            Shape [B, T, A, H]
+        Args:
+            ids (torch.Tensor): LongTensor containing source-content information of operands. Shape [batch_size, equation_length, 1+2*arity_size].
+            mem_pos (torch.Tensor): FloatTensor containing positional encoding used so far. Shape [batch_size, equation_length, hidden_size], where hidden_size = dimension of hidden state
+            nums (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape [batch_size, num_size, hidden_size].
+        
+        Returns: 
+            torch.Tensor: A FloatTensor representing operand embedding vector. Shape [batch_size, equation_length, arity_size, hidden_size]
         """
         # Compute operand embedding (Equation 4 in the paper and 3-rd and 4-th Equation in the appendix)
         # Adding u vectors will be done in _build_decoder_input.
@@ -831,33 +818,21 @@ class ExpressionTransformer(ExpressionDecoderModel):
 
     def _forward_single(self, text: torch.Tensor = None, text_pad: torch.Tensor = None,
                         text_num: torch.Tensor = None, text_numpad: torch.Tensor = None,
-                        equation: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+                        equation: torch.Tensor = None):# -> Dict[str, torch.Tensor]:
         """
         Forward computation of a single beam
 
-        :param torch.Tensor text:
-            FloatTensor containing encoder's hidden states e_i. Shape [B, S, H],
-            where B = batch size, T = length of input sequence, and H = dimension of input embedding.
-        :param torch.Tensor text_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the input sequence
-            Shape [B, S]
-        :param torch.Tensor text_num:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape: [B, N, H], where N = maximum number of written numbers in the batch.
-        :param torch.Tensor text_numpad:
-            BoolTensor, whose values are True if corresponding position is PAD in the number sequence
-            Shape [B, N]
-        :param torch.Tensor equation:
-            LongTensor containing index-type information of an operator and its operands
-            (This corresponds to f_i and a_ij in the paper)
-            Shape: [B, T, 1+2A], where B = batch size, T = length of expression sequence, and A = maximum arity.
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of followings
-            - 'operator': Log probability of next operators (i.e. Equation 6 without argmax).
-                FloatTensor with shape [B, T, F], where F = size of operator vocabulary.
-            - 'operand_J': Log probability of next J-th operands (i.e. Equation 10 without argmax).
-                FloatTensor with shape [B, T, V], where V = size of operand vocabulary.
+        Args:
+            text (torch.Tensor): FloatTensor containing encoder's hidden states. Shape [batch_size, input_sequence_length, hidden_size].
+            text_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the input sequence. Shape [batch_size, input_sequence_length]
+            text_num (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text.Shape: [batch_size, num_size, hidden_size].
+            text_numpad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the number sequence. Shape [batch_size, num_size]
+            equation (torch.Tensor): LongTensor containing index-type information of an operator and its operands. Shape: [batch_size, equation_length, 1+2*arity_size].
+        
+        Returns:
+            Dict[str, torch.Tensor]: Dictionary of followings
+                'operator': Log probability of next operators. FloatTensor with shape [batch_size, equation_length, operator_size], where operator_size = size of operator vocabulary.
+                'operand_J': Log probability of next J-th operands.FloatTensor with shape [batch_size, equation_length, operand_size].
         """
         # Retrieve decoder's hidden states
         # Dictionary will have 'func', '_out', and '_not_usable'
@@ -898,16 +873,14 @@ class ExpressionTransformer(ExpressionDecoderModel):
             result['operand_%s' % j] = self.softmax(word_output)
 
         return result
-    def _build_target_dict(self, equation, num_pad=None) -> Dict[str, torch.Tensor]:
+    def _build_target_dict(self, equation, num_pad=None):# -> Dict[str, torch.Tensor]:
         """
         Build dictionary of target matrices.
 
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of target values
-            - 'operator': Index of next operators (i.e. Equation 6).
-                LongTensor with shape [B, T].
-            - 'operand_J': Index of next J-th operands (i.e. Equation 10).
-                LongTensor with shape [B, T].
+        Returns:
+            Dict[str, torch.Tensor]: Dictionary of target values
+                'operator': Index of next operators. LongTensor with shape [batch_size, equation_length].
+                'operand_J': Index of next J-th operands. LongTensor with shape [batch_size, equation_length].
         """
         # Build targets
 
@@ -954,24 +927,17 @@ class ExpressionPointerTransformer(ExpressionDecoderModel):
         """
         return "ptr"
 
-    def _build_operand_embed(self, ids: torch.Tensor, mem_pos: torch.Tensor, nums: torch.Tensor) -> torch.Tensor:
+    def _build_operand_embed(self, ids: torch.Tensor, mem_pos: torch.Tensor, nums: torch.Tensor):# -> torch.Tensor:
         """
-        Build operand embedding a_ij in the paper.
+        Build operand embedding.
 
-        :param torch.Tensor ids:
-            LongTensor containing source-content information of operands. (This corresponds to a_ij in the paper)
-            Shape [B, T, 1+2A], where B = batch size, T = length of expression sequence, and A = maximum arity.
-        :param torch.Tensor mem_pos:
-            FloatTensor containing positional encoding used so far. (i.e. PE(.) in the paper)
-            Shape [B, T, H], where H = dimension of hidden state
-        :param torch.Tensor nums:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape [B, N, H], where N = Maximum number of written numbers in the batch.
-        :rtype: torch.Tensor
-        :return:
-            A FloatTensor representing operand embedding vector a_ij in Equation 3, 4, 5
-            Shape [B, T, A, H]
+        Args: 
+            ids (torch.Tensor): LongTensor containing source-content information of operands. Shape [batch_size, equation_length, 1+2*arity_size].
+            mem_pos (torch.Tensor): FloatTensor containing positional encoding used so far. Shape [batch_size, equation_length, hidden_size].
+            nums (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape [batch_size, num_size, hidden_size].
+        
+        Returns: 
+            torch.Tensor: A FloatTensor representing operand embedding vector. Shape [batch_size, equation_length, arity_size, hidden_size]
         """
         # Tensor ids has 1 vocabulary index of operator and A pair of (source of operand, vocabulary index of operand)
         # Source of operand (slice 1::2), shape [B, T, A]
@@ -994,30 +960,21 @@ class ExpressionPointerTransformer(ExpressionDecoderModel):
         return operand
 
     def _build_attention_keys(self, num: torch.Tensor, mem: torch.Tensor, num_pad: torch.Tensor = None,
-                              mem_pad: torch.Tensor = None) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+                              mem_pad: torch.Tensor = None):# -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """
-        Generate Attention Keys by concatenating all items in Equation 7.
+        Generate Attention Keys by concatenating all items.
 
-        :param torch.Tensor num:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape [B, N, H],
-            where B = Batch size, N = Maximum number of written numbers in the batch, and H = dimension of hidden states
-        :param torch.Tensor mem:
-            FloatTensor containing decoder's hidden states corresponding to prior expression outputs.
-            (i.e. d_i in the paper)
-            Shape [B, T, H], where T = length of prior expression outputs
-        :param torch.Tensor num_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the number sequence
-            Shape [B, N]
-        :param torch.Tensor mem_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the target expression sequence
-            Shape [B, T]
-        :rtype: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]
-        :return: Triple of Tensors
-            - [0] Keys (A_ij in the paper). Shape [B, C+N+T, H], where C = size of constant vocabulary.
-            - [1] Mask for positions that should be ignored in keys. Shape [B, C+N+T]
-            - [2] Forward Attention Mask to ignore future tokens in the expression sequence. Shape [T, C+N+T]
+        Args: 
+            num (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape [batch_size, num_size, hidden_size].
+            mem (torch.Tensor): FloatTensor containing decoder's hidden states corresponding to prior expression outputs. Shape [batch_size, equation_length, hidden_size].
+            num_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the number sequence. Shape [batch_size, num_size]
+            mem_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the target expression sequence. Shape [batch_size, equation_length]
+        
+        Returns: 
+            Tuple[torch.Tensor, torch.Tensor, torch.Tensor]: Triple of Tensors
+                - [0] Keys (A_ij in the paper). Shape [batch_size, constant_size+num_size+equation_length, hidden_size], where C = size of constant vocabulary.
+                - [1] Mask for positions that should be ignored in keys. Shape [batch_size, C+num_size+equation_length]
+                - [2] Forward Attention Mask to ignore future tokens in the expression sequence. Shape [equation_length, C+num_size+equation_length]
         """
         # Retrieve size information
         batch_sz = num.shape[0]
@@ -1045,33 +1002,21 @@ class ExpressionPointerTransformer(ExpressionDecoderModel):
 
     def _forward_single(self, text: torch.Tensor = None, text_pad: torch.Tensor = None,
                         text_num: torch.Tensor = None, text_numpad: torch.Tensor = None,
-                        equation: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+                        equation: torch.Tensor = None):# -> Dict[str, torch.Tensor]:
         """
         Forward computation of a single beam
 
-        :param torch.Tensor text:
-            FloatTensor containing encoder's hidden states e_i. Shape [B, S, H],
-            where B = batch size, T = length of input sequence, and H = dimension of input embedding.
-        :param torch.Tensor text_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the input sequence
-            Shape [B, S]
-        :param torch.Tensor text_num:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape: [B, N, H], where N = maximum number of written numbers in the batch.
-        :param torch.Tensor text_numpad:
-            BoolTensor, whose values are True if corresponding position is PAD in the number sequence
-            Shape [B, N]
-        :param torch.Tensor equation:
-            LongTensor containing index-type information of an operator and its operands
-            (This corresponds to f_i and a_ij in the paper)
-            Shape: [B, T, 1+2A], where B = batch size, T = length of expression sequence, and A = maximum arity.
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of followings
-            - 'operator': Log probability of next operators (i.e. Equation 6 without argmax).
-                FloatTensor with shape [B, T, F], where F = size of operator vocabulary.
-            - 'operand_J': Log probability of next J-th operands (i.e. Equation 10 without argmax).
-                FloatTensor with shape [B, T, V], where V = size of operand vocabulary.
+        Args: 
+            text (torch.Tensor): FloatTensor containing encoder's hidden states. Shape [batch_size, input_sequence_length, hidden_size].
+            text_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the input sequence. Shape [batch_size, input_sequence_length]
+            text_num (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape: [batch_size, num_size, hidden_size].
+            text_numpad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the number sequence. Shape [batch_size, num_size]
+            equation (torch.Tensor): LongTensor containing index-type information of an operator and its operands. Shape: [batch_size, equation_length, 1+2*arity_size].
+        
+        Returns: 
+            Dict[str, torch.Tensor]: Dictionary of followings
+                'operator': Log probability of next operators.FloatTensor with shape [batch_size, equation_length, operator_size].
+                'operand_J': Log probability of next J-th operands. FloatTensor with shape [batch_size, equation_length, operand_size].
         """
         # Retrieve decoder's hidden states
         # Dictionary will have 'func', '_out', and '_not_usable'
@@ -1095,16 +1040,14 @@ class ExpressionPointerTransformer(ExpressionDecoderModel):
 
         return result
 
-    def _build_target_dict(self, equation, num_pad=None) -> Dict[str, torch.Tensor]:
+    def _build_target_dict(self, equation, num_pad=None):# -> Dict[str, torch.Tensor]:
         """
         Build dictionary of target matrices.
 
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of target values
-            - 'operator': Index of next operators (i.e. Equation 6).
-                LongTensor with shape [B, T].
-            - 'operand_J': Index of next J-th operands (i.e. Equation 10).
-                LongTensor with shape [B, T].
+        Returns: 
+            Dict[str, torch.Tensor]: Dictionary of target values
+                'operator': Index of next operators. LongTensor with shape [batch_size, equation_length].
+                'operand_J': Index of next J-th operands. LongTensor with shape [batch_size, equation_length].
         """
         # Build targets
 
@@ -1163,38 +1106,29 @@ class OpDecoderModel(DecoderModel):
         # Weight will be initialized by sub-classes
 
 
-    def _build_word_embed(self, ids: torch.Tensor, nums: torch.Tensor) -> torch.Tensor:
+    def _build_word_embed(self, ids: torch.Tensor, nums: torch.Tensor):# -> torch.Tensor:
         """
         Build Op embedding
 
-        :param torch.Tensor ids:
-            LongTensor containing source-content information of operands. (This corresponds to t_i in the Appendix)
-            Shape [B, T], where B = batch size, and T = length of expression sequence.
-        :param torch.Tensor nums:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape [B, N, H], where N = Maximum number of written numbers in the batch.
-        :rtype: torch.Tensor
-        :return:
-            A FloatTensor representing op embedding vector v_i in the 1st equation of the Appendix (before applying LN)
-            Shape [B, T, H]
+        Args:
+            ids (torch.Tensor): LongTensor containing source-content information of operands. Shape [batch_size, equation_length].
+            nums (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape [batch_size, num_size, hidden_size].
+        
+        Returns: 
+            torch.Tensor: A FloatTensor representing op embedding vector. Shape [batch_size, equation_length, hidden_size]
         """
         raise NotImplementedError()
 
-    def _build_decoder_input(self, ids: torch.Tensor, nums: torch.Tensor) -> torch.Tensor:
+    def _build_decoder_input(self, ids: torch.Tensor, nums: torch.Tensor):# -> torch.Tensor:
         """
-        Compute input of the decoder, i.e. the 1st equation in the Appendix.
+        Compute input of the decoder.
 
-        :param torch.Tensor ids:
-            LongTensor containing op tokens (This corresponds to t_i in the appendix)
-            Shape: [B, T], where B = batch size and T = length of expression sequence.
-        :param torch.Tensor nums:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape: [B, N, H],
-            where N = maximum number of written numbers in the batch, and H = dimension of hidden state.
-        :rtype: torch.Tensor
-        :return: A FloatTensor representing input vector v_i in the 1st equation in the Appendix. Shape [B, T, H].
+        Args:
+            ids (torch.Tensor): LongTensor containing op tokens. Shape: [batch_size, equation_length]
+            nums (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape: [batch_size, num_size, hidden_size],
+        
+        Returns: 
+            torch.Tensor: A FloatTensor representing input vector. Shape [batch_size, equation_length, hidden_size].
         """
         # Positions: [T, E]
         pos = self.pos_embedding(ids.shape[1])
@@ -1204,24 +1138,18 @@ class OpDecoderModel(DecoderModel):
         return self.word_hidden_norm(word * self.pos_factor + pos.unsqueeze(0))
 
     def _build_decoder_context(self, embedding: torch.Tensor, embedding_pad: torch.Tensor = None,
-                               text: torch.Tensor = None, text_pad: torch.Tensor = None) -> torch.Tensor:
+                               text: torch.Tensor = None, text_pad: torch.Tensor = None):# -> torch.Tensor:
         """
-        Compute decoder's hidden state vectors, i.e. d_i in the paper
+        Compute decoder's hidden state vectors.
 
-        :param torch.Tensor embedding:
-            FloatTensor containing input vectors v_i. Shape [B, T, H],
-            where B = batch size, T = length of decoding sequence, and H = dimension of input embedding
-        :param torch.Tensor embedding_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the decoding sequence
-            Shape [B, T]
-        :param torch.Tensor text:
-            FloatTensor containing encoder's hidden states e_i. Shape [B, S, H],
-            where S = length of input sequence.
-        :param torch.Tensor text_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the input sequence
-            Shape [B, S]
-        :rtype: torch.Tensor
-        :return: A FloatTensor of shape [B, T, H], which contains decoder's hidden states.
+        Args: 
+            embedding (torch.Tensor): FloatTensor containing input vectors. Shape [batch_size, decoding_sequence, input_embedding_size].
+            embedding_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the decoding sequence. Shape [batch_size, decoding_sequence]
+            text (torch.Tensor): FloatTensor containing encoder's hidden states. Shape [batch_size, input_sequence_length, input_embedding_size].
+            text_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the input sequence. Shape [batch_size, input_sequence_length]
+        
+        Returns: 
+        torch.Tensor: A FloatTensor of shape [batch_size, decoding_sequence, hidden_size], which contains decoder's hidden states.
         """
         # Build forward mask
         mask = mask_forward(embedding.shape[1]).to(embedding.device)
@@ -1234,27 +1162,19 @@ class OpDecoderModel(DecoderModel):
         return output
 
     def _forward_single(self, text: torch.Tensor = None, text_pad: torch.Tensor = None, text_num: torch.Tensor = None,
-                        text_numpad:torch.Tensor = None, equation: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+                        text_numpad:torch.Tensor = None, equation: torch.Tensor = None):# -> Dict[str, torch.Tensor]:
         """
         Forward computation of a single beam
 
-        :param torch.Tensor text:
-            FloatTensor containing encoder's hidden states e_i. Shape [B, S, H],
-            where B = batch size, T = length of input sequence, and H = dimension of input embedding.
-        :param torch.Tensor text_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the input sequence
-            Shape [B, S]
-        :param torch.Tensor text_num:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape: [B, N, H], where N = maximum number of written numbers in the batch.
-        :param torch.Tensor equation:
-            LongTensor containing index-type information of an operator and its operands
-            (This corresponds to f_i and a_ij in the paper)
-            Shape: [B, T, 1+2A], where B = batch size, T = length of expression sequence, and A = maximum arity.
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of followings
-            - '_out': Decoder's hidden states. FloatTensor with shape [B, T, H]
+        Args:
+            text (torch.Tensor): FloatTensor containing encoder's hidden states e_i. Shape [batch_size, input_sequence_length, input_embedding_size].
+            text_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the input sequence. Shape [batch_size, input_sequence_length]
+            text_num (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape: [batch_size, num_size, input_embedding_size].
+            equation (torch.Tensor): LongTensor containing index-type information of an operator and its operands. Shape: [batch_size, equation_length, 1+2*arity_size].
+        
+        Returns: 
+            Dict[str, torch.Tensor]: Dictionary of followings
+                '_out': Decoder's hidden states. FloatTensor with shape [batch_size, equation_length, hidden_size].
         """
         # Embedding: [B, T, H]
         output = self._build_decoder_input(ids=equation, nums=text_num.relu())
@@ -1293,47 +1213,33 @@ class VanillaOpTransformer(OpDecoderModel):
         """
         return 'vallina'
 
-    def _build_word_embed(self, ids: torch.Tensor, nums: torch.Tensor) -> torch.Tensor:
+    def _build_word_embed(self, ids: torch.Tensor, nums: torch.Tensor):# -> torch.Tensor:
         """
         Build Op embedding
 
-        :param torch.Tensor ids:
-            LongTensor containing source-content information of operands. (This corresponds to t_i in the Appendix)
-            Shape [B, T], where B = batch size, and T = length of expression sequence.
-        :param torch.Tensor nums:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape [B, N, H], where N = Maximum number of written numbers in the batch.
-        :rtype: torch.Tensor
-        :return:
-            A FloatTensor representing op embedding vector v_i in the 1st equation of the Appendix (before applying LN)
-            Shape [B, T, H]
+        Args:
+            ids (torch.Tensor): LongTensor containing source-content information of operands. Shape [batch_size, equation_length].
+            nums (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape [batch_size, num_size, hidden_size].
+        
+        Returns: 
+            torch.Tensor:A FloatTensor representing op embedding vector. Shape [batch_size, equation_length, hidden_size].
         """
         return get_embedding_without_pad(self.word_embedding, ids)
 
     def _forward_single(self, text: torch.Tensor = None, text_pad: torch.Tensor = None, text_num: torch.Tensor = None,
-                        text_numpad: torch.Tensor = None, equation: torch.Tensor = None) -> Dict[str, torch.Tensor]:
+                        text_numpad: torch.Tensor = None, equation: torch.Tensor = None):# -> Dict[str, torch.Tensor]:
         """
         Forward computation of a single beam
 
-        :param torch.Tensor text:
-            FloatTensor containing encoder's hidden states e_i. Shape [B, S, H],
-            where B = batch size, T = length of input sequence, and H = dimension of input embedding.
-        :param torch.Tensor text_pad:
-            BoolTensor, whose values are True if corresponding position is PAD in the input sequence
-            Shape [B, S]
-        :param torch.Tensor text_num:
-            FloatTensor containing encoder's hidden states corresponding to numbers in the text.
-            (i.e. e_{a_ij} in the paper)
-            Shape: [B, N, H], where N = maximum number of written numbers in the batch.
-        :param torch.Tensor equation:
-            LongTensor containing index-type information of an operator and its operands
-            (This corresponds to f_i and a_ij in the paper)
-            Shape: [B, T], where B = batch size and T = length of expression sequence.
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of followings
-            - 'op': Log probability of next op tokens (i.e. the 2nd equation in Appendix without argmax).
-                FloatTensor with shape [B, T, V], where V = size of Op vocabulary.
+        Args:
+            text (torch.Tensor): FloatTensor containing encoder's hidden states. Shape [batch_size, input_sequence_length, input_embedding_size].
+            text_pad (torch.Tensor): BoolTensor, whose values are True if corresponding position is PAD in the input sequence. Shape [batch_size, input_sequence_length]
+            text_num (torch.Tensor): FloatTensor containing encoder's hidden states corresponding to numbers in the text. Shape: [batch_size, num_size, input_embedding_size].
+            equation (torch.Tensor): LongTensor containing index-type information of an operator and its operands. Shape: [batch_size, equation_length].
+        
+        Returns: 
+            Dict[str, torch.Tensor]: Dictionary of followings
+                'op': Log probability of next op tokens. FloatTensor with shape [batch_size, equation_length, operator_size].
         """
         # Retrieve decoder's hidden states
         # Dictionary will have '_out'
@@ -1348,13 +1254,13 @@ class VanillaOpTransformer(OpDecoderModel):
         result['op'] = self.softmax(op_out)
 
         return result
-    def _build_target_dict(self, equation, num_pad=None) -> Dict[str, torch.Tensor]:
+    def _build_target_dict(self, equation, num_pad=None):# -> Dict[str, torch.Tensor]:
         """
         Build dictionary of target matrices.
 
-        :rtype: Dict[str, torch.Tensor]
-        :return: Dictionary of target values
-            - 'op': Index of next op tokens. LongTensor with shape [B, T].
+        Returns: 
+            Dict[str, torch.Tensor]: Dictionary of target values
+                'op': Index of next op tokens. LongTensor with shape [batch_size, equation_length].
         """
         # Build targets
         return {'op': equation}

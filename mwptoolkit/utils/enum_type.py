@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:15:02
+# @File: enum_type.py
+
+
 from itertools import groupby
 from math import log10
 from sympy import Eq

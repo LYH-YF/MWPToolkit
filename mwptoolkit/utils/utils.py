@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:15:42
+# @File: utils.py
+
+
 import json
 import math
 import copy
@@ -88,7 +94,7 @@ def get_model(model_name):
         model_name (str): model name
 
     Returns:
-        Generator: model class
+        Model: model class
     """
     model_submodule = ['Seq2Seq', 'Seq2Tree', 'VAE', 'GAN', 'Graph2Tree']
     try:

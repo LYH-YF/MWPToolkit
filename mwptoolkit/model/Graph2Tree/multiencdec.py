@@ -118,7 +118,7 @@ class MultiEncDec(nn.Module):
                     sentence.append(SpecialTokens.UNK_TOKEN)
             sentences.append(sentence)
         from gensim.models import word2vec
-        model = word2vec.Word2Vec(sentences, size=embedding_size, min_count=1)
+        model = word2vec.Word2Vec(sentences, vector_size=embedding_size, min_count=1)
         emb_vectors = []
         pad_idx = vocab.index(SpecialTokens.PAD_TOKEN)
         for idx in range(len(vocab)):

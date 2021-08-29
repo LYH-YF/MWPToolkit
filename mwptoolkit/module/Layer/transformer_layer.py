@@ -1,9 +1,14 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:05:03
+# @File: transformer_layer.py
+
+
 import torch
 import math
 from torch import nn
 from torch.nn import functional as F
 
-#from transformers.modeling_bert import gelu_new as gelu_bert
 from transformers.activations import gelu_new as gelu_bert
 
 

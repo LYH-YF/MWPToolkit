@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:04:38
+# @File: layers.py
+
+
 import torch
 from torch import nn
 
@@ -27,14 +33,11 @@ class GenVar(nn.Module):
         """ Generate embedding for an unknown variable.
 
         Args:
-            encoder_state (FloatTensor): Last cell state of the encoder
-                (output of Encoder module).
-            context (FloatTensor): Encoded context, with size
-                (batch_size, text_len, dim_hidden).
+            encoder_state (torch.FloatTensor): Last cell state of the encoder (output of Encoder module).
+            context (torch.FloatTensor): Encoded context, with size [batch_size, text_len, dim_hidden].
 
         Return:
-            var_embedding (FloatTensor): Embedding of an unknown variable,
-                with size (batch_size, dim_context)
+            torch.FloatTensor: Embedding of an unknown variable, with size [batch_size, dim_context]
         """
         attn = self.attention(context, encoder_state.squeeze(0), context_lens)
         return attn
@@ -54,7 +57,6 @@ class Transformer(nn.Module):
 
     def forward(self, top2):
         return self.mlp(top2)
-        # return torch.stack([self.ret] * top2.size(0), 0)
 
 
 class TreeAttnDecoderRNN(nn.Module):

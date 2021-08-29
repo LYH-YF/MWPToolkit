@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:00:42
+# @File: graph_layers.py
+
+
 import math
 import torch
 from torch import nn
@@ -12,6 +18,13 @@ class LayerNorm(nn.Module):
         self.eps = eps
 
     def forward(self, x):
+        """
+        Args:
+            x (torch.Tensor): input variable.
+        
+        Returns:
+            torch.Tensor: output variable.
+        """
         mean = x.mean(-1, keepdim=True)
         std = x.std(-1, keepdim=True)
         return self.a_2 * (x - mean) / (std + self.eps) + self.b_2
@@ -25,6 +38,13 @@ class PositionwiseFeedForward(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x):
+        """
+        Args:
+            x (torch.Tensor): input variable.
+        
+        Returns:
+            torch.Tensor: output variable.
+        """
         return self.w_2(self.dropout(F.relu(self.w_1(x))))
 
 class MeanAggregator(nn.Module):
@@ -73,11 +93,7 @@ class GraphConvolution(nn.Module):
             self.bias.data.uniform_(-stdv, stdv)
 
     def forward(self, input, adj):
-        #print(input.shape)
-        #print(self.weight.shape)
         support = torch.matmul(input, self.weight)
-        #print(adj.shape)
-        #print(support.shape)
         output = torch.matmul(adj, support)
         
         if self.bias is not None:

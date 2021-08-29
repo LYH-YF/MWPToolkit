@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:11:58
+# @File: tree_layers.py
+
+
 import torch
 from torch import nn
 from torch.nn import functional as F
@@ -38,155 +44,6 @@ class TreeEmbedding:  # the class save the tree
     def __init__(self, embedding, terminal=False):
         self.embedding = embedding
         self.terminal = terminal
-
-
-class Tree():
-    def __init__(self):
-        self.parent = None
-        self.num_children = 0
-        self.children = []
-
-    def __str__(self, level=0):
-        ret = ""
-        for child in self.children:
-            if isinstance(child, type(self)):
-                ret += child.__str__(level + 1)
-            else:
-                ret += "\t" * level + str(child) + "\n"
-        return ret
-
-    def add_child(self, c):
-        if isinstance(c, type(self)):
-            c.parent = self
-        self.children.append(c)
-        self.num_children = self.num_children + 1
-
-    def to_string(self):
-        r_list = []
-        for i in range(self.num_children):
-            if isinstance(self.children[i], Tree):
-                r_list.append("( " + self.children[i].to_string() + " )")
-            else:
-                r_list.append(str(self.children[i]))
-        return "".join(r_list)
-
-    def to_list(self, out_idx2symbol):
-        r_list = []
-        for i in range(self.num_children):
-            if isinstance(self.children[i], type(self)):
-                #r_list.append(form_manager.get_symbol_idx("("))
-                cl = self.children[i].to_list(out_idx2symbol)
-                r_list.append(cl)
-                # for k in range(len(cl)):
-                #     r_list.append(cl[k])
-                #r_list.append(form_manager.get_symbol_idx(")"))
-            elif self.children[i] == out_idx2symbol.index(SpecialTokens.NON_TOKEN):
-                continue
-            elif self.children[i] == out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
-                continue
-            else:
-                r_list.append(self.children[i])
-        return r_list
-
-
-class BinaryTree():
-    def __init__(self, root_node=None):
-        self.root = root_node
-        self.rel_quants = []
-
-    def equ2tree(self, equ_list, out_idx2symbol, op_list, input_var, emb):
-
-        stack = []
-        for idx in equ_list:
-            if idx == out_idx2symbol.index(SpecialTokens.PAD_TOKEN):
-                break
-            if idx == out_idx2symbol.index(SpecialTokens.EOS_TOKEN):
-                break
-
-            if out_idx2symbol[idx] in op_list:
-                node = Node(idx, isleaf=False)
-                node.set_right_node(stack.pop())
-                node.set_left_node(stack.pop())
-                stack.append(node)
-            else:
-                node = Node(idx, isleaf=True)
-                position = (input_var == idx).nonzero()
-                node.node_embeding = emb[position]
-                stack.append(node)
-        self.root = stack.pop()
-
-    def equ2tree_(self, equ_list):
-        stack = []
-        for symbol in equ_list:
-            if symbol in [SpecialTokens.EOS_TOKEN, SpecialTokens.PAD_TOKEN]:
-                break
-            if symbol in ['+', '-', '*', '/', '^', '=', SpecialTokens.BRG_TOKEN, SpecialTokens.OPT_TOKEN]:
-                node = Node(symbol, isleaf=False)
-                node.set_right_node(stack.pop())
-                node.set_left_node(stack.pop())
-                stack.append(node)
-            else:
-                node = Node(symbol, isleaf=True)
-                stack.append(node)
-        self.root = stack.pop()
-
-    def tree2equ(self, node):
-        equation = []
-        if node.is_leaf:
-            equation.append(node.node_value)
-            return equation
-        right_equ = self.tree2equ(node.right_node)
-        left_equ = self.tree2equ(node.left_node)
-        equation = left_equ + right_equ + [node.node_value]
-        return equation
-
-    def is_float(self, num_str):
-        try:
-            float(num_str)
-        except:
-            return False
-        else:
-            return True
-
-    def is_equal(self, v1, v2):
-        if self.is_float(v1) == False or self.is_float(v2) == False:
-            return False
-        if abs(float(v1) - float(v2)) < 1e-5:
-            return True
-        return False
-
-    def lca(self, root, va, vb, parent):
-        left = False
-        right = False
-        if not self.result and root.left_node:
-            left = self.lca(root.left_node, va, vb, root)
-        if not self.result and root.left_node:
-            right = self.lca(root.right_node, va, vb, root)
-        mid = False
-        if self.is_equal(root.node_value, va) or self.is_equal(root.node_value, vb):
-            mid = True
-        if not self.result and (left + right + mid) == 2:
-            if mid:
-                self.result = parent
-            else:
-                self.result = root
-        return left or mid or right
-
-    def is_in_rel_quants(self, value, rel_quants):
-        if value in rel_quants:
-            return True
-        else:
-            return False
-
-    def query(self, va, vb):
-        if self.root == None:
-            return None
-        self.result = None
-        self.lca(self.root, va, vb, None)
-        if self.result:
-            return self.result.value
-        else:
-            return self.result
 
 
 class Score(nn.Module):

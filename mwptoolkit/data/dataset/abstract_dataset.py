@@ -97,15 +97,20 @@ class AbstractDataset(object):
         trainset_file = self.dataset_path + "/trainset.json"
         validset_file = self.dataset_path + "/validset.json"
         testset_file = self.dataset_path + "/testset.json"
-        # base_dir=os.path.abspath(trainset_file)
-        # print(base_dir)
-        self.trainset = read_json_data(os.path.join(self.root,trainset_file))[:]
-        self.validset = read_json_data(os.path.join(self.root,validset_file))[:]
-        self.testset = read_json_data(os.path.join(self.root,testset_file))[:]
+        
+        if os.path.isabs(trainset_file):
+            self.trainset = read_json_data(trainset_file)
+        else:
+            self.trainset = read_json_data(os.path.join(self.root,trainset_file))
+        if os.path.isabs(validset_file):
+            self.validset = read_json_data(validset_file)
+        else:
+            self.validset = read_json_data(os.path.join(self.root,validset_file))
+        if os.path.isabs(testset_file):
+            self.testset = read_json_data(testset_file)
+        else:
+            self.testset = read_json_data(os.path.join(self.root,testset_file))
 
-        # self.trainset = read_json_data(trainset_file)[:]
-        # self.validset = read_json_data(validset_file)[:]
-        # self.testset = read_json_data(testset_file)[:]
         if self.validset_divide is not True:
             self.testset = self.validset + self.testset
             self.validset = []
@@ -119,8 +124,14 @@ class AbstractDataset(object):
         """
         trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
         testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
-        self.trainset = read_json_data(trainset_file)
-        self.testset = read_json_data(testset_file)
+        if os.path.isabs(trainset_file):
+            self.trainset = read_json_data(trainset_file)
+        else:
+            self.trainset = read_json_data(os.path.join(self.root,trainset_file))
+        if os.path.isabs(trainset_file):
+            self.testset = read_json_data(testset_file)
+        else:
+            self.testset = read_json_data(os.path.join(self.root,testset_file))
         self.validset = []
 
     def fix_process(self, fix):

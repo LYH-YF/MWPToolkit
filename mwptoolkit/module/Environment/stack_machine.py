@@ -19,16 +19,15 @@ class OPERATIONS:
         #self.N_OPS = self.POWER+1
 
 class StackMachine:
-    """
-
-    Args:
-        constants (list): Value of numbers.
-        embeddings (tensor): Tensor of shape [len(constants), dim_embedding].
-            Embedding of the constants.
-        bottom_embedding (teonsor): Tensor of shape (dim_embedding,). The
-            embeding to return when stack is empty.
-    """
     def __init__(self, operations, constants, embeddings, bottom_embedding, dry_run=False):
+        """
+        Args:
+            constants (list): Value of numbers.
+            embeddings (tensor): Tensor of shape [len(constants), dim_embedding].
+                Embedding of the constants.
+            bottom_embedding (teonsor): Tensor of shape (dim_embedding,). The
+                embeding to return when stack is empty.
+        """
         self._operands = list(constants)
         self._embeddings = [embedding for embedding in embeddings]
         self.operations = operations
@@ -74,7 +73,7 @@ class StackMachine:
             by 1.
 
         Args:
-            embedding (tensor): Tensor of shape (dim_embedding). Embedding
+            embedding (torch.Tensor): Tensor of shape (dim_embedding). Embedding
                 of the unknown varialbe.
         """
         var = sympy.Symbol('x{}'.format(self._n_nuknown))
@@ -89,11 +88,10 @@ class StackMachine:
         """ Push var to stack.
 
         Args:
-            operand_index (int): Index of the operand. If
-                index >= number of constants, then it implies a variable is
-                pushed.
-        Return:
-            tensor: Simply return the pushed embedding.
+            operand_index (int): Index of the operand. If index >= number of constants, then it implies a variable is pushed.
+        
+        Returns:
+            torch.Tensor: Simply return the pushed embedding.
         """
         self._stack.append((self._operands[operand_index],
                             self._embeddings[operand_index]))
@@ -106,16 +104,16 @@ class StackMachine:
         """ Apply operator on stack with embedding operation only.
 
         Args:
-            operator (OPERATION): One of
+            operator (mwptoolkit.module.Environment.stack_machine.OPERATION): One of
                 - OPERATIONS.ADD
                 - OPERATIONS.SUB
                 - OPERATIONS.MUL
                 - OPERATIONS.DIV
                 - OPERATIONS.EQL
-            embed_res (FloatTensor): Resulted embedding after transformation,
-                with size (dim_embedding,).
-        Return:
-            tensor: embeding on the top of the stack.
+            embed_res (torch.FloatTensor): Resulted embedding after transformation, with size (dim_embedding,).
+        
+        Returns:
+            torch.Tensor: embeding on the top of the stack.
         """
         if len(self._stack) < 2: return self._bottom_embed
         val1, embed1 = self._stack.pop()
@@ -143,9 +141,8 @@ class StackMachine:
     def get_solution(self):
         """ Get solution. If the problem has not been solved, return None.
 
-        Return:
-            list: If the problem has been solved, return result from
-                sympy.solve. If not, return None.
+        Returns:
+            list: If the problem has been solved, return result from sympy.solve. If not, return None.
         """
 
         if self._n_nuknown == 0:
@@ -169,7 +166,7 @@ class StackMachine:
         """ Get the top 2 embeddings of the stack.
 
         Return:
-            tensor: Return tensor of shape (2, embed_dim)
+            torch.Tensor: Return tensor of shape (2, embed_dim).
         """
         if len(self._stack) >= 2:
             return torch.stack([self._stack[-1][1],
@@ -186,7 +183,7 @@ class StackMachine:
         """ Get the height of the stack.
 
         Return:
-            int: height
+            int: height.
         """
         return len(self._stack)
 

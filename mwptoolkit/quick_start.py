@@ -4,7 +4,10 @@
 # @File: quick_start.py
 
 
+import os
+import sys
 from logging import getLogger
+
 import torch
 
 from mwptoolkit.config.configuration import Config
@@ -14,6 +17,8 @@ from mwptoolkit.data.utils import create_dataset, create_dataloader
 from mwptoolkit.utils.utils import get_model, init_seed, get_trainer
 from mwptoolkit.utils.enum_type import SpecialTokens, FixType
 from mwptoolkit.utils.logger import init_logger
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
 
 
 def train_cross_validation(config):

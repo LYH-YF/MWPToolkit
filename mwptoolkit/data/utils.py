@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 21:39:08
+# @File: utils.py
+
+
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
 from mwptoolkit.data.dataset.single_equation_dataset import SingleEquationDataset
 from mwptoolkit.data.dataset.multi_equation_dataset import MultiEquationDataset

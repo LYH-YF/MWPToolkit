@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:14:01
+# @File: supervised_trainer.py
+
+
 import time
 import math
 from itertools import groupby

@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:13:14
+# @File: abstract_trainer.py
+
+
 from logging import getLogger
 
 import torch

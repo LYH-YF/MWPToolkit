@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:14:27
+# @File: template_trainer.py
+
+
 import time
 
 from mwptoolkit.trainer.trainer import AbstractTrainer

@@ -198,6 +198,15 @@ class Score(nn.Module):
         self.score = nn.Linear(hidden_size, 1, bias=False)
 
     def forward(self, hidden, num_embeddings, num_mask=None):
+        """
+        Args:
+            hidden (torch.Tensor): hidden representation, shape [batch_size, 1, hidden_size + input_size].
+            num_embeddings (torch.Tensor): number embedding, shape [batch_size, number_size, hidden_size].
+            num_mask (torch.BoolTensor): number mask, shape [batch_size, number_size].
+        
+        Returns:
+            score (torch.Tensor): shape [batch_size, number_size].
+        """
         max_len = num_embeddings.size(1)
         repeat_dims = [1] * hidden.dim()
         repeat_dims[1] = max_len
@@ -272,6 +281,17 @@ class NodeEmbeddingLayer(nn.Module):
         self.embeddings = nn.Embedding(op_nums, embedding_size)
 
     def forward(self, node_embedding, node_label, current_context):
+        """
+        Args:
+            node_embedding (torch.Tensor): node embedding, shape [batch_size, num_directions * hidden_size].
+            node_label (torch.Tensor): shape [batch_size].
+        
+        Returns:
+            tuple(torch.Tensor, torch.Tensor, torch.Tensor):
+                l_child, representation of left child, shape [batch_size, num_directions * hidden_size].
+                r_child, representation of right child, shape [batch_size, num_directions * hidden_size].
+                node_label_, representation of node label, shape [batch_size, embedding_size].
+        """
         node_label_ = self.embeddings(node_label)
 
         return node_embedding, node_embedding, node_label_
@@ -578,6 +598,24 @@ class Prediction(nn.Module):
         self.score = Score(hidden_size * 2, hidden_size)
 
     def forward(self, node_stacks, left_childs, encoder_outputs, num_pades, padding_hidden, seq_mask, mask_nums):
+        """
+        Args:
+            node_stacks (list): node stacks.
+            left_childs (list): representation of left childs.
+            encoder_outputs (torch.Tensor): output from encoder, shape [sequence_length, batch_size, hidden_size].
+            num_pades (torch.Tensor): number representation, shape [batch_size, number_size, hidden_size].
+            padding_hidden (torch.Tensor): padding hidden, shape [1,hidden_size].
+            seq_mask (torch.BoolTensor): sequence mask, shape [batch_size, sequence_length].
+            mask_nums (torch.BoolTensor): number mask, shape [batch_size, number_size].
+        
+        Returns:
+            tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor):
+                num_score, number score, shape [batch_size, number_size].
+                op, operator score, shape [batch_size, operator_size].
+                current_node, current node representation, shape [batch_size, 1, hidden_size].
+                current_context, current context representation, shape [batch_size, 1, hidden_size].
+                embedding_weight, embedding weight, shape [batch_size, number_size, hidden_size].
+        """
         current_embeddings = []
 
         for st in node_stacks:
@@ -650,6 +688,18 @@ class GenerateNode(nn.Module):
         self.generate_rg = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
 
     def forward(self, node_embedding, node_label, current_context):
+        """
+        Args:
+            node_embedding (torch.Tensor): node embedding, shape [batch_size, hidden_size].
+            node_label (torch.Tensor): representation of node label, shape [batch_size, embedding_size].
+            current_context (torch.Tensor): current context, shape [batch_size, hidden_size].
+        
+        Returns:
+            tuple(torch.Tensor, torch.Tensor, torch.Tensor):
+                l_child, representation of left child, shape [batch_size, hidden_size].
+                r_child, representation of right child, shape [batch_size, hidden_size].
+                node_label_, representation of node label, shape [batch_size, embedding_size].
+        """
         node_label_ = self.embeddings(node_label)
         node_label = self.em_dropout(node_label_)
         node_embedding = node_embedding.squeeze(1)
@@ -678,6 +728,15 @@ class Merge(nn.Module):
         self.merge_g = nn.Linear(hidden_size * 2 + embedding_size, hidden_size)
 
     def forward(self, node_embedding, sub_tree_1, sub_tree_2):
+        """
+        Args:
+            node_embedding (torch.Tensor): node embedding, shape [1, embedding_size].
+            sub_tree_1 (torch.Tensor): representation of sub tree 1, shape [1, hidden_size].
+            sub_tree_2 (torch.Tensor): representation of sub tree 2, shape [1, hidden_size].
+        
+        Returns:
+            torch.Tensor: representation of merged tree, shape [1, hidden_size].
+        """
         sub_tree_1 = self.em_dropout(sub_tree_1)
         sub_tree_2 = self.em_dropout(sub_tree_2)
         node_embedding = self.em_dropout(node_embedding)
@@ -696,6 +755,15 @@ class TreeAttention(nn.Module):
         self.score = nn.Linear(hidden_size, 1)
 
     def forward(self, hidden, encoder_outputs, seq_mask=None):
+        """
+        Args:
+            hidden (torch.Tensor): hidden representation, shape [1, batch_size, hidden_size]
+            encoder_outputs (torch.Tensor): output from encoder, shape [sequence_length, batch_size, hidden_size]. 
+            seq_mask (torch.Tensor): sequence mask, shape [batch_size, sequence_length].
+        
+        Returns:
+            attn_energies (torch.Tensor): attention energies, shape [batch_size, 1, sequence_length].
+        """
         max_len = encoder_outputs.size(0)
 
         repeat_dims = [1] * hidden.dim()

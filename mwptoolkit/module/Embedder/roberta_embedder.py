@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 21:47:51
+# @File: roberta_embedder.py
+
+
 import torch
 from torch import nn
 from transformers import RobertaModel

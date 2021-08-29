@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 21:46:05
+# @File: bert_embedder.py
+
+
 import torch
 from torch import nn
 from transformers import BertModel

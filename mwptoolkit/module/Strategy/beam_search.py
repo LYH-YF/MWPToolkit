@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 22:12:20
+# @File: beam_search.py
+
+
 import copy
 import torch
 from torch.nn import functional as F

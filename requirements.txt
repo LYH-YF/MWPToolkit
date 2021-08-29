@@ -1,4 +1,4 @@
-pytorch>=1.5.0
+torch>=1.5.0
 transformers==4.3.3
 stanza>=1.2
 sympy>=1.6

@@ -21,7 +21,7 @@ class RNNVAE(nn.Module):
     Reference:
         Zhang et al. "Variational Neural Machine Translation".
     
-    We apply translation machine to math word problem.
+    We apply translation machine based rnnvae to math word problem task.
     """
     def __init__(self, config, dataset):
         super(RNNVAE, self).__init__()

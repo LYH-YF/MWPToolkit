@@ -1,3 +1,9 @@
+# -*- encoding: utf-8 -*-
+# @Author: Yihuai Lan
+# @Time: 2021/08/29 21:49:07
+# @File: stack_machine.py
+
+
 import sympy
 import torch
 

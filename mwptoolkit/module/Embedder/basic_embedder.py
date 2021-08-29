@@ -3,9 +3,9 @@ from torch import nn
 
 
 class BaiscEmbedder(nn.Module):
-    r'''
+    """
     Basic embedding layer
-    '''
+    """
     def __init__(self, input_size, embedding_size, dropout_ratio, padding_idx=0):
         super(BaiscEmbedder, self).__init__()
         self.input_size = input_size
@@ -16,9 +16,10 @@ class BaiscEmbedder(nn.Module):
     def forward(self, input_seq):
         r'''Implement the embedding process
         Args:
-            input_seq (Torch.Tensor): source sequence, shape [batch_size, sequence_length].
+            input_seq (torch.Tensor): source sequence, shape [batch_size, sequence_length].
+        
         Retruns:
-            - Torch.Tensor: embedding output, shape[batch_size, sequence_length, embedding_size]
+            torch.Tensor: embedding output, shape [batch_size, sequence_length, embedding_size].
         '''
         embedding_output = self.embedder(input_seq)
         embedding_output = self.dropout(embedding_output)

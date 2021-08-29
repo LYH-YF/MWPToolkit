@@ -60,6 +60,13 @@ class PositionEmbedder(nn.Module):
         return emb
 
     def forward(self, input_seq, offset=0):
+        """
+        Args:
+            input_seq (torch.Tensor): input sequence, shape [batch_size, sequence_length].
+        
+        Returns:
+            torch.Tensor: position embedding, shape [batch_size, sequence_length, embedding_size].
+        """
         batch_size, seq_len = input_seq.size()
         max_position = seq_len + offset
         if self.weights is None or max_position > self.weights.size(0):

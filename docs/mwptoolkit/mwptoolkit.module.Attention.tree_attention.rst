@@ -1,4 +1,7 @@
 mwptoolkit.module.Attention.tree_attentio
 ============================================
 
-mwptoolkit.module.Attention.tree_attention
+.. automodule:: mwptoolkit.module.Attention.tree_attention
+   :members:
+   :undoc-members:
+   :show-inheritance:

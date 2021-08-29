@@ -151,7 +151,7 @@ class TreeLSTM(nn.Module):
                                                   num_pos, nums_stack, padding_hidden, seq_mask, num_mask, UNK_TOKEN,
                                                   num_start, initial_hidden)
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)
-        target_length = target_length.to(self.device)
+        target_length = torch.LongTensor(target_length).to(self.device)
         self.loss.reset()
         self.loss.eval_batch(all_node_outputs, target, target_length)
         self.loss.backward()
@@ -291,11 +291,6 @@ class TreeLSTM(nn.Module):
                     parent.append(hidden[0][idx].unsqueeze(0))
                     prev.append(self.root)
                     prev_idx.append(None)
-                # elif False: #len(n) == 0:
-                #     left.append(self.root)
-                #     parent.append(self.root)
-                #     prev.append(self.root)
-                #     prev_idx.append(None)
                 elif n[-1] < num_start:
                     left.append(self.root)
                     parent.append(n_hidden[-1])
@@ -312,12 +307,7 @@ class TreeLSTM(nn.Module):
                             break
                     if parent_flag: parent.append(hidden[0][idx].unsqueeze(0))
                     prev_idx.append(n[-1])
-                #if len(parent)
-                #if idx == 0: print('prev_idx', prev_idx, n)
-
-            #print('left, parent, prev', len(parent), parent[0].size(), len(left), left[0].size(), len(prev), prev[0].size())
-
-        #exit()
+                
         return all_node_outputs
 
     def generate_node_(self, encoder_outputs, problem_output, padding_hidden, seq_mask, num_mask, num_pos, \

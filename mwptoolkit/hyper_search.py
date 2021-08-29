@@ -4,11 +4,11 @@
 # @File: hyper_search.py
 
 
+import os
+import sys
 from functools import partial
 from logging import getLogger
-import os
 
-import torch
 import ray
 from ray import tune
 from ray.tune import CLIReporter
@@ -23,6 +23,8 @@ from mwptoolkit.utils.enum_type import SpecialTokens, FixType
 from mwptoolkit.utils.logger import init_logger
 
 from mwptoolkit.quick_start import run_toolkit
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), ".")))
 
 def train_process(search_parameter,configs):
     for key,value in search_parameter.items():
@@ -76,14 +78,13 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
     best_config=result.get_best_config(metric="accuracy", mode="max")
 
     logger.info("best config:{}".format(best_config))
-    #print("Best config: ", best_config)
     
 
     config_dict.update(best_config)
-
-    run_toolkit(model_name,dataset_name,task_type,config_dict)
 
     model_config=read_json_data(configs["model_config_path"])
     model_config.update(best_config)
     write_json_data(model_config,configs["best_config_path"])
     logger.info("best config saved at {}".format(configs["best_config_path"]))
+
+    run_toolkit(model_name,dataset_name,task_type,config_dict)

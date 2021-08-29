@@ -18,6 +18,8 @@ Welcome to MWPToolkit's documentation!
    mwptoolkit/mwptoolkit.module
    mwptoolkit/mwptoolkit.trainer
    mwptoolkit/mwptoolkit.utils
+   mwptoolkit/mwptoolkit.hyper_search
+   mwptoolkit/mwptoolkit.quick_start
 
 
 Indices and tables

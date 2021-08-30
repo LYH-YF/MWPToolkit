@@ -8,7 +8,7 @@ import copy
 import re
 import threading
 import sympy as sym
-from mwptoolkit.utils.enum_type import SpecialTokens, OPERATORS, NumMask, MaskSymbol
+from mwptoolkit.utils.enum_type import SpecialTokens, OPERATORS, NumMask, MaskSymbol, FixType
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
 
 def get_evaluator(config):

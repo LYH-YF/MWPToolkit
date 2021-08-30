@@ -1,7 +1,7 @@
 {
     "min_word_keep":5,
     "min_generate_keep":5,
-    "validset_divide":false,
+    "validset_divide":true,
     "mask_symbol":"number",
     "max_output_len":10,
     "single":true,

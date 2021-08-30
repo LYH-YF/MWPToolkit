@@ -76,7 +76,10 @@ class Config(object):
         self._init_device()
 
     def _load_config(self):
-        self.file_config_dict = read_json_data('mwptoolkit/config/config.json')
+        dir=os.path.dirname(os.path.realpath(__file__))
+        config_path=os.path.join(dir,'config.json')
+        self.file_config_dict = read_json_data(config_path)
+        #self.file_config_dict = read_json_data('mwptoolkit/config/config.json')
 
     def _merge_config_dict(self, model_name, dataset_name, task_type, config_dict):
         self.config_dict['model'] = model_name
@@ -214,6 +217,7 @@ class Config(object):
 
     def _build_path_config(self):
         path_config_dict = {}
+        dir=os.path.dirname(os.path.realpath(__file__))
         root=os.getcwd()
         path_config_dict['root']=root
         model_name = self.config_dict['model']
@@ -222,9 +226,12 @@ class Config(object):
             model_name = self.cmd_config_dict["model"]
         if dataset_name == None:
             dataset_name = self.cmd_config_dict["dataset"]
-        path_config_dict["model_config_path"] = "mwptoolkit/properties/model/{}.json".format(model_name)
-        path_config_dict["best_config_path"] = "mwptoolkit/properties/best_config/{}_{}.json".format(model_name,dataset_name)
-        path_config_dict["dataset_config_path"] = "mwptoolkit/properties/dataset/{}.json".format(dataset_name)
+        path_config_dict["model_config_path"] = os.path.join(dir,"../properties/model/{}.json".format(model_name))
+        path_config_dict["best_config_path"] = os.path.join(dir,"../properties/best_config/{}_{}.json".format(model_name,dataset_name))
+        path_config_dict["dataset_config_path"] = os.path.join(dir,"../properties/dataset/{}.json".format(dataset_name))
+        # path_config_dict["model_config_path"] = "mwptoolkit/properties/model/{}.json".format(model_name)
+        # path_config_dict["best_config_path"] = "mwptoolkit/properties/best_config/{}_{}.json".format(model_name,dataset_name)
+        # path_config_dict["dataset_config_path"] = "mwptoolkit/properties/dataset/{}.json".format(dataset_name)
         path_config_dict["dataset_path"] = "dataset/{}".format(dataset_name)
         self.path_config_dict = path_config_dict
 

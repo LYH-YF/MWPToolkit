@@ -96,7 +96,7 @@ def get_model(model_name):
     Returns:
         Model: model class
     """
-    model_submodule = ['Seq2Seq', 'Seq2Tree', 'VAE', 'GAN', 'Graph2Tree']
+    model_submodule = ['Seq2Seq', 'Seq2Tree', 'VAE', 'GAN', 'Graph2Tree','PreTrain']
     try:
         model_file_name = model_name.lower()
         for submodule in model_submodule:

@@ -11,7 +11,7 @@ MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is 
 Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. 
 
 ![](https://github.com/LYH-YF/MWPToolkit/blob/master/architecture1.png)
-<div align="center"> Figure: Architecture of MWP Toolkit </div>
+<div align="center"> Figure: The Overall Framework of MWP Toolkit </div>
 
 ## News
 

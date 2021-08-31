@@ -1,6 +1,10 @@
-# <div align="center"> MWPToolkit </div>
+![](https://github.com/LYH-YF/MWPToolkit/blob/master/title.png)
 
-![](https://img.shields.io/badge/license-MIT-green)
+##
+
+![](https://img.shields.io/badge/pypi-0.0.3-orange) 
+![](https://img.shields.io/badge/license-MIT-green) 
+![](https://img.shields.io/badge/docs-passing-pink)
 
 [Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper]()
 
@@ -9,18 +13,15 @@ MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is 
 Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. 
 
 ![](https://github.com/LYH-YF/MWPToolkit/blob/master/architecture1.png)
-<div align="center"> Figure: Architecture of MWP Toolkit </div>
+<div align="center"> Figure: The Overall Framework of MWP Toolkit </div>
 
 ## News
 
-## Feature
+## Characteristics
 
-**(YS: can you come up with more points?)**
-
-* **Comprehensive toolkit for MWP solving task**. To our best knowledge, MWP toolkit is the first open-source library for MWP solving task, where popular benchmark datasets and advanced deep learning-based methods for MWP solving tasks are integrated into a unified framework. 
-* **Easy to get started**. MWP toolkit is developed upon Python and Pytorch. We provide detailed instruction, which facilitates users to evaluate the build-in datasets or apply the code to their own data.
-* **Highly modularized framework**. MWP toolkit is designed with highly reused modules and provides convenient interfaces for users. Specifically, data preprocessor, data loader, encoder, decoder and evaluator form the running procedure. Each module could be developed and extended independently.
-
+* **Unification and Modularization**. We decouple solvers with different model architectures into highly modularized, reusable components and integrate them in a unified framework, which includes data, model, evaluation modules. It is convenient for you to study MWPs at a conceptual level and compare different models fairly.
+* **Comprehensiveness and Standardization**. MWPToolkit has deployed the popular benchmark datasets and models for MWPs solving, covering Seq2Seq, Seq2Tree, Graph2Tree, and Pre-trained Language Models. Moreover, some tricks like hyper-parameter tuning used in general NLP tasks are integrated. As all models can be implemented with a same experimental configuration, the evaluation of different models is standardized.
+* **Extensibility and Usability**. MWPToolkit provides user-friendly interfaces for various functions or modules. And the components in the pipeline architecture are modeled as exchangeable modules. You can try different combinations of modules via simply changing the configuration file or command line. You can also easily develop your own models by replacing or extending corresponding modules with your proposed ones.
 
 ## Installation
 Development environment:
@@ -32,13 +33,11 @@ pyltp >= 0.2.1 (optional)
 
 ### Method 1: Install from pip
 
-**(YS: figure out how to make pip install of this library)**
 ```
 pip install mwptoolkit
 ```
 ### Method 2: Install from source
 
-**(YS: check if this is correct)**
 ```
 # Clone current repo
 git clone https://github.com/LYH-YF/MWPToolkit.git && cd MWPToolkit
@@ -59,7 +58,7 @@ python run_mwptoolkit.py --model=GTS --dataset=math23k --task_type=single_equati
 
 Above script will run [GTS](https://www.ijcai.org/proceedings/2019/736) model on [Math23K](https://aclanthology.org/D17-1088/) dataset with 5 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation). It will take around **xx** minutes to train 5 GTS models independently and output the average scores of equation accuracy and value accuracy. The training log can be found in the [log file](). 
 
-If you would like to change the parameters, such as ```dataset``` and ```model```, please refer to the following instruction: **(YS: check whether my following description is correct, maybe we just keep the required arguments)**
+If you would like to change the parameters, such as ```dataset``` and ```model```, please refer to the following instruction: 
 
 * ```model```: The model name you specify to apply. You can see all options in Section [Model](#model).
 * ```dataset```: The dataset name you specify to evaluate. You can see all options in Section [Dataset](#dataset).

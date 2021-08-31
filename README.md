@@ -23,17 +23,10 @@ Our framework has the following architecture. You could utilize our toolkit to e
 
 
 ## Installation
-Development environment **(YS: move other libraries expect python, pytorch to requirements.txt file)**:
+Development environment:
 ```
 python >= 3.6.0
 pytorch >= 1.5.0
-transformers == 4.3.3
-stanza >= 1.2
-sympy >= 1.6
-ray >= 1.3.0
-nltk >= 3.5
-gensim >= 3.8.3
-word2number >= 1.1
 pyltp >= 0.2.1 (optional)
 ```
 
@@ -41,7 +34,7 @@ pyltp >= 0.2.1 (optional)
 
 **(YS: figure out how to make pip install of this library)**
 ```
-pip install 
+pip install mwptoolkit
 ```
 ### Method 2: Install from source
 
@@ -198,7 +191,7 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
     </thread>
     <tbody>
         <tr>
-            <td rowspan="6">Seq2Seq</td>
+            <td rowspan="7">Seq2Seq</td>
             <td>DNS</td>
             <td align="center"><a href="https://aclanthology.org/D17-1088/">(Wang et al., 2017)</a></td>
         </tr>
@@ -217,6 +210,10 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
         <tr>
             <td>RNN</td>
             <td align="center"><a href="https://arxiv.org/abs/1409.3215">(Sutskever et al., 2014)</a></td>
+        </tr>
+        <tr>
+            <td>RNNVAE</td>
+            <td align="center"><a href="https://arxiv.org/abs/1605.07869">(Zhang et al., 2016)</a></td>
         </tr>
         <tr>
             <td>Transformer</td>
@@ -251,11 +248,6 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
         <tr>
             <td>MultiE&D</td>
             <td align="center"><a href="https://aclanthology.org/2020.coling-main.262/">(Shen et al., 2020)</a></td>
-        </tr>
-        <tr>
-            <td rowspan="1">VAE</td>
-            <td>RNNVAE</td>
-            <td align="center"><a href="https://arxiv.org/abs/1605.07869">(Zhang et al., 2016)</a></td>
         </tr>
         <tr>
             <td rowspan="3">Pre-trained</td>

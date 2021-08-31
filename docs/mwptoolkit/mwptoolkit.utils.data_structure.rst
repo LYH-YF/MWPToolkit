@@ -1,7 +1,7 @@
 mwptoolkit.utils.data_structure
 ================================
 
-.. automodule:: mwptoolkit.utils.enum_type
+.. automodule:: mwptoolkit.utils.data_structure
    :members:
    :undoc-members:
    :show-inheritance:

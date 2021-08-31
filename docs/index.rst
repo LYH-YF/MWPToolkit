@@ -21,6 +21,14 @@ Welcome to MWPToolkit's documentation!
    mwptoolkit/mwptoolkit.hyper_search
    mwptoolkit/mwptoolkit.quick_start
 
+==================
+MWPToolkit Usage:
+==================
+command line lookup_
+
+.. _lookup: _static/cmd.html
+
+
 
 Indices and tables
 ==================

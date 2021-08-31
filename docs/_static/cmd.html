@@ -1,0 +1,346 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>mwptoolkit.config.configuration &mdash; MWPToolkit 0.0.1 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+    <script language="JavaScript">
+		function cmd_line_generation(){
+            cmd_line='python ';
+            var model = document.getElementsByName("model")[0].value;
+            var dataset = document.getElementsByName("dataset")[0].value;
+            var run_names = document.getElementsByName("run_name");
+            var use_gpu = document.getElementsByName("use_gpu");
+            var five_fold = document.getElementsByName("5_fold")[0];
+            //run name
+            for(var x = 0; x < run_names.length; x++){
+                if (run_names[x].checked){
+                    switch (run_names[x].value){
+                        case "hyper_search":
+                            cmd_line=cmd_line+"run_hyper_search.py ";
+                            break;
+                        case "train":
+                            cmd_line=cmd_line+"run_mwptoolkit.py ";
+                            break;
+                        case "test":
+                            cmd_line=cmd_line+"run_mwptoolkit.py --test_only=True ";
+                            break;
+                        default:
+                            cmd_line=cmd_line+"run_mwptoolkit.py ";
+                            break;
+                    }
+                }
+            }
+            // model and dataset
+            cmd_line = cmd_line+"--model="+model+" ";
+            cmd_line = cmd_line+"--dataset="+dataset+" ";
+
+            var single_dataset=new Array("math23k","asdiv-a","mawps-single","mawps_asdiv-a_svamp");
+            var multi_dataset=new Array("draw","mawps","hmwp");
+            if (single_dataset.includes(dataset)){
+                cmd_line = cmd_line+"--task_type="+"single_equation ";
+            }
+            else if (multi_dataset.includes(dataset)){
+                cmd_line = cmd_line+"--task_type="+"multi_equation ";
+            }
+            if (five_fold.checked){
+                cmd_line = cmd_line+"--k_fold=5 ";
+            }
+            for(var x = 0; x < use_gpu.length; x++){
+                if (use_gpu[x].checked){
+                    switch (use_gpu[x].value){
+                        case "yes":
+                            cmd_line=cmd_line+"--gpu_id=0 ";
+                            break;
+                        case "no":
+                            cmd_line=cmd_line+"--use_gpu=False ";
+                            break;
+                        default:
+                            cmd_line=cmd_line+"--gpu_id=0 ";
+                            break;
+                    }
+                }
+            }
+
+            var pretrain_model = new Array("BERTGen","GPT2","RobertaGen","EPT");
+            var chinese_dataset = new Array("math23k","hmwp");
+            var english_dataset = new Array("asdiv-a","mawps-single","mawps_asdiv-a_svamp","draw","mawps");
+            if (pretrain_model.includes(model)){
+                switch (model){
+                    case "BERTGen":
+                        if (chinese_dataset.includes(dataset)){
+                            cmd_line = cmd_line + "--pretrained_model_path=bert-base-chinese ";
+                        }
+                        else if (english_dataset.includes(dataset)){
+                            cmd_line = cmd_line + "--pretrained_model_path=bert-base-uncased ";
+                        }
+                        break;
+                    case "GPT2":
+                        if (chinese_dataset.includes(dataset)){
+                            cmd_line = cmd_line + "--pretrained_model_path=uer/gpt2-base-chinese-cluecorpussmall ";
+                        }
+                        else if (english_dataset.includes(dataset)){
+                            cmd_line = cmd_line + "--pretrained_model_path=gpt2 ";
+                        }
+                        break;
+                    case "RobertaGen":
+                        if (chinese_dataset.includes(dataset)){
+                            cmd_line = cmd_line + "--pretrained_model_path=uer/chinese_roberta_L-12_H-768 ";
+                        }
+                        else if (english_dataset.includes(dataset)){
+                            cmd_line = cmd_line + "--pretrained_model_path=roberta-base ";
+                        }
+                        break;
+                }
+            }
+            var cmd_line_str = document.getElementsByName("cmd_line_str")[0];
+            cmd_line_str.value=cmd_line;
+        }
+	</script>
+
+    <style type="text/css">
+    .td-right{
+				text-align: right;
+			}
+    .td-left{
+				text-align: left;
+			}
+    </style>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="mwptoolkit.data" href="mwptoolkit.data.html" />
+    <link rel="prev" title="Welcome to MWPToolkit’s documentation!" href="../index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> MWPToolkit</a>
+            <div role="search">
+            <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+                <input type="text" name="q" placeholder="Search docs" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+            </form>
+            </div>
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+            <p class="caption" role="heading"><span class="caption-text">MWPToolkit API:</span></p>
+            <ul class="current">
+            <li class="toctree-l1 current"><a class="current reference internal" href="#">cmd</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.data.html">mwptoolkit.data</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.evaluate.evaluator.html">mwptoolkit.evaluate.evaluator</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.loss.html">mwptoolkit.loss</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.model.html">mwptoolkit.model</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.module.html">mwptoolkit.module</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.trainer.html">mwptoolkit.trainer</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.utils.html">mwptoolkit.utils</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.hyper_search.html">mwptoolkit.hyper_search</a></li>
+            <li class="toctree-l1"><a class="reference internal" href="mwptoolkit.quick_start.html">mwptoolkit.quick_start</a></li>
+            </ul>
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+        <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">MWPToolkit</a>
+        
+        </nav>
+
+
+        <div class="wy-nav-content">
+        
+            <div class="rst-content">
+
+                <div role="navigation" aria-label="breadcrumbs navigation">
+
+                    <ul class="wy-breadcrumbs">
+                        
+                        <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+                            
+                        <li>cmd line</li>
+                        
+                        
+                        <li class="wy-breadcrumbs-aside">
+                            
+                            
+                                <a href="../_static/cmd.html" rel="nofollow"> View page source</a>
+                            
+                            
+                        </li>
+                        
+                    </ul>
+                    <hr/>
+                </div>
+            <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+                <div itemprop="articleBody">
+            
+                    <div class="section" id="module-mwptoolkit.config.configuration">
+                        <span id="command-line"></span>
+                        <h1>command line<a class="headerlink" href="#cmd.html" title="Permalink to this headline">¶</a></h1>
+
+                    </div>
+
+                    <table align="center">
+                        <tr>
+                            <td class="td-right">model:</td>
+                            <td>
+                                <input id="model" style="width: 100%; height: 100%" name="model" type="text" list="modellist" />
+                                <datalist id="modellist" size="5">
+                                    <option value="BERTGen" />
+                                    <option value="DNS" />
+                                    <option value="GPT2" />
+                                    <option value="Graph2Tree" />
+                                    <option value="GroupATT" />
+                                    <option value="GTS" />
+                                    <option value="MathEN" />
+                                    <option value="MultiEncDec" />
+                                    <option value="RNNEncDec" />
+                                    <option value="RNNVAE" />
+                                    <option value="RobertaGen" />
+                                    <option value="Saligned" />
+                                    <option value="SAUSolver" />
+                                    <option value="Transformer" />
+                                    <option value="TreeLSTM" />
+                                    <option value="TRNN" />
+                                    <option value="TSN" />
+                                    
+                                </datalist>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-right">dataset:</td>
+                            <td>
+                                <input id="dataset" style="width: 100%; height: 100%" name="dataset" type="text" list="datasetlist" />
+                                <datalist id="datasetlist">
+                                    <option value="asdiv-a" />
+                                    <option value="draw" />
+                                    <option value="hmwp" />
+                                    <option value="mawps" />
+                                    <option value="mawps_asdiv-a_svamp" />
+                                    <option value="mawps-single" />
+                                    <option value="math23k" />
+                                    
+                                </datalist>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-right">run:</td>
+                            <td>
+                                <input type="radio" name="run_name" value="train" checked="checked" />train
+                                <input type="radio" name="run_name" value="test" />test
+                                <input type="radio" name="run_name" value="hyper_search" />hyper-parameter search
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-right">use gpu:</td>
+                            <td>
+                                <input type="radio" name="use_gpu" value="yes" checked="checked" />yes
+                                <input type="radio" name="use_gpu" value="no" />no
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-right">5 fold:</td>
+                            <td>
+                                <input type="checkbox" name="5_fold" value=""/>yes
+                            </td>
+                        </tr>
+                    </table>
+                    <textarea id="cmd_line_str" align="center" name="cmd_line_str" cols="40" rows="4" >我是一位特别热爱学习的好孩子。。。</textarea>
+                    <table align="right">
+                    <td>
+                    <input align="center" type="submit" value="confirm" onclick="cmd_line_generation()" />
+                    </td>
+                    </table>
+
+                </div>
+           
+            </div>
+            <footer>
+                <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+                    <a href="mwptoolkit.data.html" class="btn btn-neutral float-right" title="mwptoolkit.data" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+                    <a href="../index.html" class="btn btn-neutral float-left" title="Welcome to MWPToolkit’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+                </div>
+                <hr/>
+
+                <div role="contentinfo">
+                    <p>
+                        &#169; Copyright 2021, &#39;&#39;.
+
+                    </p>
+                </div>
+                Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+                
+                <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+                
+                provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+            </footer>
+            </div>
+        </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

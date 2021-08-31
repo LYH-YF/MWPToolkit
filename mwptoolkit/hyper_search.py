@@ -50,7 +50,7 @@ def train_process(search_parameter,configs):
     if configs['model'].lower() in ['multiencdec']:
         evaluator = MultiEncDecEvaluator(configs)
 
-    trainer = get_trainer(configs["task_type"], configs["model"], configs["supervising_mode"],configs)(configs, model, dataloader, evaluator)
+    trainer = get_trainer(configs)(configs, model, dataloader, evaluator)
     trainer.param_search()
 
 def hyper_search_process(model_name, dataset_name, task_type, search_parameter, config_dict={}):

@@ -144,18 +144,17 @@ def get_trainer_(task_type, model_name, sup_mode):
             'AbstractTrainer'
         )
 
-def get_trainer(task_type, model_name, sup_mode, config):
+def get_trainer(config):
     r"""Automatically select trainer class based on task type and model name
 
     Args:
-        task_type (~mwptoolkit.utils.enum_type.TaskType): task type.
-        model_name (str): model name.
-        sup_mode (~mwptoolkit.utils.enum_type.SupervisingMode): supervising mode.
-        config (~mwptoolkit.config.configuration.Congig)
+        config (~mwptoolkit.config.configuration.Config)
 
     Returns:
-        ~mwptoolkit.trainer.SupervisedTrainer: trainer class | ~mwptoolkit.trainer.WeaklySupervisedTrainer
+        ~mwptoolkit.trainer.SupervisedTrainer: trainer class
     """
+    model_name = config["model"]
+    sup_mode = config["supervising_mode"]
     if sup_mode == SupervisingMode.fully_supervised:
         if config['embedding']:
             try:

@@ -113,7 +113,7 @@ def run_toolkit(model_name, dataset_name, task_type, config_dict={}):
         if config['model'].lower() in ['multiencdec']:
             evaluator = MultiEncDecEvaluator(config)
 
-        trainer = get_trainer(config["task_type"], config["model"], config["supervising_mode"],config)(config, model, dataloader, evaluator)
+        trainer = get_trainer(config)(config, model, dataloader, evaluator)
         logger.info(model)
         if config["test_only"]:
             trainer.test()

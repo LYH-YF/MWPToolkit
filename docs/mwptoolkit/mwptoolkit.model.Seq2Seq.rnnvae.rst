@@ -1,7 +1,7 @@
-mwptoolkit.model.VAE.rnnvae
+mwptoolkit.model.Seq2Seq.rnnvae
 =============================
 
-.. automodule:: mwptoolkit.model.VAE.rnnvae
+.. automodule:: mwptoolkit.model.Seq2Seq.rnnvae
    :members:
    :undoc-members:
    :show-inheritance:

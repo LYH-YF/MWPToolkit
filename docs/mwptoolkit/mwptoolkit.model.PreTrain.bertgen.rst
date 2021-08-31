@@ -1,7 +1,7 @@
-mwptoolkit.model.Seq2Seq.bertgen
+mwptoolkit.model.PreTrain.bertgen
 ==================================
 
-.. automodule:: mwptoolkit.model.Seq2Seq.bertgen
+.. automodule:: mwptoolkit.model.PreTrain.bertgen
    :members:
    :undoc-members:
    :show-inheritance:

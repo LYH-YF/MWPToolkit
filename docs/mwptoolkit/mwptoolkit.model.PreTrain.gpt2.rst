@@ -1,7 +1,7 @@
-mwptoolkit.model.Seq2Seq.gpt2
+mwptoolkit.model.PreTrain.gpt2
 ================================
 
-.. automodule:: mwptoolkit.model.Seq2Seq.gpt2
+.. automodule:: mwptoolkit.model.PreTrain.gpt2
    :members:
    :undoc-members:
    :show-inheritance:

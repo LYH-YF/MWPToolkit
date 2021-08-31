@@ -1,7 +1,7 @@
-mwptoolkit.model.Seq2Seq.robertagen
+mwptoolkit.model.PreTrain.robertagen
 ====================================
 
-.. automodule:: mwptoolkit.model.Seq2Seq.robertagen
+.. automodule:: mwptoolkit.model.PreTrain.robertagen
    :members:
    :undoc-members:
    :show-inheritance:

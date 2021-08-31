@@ -7,4 +7,4 @@ mwptoolkit.model
     mwptoolkit.model.Seq2Seq
     mwptoolkit.model.Seq2Tree
     mwptoolkit.model.Graph2Tree
-    mwptoolkit.model.VAE
+    mwptoolkit.model.PreTrain

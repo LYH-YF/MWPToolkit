@@ -56,7 +56,7 @@ def train_cross_validation(config):
             evaluator = MultiEncDecEvaluator(config)
 
 
-        trainer = get_trainer(config["task_type"], config["model"],config["supervising_mode"],config)(config, model, dataloader, evaluator)
+        trainer = get_trainer(config)(config, model, dataloader, evaluator)
         logger.info("fold {}".format(fold_t))
         if config["test_only"]:
             trainer.test()

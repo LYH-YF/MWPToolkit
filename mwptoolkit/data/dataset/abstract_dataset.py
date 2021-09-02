@@ -61,6 +61,7 @@ class AbstractDataset(object):
 
         read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
 
+        shuffle (bool): whether to shuffle trainset before training.
         """
         super().__init__()
         self.model = config["model"]
@@ -84,6 +85,7 @@ class AbstractDataset(object):
         
         self.k_fold = config["k_fold"]
         self.read_local_folds = config["read_local_folds"]
+        self.shuffle = config["shuffle"]
         
         self.device = config["device"]
         
@@ -281,6 +283,8 @@ class AbstractDataset(object):
                         self.trainset += copy.deepcopy(folds[fold_t])
             self._preprocess()
             self._build_vocab()
+            if self.shuffle:
+                random.shuffle(self.trainset)
             yield k
 
     def dataset_load(self):
@@ -289,6 +293,8 @@ class AbstractDataset(object):
         self._load_dataset()
         self._preprocess()
         self._build_vocab()
+        if self.shuffle:
+            random.shuffle(self.trainset)
 
     def _preprocess(self):
         raise NotImplementedError

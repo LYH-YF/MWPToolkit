@@ -74,6 +74,7 @@ class DatasetEPT(AbstractDataset):
 
         read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
 
+        shuffle (bool): whether to shuffle trainset before training.
         """
         super().__init__(config)
         self.pretrained_model=config['pretrained_model_path']

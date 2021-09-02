@@ -2,9 +2,9 @@
 
 ##
 
-![](https://img.shields.io/badge/pypi-0.0.3-orange) 
-![](https://img.shields.io/badge/license-MIT-green) 
-![](https://img.shields.io/badge/docs-passing-pink)
+[![PyPi Latest Release](https://img.shields.io/pypi/v/textbox)](https://pypi.org/project/mwptoolkit/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Documentation Status](https://readthedocs.org/projects/textbox/badge/?version=latest)](https://textbox.readthedocs.io/en/latest/?badge=latest)
 
 [Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper]()
 
@@ -666,4 +666,4 @@ If you find MWP toolkit is useful for your research, please cite:
 
 ## License
 
-MWPtoolkit uses [MIT License](https://github.com/LYH-YF/MWPToolkit/blob/master/LICENSE).
+MWPToolkit uses [MIT License](https://github.com/LYH-YF/MWPToolkit/blob/master/LICENSE).

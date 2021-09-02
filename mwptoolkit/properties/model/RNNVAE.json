@@ -1,5 +1,4 @@
 {
-    "//":"model parameters",
     "embedding_size": 128,
     "hidden_size": 512,
     "latent_size": 64,
@@ -11,13 +10,12 @@
     "dropout_ratio": 0.5,
     "learning_rate": 0.002,
     "attention":true,
-    
-    "///":"data process parameters",
+
     "share_vocab":false,
     "symbol_for_tree":false,
     "add_sos":true,
     "add_eos":true,
+    "mask_symbol":"number",
     
-    "////":"train parameters",
     "epoch_nums":100
 }

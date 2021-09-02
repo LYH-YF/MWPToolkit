@@ -15,6 +15,7 @@
     "decoding_strategy": "greedy_search",
     "share_vocab":false,
     "symbol_for_tree":false,
+    "mask_symbol":"number",
     "max_len":128,
     "epoch_nums":200,
     "teacher_force_ratio":0.9,

@@ -12,5 +12,6 @@
     "beam_size":5,
     "share_vocab":false,
     "mask_symbol":"number",
-    "symbol_for_tree":true
+    "symbol_for_tree":true,
+    "equation_fix":"prefix"
 }

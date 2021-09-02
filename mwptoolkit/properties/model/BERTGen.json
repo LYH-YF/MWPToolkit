@@ -20,6 +20,7 @@
     "teacher_force_ratio":0.9,
     "add_sos":true,
     "add_eos":true,
+    "mask_symbol":"number",
     "train_batch_size":8,
     "test_batch_size":8
 }

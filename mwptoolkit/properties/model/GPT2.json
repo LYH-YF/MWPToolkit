@@ -8,6 +8,8 @@
     "share_vocab":true,
     "test_batch_size":32,
     "epoch_nums":200,
+    "mask_symbol":"number",
     "add_sos":true,
-    "add_eos":true
+    "add_eos":true,
+    "equation_fix":"prefix"
 }

@@ -19,5 +19,5 @@
     "teacher_force_ratio":1.0,
     "add_sos":true,
     "add_eos":true,
-    "equation_fix":"prefix"
+    "equation_fix":"None"
 }

@@ -45,6 +45,10 @@
             var run_names = document.getElementsByName("run_name");
             var use_gpu = document.getElementsByName("use_gpu");
             var five_fold = document.getElementsByName("5_fold")[0];
+            // AST-Dec -> TreeLSTM
+            if (model=="AST-Dec"){
+                model = "TreeLSTM";
+            }
             //run name
             for(var x = 0; x < run_names.length; x++){
                 if (run_names[x].checked){
@@ -94,7 +98,7 @@
                     }
                 }
             }
-
+            //pretrain model
             var pretrain_model = new Array("BERTGen","GPT2","RobertaGen","EPT");
             var chinese_dataset = new Array("math23k","hmwp");
             var english_dataset = new Array("asdiv-a","mawps-single","mawps_asdiv-a_svamp","draw","mawps");
@@ -124,6 +128,37 @@
                             cmd_line = cmd_line + "--pretrained_model_path=roberta-base ";
                         }
                         break;
+                }
+            }
+            //hyper search
+            var Seq2Seq_model = Array("DNS","MathEN","RNN");
+            var Seq2Tree_model = Array("GTS","SAUSolver","TSN");
+            var PreTrain_model = Array("BERTGen","GPT2","RobertaGen");
+            for(var x = 0; x < run_names.length; x++){
+                if (run_names[x].checked){
+                    switch (run_names[x].value){
+                        case "hyper_search":
+                            cmd_line=cmd_line+"--cpu_per_trial=2 --gpu_per_trial=0.5 --samples=1 ";
+                            if (Seq2Seq_model.includes(model)){
+                                cmd_line=cmd_line+"--search_file=search_space/Seq2Seq_basic.json ";
+                            }
+                            else if (Seq2Tree_model.includes(model)){
+                                cmd_line=cmd_line+"--search_file=search_space/Seq2Tree_basic.json ";
+                            }
+                            else if (PreTrain_model.includes(model)){
+                                cmd_line=cmd_line+"--search_file=search_space/PreTrain_basic.json ";
+                            }
+                            else {
+                                cmd_line=cmd_line+"--search_file=search_space/"+model+".json ";
+                            }
+                            break;
+                        case "train":
+                            break;
+                        case "test":
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
             var cmd_line_str = document.getElementsByName("cmd_line_str")[0];
@@ -235,6 +270,7 @@
                             <td>
                                 <input id="model" style="width: 100%; height: 100%" name="model" type="text" list="modellist" />
                                 <datalist id="modellist" size="5">
+                                    <option value="AST-Dec" />
                                     <option value="BERTGen" />
                                     <option value="DNS" />
                                     <option value="GPT2" />
@@ -249,7 +285,6 @@
                                     <option value="Saligned" />
                                     <option value="SAUSolver" />
                                     <option value="Transformer" />
-                                    <option value="TreeLSTM" />
                                     <option value="TRNN" />
                                     <option value="TSN" />
                                     

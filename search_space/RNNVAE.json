@@ -1,0 +1,10 @@
+[
+    "embedding_size=[64,128,256]",
+    "hidden_size=[128,256,512]",
+    "latent_size=[16,32,64]",
+    "num_highway_layers=[2,4]",
+    "num_encoder_layers=[2,4]",
+    "num_decoder_layers=[2,4]",
+    "dropout_ratio=(0,1)",
+    "learning_rate=(1e-4, 1e-2)"
+]

@@ -224,7 +224,7 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
             <td align="center"><a href="https://ojs.aaai.org//index.php/AAAI/article/view/4697">(Wang et al., 2019)</a></td>
         </tr>
         <tr>
-            <td>TreeLSTM</td>
+            <td>AST-Dec</td>
             <td align="center"><a href="https://aclanthology.org/D19-1241/">(Liu et al., 2019)</a></td>
         </tr>
         <tr>
@@ -305,9 +305,8 @@ We have implemented 2 evaluation metrics to measure the effect of MWP models.
 
 We have implemented the models on the datasets that are integrated within our toolkit. All the implementation follows the build-in configurations. All the experiments are conducted with 5 cross-validation. The experiment results(Equ acc|Val acc) are displayed in the following table.
 
+### <div align="center">Single-equation Task Results</div>
 <table align="center">
-    <center><strong>Single-equation Task Result</strong>
-    </center>
     <tr>
         <th rowspan="3">model</th>
         <td align="center" colspan="8"><strong>Dataset</strong></td>
@@ -516,9 +515,9 @@ We have implemented the models on the datasets that are integrated within our to
         <td>25.7</td>
     </tr>
 </table>
+
+### <div align="center">Multiple-equation Task Result</div>
 <table align="center">
-    <center><strong>Multiple-equation Task Result</strong>
-    </center>
     <tr>
         <th rowspan="3">model</th>
         <td align="center" colspan="6"><strong>Dataset</strong></td>

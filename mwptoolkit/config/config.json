@@ -7,5 +7,6 @@
     "load_best_config":false,
     "supervising_mode": "fully_supervised",
     "rebuild":false,
-    "validset_divide":true
+    "validset_divide":true,
+    "shuffle":false
 }

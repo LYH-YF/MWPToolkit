@@ -306,7 +306,8 @@ We have implemented 2 evaluation metrics to measure the effect of MWP models.
 We have implemented the models on the datasets that are integrated within our toolkit. All the implementation follows the build-in configurations. All the experiments are conducted with 5 cross-validation. The experiment results(Equ acc|Val acc) are displayed in the following table.
 
 <table align="center">
-    <caption><strong>Single-equation Task Result</strong>
+    <caption align="center">
+        <strong>Single-equation Task Result</strong>
     </caption>
     <tr>
         <th rowspan="3">model</th>
@@ -517,7 +518,7 @@ We have implemented the models on the datasets that are integrated within our to
     </tr>
 </table>
 <table align="center">
-    <caption><strong>Multiple-equation Task Result</strong>
+    <caption align="center"><strong>Multiple-equation Task Result</strong>
     </caption>
     <tr>
         <th rowspan="3">model</th>

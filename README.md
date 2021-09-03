@@ -6,7 +6,7 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Documentation Status](https://readthedocs.org/projects/textbox/badge/?version=latest)](https://textbox.readthedocs.io/en/latest/?badge=latest)
 
-[Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper]()
+[Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper](https://arxiv.org/pdf/2109.00799.pdf)
 
 MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 
 
@@ -660,9 +660,13 @@ We will keep updating and maintaining this repository. You are welcome to contri
 
 If you find MWP toolkit is useful for your research, please cite:
 
-> @article{
-> ...
+> @article{lan2021mwptoolkit,
+>     title={MWPToolkit: An Open-Source Framework for Deep Learning-Based Math Word Problem Solvers},
+>     author={Yihuai Lan and Lei Wang and Qiyuan Zhang and Yunshi Lan and Bing Tian Dai and Yan Wang and Dongxiang Zhang and Ee-Peng Lim},
+>     journal={arXiv preprint arXiv:2109.00799},
+>     year={2021}
 > }
+
 
 ## License
 

@@ -4,7 +4,7 @@
 
 [![PyPi Latest Release](https://img.shields.io/pypi/v/textbox)](https://pypi.org/project/mwptoolkit/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Documentation Status](https://readthedocs.org/projects/textbox/badge/?version=latest)](https://textbox.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/textbox/badge/?version=latest)](https://mwptoolkit.readthedocs.io/en/latest/?badge=latest)
 
 [Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper](https://arxiv.org/pdf/2109.00799.pdf)
 

@@ -2,13 +2,13 @@
 
 ##
 
-[![PyPi Latest Release](https://img.shields.io/pypi/v/textbox)](https://pypi.org/project/mwptoolkit/)
+[![PyPi Latest Release](https://img.shields.io/pypi/v/mwptoolkit)](https://pypi.org/project/mwptoolkit/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Documentation Status](https://readthedocs.org/projects/textbox/badge/?version=latest)](https://mwptoolkit.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/mwptoolkit/badge/?version=latest)](https://mwptoolkit.readthedocs.io/en/latest/?badge=latest)
 
 [Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper](https://arxiv.org/pdf/2109.00799.pdf)
 
-MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 
+MWPToolkit is a PyTorch-based toolkit for Math Word Problem (MWP) solving. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 
 
 Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. 
 
@@ -106,7 +106,7 @@ Instead of moving your dataset folder and dataset configuration file to the abov
 * ```dataset_path```: The path to dataset folder. The default value is ```'dataset/dataset_name'```, you can change it to your own dataset path via appending ```--dataset_path=[your_dataset]``` to cmd script.
 * ```dataset_config_path```: The path to dataset configuration file. The default value is ```'mwptoolkit/properties/dataset/dataset_name.json'```, you can change it to your own dataset configuration path via appending ```--dataset_config_path=[your_dataset_configuration]``` to cmd script.
 
-### Run Hyper-parameters Search
+### Run hyper-parameters search
 
 Our toolkit also provides the option to do hyper-parameters search, which could facilitate users to obtain optimal hyper-parameters efficiently. We integrated hyper-parameter search in our framework via ```ray.tune```. Due to the search procedure, it will take longer time to train a model.
 
@@ -278,7 +278,7 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
 </table>
 
 
-### Evaluation Metric
+### Evaluation metric
 
 We have implemented 2 evaluation metrics to measure the effect of MWP models. 
 

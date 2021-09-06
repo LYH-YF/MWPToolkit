@@ -56,7 +56,7 @@ To have an initial trial of our toolkit, you can use the provided cmd script:
 python run_mwptoolkit.py --model=GTS --dataset=math23k --task_type=single_equation --equation_fix=prefix --k_fold=5 --test_step=5 --gpu_id=0
 ```
 
-Above script will run [GTS](https://www.ijcai.org/proceedings/2019/736) model on [Math23K](https://aclanthology.org/D17-1088/) dataset with 5 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation). It will take around **xx** minutes to train 5 GTS models independently and output the average scores of equation accuracy and value accuracy. The training log can be found in the [log file](). 
+Above script will run [GTS](https://www.ijcai.org/proceedings/2019/736) model on [Math23K](https://aclanthology.org/D17-1088/) dataset with 5 [cross-validation](https://en.wikipedia.org/wiki/Cross-validation_(statistics)#k-fold_cross-validation). It will take around **xx** minutes to train 5 GTS models independently and output the average scores of equation accuracy and value accuracy. The training log can be found in the [log file](https://github.com/LYH-YF/MWPToolkit/tree/master/log). 
 
 If you would like to change the parameters, such as ```dataset``` and ```model```, please refer to the following instruction: 
 
@@ -68,7 +68,7 @@ If you would like to change the parameters, such as ```dataset``` and ```model``
 * ```test_step```: The epoch number of training after which conducts the evaluation on test. It should be an interger.
 * ```gpu_id```: The GPU ID for training the model. It should be an integer based on your GPU configuration. Please note that we haven't tested the framework with multiple GPUs yet.
 
-Please note ```model```, ```dataset``` and ```task_type``` are the required. 
+Please note ```model```, ```dataset``` and ```task_type``` are the required. We also provide the [interface](https://mwptoolkit.readthedocs.io/en/latest/_static/cmd.html) where you can config your experiments by clicking options and we automatically generate corresponding cmd lines. 
 
 ### Evaluate a new dataset
 

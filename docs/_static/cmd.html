@@ -98,6 +98,26 @@
                     }
                 }
             }
+            //equation_fix
+            var infix_model = new Array("DNS","BERTGen","RNNEncDec","RNNVAE","RobertaGen","Transformer");
+            var prefix_model = new Array("GPT2","Graph2Tree","GTS","SAUSolver","TreeLSTM","TSN");
+            var postfix_model = new Array("EPT","GroupATT","MathEN","Saligned","TRNN");
+            var non_model = new Array("MultiEncDec");
+            if (infix_model.includes(model)){
+                cmd_line = cmd_line + "--equation_fix=infix ";
+            }
+            else if (prefix_model.includes(model)){
+                cmd_line = cmd_line + "--equation_fix=prefix ";
+            }
+            else if (postfix_model.includes(model)){
+                cmd_line = cmd_line + "--equation_fix=postfix ";
+            }
+            else if (non_model.includes(model)){
+                cmd_line = cmd_line + "--equation_fix=None ";
+            }
+            else{
+                cmd_line = cmd_line + "--equation_fix=None ";
+            }
             //pretrain model
             var pretrain_model = new Array("BERTGen","GPT2","RobertaGen","EPT");
             var chinese_dataset = new Array("math23k","hmwp");

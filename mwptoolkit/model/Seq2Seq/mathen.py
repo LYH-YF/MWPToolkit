@@ -25,7 +25,7 @@ class MathEN(nn.Module):
         Wang et al. "Translating a Math Word Problem to a Expression Tree" in EMNLP 2018.
     """
     def __init__(self, config, dataset):
-        super(MatnEN, self).__init__()
+        super(MathEN, self).__init__()
         self.bidirectional = config["bidirectional"]
         self.embedding_size = config["embedding_size"]
         self.hidden_size = config["hidden_size"]

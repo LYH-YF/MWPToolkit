@@ -197,7 +197,19 @@ class InfixEvaluator(AbstractEvaluator):
             if flag == True:
                 return True, False, tar_exp, tar_exp
             else:
-                return False, False, tar_exp, tar_exp
+                flag = True
+                test_solves_list = list(test_solves.values())
+                target_solvers_list = list(tar_solves.values())
+                t1 = sorted(test_solves_list)
+                t2 = sorted(target_solvers_list)
+                for v1, v2 in zip(t1, t2):
+                    if abs(v1 - v2) > 1e-4:
+                        flag = False
+                        break
+                if flag:
+                    return True, False, test_exp, tar_exp
+                else:
+                    return False, False, test_exp, tar_exp
         except:
             return False, False, tar_exp, tar_exp
 
@@ -369,18 +381,18 @@ class PrefixEvaluator(AbstractEvaluator):
 
         Args:
             test_exp (list): list of test expression.
-            
+
             tar_exp (list): list of target expression.
 
         Returns:
             (tuple(bool,bool,list,list))
 
             val_ac (bool): the correctness of test expression answer compared to target expression answer.
-            
+
             equ_ac (bool): the correctness of test expression compared to target expression.
-            
+
             test_exp (list): list of test expression.
-            
+
             tar_exp (list): list of target expression.
         """
         if test_exp is []:
@@ -431,7 +443,19 @@ class PrefixEvaluator(AbstractEvaluator):
             if flag == True:
                 return True, False, test_exp, tar_exp
             else:
-                return False, False, test_exp, tar_exp
+                flag = True
+                test_solves_list = list(test_solves.values())
+                target_solvers_list = list(tar_solves.values())
+                t1 = sorted(test_solves_list)
+                t2 = sorted(target_solvers_list)
+                for v1, v2 in zip(t1, t2):
+                    if abs(v1 - v2) > 1e-4:
+                        flag = False
+                        break
+                if flag:
+                    return True, False, test_exp, tar_exp
+                else:
+                    return False, False, test_exp, tar_exp
         except:
             return False, False, test_exp, tar_exp
         return False, False, test_exp, tar_exp
@@ -439,9 +463,9 @@ class PrefixEvaluator(AbstractEvaluator):
     def _compute_prefix_expression(self, pre_fix):
         st = list()
         operators = ["+", "-", "^", "*", "/"]
-        pre_fix = copy.deepcopy(pre_fix)
-        pre_fix.reverse()
-        for p in pre_fix:
+        pre_fix_ = copy.deepcopy(pre_fix)
+        pre_fix_.reverse()
+        for p in pre_fix_:
             if p not in operators:
                 pos = re.search("\d+\(", p)
                 if pos:
@@ -488,9 +512,9 @@ class PrefixEvaluator(AbstractEvaluator):
         st = list()
         operators = ["+", "-", "^", "*", "/", "=", "<BRG>"]
         unk_symbols = {}
-        pre_fix = copy.deepcopy(pre_fix)
-        pre_fix.reverse()
-        for p in pre_fix:
+        pre_fix_ = copy.deepcopy(pre_fix)
+        pre_fix_.reverse()
+        for p in pre_fix_:
             if p not in operators:
                 pos = re.search("\d+\(", p)
                 if pos:
@@ -662,7 +686,19 @@ class PostfixEvaluator(AbstractEvaluator):
             if flag == True:
                 return True, False, test_exp, tar_exp
             else:
-                return False, False, test_exp, tar_exp
+                flag = True
+                test_solves_list = list(test_solves.values())
+                target_solvers_list = list(tar_solves.values())
+                t1 = sorted(test_solves_list)
+                t2 = sorted(target_solvers_list)
+                for v1, v2 in zip(t1, t2):
+                    if abs(v1 - v2) > 1e-4:
+                        flag = False
+                        break
+                if flag:
+                    return True, False, test_exp, tar_exp
+                else:
+                    return False, False, test_exp, tar_exp
         except:
             return False, False, test_exp, tar_exp
         return False, False, test_exp, tar_exp
@@ -883,7 +919,19 @@ class MultiWayTreeEvaluator(AbstractEvaluator):
             if flag == True:
                 return True, False, tar_exp, tar_exp
             else:
-                return False, False, tar_exp, tar_exp
+                flag = True
+                test_solves_list = list(test_solves.values())
+                target_solvers_list = list(tar_solves.values())
+                t1 = sorted(test_solves_list)
+                t2 = sorted(target_solvers_list)
+                for v1, v2 in zip(t1, t2):
+                    if abs(v1 - v2) > 1e-4:
+                        flag = False
+                        break
+                if flag:
+                    return True, False, test_exp, tar_exp
+                else:
+                    return False, False, test_exp, tar_exp
         except:
             return False, False, tar_exp, tar_exp
 
@@ -1118,7 +1166,19 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
             if flag == True:
                 return True, False, test_exp, tar_exp
             else:
-                return False, False, test_exp, tar_exp
+                flag = True
+                test_solves_list = list(test_solves.values())
+                target_solvers_list = list(tar_solves.values())
+                t1 = sorted(test_solves_list)
+                t2 = sorted(target_solvers_list)
+                for v1, v2 in zip(t1, t2):
+                    if abs(v1 - v2) > 1e-4:
+                        flag = False
+                        break
+                if flag:
+                    return True, False, test_exp, tar_exp
+                else:
+                    return False, False, test_exp, tar_exp
         except:
             return False, False, test_exp, tar_exp
         return False, False, test_exp, tar_exp
@@ -1224,7 +1284,19 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
             if flag == True:
                 return True, False, test_exp, tar_exp
             else:
-                return False, False, test_exp, tar_exp
+                flag = True
+                test_solves_list = list(test_solves.values())
+                target_solvers_list = list(tar_solves.values())
+                t1 = sorted(test_solves_list)
+                t2 = sorted(target_solvers_list)
+                for v1, v2 in zip(t1, t2):
+                    if abs(v1 - v2) > 1e-4:
+                        flag = False
+                        break
+                if flag:
+                    return True, False, test_exp, tar_exp
+                else:
+                    return False, False, test_exp, tar_exp
         except:
             return False, False, test_exp, tar_exp
         return False, False, test_exp, tar_exp

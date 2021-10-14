@@ -2,3 +2,11 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import division
 from mwptoolkit.loss import abstract_loss,binary_cross_entropy_loss,cross_entropy_loss,masked_cross_entropy_loss,mse_loss,nll_loss,smoothed_cross_entropy_loss
+
+from mwptoolkit.loss.abstract_loss import AbstractLoss
+from mwptoolkit.loss.binary_cross_entropy_loss import BinaryCrossEntropyLoss
+from mwptoolkit.loss.cross_entropy_loss import CrossEntropyLoss
+from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss
+from mwptoolkit.loss.mse_loss import MSELoss
+from mwptoolkit.loss.nll_loss import NLLLoss
+from mwptoolkit.loss.smoothed_cross_entropy_loss import SmoothCrossEntropyLoss

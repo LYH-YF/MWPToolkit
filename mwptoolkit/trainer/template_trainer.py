@@ -6,9 +6,10 @@
 
 import time
 
-from mwptoolkit.trainer.trainer import AbstractTrainer
+from mwptoolkit.trainer.abstract_trainer import AbstractTrainer
 from mwptoolkit.utils.enum_type import DatasetType
 from mwptoolkit.utils.utils import time_since
+
 
 class TemplateTrainer(AbstractTrainer):
     r"""template trainer.

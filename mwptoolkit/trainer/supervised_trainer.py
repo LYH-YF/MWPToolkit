@@ -1107,23 +1107,24 @@ class TreeLSTMTrainer(AbstractTrainer):
 
 class SAUSolverTrainer(GTSTrainer):
     """sausolver trainer, used to implement training, testing, parameter searching for deep-learning model SAUSolver.
-    
+
     example of instantiation:
-        
+
         >>> trainer = SAUSolverTrainer(config, model, dataloader, evaluator)
 
         for training:
-            
+
             >>> trainer.fit()
-        
+
         for testing:
-            
+
             >>> trainer.test()
-        
+
         for parameter searching:
 
             >>> trainer.param_search()
     """
+
     def __init__(self, config, model, dataloader, evaluator):
         """
         Args:
@@ -1131,7 +1132,7 @@ class SAUSolverTrainer(GTSTrainer):
             model (Model): An object of deep-learning model. 
             dataloader (Dataloader): dataloader object.
             evaluator (Evaluator): evaluator object.
-        
+
         expected that config includes these parameters below:
 
         learning_rate (float): learning rate of model.
@@ -1163,15 +1164,12 @@ class SAUSolverTrainer(GTSTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        try:
-            test_out, target = self.model.model_test(batch)
-        except:
-            print(batch['id'])
-
+        test_out, target = self.model.model_test(batch)
         batch_size = len(test_out)
         val_acc = []
         equ_acc = []
         for idx in range(batch_size):
+            # batch['ans'][idx] = [12,8]
             if self.config["task_type"] == TaskType.SingleEquation:
                 val_ac, equ_ac, _, _ = self.evaluator.result(test_out[idx], target[idx])
             elif self.config["task_type"] == TaskType.MultiEquation:
@@ -1180,18 +1178,114 @@ class SAUSolverTrainer(GTSTrainer):
                 raise NotImplementedError
             val_acc.append(val_ac)
             equ_acc.append(equ_ac)
-            result={
-                'id':batch['id'][idx],
-                'prediction':' '.join(test_out[idx]),
-                'target':' '.join(target[idx]),
-                'number list':batch['num list'][idx],
-                'value acc':val_ac,
-                'equ acc':equ_ac
+            result = {
+                'id': batch['id'][idx],
+                'prediction': ' '.join(test_out[idx]),
+                'target': ' '.join(target[idx]),
+                'number list': batch['num list'][idx],
+                'value acc': val_ac,
+                'equ acc': equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc
 
+    def _build_optimizer(self):
+        self.embedder_optimizer = torch.optim.Adam(self.model.embedder.parameters(),
+                                                   self.config["embedding_learning_rate"],
+                                                   weight_decay=self.config["weight_decay"])
+        self.encoder_optimizer = torch.optim.Adam(self.model.encoder.parameters(), self.config["learning_rate"],
+                                                  weight_decay=self.config["weight_decay"])
+        self.decoder_optimizer = torch.optim.Adam(self.model.decoder.parameters(), self.config["learning_rate"],
+                                                  weight_decay=self.config["weight_decay"])
+        self.node_generater_optimizer = torch.optim.Adam(self.model.node_generater.parameters(),
+                                                         self.config["learning_rate"],
+                                                         weight_decay=self.config["weight_decay"])
+        self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"],
+                                                weight_decay=self.config["weight_decay"])
+        self.sa_optimizer = torch.optim.Adam(self.model.sa.parameters(), self.config['learning_rate'],
+                                             weight_decay=self.config["weight_decay"])
+        # scheduler
+        self.embedder_scheduler = torch.optim.lr_scheduler.StepLR(self.embedder_optimizer,
+                                                                  step_size=self.config["step_size"], gamma=0.5, )
+        self.encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.encoder_optimizer,
+                                                                 step_size=self.config["step_size"], gamma=0.5)
+        self.decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.decoder_optimizer,
+                                                                 step_size=self.config["step_size"], gamma=0.5)
+        self.node_generater_scheduler = torch.optim.lr_scheduler.StepLR(self.node_generater_optimizer,
+                                                                        step_size=self.config["step_size"], gamma=0.5)
+        self.merge_scheduler = torch.optim.lr_scheduler.StepLR(self.merge_optimizer, step_size=self.config["step_size"],
+                                                               gamma=0.5)
+        self.sa_scheduler = torch.optim.lr_scheduler.StepLR(self.sa_optimizer, step_size=self.config['step_size'],
+                                                            gamma=0.5)
 
+    def _save_checkpoint(self):
+        check_pnt = {
+            "model": self.model.state_dict(),
+            "embedder_optimizer": self.embedder_optimizer.state_dict(),
+            "encoder_optimizer": self.encoder_optimizer.state_dict(),
+            "decoder_optimizer": self.decoder_optimizer.state_dict(),
+            "generate_optimizer": self.node_generater_optimizer.state_dict(),
+            "merge_optimizer": self.merge_optimizer.state_dict(),
+            "sa_optimizer":self.sa_optimizer.state_dict(),
+            "embedder_scheduler": self.embedder_scheduler.state_dict(),
+            "encoder_scheduler": self.encoder_scheduler.state_dict(),
+            "decoder_scheduler": self.decoder_scheduler.state_dict(),
+            "generate_scheduler": self.node_generater_scheduler.state_dict(),
+            "merge_scheduler": self.merge_scheduler.state_dict(),
+            "sa_scheduler":self.sa_scheduler.state_dict(),
+            "start_epoch": self.epoch_i,
+            "best_valid_value_accuracy": self.best_valid_value_accuracy,
+            "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
+            "best_test_value_accuracy": self.best_test_value_accuracy,
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t": self.config["fold_t"]
+        }
+        torch.save(check_pnt, self.config["checkpoint_path"])
+
+    def _load_checkpoint(self):
+        check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.embedder_optimizer.load_state_dict(check_pnt["embedder_optimizer"])
+        self.encoder_optimizer.load_state_dict(check_pnt["encoder_optimizer"])
+        self.decoder_optimizer.load_state_dict(check_pnt["decoder_optimizer"])
+        self.node_generater_optimizer.load_state_dict(check_pnt["generate_optimizer"])
+        self.merge_optimizer.load_state_dict(check_pnt["merge_optimizer"])
+        self.sa_optimizer.load_state_dict(check_pnt["sa_optimizer"])
+        # load parameter of scheduler
+        self.embedder_scheduler.load_state_dict(check_pnt['embedder_scheduler'])
+        self.encoder_scheduler.load_state_dict(check_pnt["encoder_scheduler"])
+        self.decoder_scheduler.load_state_dict(check_pnt["decoder_scheduler"])
+        self.node_generater_scheduler.load_state_dict(check_pnt["generate_scheduler"])
+        self.merge_scheduler.load_state_dict(check_pnt["merge_scheduler"])
+        self.sa_scheduler.load_state_dict(check_pnt["sa_scheduler"])
+        # other parameter
+        self.start_epoch = check_pnt["start_epoch"]
+        self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
+        self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
+        self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
+        self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
+
+    def _scheduler_step(self):
+        self.embedder_scheduler.step()
+        self.encoder_scheduler.step()
+        self.decoder_scheduler.step()
+        self.node_generater_scheduler.step()
+        self.merge_scheduler.step()
+        self.sa_scheduler.step()
+
+    def _optimizer_step(self):
+        self.embedder_optimizer.step()
+        self.encoder_optimizer.step()
+        self.decoder_optimizer.step()
+        self.node_generater_optimizer.step()
+        self.merge_optimizer.step()
+        self.sa_optimizer.step()
+
+    
 class TRNNTrainer(SupervisedTrainer):
     """trnn trainer, used to implement training, testing, parameter searching for deep-learning model TRNN.
     
@@ -1491,6 +1585,7 @@ class TRNNTrainer(SupervisedTrainer):
                 test_equ_ac, test_val_ac, _, acc, test_total, test_time_cost = self.evaluate(DatasetType.Test)
 
                 tune.report(accuracy=test_val_ac)
+
 
 class SalignedTrainer(SupervisedTrainer):
     """saligned trainer, used to implement training, testing, parameter searching for deep-learning model S-aligned.
@@ -1980,7 +2075,49 @@ class TSNTrainer(AbstractTrainer):
         torch.save(check_pnt, self.config["checkpoint_path"])
 
     def _load_checkpoint(self):
-        return super()._load_checkpoint()
+        check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.t_embedder_optimizer.load_state_dict(check_pnt['t_embedder_optimizer'])
+        self.t_encoder_optimizer.load_state_dict(check_pnt['t_encoder_optimizer'])
+        self.t_decoder_optimizer.load_state_dict(check_pnt['t_decoder_optimizer'])
+        self.t_node_generater_optimizer.load_state_dict(check_pnt['t_node_generater_optimizer'])
+        self.t_merge_optimizer.load_state_dict(check_pnt['t_merge_optimizer'])
+
+        self.s_embedder_optimizer.load_state_dict(check_pnt['s_embedder_optimizer'])
+        self.s_encoder_optimizer.load_state_dict(check_pnt['s_encoder_optimizer'])
+        self.s_decoder_optimizer1.load_state_dict(check_pnt['s_decoder_optimizer1'])
+        self.s_node_generater_optimizer1.load_state_dict(check_pnt['s_node_generater_optimizer1'])
+        self.s_merge_optimizer1.load_state_dict(check_pnt['s_merge_optimizer1'])
+        self.s_decoder_optimizer2.load_state_dict(check_pnt['s_decoder_optimizer2'])
+        self.s_node_generater_optimizer2.load_state_dict(check_pnt['s_node_generater_optimizer2'])
+        self.s_merge_optimizer2.load_state_dict(check_pnt['s_merge_optimizer2'])
+
+        # load parameter of scheduler
+        self.t_embedder_scheduler.load_state_dict(check_pnt['t_embedder_scheduler'])
+        self.t_encoder_scheduler.load_state_dict(check_pnt['t_encoder_scheduler'])
+        self.t_decoder_scheduler.load_state_dict(check_pnt['t_decoder_scheduler'])
+        self.t_node_generater_scheduler.load_state_dict(check_pnt['t_node_generater_scheduler'])
+        self.t_merge_scheduler.load_state_dict(check_pnt['t_merge_scheduler'])
+
+        self.s_embedder_scheduler.load_state_dict(check_pnt['s_embedder_scheduler'])
+        self.s_encoder_scheduler.load_state_dict(check_pnt['s_encoder_scheduler'])
+        self.s_decoder_scheduler1.load_state_dict(check_pnt['s_decoder_scheduler1'])
+        self.s_node_generater_scheduler1.load_state_dict(check_pnt['s_node_generater_scheduler1'])
+        self.s_merge_scheduler1.load_state_dict(check_pnt['s_merge_scheduler1'])
+        self.s_decoder_scheduler2.load_state_dict(check_pnt['s_decoder_scheduler2'])
+        self.s_node_generater_scheduler2.load_state_dict(check_pnt['s_node_generater_scheduler2'])
+        self.s_merge_scheduler2.load_state_dict(check_pnt['s_merge_scheduler2'])
+
+        # other parameter
+        self.t_start_epoch = check_pnt["t_start_epoch"]
+        self.s_start_epoch = check_pnt['s_start_epoch']
+        self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
+        self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
+        self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
+        self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
 
     def _teacher_net_train(self):
         self.model.t_embedder.train()
@@ -2737,3 +2874,93 @@ class PretrainTRNNTrainer(TRNNTrainer):
             lr = self.config["ans_learning_rate"],
             momentum = 0.9
         )
+
+class MWPBertTrainer(GTSTrainer):
+    def __init__(self,config,model,dataloader,evaluator):
+        super().__init__(config,model,dataloader,evaluator)
+    
+    def _build_optimizer(self):
+        self.encoder_optimizer = torch.optim.Adam(
+            self.model.encoder.parameters(), 
+            self.config['encoding_learning_rate'],
+            weight_decay=self.config["weight_decay"]
+        )
+        self.decoder_optimizer = torch.optim.Adam(
+            self.model.decoder.parameters(), 
+            self.config["learning_rate"],
+            weight_decay=self.config["weight_decay"]
+        )
+        self.node_generater_optimizer = torch.optim.Adam(
+            self.model.node_generater.parameters(),
+            self.config["learning_rate"],
+            weight_decay=self.config["weight_decay"]
+        )
+        self.merge_optimizer = torch.optim.Adam(
+            self.model.merge.parameters(), 
+            self.config["learning_rate"],
+            weight_decay=self.config["weight_decay"]
+        )
+        # scheduler
+        self.encoder_scheduler = torch.optim.lr_scheduler.StepLR(self.encoder_optimizer,
+                                                                 step_size=self.config["step_size"], gamma=0.5)
+        self.decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.decoder_optimizer,
+                                                                 step_size=self.config["step_size"], gamma=0.5)
+        self.node_generater_scheduler = torch.optim.lr_scheduler.StepLR(self.node_generater_optimizer,
+                                                                        step_size=self.config["step_size"], gamma=0.5)
+        self.merge_scheduler = torch.optim.lr_scheduler.StepLR(self.merge_optimizer, step_size=self.config["step_size"],
+                                                               gamma=0.5)
+    
+    def _save_checkpoint(self):
+        check_pnt = {
+            "model": self.model.state_dict(),
+            "encoder_optimizer": self.encoder_optimizer.state_dict(),
+            "decoder_optimizer": self.decoder_optimizer.state_dict(),
+            "generate_optimizer": self.node_generater_optimizer.state_dict(),
+            "merge_optimizer": self.merge_optimizer.state_dict(),
+            "encoder_scheduler": self.encoder_scheduler.state_dict(),
+            "decoder_scheduler": self.decoder_scheduler.state_dict(),
+            "generate_scheduler": self.node_generater_scheduler.state_dict(),
+            "merge_scheduler": self.merge_scheduler.state_dict(),
+            "start_epoch": self.epoch_i,
+            "best_valid_value_accuracy": self.best_valid_value_accuracy,
+            "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
+            "best_test_value_accuracy": self.best_test_value_accuracy,
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t": self.config["fold_t"]
+        }
+        torch.save(check_pnt, self.config["checkpoint_path"])
+
+    def _load_checkpoint(self):
+        check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.encoder_optimizer.load_state_dict(check_pnt["encoder_optimizer"])
+        self.decoder_optimizer.load_state_dict(check_pnt["decoder_optimizer"])
+        self.node_generater_optimizer.load_state_dict(check_pnt["generate_optimizer"])
+        self.merge_optimizer.load_state_dict(check_pnt["merge_optimizer"])
+        # load parameter of scheduler
+        self.encoder_scheduler.load_state_dict(check_pnt["encoder_scheduler"])
+        self.decoder_scheduler.load_state_dict(check_pnt["decoder_scheduler"])
+        self.node_generater_scheduler.load_state_dict(check_pnt["generate_scheduler"])
+        self.merge_scheduler.load_state_dict(check_pnt["merge_scheduler"])
+        # other parameter
+        self.start_epoch = check_pnt["start_epoch"]
+        self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
+        self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
+        self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
+        self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
+
+    def _scheduler_step(self):
+        self.encoder_scheduler.step()
+        self.decoder_scheduler.step()
+        self.node_generater_scheduler.step()
+        self.merge_scheduler.step()
+
+    def _optimizer_step(self):
+        self.encoder_optimizer.step()
+        self.decoder_optimizer.step()
+        self.node_generater_optimizer.step()
+        self.merge_optimizer.step()

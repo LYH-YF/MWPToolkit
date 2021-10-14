@@ -8,4 +8,5 @@ MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is 
 * **Highly modularized framework**. MWP toolkit is designed with highly reused modules and provides convenient interfaces for users. Specifically, data preprocessor, data loader, encoder, decoder and evaluator form the running procedure. Each module could be developed and extended independently.
 
 ## News
+* **Fix some bugs.**
 

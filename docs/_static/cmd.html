@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>mwptoolkit.config.configuration &mdash; MWPToolkit 0.0.4 documentation</title>
+  <title>command line &mdash; MWPToolkit 0.0.5 documentation</title>
   
 
   
@@ -73,7 +73,7 @@
             cmd_line = cmd_line+"--dataset="+dataset+" ";
 
             var single_dataset=new Array("math23k","asdiv-a","mawps-single","mawps_asdiv-a_svamp");
-            var multi_dataset=new Array("draw","mawps","hmwp");
+            var multi_dataset=new Array("draw","mawps","hmwp","alg514");
             if (single_dataset.includes(dataset)){
                 cmd_line = cmd_line+"--task_type="+"single_equation ";
             }
@@ -316,6 +316,7 @@
                             <td>
                                 <input id="dataset" style="width: 100%; height: 100%" name="dataset" type="text" list="datasetlist" />
                                 <datalist id="datasetlist">
+                                    <option value="alg514" />
                                     <option value="asdiv-a" />
                                     <option value="draw" />
                                     <option value="hmwp" />

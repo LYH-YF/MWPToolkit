@@ -58,13 +58,8 @@ class MultiEquationDataLoader(AbstractDataLoader):
         self.validset_nums = len(dataset.validset)
         self.testset_nums = len(dataset.testset)
 
-        if config["pretrained_model_path"]:
-            self.pretrained_tokenzier = AutoTokenizer.from_pretrained(config["pretrained_model_path"])
-            if config["model"].lower() in ["ept"]:
-                self.pretrained_tokenzier.add_special_tokens({'additional_special_tokens': ['[N]']})
-        else:
-            self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
-            self.in_unk_token = dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
+        self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
+        self.in_unk_token = dataset.in_word2idx[SpecialTokens.UNK_TOKEN]
 
         if self.symbol_for_tree or self.equation_fix == FixType.MultiWayTree:
             self.out_pad_token = self.in_pad_token

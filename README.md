@@ -17,6 +17,8 @@ Our framework has the following architecture. You could utilize our toolkit to e
 
 ## News
 
+* **Fix some bugs.**
+
 ## Characteristics
 
 * **Unification and Modularization**. We decouple solvers with different model architectures into highly modularized, reusable components and integrate them in a unified framework, which includes data, model, evaluation modules. It is convenient for you to study MWPs at a conceptual level and compare different models fairly.

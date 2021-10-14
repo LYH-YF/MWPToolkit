@@ -639,3 +639,37 @@ class TreeAttention(nn.Module):
         attn_energies = nn.functional.softmax(attn_energies, dim=1)  # B x S
 
         return attn_energies.unsqueeze(1)
+    
+
+class SemanticAlignmentModule(nn.Module):
+    def __init__(self, encoder_hidden_size, decoder_hidden_size, hidden_size, batch_first=False):
+        super(SemanticAlignmentModule, self).__init__()
+        self.batch_first = batch_first
+        self.attn = TreeAttention(encoder_hidden_size,decoder_hidden_size)
+        self.encoder_linear1 = nn.Linear(encoder_hidden_size, hidden_size)
+        self.encoder_linear2 = nn.Linear(hidden_size, hidden_size)
+
+        self.decoder_linear1 = nn.Linear(decoder_hidden_size, hidden_size)
+        self.decoder_linear2 = nn.Linear(hidden_size, hidden_size)
+
+    def forward(self, decoder_hidden, encoder_outputs):
+        if self.batch_first:
+            decoder_hidden = decoder_hidden.unsqueeze(0)
+            encoder_outputs = encoder_outputs.unsqueeze(0)
+        else:
+            decoder_hidden = decoder_hidden.unsqueeze(0)
+            encoder_outputs = encoder_outputs.unsqueeze(1)
+        attn_weights = self.attn(decoder_hidden, encoder_outputs, None)
+        if self.batch_first:
+            align_context = attn_weights.bmm(encoder_outputs) # B x 1 x H
+        else:
+            align_context = attn_weights.bmm(encoder_outputs.transpose(0, 1))  # B x 1 x H
+            align_context = align_context.transpose(0,1)
+
+        encoder_linear1 = torch.tanh(self.encoder_linear1(align_context))
+        encoder_linear2 = self.encoder_linear2(encoder_linear1)
+
+        decoder_linear1 = torch.tanh(self.decoder_linear1(decoder_hidden))
+        decoder_linear2 = self.decoder_linear2(decoder_linear1)
+
+        return encoder_linear2, decoder_linear2

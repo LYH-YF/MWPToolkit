@@ -1,4 +1,7 @@
 /.vscode
+/.idea
+/mwptoolkit.egg-info
+/dist
 __pycache__
 /dataset/math23k/partition.py
 /dataset/ape200k/process.py
@@ -6,12 +9,17 @@ __pycache__
 /dataset/mawps/MAWPS_.json
 /dataset/hmwp/process.py
 /dataset/math23k/graph2tree_deprel_info.json
+/dataset/alg514/stat_equations.py
 preprocess.py
 pos_info.json
 pos_info_.json
 span_level_deprel_tree_info.json
 deprel_tree_info.json
 *.pth
+.pypirc
+make.bat
+Makefile
+run_setup.sh
 /pretrain/gpt2_cn
 /pretrain/gpt2_en
 *.log

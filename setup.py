@@ -16,7 +16,7 @@ with open("PYPI.md", "r") as f:
 
 setuptools.setup(
     name='mwptoolkit',
-    version='0.0.4',
+    version='0.0.5',
     url="https://github.com/LYH-YF/MWPToolkit",
     author=" ",
     long_description=long_description,

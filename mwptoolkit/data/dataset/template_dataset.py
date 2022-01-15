@@ -15,11 +15,13 @@ class TemplateDataset(AbstractDataset):
 
     you need implement:
 
-    TemplateDataset._preprocess
+    TemplateDataset._preprocess()
 
-    TemplateDataset._build_symbol
+    TemplateDataset._build_symbol()
 
-    TemplateDataset._build_template_symbol
+    TemplateDataset._build_template_symbol()
+
+    overwrite TemplateDataset._build_vocab() if necessary
     
     """
     def __init__(self, config):
@@ -32,6 +34,18 @@ class TemplateDataset(AbstractDataset):
         self.temp_idx2symbol = []
 
     def _preprocess(self):
+        """
+        In this function, you need to implement the codes of data preprocessing.
+
+        Specifically, you need to
+
+        1. format input and output of every data, including trainset, validset and testset.
+
+        2. reset the list variables TemplateDataset.generate_list, TemplateDataset.operator_list and TemplateDataset.special_token_list.
+
+        3. reset the integer variables TemplateDataset.copy_nums
+
+        """
         return super()._preprocess()
 
     def _build_vocab(self):
@@ -69,9 +83,24 @@ class TemplateDataset(AbstractDataset):
             self.temp_symbol2idx[symbol] = idx
 
     def _build_symbol(self):
+        """
+        In this function, you need to implement the codes of building output vocabulary.
+
+        Specifically, you need to
+
+        1. reset the list variables TemplateDataset.out_idx2symbol, append the generating symbols into it.
+        """
         raise NotImplementedError
 
     def _build_template_symbol(self):
+        """
+        In this function, you need to implement the codes of building output vocabulary for equation template.
+
+        Specifically, you need to
+
+        1. reset the list variables TemplateDataset.temp_idx2symbol, append the generating symbols into it.
+        Also, you can do nothing in this function if you don't need template.
+        """
         raise NotImplementedError
 
     def _update_vocab(self, vocab_list):

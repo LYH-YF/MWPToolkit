@@ -9,7 +9,7 @@ import torch
 import numpy as np
 from torch import nn
 
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import SalignedEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import SalignedDecoder
 from mwptoolkit.module.Environment.stack_machine import OPERATIONS, StackMachine
@@ -23,6 +23,7 @@ class Saligned(nn.Module):
     """
     def __init__(self, config, dataset):
         super(Saligned, self).__init__()
+        self.device = config['device']
         self.operations = operations = OPERATIONS(dataset.out_symbol2idx)
         # parameter
         self._vocab_size = vocab_size = len(dataset.in_idx2word)
@@ -73,7 +74,7 @@ class Saligned(nn.Module):
             self.out_pad_token = None
         # module
         #print('vocab_size', config); #exit()
-        self.embedder = BaiscEmbedder(vocab_size, dim_embed, dropout_rate)
+        self.embedder = BasicEmbedder(vocab_size, dim_embed, dropout_rate)
         self.encoder = SalignedEncoder(dim_embed, dim_hidden, dim_hidden, dropout_rate)
         self.decoder = SalignedDecoder(operations, dim_hidden, dropout_rate, device)
         self.embedding_one = torch.nn.Parameter(torch.normal(torch.zeros(2 * dim_hidden), 0.01))
@@ -86,18 +87,18 @@ class Saligned(nn.Module):
         self._op_loss = torch.nn.CrossEntropyLoss(class_weights, size_average=False, reduce=False, ignore_index=-1)
         self._arg_loss = torch.nn.CrossEntropyLoss()
 
-    def calculate_loss(self, batch_data):
+    def calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
         
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            float: loss value.
+        :param batch_data: one batch data.
+        :return: loss value.
+
+        batch_data should include keywords 'question', 'ques len', 'equation', 'equ len',
+        'num pos', 'num list', 'num size'.
         """
-        text = batch_data["question"]
-        ops = batch_data["equation"]
-        text_len = batch_data["ques len"]
+        text = torch.tensor(batch_data["question"]).to(self.device)
+        ops = torch.tensor(batch_data["equation"]).to(self.device)
+        text_len = torch.tensor(batch_data["ques len"]).long()
         constant_indices = batch_data["num pos"]
         constants = batch_data["num list"]
         op_len = batch_data["equ len"]
@@ -197,23 +198,20 @@ class Saligned(nn.Module):
         #print(stacks[0].stack_log_index, pred_logits[0], ops[0]); #exit()
         return loss
 
-    def model_test(self, batch_data):
+    def model_test(self, batch_data:dict) -> tuple:
         """Model test.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            tuple(list,list): predicted equation, target equation.
+
+        :param batch_data: one batch data.
+        :return: predicted equation, target equation.
+
+        batch_data should include keywords 'question', 'ques len', 'equation', 'equ len',
+        'num pos', 'num list', 'num size'.
         """
-        text = batch_data["question"]
-        ops = batch_data["equation"]
-        text_len = batch_data["ques len"]
+        text = torch.tensor(batch_data['question']).to(self.device)
+        text_len = torch.tensor(batch_data['ques len']).long()
         constant_indices = batch_data["num pos"]
         constants = batch_data["num list"]
-        op_len = batch_data["equ len"]
-        target = batch_data["equation"]
-        nums_stack = batch_data["num stack"]
+        target = torch.tensor(batch_data['equation'])
         fix_constants = self.fix_constants
         batch_size = len(text)
 
@@ -278,7 +276,8 @@ class Saligned(nn.Module):
 
         for i in range(batch_size):
             predicts_idx[i] = [w for w in stacks[i].stack_log_index if w not in [self.PAD]]
-            targets[i] = list(batch_data["equation"][i].cpu().numpy())
+            #targets[i] = list(batch_data["equation"][i].cpu().numpy())
+            targets[i] = list(batch_data["equation"][i])
         predicts = self.convert_idx2symbol(torch.LongTensor(predicts_idx).to(self._device), constants)
         targets = self.convert_idx2symbol(target, constants)
 

@@ -12,7 +12,7 @@ from mwptoolkit.module.Attention.tree_attention import TreeAttention
 from mwptoolkit.module.Attention.hierarchical_attention import HierarchicalAttention
 from mwptoolkit.module.Layer.tree_layers import Score,Dec_LSTM
 from mwptoolkit.module.Layer.tree_layers import ScoreModel,GateNN,TreeEmbeddingModel,DecomposeModel,NodeEmbeddingNode
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Strategy.beam_search import BeamNode
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
@@ -361,7 +361,7 @@ class RNNBasedTreeDecoder(nn.Module):
         super(RNNBasedTreeDecoder, self).__init__()
         self.hidden_size = hidden_size
         self.embedding_size = embedding_size
-        self.embedding = BaiscEmbedder(input_size, embedding_size,dropout_ratio, padding_idx=0)
+        self.embedding = BasicEmbedder(input_size, embedding_size,dropout_ratio, padding_idx=0)
 
         self.lstm = Dec_LSTM(embedding_size,hidden_size,dropout_ratio)
 

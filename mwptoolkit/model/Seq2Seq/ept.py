@@ -11,7 +11,7 @@ from mwptoolkit.module.Encoder.transformer_encoder import TransformerEncoder
 from mwptoolkit.module.Decoder.transformer_decoder import TransformerDecoder
 from mwptoolkit.module.Decoder.ept_decoder import VanillaOpTransformer, ExpressionTransformer, ExpressionPointerTransformer
 from mwptoolkit.module.Embedder.position_embedder import PositionEmbedder
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Attention.self_attention import SelfAttentionMask
 from mwptoolkit.module.Strategy.beam_search import Beam_Search_Hypothesis
 from mwptoolkit.module.Strategy.sampling import topk_sampling
@@ -36,6 +36,7 @@ class EPT(nn.Module):
     """
     def __init__(self, config, dataset):
         super(EPT, self).__init__()
+        self.device = config["device"]
         self.max_output_len = config["max_output_len"]
         self.share_vocab = config["share_vocab"]
         self.decoding_strategy = config["decoding_strategy"]
@@ -91,27 +92,27 @@ class EPT(nn.Module):
             all_outputs, _ = self.generate_without_t(encoder_output, num_pos, num_size, src_mask, equ_len)
             return all_outputs, _
 
-    def calculate_loss(self, batch):
+    def calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            float: loss value.
+
+        :param batch_data: one batch data.
+        :return: loss value.
+
+        batch_data should include keywords 'question', 'ques len', 'equation','ques mask', 'num pos',
+        'num size' and 'max numbers'.
         """
-        src = batch["question"]
-        src_mask = batch["ques mask"]
-        num_pos = batch["num pos"]
+        src = torch.tensor(batch_data["question"]).to(self.device)
+        src_mask = torch.bool(batch_data["ques mask"]).to(self.device)
+        num_pos = batch_data["num pos"]
+        target = torch.tensor(batch_data["equation"]).to(self.device)
         encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())
         encoder_output = encoder_outputs[0]
-        num_size = max(batch["num size"])
-        max_numbers = batch["max numbers"]
-        if batch["num pos"] is not None:
+        num_size = max(batch_data["num size"])
+        max_numbers = batch_data["max numbers"]
+        if batch_data["num pos"] is not None:
             text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=max_numbers)
         else:
             text_num = text_numpad = None
-        target = batch["equation"]
         token_logits, targets = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, equation=target)
 
         batch_size = target.size(0)
@@ -128,24 +129,24 @@ class EPT(nn.Module):
         batch_loss = self.loss.get_loss()
         return batch_loss
 
-    def model_test(self, batch):
+    def model_test(self, batch_data:dict) -> tuple:
         """Model test.
         
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            tuple(list,list): predicted equation, target equation.
+        :param batch_data: one batch data.
+        :return: predicted equation, target equation.
+
+        batch_data should include keywords 'question', 'ques len', 'equation','ques mask', 'num pos',
+        'num size'.
         """
-        src = batch["question"]
-        src_mask = batch["ques mask"]
-        num_pos = batch["num pos"]
-        equ_len = batch["equation"].size(1)
+        src = torch.tensor(batch_data["question"]).to(self.device)
+        src_mask = torch.bool(batch_data["ques mask"]).to(self.device)
+        num_pos = batch_data["num pos"]
+        equ_len = max(batch_data["equ len"])
         encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())
         encoder_output = encoder_outputs[0]
 
-        max_numbers = max(batch["num size"])
-        if batch["num pos"] is not None:
+        max_numbers = max(batch_data["num size"])
+        if batch_data["num pos"] is not None:
             text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=max_numbers)
         else:
             text_num = text_numpad = None
@@ -159,8 +160,8 @@ class EPT(nn.Module):
             tensor[:, :, :seq_len] = all_outputs.cpu()
             all_outputs = tensor
 
-        all_outputs = self.convert_idx2symbol(all_outputs.squeeze(1), batch["num list"])
-        targets = self.convert_idx2symbol(batch["equation"], batch["num list"])
+        all_outputs = self.convert_idx2symbol(all_outputs.squeeze(1), batch_data["num list"])
+        targets = self.convert_idx2symbol(batch_data["equation"], batch_data["num list"])
         return all_outputs, targets
 
     def generate_t(self, target, encoder_output, num_pos, num_size, src_mask):

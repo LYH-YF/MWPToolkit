@@ -97,9 +97,9 @@ class SingleEquationDataset(AbstractDataset):
     def _preprocess(self):
         transfer = number_transfer
         
-        self.trainset, generate_list, train_copy_nums,_ = transfer(self.trainset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
-        self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
-        self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep)
+        self.trainset, generate_list, train_copy_nums,unk_symbols = transfer(self.trainset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep,self.linear)
+        self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep,self.linear)
+        self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, 'single_equation', self.mask_symbol, self.min_generate_keep,self.linear)
         
         target_equation_fix=self.equation_fix if self.equation_fix else FixType.Infix
         source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
@@ -143,15 +143,17 @@ class SingleEquationDataset(AbstractDataset):
         self.fix_process(fix)
         self.operator_mask_process()
 
-        self.generate_list = generate_list
+        self.generate_list = unk_symbols + generate_list
         if self.symbol_for_tree:
             self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         elif self.model.lower() in ['saligned']:
             self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         else:
             self.copy_nums = train_copy_nums
-        self.operator_nums = len(Operators.Single)
         self.operator_list = copy.deepcopy(Operators.Single)
+        if self.dataset in [DatasetName.mawps]:
+            self.operator_list.append('=')
+        self.operator_nums = len(self.operator_list)
 
         # graph preprocess
         use_gpu = True if self.device == torch.device('cuda') else False
@@ -168,19 +170,7 @@ class SingleEquationDataset(AbstractDataset):
                                         self.parse_tree_path, self.language, use_gpu)
                 self.trainset, self.validset, self.testset, token_list =\
                     get_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
-        if self.model.lower() in ['hms']:
-            if os.path.exists(self.parse_tree_path) and not self.rebuild:
-                logger = getLogger()
-                logger.info("read span-level deprel tree infomation from {} ...".format(self.parse_tree_path))
-                self.trainset, self.validset, self.testset, self.max_span_size =\
-                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
-            else:
-                logger = getLogger()
-                logger.info("build span-level deprel tree infomation to {} ...".format(self.parse_tree_path))
-                span_level_deprel_tree_to_file(self.trainset, self.validset, self.testset, \
-                                                self.parse_tree_path, self.language, use_gpu)
-                self.trainset, self.validset, self.testset, self.max_span_size =\
-                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+
         if self.model.lower() in ['graph2tree']:
             if os.path.exists(self.parse_tree_path) and not self.rebuild:
                 logger = getLogger()
@@ -204,8 +194,12 @@ class SingleEquationDataset(AbstractDataset):
                     words_count[word] += 1
                 except:
                     words_count[word] = 1
-
-        self.in_idx2word = copy.deepcopy(SPECIAL_TOKENS)
+        # if self.model.lower() in ['hms']:
+        #     self.in_idx2word = [SpecialTokens.PAD_TOKEN,SpecialTokens.UNK_TOKEN]
+        # else:
+        #     self.in_idx2word = copy.deepcopy(SPECIAL_TOKENS)
+        # self.in_idx2word = copy.deepcopy(SPECIAL_TOKENS)
+        self.in_idx2word = [SpecialTokens.PAD_TOKEN,SpecialTokens.SOS_TOKEN,SpecialTokens.EOS_TOKEN,SpecialTokens.UNK_TOKEN]
 
         for key, value in words_count.items():
             if value > self.min_word_keep or "NUM" in key:
@@ -435,7 +429,7 @@ class SingleEquationDataset(AbstractDataset):
 
 
     def _build_symbol_for_tree(self):
-        self.out_idx2symbol = copy.deepcopy(Operators.Single)
+        self.out_idx2symbol = copy.deepcopy(self.operator_list)
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
 
@@ -495,11 +489,11 @@ class SingleEquationDataset(AbstractDataset):
 
     def _build_symbol(self):
         if self.share_vocab:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
         else:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
         if self.model.lower() in ['hms']:
-            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + Operators.Single
+            self.out_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + self.operator_list
         self.num_start = len(self.out_idx2symbol)
         self.out_idx2symbol += self.generate_list
         if self.model.lower() in ['hms']:

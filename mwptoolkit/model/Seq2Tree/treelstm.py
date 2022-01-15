@@ -8,7 +8,7 @@ import copy
 import torch
 from torch import nn
 
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import LSTMBasedTreeDecoder
 from mwptoolkit.module.Layer.tree_layers import NodeEmbeddingLayer, TreeNode, TreeEmbedding
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
@@ -61,7 +61,7 @@ class TreeLSTM(nn.Module):
             self.out_pad_token = None
 
         # module
-        self.embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        self.embedder = BasicEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         self.encoder = nn.LSTM(self.embedding_size, self.hidden_size, self.num_layers, \
                                batch_first=True, dropout=self.dropout_ratio, bidirectional=True)
         self.decoder = LSTMBasedTreeDecoder(self.embedding_size, self.hidden_size * self.num_layers, self.operator_nums, self.generate_size, self.dropout_ratio)
@@ -106,23 +106,22 @@ class TreeLSTM(nn.Module):
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)  # B x S x N
         return all_node_outputs
 
-    def calculate_loss(self, batch_data):
+    def calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            float: loss value.
+
+        :param batch_data: one batch data.
+        :return: loss value.
+
+        batch_data should include keywords 'question', 'ques len', 'equation', 'equ len',
+        'num stack', 'num size', 'num pos'
         """
-        seq = batch_data["question"]
-        seq_length = batch_data["ques len"]
-        nums_stack = batch_data["num stack"]
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        target = torch.tensor(batch_data["equation"]).to(self.device)
+        target_length = torch.LongTensor(batch_data["equ len"]).to(self.device)
+        nums_stack = copy.deepcopy(batch_data["num stack"])
         num_size = batch_data["num size"]
         num_pos = batch_data["num pos"]
-        target = batch_data["equation"]
-        target_length = batch_data["equ len"]
-        equ_mask = batch_data["equ mask"]
         generate_nums = self.generate_nums
         num_start = self.num_start
         UNK_TOKEN = self.unk_token
@@ -151,30 +150,27 @@ class TreeLSTM(nn.Module):
                                                   num_pos, nums_stack, padding_hidden, seq_mask, num_mask, UNK_TOKEN,
                                                   num_start, initial_hidden)
         all_node_outputs = torch.stack(all_node_outputs, dim=1).to(self.device)
-        target_length = torch.LongTensor(target_length).to(self.device)
+        #target_length = torch.LongTensor(target_length).to(self.device)
         self.loss.reset()
         self.loss.eval_batch(all_node_outputs, target, target_length)
         self.loss.backward()
         return self.loss.get_loss()
 
-    def model_test(self, batch_data):
+    def model_test(self, batch_data:dict) -> float:
         """Model test.
         
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            tuple(list,list): predicted equation, target equation.
+        :param batch_data: one batch data.
+        :return: predicted equation, target equation.
+        batch_data should include keywords 'question', 'ques len', 'equation',
+        'num stack', 'num pos', num size, 'num list'
         """
-        seq = batch_data["question"]
-        seq_length = batch_data["ques len"]
-        nums_stack = batch_data["num stack"]
-        num_size = batch_data["num size"]
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        target = torch.tensor(batch_data["equation"]).to(self.device)
+        nums_stack = copy.deepcopy(batch_data["num stack"])
         num_pos = batch_data["num pos"]
-        target = batch_data["equation"]
-        target_length = batch_data["equ len"]
-        equ_mask = batch_data["equ mask"]
         num_list = batch_data['num list']
+        num_size = batch_data['num size']
         generate_nums = self.generate_nums
         num_start = self.num_start
         UNK_TOKEN = self.unk_token

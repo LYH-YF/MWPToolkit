@@ -10,6 +10,7 @@ from mwptoolkit.data.dataset.multi_equation_dataset import MultiEquationDataset
 from mwptoolkit.data.dataset.dataset_multiencdec import DatasetMultiEncDec
 from mwptoolkit.data.dataset.dataset_ept import DatasetEPT
 from mwptoolkit.data.dataset.pretrain_dataset import PretrainDataset
+from mwptoolkit.data.dataset.dataset_hms import DatasetHMS
 
 from mwptoolkit.data.dataloader.abstract_dataloader import AbstractDataLoader
 from mwptoolkit.data.dataloader.single_equation_dataloader import SingleEquationDataLoader
@@ -17,6 +18,7 @@ from mwptoolkit.data.dataloader.multi_equation_dataloader import MultiEquationDa
 from mwptoolkit.data.dataloader.dataloader_multiencdec import DataLoaderMultiEncDec
 from mwptoolkit.data.dataloader.dataloader_ept import DataLoaderEPT
 from mwptoolkit.data.dataloader.pretrain_dataloader import PretrainDataLoader
+from mwptoolkit.data.dataloader.dataloader_hms import DataLoaderHMS
 from mwptoolkit.utils.enum_type import TaskType
 
 def create_dataset(config):
@@ -32,6 +34,8 @@ def create_dataset(config):
         return DatasetMultiEncDec(config)
     if config['model'].lower() in ['ept']:
         return DatasetEPT(config)
+    if config['model'].lower() in ['hms']:
+        return DatasetHMS(config)
     if config['embedding'] != None:
         return PretrainDataset(config)
     task_type = config['task_type'].lower()
@@ -55,6 +59,8 @@ def create_dataloader(config):
         return DataLoaderMultiEncDec
     if config['model'].lower() in ['ept']:
         return DataLoaderEPT
+    if config['model'].lower() in ['hms']:
+        return DataLoaderHMS
     if config['embedding'] != None:
         return PretrainDataLoader
     task_type = config['task_type'].lower()

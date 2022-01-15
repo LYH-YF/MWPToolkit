@@ -14,7 +14,7 @@ from mwptoolkit.module.Attention.group_attention import GroupAttention
 from mwptoolkit.module.Attention.hierarchical_attention import Attention
 from mwptoolkit.module.Attention.seq_attention import Attention as Attention_x
 from mwptoolkit.module.Embedder.position_embedder import PositionalEncoding
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Encoder.transformer_encoder import GroupATTEncoder
 from mwptoolkit.module.Layer.transformer_layer import PositionwiseFeedForward, GAEncoderLayer
 

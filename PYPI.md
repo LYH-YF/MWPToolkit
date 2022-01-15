@@ -8,5 +8,16 @@ MWPToolkit is a PyTorch-based toolkit for Math Word Problem(MWP) solving. It is 
 * **Highly modularized framework**. MWP toolkit is designed with highly reused modules and provides convenient interfaces for users. Specifically, data preprocessor, data loader, encoder, decoder and evaluator form the running procedure. Each module could be developed and extended independently.
 
 ## News
-* **Fix some bugs.**
+* 1.Fix some bugs:
 
+  (1)**from_prefix_to_infix**,**from_postfix_to_infix** in mwptoolkit/utils/preprocess_tool/equation_operator.py
+
+  (2)the sequence length will be longer than pos_embedder's max length in **RobertGen**, **BertGen**.
+
+  (3)data preprocessing for new dataset won't **automatically remove 'x=' or '=x'** in single equation.
+
+* 2.Update new models:
+
+  (1)Seq2Tree model **BertTD**
+
+* 3.Rewrite Dataloader

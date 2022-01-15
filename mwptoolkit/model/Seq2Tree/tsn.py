@@ -4,19 +4,13 @@
 # @File: tsn.py
 
 import copy
-import math
-import random
 import itertools
-from logging import getLogger
 
 import torch
-import stanza
-import numpy as np
 from torch import nn
-from torch.nn import functional as F
+from typing import Tuple
 
-#from mwptoolkit.module.Encoder.graph_based_encoder import GraphBasedEncoder
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
 from mwptoolkit.module.Layer.tree_layers import NodeGenerater, SubTreeMerger, TreeNode, TreeEmbedding
@@ -75,14 +69,14 @@ class TSN(nn.Module):
         except:
             self.out_pad_token = None
 
-        self.t_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        self.t_embedder = BasicEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         self.t_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio, batch_first=False)
         #self.t_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size,self.num_layers,self.dropout_ratio)
         self.t_decoder = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.t_node_generater = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size, self.dropout_ratio)
         self.t_merge = Merge(self.hidden_size, self.embedding_size, self.dropout_ratio)
 
-        self.s_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        self.s_embedder = BasicEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         self.s_encoder = BasicRNNEncoder(self.embedding_size, self.hidden_size, self.num_layers, self.rnn_cell_type, self.dropout_ratio, batch_first=False)
         #self.s_encoder = GraphBasedEncoder(self.embedding_size,self.hidden_size, self.num_layers,self.dropout_ratio)
         self.s_decoder_1 = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
@@ -96,26 +90,24 @@ class TSN(nn.Module):
         self.loss = MaskedCrossEntropyLoss()
         self.soft_target = {}
 
-    def teacher_calculate_loss(self, batch_data):
+    def teacher_calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation of teacher net.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            float: loss value.
+
+        :param batch_data: one batch data.
+        :return: loss value
+
+        batch_data should include keywords 'question', 'ques len', 'equation', 'equ len',
+        'num stack', 'num size', 'num pos'
         """
-        seq = batch_data["question"]
-        seq_length = batch_data["ques len"]
-        nums_stack = batch_data["num stack"]
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        target = torch.tensor(batch_data["equation"]).to(self.device)
+        target_length = torch.LongTensor(batch_data["equ len"]).to(self.device)
+
+        nums_stack = copy.deepcopy(batch_data["num stack"])
         num_size = batch_data["num size"]
         num_pos = batch_data["num pos"]
-        target = batch_data["equation"]
-        target_length = batch_data["equ len"]
-        equ_mask = batch_data["equ mask"]
-        batch_id = batch_data["id"]
-        #group_nums = batch_data['group nums']
-        num_list = batch_data['num list']
+
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
@@ -127,26 +119,26 @@ class TSN(nn.Module):
             nums_stack,num_size,generate_nums,num_pos,unk,num_start)
         return loss
 
-    def student_calculate_loss(self, batch_data):
+    def student_calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation of student net.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            float: loss value.
+
+        :param batch_data: one batch data.
+        :return: loss value.
+
+        batch_data should include keywords 'question', 'ques len', 'equation', 'equ len',
+        'num stack', 'num size', 'num pos', 'id'
         """
-        seq = batch_data["question"]
-        seq_length = batch_data["ques len"]
-        nums_stack = batch_data["num stack"]
+
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        target = torch.tensor(batch_data["equation"]).to(self.device)
+        target_length = torch.LongTensor(batch_data["equ len"]).to(self.device)
+        nums_stack = copy.deepcopy(batch_data["num stack"])
         num_size = batch_data["num size"]
         num_pos = batch_data["num pos"]
-        target = batch_data["equation"]
-        target_length = batch_data["equ len"]
-        equ_mask = batch_data["equ mask"]
+
         batch_id = batch_data["id"]
-        #group_nums = batch_data['group nums']
-        num_list = batch_data['num list']
+
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention
@@ -161,25 +153,21 @@ class TSN(nn.Module):
                 unk,num_start,num_pos,soft_target,self.encoder_mask)
         return loss
 
-    def teacher_test(self, batch_data):
+    def teacher_test(self, batch_data:dict) -> tuple:
         """Teacher net test.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            tuple(list,list): predicted equation, target equation.
+
+        :param batch_data: one batch data.
+        :return: predicted equation, target equation.
+
+        batch_data should include keywords 'question', 'ques len', 'equation',
+        'num stack', 'num pos', 'num list'
         """
-        seq = batch_data["question"]
-        seq_length = batch_data["ques len"]
-        nums_stack = batch_data["num stack"]
-        num_size = batch_data["num size"]
+
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        target = torch.tensor(batch_data["equation"]).to(self.device)
+        nums_stack = copy.deepcopy(batch_data["num stack"])
         num_pos = batch_data["num pos"]
-        target = batch_data["equation"]
-        target_length = batch_data["equ len"]
-        equ_mask = batch_data["equ mask"]
-        batch_id = batch_data["id"]
-        #group_nums = batch_data['group nums']
         num_list = batch_data['num list']
         generate_nums = self.generate_nums
         num_start = self.num_start
@@ -191,25 +179,21 @@ class TSN(nn.Module):
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         return all_output, targets
 
-    def student_test(self, batch_data):
+    def student_test(self, batch_data:dict) -> Tuple[list, float, list, float, list]:
         """Student net test.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            tuple(list,float,list,float,list): predicted equation1, score1, predicted equation2, score2, target equation.
+
+        :param batch_data: one batch data.
+        :return: predicted equation1, score1, predicted equation2, score2, target equation.
+
+        batch_data should include keywords 'question', 'ques len', 'equation',
+        'num stack', 'num pos', 'num list'
         """
-        seq = batch_data["question"]
-        seq_length = batch_data["ques len"]
-        nums_stack = batch_data["num stack"]
-        num_size = batch_data["num size"]
+
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        target = torch.tensor(batch_data["equation"]).to(self.device)
+        nums_stack = copy.deepcopy(batch_data["num stack"])
         num_pos = batch_data["num pos"]
-        target = batch_data["equation"]
-        target_length = batch_data["equ len"]
-        equ_mask = batch_data["equ mask"]
-        batch_id = batch_data["id"]
-        group_nums = batch_data['group nums']
         num_list = batch_data['num list']
         generate_nums = self.generate_nums
         num_start = self.num_start
@@ -319,9 +303,10 @@ class TSN(nn.Module):
             # all_leafs = all_leafs.cuda()
             all_node_outputs = all_node_outputs.cuda()
             target = target.cuda()
-            target_length = torch.LongTensor(target_length).cuda()
+            # target_length = torch.LongTensor(target_length).cuda()
         else:
-            target_length = torch.LongTensor(target_length)
+            pass
+            # target_length = torch.LongTensor(target_length)
 
         # op_target = target < num_start
         # loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
@@ -597,10 +582,10 @@ class TSN(nn.Module):
             target = target.cuda()
             target_1 = target_1.cuda()
             sf_target = soft_target.float().cuda()
-            target_length = torch.LongTensor(target_length).cuda()
+            # target_length = torch.LongTensor(target_length).cuda()
         else:
             sf_target = soft_target.float()
-            target_length = torch.LongTensor(target_length)
+            # target_length = torch.LongTensor(target_length)
 
         # op_target = target < num_start
         # loss_0 = masked_cross_entropy_without_logit(all_leafs, op_target.long(), target_length)
@@ -849,16 +834,16 @@ class TSN(nn.Module):
             batch_data (dict): one batch data.
         
         """
-        seq = batch_data["question"]
-        seq_length = batch_data["ques len"]
-        nums_stack = batch_data["num stack"]
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        target = torch.tensor(batch_data["equation"]).to(self.device)
+        target_length = torch.tensor(batch_data["equ len"]).to(self.device)
+
+        nums_stack = copy.deepcopy(batch_data["num stack"])
         num_size = batch_data["num size"]
         num_pos = batch_data["num pos"]
-        target = batch_data["equation"]
-        target_length = batch_data["equ len"]
+
         ques_id = batch_data["id"]
-        group_nums = batch_data['group nums']
-        num_list = batch_data['num list']
         generate_nums = self.generate_nums
         num_start = self.num_start
         # sequence mask for attention

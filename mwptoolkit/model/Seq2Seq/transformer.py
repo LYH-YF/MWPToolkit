@@ -11,7 +11,7 @@ from torch import nn
 from mwptoolkit.module.Encoder.transformer_encoder import TransformerEncoder
 from mwptoolkit.module.Decoder.transformer_decoder import TransformerDecoder
 from mwptoolkit.module.Embedder.position_embedder import PositionEmbedder
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Attention.self_attention import SelfAttentionMask
 from mwptoolkit.module.Strategy.beam_search import Beam_Search_Hypothesis
 from mwptoolkit.module.Strategy.sampling import topk_sampling
@@ -28,6 +28,7 @@ class Transformer(nn.Module):
     """
     def __init__(self, config, dataset):
         super(Transformer, self).__init__()
+        self.device = config['device']
         self.max_output_len = config["max_output_len"]
         self.share_vocab = config["share_vocab"]
         self.decoding_strategy = config["decoding_strategy"]
@@ -60,11 +61,11 @@ class Transformer(nn.Module):
         self.vocab_size = len(dataset.in_idx2word)
         self.symbol_size = len(dataset.out_idx2symbol)
 
-        self.in_embedder = BaiscEmbedder(self.vocab_size, config["embedding_size"], config["embedding_dropout_ratio"])
+        self.in_embedder = BasicEmbedder(self.vocab_size, config["embedding_size"], config["embedding_dropout_ratio"])
         if config["share_vocab"]:
             self.out_embedder = self.in_embedder
         else:
-            self.out_embedder = BaiscEmbedder(self.symbol_size, config["embedding_size"], config["embedding_dropout_ratio"])
+            self.out_embedder = BasicEmbedder(self.symbol_size, config["embedding_size"], config["embedding_dropout_ratio"])
 
         #self.pos_embedder=PositionEmbedder(config["embedding_size"],config["device"],config["embedding_dropout_ratio"],config["max_len"])
         self.pos_embedder = PositionEmbedder(config["embedding_size"], config["max_len"])
@@ -109,17 +110,16 @@ class Transformer(nn.Module):
         decoder_inputs = self.out_embedder(decoder_inputs)
         return decoder_inputs
 
-    def calculate_loss(self, batch_data):
+    def calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
         
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            float: loss value.
+        :param batch_data: one batch data.
+        :return: loss value.
+
+        batch_data should include keywords 'question', 'equation'.
         """
-        src = batch_data['question']
-        target = batch_data['equation']
+        src = torch.tensor(batch_data['question']).to(self.device)
+        target = torch.tensor(batch_data['equation']).to(self.device)
         device = src.device
         source_embeddings = self.in_embedder(src) + self.pos_embedder(src).to(device)
         source_padding_mask = torch.eq(src, self.out_pad_token)
@@ -137,14 +137,13 @@ class Transformer(nn.Module):
         self.loss.backward()
         return self.loss.get_loss()
 
-    def model_test(self, batch_data):
+    def model_test(self, batch_data:dict) -> tuple:
         """Model test.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            tuple(list,list): predicted equation, target equation.
+
+        :param batch_data: one batch data.
+        :return: predicted equation, target equation.
+
+        batch_data should include keywords 'question', 'equation' and 'num list'.
         """
         src = batch_data['question']
         target = batch_data['equation']

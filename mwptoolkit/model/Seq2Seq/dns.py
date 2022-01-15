@@ -12,7 +12,7 @@ from torch.nn import functional as F
 
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import BasicRNNDecoder, AttentionalRNNDecoder
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.loss.nll_loss import NLLLoss
 from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
@@ -67,11 +67,11 @@ class DNS(nn.Module):
         except:
             self.out_pad_token = None
 
-        self.in_embedder = BaiscEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        self.in_embedder = BasicEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
             self.out_embedder = self.in_embedder
         else:
-            self.out_embedder = BaiscEmbedder(self.symbol_size, self.embedding_size, self.dropout_ratio)
+            self.out_embedder = BasicEmbedder(self.symbol_size, self.embedding_size, self.dropout_ratio)
 
         self.encoder=BasicRNNEncoder(self.embedding_size,self.hidden_size,self.num_layers,\
                                         self.encoder_rnn_cell_type,self.dropout_ratio,self.bidirectional)
@@ -121,18 +121,17 @@ class DNS(nn.Module):
             all_outputs = self.generate_without_t(encoder_outputs, encoder_hidden, decoder_inputs)
             return all_outputs
 
-    def calculate_loss(self, batch_data):
+    def calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            float: loss value.
+
+        :param batch_data: one batch data.
+        :return: loss value.
+
+        batch_data should include keywords 'question', 'ques len' and 'equation'
         """
-        seq = batch_data['question']
-        seq_length = batch_data['ques len']
-        target = batch_data['equation']
+        seq = torch.tensor(batch_data['question']).to(self.device)
+        seq_length = torch.tensor(batch_data['ques len']).long()
+        target = torch.tensor(batch_data['equation']).to(self.device)
 
         batch_size = seq.size(0)
         device = seq.device
@@ -142,7 +141,7 @@ class DNS(nn.Module):
 
         if self.bidirectional:
             encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
-            if (self.encoder_rnn_cell_type == 'lstm'):
+            if self.encoder_rnn_cell_type == 'lstm':
                 encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:
                 encoder_hidden = encoder_hidden[::2].contiguous()
@@ -167,19 +166,18 @@ class DNS(nn.Module):
 
         return self.loss.get_loss()
 
-    def model_test(self, batch_data):
+    def model_test(self, batch_data:list) -> tuple:
         """Model test.
-        
-        Args:
-            batch_data (dict): one batch data.
-        
-        Returns:
-            tuple(list,list): predicted equation, target equation.
+
+        :param batch_data: one batch data.
+        :return: predicted equation, target equation.
+
+        batch_data should include keywords 'question', 'ques len', 'equation' and 'num list'.
         """
-        seq = batch_data['question']
-        seq_length = batch_data['ques len']
+        seq = torch.tensor(batch_data['question']).to(self.device)
+        seq_length = torch.tensor(batch_data['ques len']).long()
         num_list = batch_data['num list']
-        target = batch_data['equation']
+        target = torch.tensor(batch_data['equation']).to(self.device)
 
         batch_size = seq.size(0)
         device = seq.device

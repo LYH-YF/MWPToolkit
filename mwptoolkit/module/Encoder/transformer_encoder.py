@@ -6,6 +6,7 @@
 
 import torch
 from torch import nn
+from transformers import BertModel
 
 from mwptoolkit.module.Layer.transformer_layer import TransformerLayer,GAEncoderLayer,LayerNorm
 from mwptoolkit.utils.utils import clones
@@ -72,4 +73,29 @@ class GroupATTEncoder(nn.Module):
         for layer in self.layers:
             inputs = layer(inputs, mask)
         return self.norm(inputs)
+
+
+class BertEncoder(nn.Module):
+    def __init__(self,hidden_size,dropout_ratio,pretrained_model_path):
+        super(BertEncoder, self).__init__()
+        self.embedding_size = 768
+        self.bert = BertModel.from_pretrained(pretrained_model_path)
+        self.hidden_size = hidden_size
+        self.dropout = dropout_ratio
+
+        self.em_dropout = nn.Dropout(dropout_ratio)
+        self.linear = nn.Linear(self.embedding_size, self.hidden_size)
+    
+    def forward(self,input_ids,attention_mask):
+        output = self.bert(input_ids=input_ids, attention_mask=attention_mask, output_hidden_states=True)
+        embedded = self.em_dropout(output[0])  # B x S x Bert_emb(768)
+
+        pade_outputs = self.linear(embedded)  # B x S x E
+        pade_outputs = pade_outputs.transpose(0, 1)  # S x B x E
+
+        
+        return pade_outputs
+    
+    def token_resize(self,input_size):
+        self.bert.resize_token_embeddings(input_size)
 

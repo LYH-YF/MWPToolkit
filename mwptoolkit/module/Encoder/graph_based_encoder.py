@@ -10,7 +10,7 @@ from torch.nn import functional as F
 
 from mwptoolkit.module.Graph.graph_module import Graph_Module,Parse_Graph_Module,Num_Graph_Module
 from mwptoolkit.module.Layer.graph_layers import MeanAggregator
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.utils.utils import clones
 def replace_masked_values(tensor, mask, replace_with):
     return tensor.masked_fill((1 - mask).bool(), replace_with)
@@ -67,7 +67,7 @@ class GraphEncoder(nn.Module):
         self.embedding_size=embedding_size
 
         self.dropout = nn.Dropout(dropout_ratio)
-        self.embedding = BaiscEmbedder(vocab_size,self.embedding_size,dropout_ratio,padding_idx=0)
+        self.embedding = BasicEmbedder(vocab_size,self.embedding_size,dropout_ratio,padding_idx=0)
 
         self.fw_aggregators = nn.ModuleList()
         self.bw_aggregators = nn.ModuleList()

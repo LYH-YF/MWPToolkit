@@ -1,5 +1,5 @@
 {
-    "seqseq_embedding_size":128,
+    "seq2seq_embedding_size":128,
     "seq2seq_encode_hidden_size":512,
     "seq2seq_decode_hidden_size":512,
     "seq2seq_learning_rate":0.001,

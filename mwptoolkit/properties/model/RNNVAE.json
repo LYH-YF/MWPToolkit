@@ -9,6 +9,7 @@
     "bidirectional": true,
     "dropout_ratio": 0.5,
     "learning_rate": 0.002,
+    "teacher_force_ratio": 0.8,
     "attention":true,
 
     "share_vocab":false,

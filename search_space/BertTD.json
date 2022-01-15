@@ -1,0 +1,11 @@
+[
+    "embedding_size=[64,128,256]",
+    "learning_rate=(1e-6,5e-4)",
+    "encoding_learning_rate=(1e-6,5e-4)",
+    "epoch_nums=[40,50,60]",
+    "dropout_ratio=(0,1)",
+    "step_size=[20,30]",
+    "warmup_steps=[300,400,500]",
+    "train_batch_size=[4,8,16]",
+    "beam_size=[3,5]"
+]

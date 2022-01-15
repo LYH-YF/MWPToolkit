@@ -9,6 +9,7 @@ import math
 from itertools import groupby
 
 import torch
+import transformers
 from ray import tune
 
 from mwptoolkit.trainer.abstract_trainer import AbstractTrainer
@@ -122,7 +123,9 @@ class SupervisedTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
+        gen_start = time.time()
         test_out, target = self.model.model_test(batch)
+        gen_time_cost = (time.time() - gen_start)*1000000
         batch_size = len(test_out)
         val_acc = []
         equ_acc = []
@@ -141,7 +144,8 @@ class SupervisedTrainer(AbstractTrainer):
                 'target':' '.join(target[idx]),
                 'number list':batch['num list'][idx],
                 'value acc':val_ac,
-                'equ acc':equ_ac
+                'equ acc':equ_ac,
+                'time_cost':gen_time_cost
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -165,7 +169,7 @@ class SupervisedTrainer(AbstractTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -268,7 +272,7 @@ class SupervisedTrainer(AbstractTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -425,7 +429,9 @@ class GTSTrainer(AbstractTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
+        gen_start = time.time()
         test_out, target = self.model.model_test(batch)
+        gen_time_cost = (time.time() - gen_start)*1000000
 
         batch_size = len(test_out)
         val_acc = []
@@ -445,7 +451,8 @@ class GTSTrainer(AbstractTrainer):
                 'target':' '.join(target[idx]),
                 'number list':batch['num list'][idx],
                 'value acc':val_ac,
-                'equ acc':equ_ac
+                'equ acc':equ_ac,
+                'time_cost': gen_time_cost
             }
             self.output_result.append(result)
         return val_acc, equ_acc
@@ -468,7 +475,7 @@ class GTSTrainer(AbstractTrainer):
         """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -572,7 +579,7 @@ class GTSTrainer(AbstractTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -990,7 +997,7 @@ class TreeLSTMTrainer(AbstractTrainer):
         """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -1091,7 +1098,7 @@ class TreeLSTMTrainer(AbstractTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -1458,7 +1465,7 @@ class TRNNTrainer(SupervisedTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
@@ -1573,7 +1580,7 @@ class TRNNTrainer(SupervisedTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -1727,7 +1734,7 @@ class SalignedTrainer(SupervisedTrainer):
         return op_target, eq_len
 
     def _train_batch(self, batch):
-        order = torch.sort(batch['ques len'] * -1)[1]
+        order = torch.sort(torch.tensor(batch['ques len']) * -1)[1]
         for k in batch:
             if type(batch[k]) is list:
                 batch[k] = [batch[k][i] for i in order]
@@ -1737,7 +1744,7 @@ class SalignedTrainer(SupervisedTrainer):
         return batch_loss
 
     def _eval_batch(self, batch):
-        order = torch.sort(batch['ques len'] * -1)[1]
+        order = torch.sort(torch.tensor(batch['ques len']) * -1)[1]
         for k in batch:
             if type(batch[k]) is list:
                 batch[k] = [batch[k][i] for i in order]
@@ -1775,9 +1782,9 @@ class SalignedTrainer(SupervisedTrainer):
         self.model.train()
         #print(self.dataloader.dataset.out_symbol2idx); #exit()
         for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
-            #if batch_idx >= 100: continue
-            #print('batch_idx', batch_idx)
-            batch["raw_equation"] = batch["equation"].clone()
+            # if batch_idx >= 100: continue
+            # print('batch_idx', batch_idx)
+            # batch["raw_equation"] = batch["equation"].clone()
             self.batch_idx = batch_idx + 1
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
@@ -1792,7 +1799,7 @@ class SalignedTrainer(SupervisedTrainer):
         """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -1858,15 +1865,15 @@ class SalignedTrainer(SupervisedTrainer):
         self.output_result=[]
         test_start_time = time.time()
         for batch_idx, batch in enumerate(self.dataloader.load_data(eval_set)):
-            if batch_idx >= 3000: continue
-            batch["raw_equation"] = batch["equation"].clone()
+            # if batch_idx >= 3000: continue
+            # batch["raw_equation"] = batch["equation"].clone()
             # batch["equation"], batch['equ len'] = self.adjust_equ(batch["raw_equation"], batch['equ len'],
             #                                                       batch['num list'])
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
-            pass
+
 
         test_time_cost = time_since(time.time() - test_start_time)
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
@@ -2266,7 +2273,7 @@ class TSNTrainer(AbstractTrainer):
         """
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
 
@@ -2631,7 +2638,7 @@ class EPTTrainer(AbstractTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -2798,7 +2805,7 @@ class EPTTrainer(AbstractTrainer):
         train_batch_size = self.config["train_batch_size"]
         epoch_nums = self.config["epoch_nums"]
 
-        self.train_batch_nums = int(self.dataloader.trainset_nums / train_batch_size) + 1
+        self.train_batch_nums = math.ceil(self.dataloader.trainset_nums / train_batch_size)
 
         self.logger.info("start training...")
         for epo in range(self.start_epoch, epoch_nums):
@@ -2964,3 +2971,64 @@ class MWPBertTrainer(GTSTrainer):
         self.decoder_optimizer.step()
         self.node_generater_optimizer.step()
         self.merge_optimizer.step()
+
+
+class BertTDTrainer(SupervisedTrainer):
+    def __init__(self, config, model, dataloader, evaluator):
+        super().__init__(config, model, dataloader, evaluator)
+        self._build_optimizer()
+        if config["resume"]:
+            self._load_checkpoint()
+    
+    def _build_optimizer(self):
+        t_total = (len(self.dataloader.dataset.trainset) // self.config['train_batch_size'] + 1) * self.config['epoch_nums']
+        self.optimizer = transformers.AdamW([{'params': self.model.parameters(), 'weight_decay': 0.0}], lr=self.config['learning_rate'])
+        self.scheduler = transformers.get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=self.config['warmup_steps'],num_training_steps=t_total)
+
+    def _save_checkpoint(self):
+        check_pnt = {
+            "model": self.model.state_dict(),
+            "optimizer": self.optimizer.state_dict(),
+            "scheduler": self.scheduler.state_dict(),
+            "start_epoch": self.epoch_i,
+            "best_valid_value_accuracy": self.best_valid_value_accuracy,
+            "best_valid_equ_accuracy": self.best_valid_equ_accuracy,
+            "best_test_value_accuracy": self.best_test_value_accuracy,
+            "best_test_equ_accuracy": self.best_test_equ_accuracy,
+            "best_folds_accuracy": self.best_folds_accuracy,
+            "fold_t": self.config["fold_t"]
+        }
+        torch.save(check_pnt, self.config["checkpoint_path"])
+
+    def _load_checkpoint(self):
+        # check_pnt = torch.load(self.config["checkpoint_path"],map_location="cpu")
+        check_pnt = torch.load(self.config["checkpoint_path"], map_location=self.config["map_location"])
+        # load parameter of model
+        self.model.load_state_dict(check_pnt["model"])
+        # load parameter of optimizer
+        self.optimizer.load_state_dict(check_pnt["optimizer"])
+        self.scheduler.load_state_dict(check_pnt["scheduler"])
+        # other parameter
+        self.start_epoch = check_pnt["start_epoch"]
+        self.best_valid_value_accuracy = check_pnt["best_valid_value_accuracy"]
+        self.best_valid_equ_accuracy = check_pnt["best_valid_equ_accuracy"]
+        self.best_test_value_accuracy = check_pnt["best_test_value_accuracy"]
+        self.best_test_equ_accuracy = check_pnt["best_test_equ_accuracy"]
+        self.best_folds_accuracy = check_pnt["best_folds_accuracy"]
+    
+    def _train_epoch(self):
+        epoch_start_time = time.time()
+        loss_total = 0.
+        self.model.train()
+        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+            self.batch_idx = batch_idx + 1
+            self.model.zero_grad()
+            batch_loss = self._train_batch(batch)
+            loss_total += batch_loss
+            self.optimizer.step()
+            self.scheduler.step()
+        epoch_time_cost = time_since(time.time() - epoch_start_time)
+        return loss_total, epoch_time_cost
+
+    
+    

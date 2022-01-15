@@ -4,9 +4,7 @@
 # @File: abstract_dataloader.py
 
 
-import random
-import torch
-from mwptoolkit.utils.enum_type import FixType, SpecialTokens
+from mwptoolkit.utils.enum_type import FixType
 
 
 class AbstractDataLoader(object):
@@ -16,11 +14,9 @@ class AbstractDataLoader(object):
     """
     def __init__(self, config, dataset):
         """
-        Args:
-            config (mwptoolkit.config.configuration.Config)
+        :param config:
+        :param dataset:
 
-            dataset (mwptoolit.data.dataset)
-        
         expected that config includes these parameters below:
 
         model (str): model name.
@@ -66,6 +62,16 @@ class AbstractDataLoader(object):
         self.out_unk_token = None
         self.temp_unk_token = None
         self.temp_pad_token = None
+
+        self.trainset_batches = []
+        self.validset_batches = []
+        self.testset_batches = []
+        self.__trainset_batch_idx = -1
+        self.__validset_batch_idx = -1
+        self.__testset_batch_idx = -1
+        self.trainset_batch_nums = 0
+        self.validset_batch_nums = 0
+        self.testset_batch_nums = 0
 
     def _pad_input_batch(self, batch_seq, batch_seq_len):
         if self.max_len != None:
@@ -213,3 +219,14 @@ class AbstractDataLoader(object):
         """load data.
         """
         raise NotImplementedError
+
+    def load_next_batch(self):
+        """load data.
+                """
+        raise NotImplementedError
+
+    def init_batches(self):
+        """initialize batches.
+        """
+        raise NotImplementedError
+

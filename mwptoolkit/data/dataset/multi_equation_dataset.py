@@ -173,19 +173,7 @@ class MultiEquationDataset(AbstractDataset):
                                         self.parse_tree_path, self.language, use_gpu)
                 self.trainset, self.validset, self.testset, token_list =\
                     get_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
-        if self.model.lower() in ['hms']:
-            if os.path.exists(self.parse_tree_path) and not self.rebuild:
-                logger = getLogger()
-                logger.info("read span-level deprel tree infomation from {} ...".format(self.parse_tree_path))
-                self.trainset, self.validset, self.testset, self.max_span_size =\
-                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
-            else:
-                logger = getLogger()
-                logger.info("build span-level deprel tree infomation to {} ...".format(self.parse_tree_path))
-                span_level_deprel_tree_to_file(self.trainset, self.validset, self.testset, \
-                                                self.parse_tree_path, self.language, use_gpu)
-                self.trainset, self.validset, self.testset, self.max_span_size =\
-                    get_span_level_deprel_tree_(self.trainset, self.validset, self.testset, self.parse_tree_path)
+
         if self.model.lower() in ['graph2tree']:
             if os.path.exists(self.parse_tree_path) and not self.rebuild:
                 logger = getLogger()

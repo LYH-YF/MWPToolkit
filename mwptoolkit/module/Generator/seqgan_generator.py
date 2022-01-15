@@ -4,7 +4,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Decoder.rnn_decoder import AttentionalRNNDecoder, BasicRNNDecoder
 class SeqGANGenerator(nn.Module):
@@ -30,11 +30,11 @@ class SeqGANGenerator(nn.Module):
         self.out_pad_token=config["out_pad_token"]
         self.vocab_size = config["vocab_size"]
 
-        self.in_embedder=BaiscEmbedder(config["vocab_size"],config["generator_embedding_size"],config["dropout_ratio"])
+        self.in_embedder=BasicEmbedder(config["vocab_size"],config["generator_embedding_size"],config["dropout_ratio"])
         if config["share_vocab"]:
             self.out_embedder=self.in_embedder
         else:
-            self.out_embedder=BaiscEmbedder(config["symbol_size"],config["generator_embedding_size"],config["dropout_ratio"])
+            self.out_embedder=BasicEmbedder(config["symbol_size"],config["generator_embedding_size"],config["dropout_ratio"])
         
         self.encoder=BasicRNNEncoder(config["generator_embedding_size"],config["hidden_size"],config["num_layers"],\
                                         config["rnn_cell_type"],config["dropout_ratio"])

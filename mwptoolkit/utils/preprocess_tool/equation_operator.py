@@ -148,7 +148,7 @@ def from_prefix_to_infix(expression):
             right_first = False
             if len(n_left) > 1 and priority[last_op.pop()] < priority[symbol]:
                 left_first = True
-            if len(n_right) > 1 and priority[last_op.pop()] < priority[symbol]:
+            if len(n_right) > 1 and priority[last_op.pop()] <= priority[symbol]:
                 right_first = True
             if left_first:
                 n_left = ['('] + n_left + [')']
@@ -180,7 +180,7 @@ def from_postfix_to_infix(expression):
             n_left = st.pop()
             left_first = False
             right_first = False
-            if len(n_right) > 1 and priority[last_op.pop()] < priority[symbol]:
+            if len(n_right) > 1 and priority[last_op.pop()] <= priority[symbol]:
                 right_first = True
             if len(n_left) > 1 and priority[last_op.pop()] < priority[symbol]:
                 left_first = True

@@ -151,8 +151,10 @@ class DatasetMultiEncDec(TemplateDataset):
             self.copy_nums = train_copy_nums
 
         if self.task_type == TaskType.SingleEquation:
-            self.operator_nums = len(Operators.Single)
             self.operator_list = copy.deepcopy(Operators.Single)
+            if self.dataset in [DatasetName.mawps]:
+                self.operator_list.append('=')
+            self.operator_nums = len(self.operator_list)
         elif self.task_type == TaskType.MultiEquation:
             self.operator_nums = len(Operators.Multi)
             self.operator_list = copy.deepcopy(Operators.Multi)

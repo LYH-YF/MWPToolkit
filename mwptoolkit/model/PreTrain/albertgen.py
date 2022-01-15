@@ -5,7 +5,7 @@ import torch
 from transformers import AlbertModel, AlbertTokenizer, BertModel, BertTokenizer
 from mwptoolkit.module.Decoder.transformer_decoder import TransformerDecoder
 from mwptoolkit.module.Embedder.position_embedder import PositionEmbedder_x as PositionEmbedder
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Attention.self_attention import SelfAttentionMask
 from mwptoolkit.module.Strategy.sampling import topk_sampling
 from mwptoolkit.module.Strategy.greedy import greedy_search
@@ -56,10 +56,10 @@ class AlbertGen(nn.Module):
         config["in_idx2word"] = list(self.tokenizer.get_vocab().keys())
         # config["embedding_size"] = self.encoder.config.n_embd
 
-        self.in_embedder = BaiscEmbedder(config["vocab_size"], config["embedding_size"],
+        self.in_embedder = BasicEmbedder(config["vocab_size"], config["embedding_size"],
                                          config["embedding_dropout_ratio"])
 
-        self.out_embedder = BaiscEmbedder(config["symbol_size"], config["embedding_size"],
+        self.out_embedder = BasicEmbedder(config["symbol_size"], config["embedding_size"],
                                               config["embedding_dropout_ratio"])
 
         self.pos_embedder = PositionEmbedder(config["embedding_size"], config["max_len"])
@@ -128,7 +128,10 @@ class AlbertGen(nn.Module):
                     else:
                         tgt.append(self.out_symbol2idx[_] )
                 # tgt = [self.out_symbol2idx[_] for _ in t]
-                tgts.append(tgt)
+                if self.max_output_len is not None:
+                    tgts.append(tgt[:self.max_output_len - 1])
+                else:
+                    tgts.append(tgt)
 
             target_length = max([len(_) for _ in tgts])
             for i in range(len(tgts)):

@@ -1,24 +1,24 @@
 import torch
 from torch import nn
 
-from mwptoolkit.module.Embedder.basic_embedder import BaiscEmbedder
+from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Encoder.rnn_encoder import HWCPEncoder
 from mwptoolkit.module.Decoder.tree_decoder import HMSDecoder
-from mwptoolkit.loss.nll_loss import NLLLoss
-from mwptoolkit.utils.enum_type import SpecialTokens,NumMask
+from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
+
 
 class HMS(nn.Module):
-    def __init__(self,config,dataset):
-        super(HMS,self).__init__()
-        self.device=config["device"]
+    def __init__(self, config, dataset):
+        super(HMS, self).__init__()
+        self.device = config["device"]
         self.hidden_size = config["hidden_size"]
         self.embedding_size = config["embedding_size"]
-        self.dropout_ratio=config['dropout_ratio']
+        self.dropout_ratio = config['dropout_ratio']
         self.beam_size = config['beam_size']
         self.output_length = config['max_output_len']
-        self.share_vacab=config['share_vocab']
+        self.share_vacab = config['share_vocab']
 
-        self.span_size=dataset.max_span_size
+        self.span_size = dataset.max_span_size
         self.vocab_size = len(dataset.in_idx2word)
         self.symbol_size = len(dataset.out_idx2symbol)
         self.operator_list = dataset.operator_list
@@ -27,7 +27,7 @@ class HMS(nn.Module):
         self.out_idx2symbol = dataset.out_idx2symbol
         self.in_word2idx = dataset.in_word2idx
         self.in_idx2word = dataset.in_idx2word
-        
+
         self.mask_list = NumMask.number
         self.out_pad_token = dataset.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         try:
@@ -42,18 +42,21 @@ class HMS(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-        embedder=BaiscEmbedder(self.vocab_size,self.embedding_size,self.dropout_ratio)
-        
-        self.encoder=HWCPEncoder(embedder,self.embedding_size,self.hidden_size,self.span_size,self.dropout_ratio)
-        self.decoder=HMSDecoder(embedder,self.hidden_size,self.dropout_ratio,self.operator_list,self.in_word2idx,self.out_idx2symbol,self.device)
-        
+        embedder = BasicEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
+        embedder = self._init_embedding_params(dataset.trainset, dataset.in_idx2word, embedder)
+
+        self.encoder = HWCPEncoder(embedder, self.embedding_size, self.hidden_size, self.span_size, self.dropout_ratio)
+        self.decoder = HMSDecoder(embedder, self.hidden_size, self.dropout_ratio, self.operator_list, self.in_word2idx,
+                                  self.out_idx2symbol, self.device)
+
         weight = torch.ones(self.symbol_size).to(self.device)
         pad = self.out_pad_token
-        #self.loss = NLLLoss(weight, pad)
-        self.loss = nn.NLLLoss(weight,pad,reduction='sum')
-    def forward(self, input_variable, input_lengths,span_num_pos,word_num_poses, span_length=None,tree=None,
+        # self.loss = NLLLoss(weight, pad)
+        self.loss = nn.NLLLoss(weight, pad, reduction='sum')
+
+    def forward(self, input_variable, input_lengths, span_num_pos, word_num_poses, span_length=None, tree=None,
                 target_variable=None, max_length=None, beam_width=None):
-        num_pos=(span_num_pos,word_num_poses)
+        num_pos = (span_num_pos, word_num_poses)
         if beam_width != None:
             beam_width = self.beam_size
             max_length = self.output_length
@@ -75,21 +78,30 @@ class HMS(nn.Module):
             beam_width=beam_width
         )
         return output
-    
-    def calculate_loss(self,batch_data):
-        input_variable=batch_data["spans"]
-        input_lengths=batch_data["spans len"]
-        span_num_pos=batch_data["span num pos"]
-        word_num_poses=batch_data["word num poses"]
-        span_length=batch_data["span nums"]
-        tree=batch_data["deprel tree"]
-        target_variable=batch_data["equation"]
-        if self.share_vacab:
-            target_variable=self.convert_in_idx_2_out_idx(target_variable)
 
-        num_pos=(span_num_pos,word_num_poses)
-        max_length=None
-        beam_width=None
+    def calculate_loss(self, batch_data: dict) -> float:
+        """Finish forward-propagating, calculating loss and back-propagation.
+
+        :param batch_data: one batch data.
+        :return: loss value.
+
+        batch_data should include keywords 'spans', 'spans len', 'span num pos', 'word num poses',
+        'span nums', 'deprel tree', 'num pos', 'equation'
+        """
+        input_variable = [torch.tensor(span_i_batch).to(self.device) for span_i_batch in batch_data["spans"]]
+        input_lengths = torch.tensor(batch_data["spans len"]).long()
+        span_num_pos = torch.LongTensor(batch_data["span num pos"]).to(self.device)
+        word_num_poses = [torch.LongTensor(word_num_pos).to(self.device) for word_num_pos in
+                          batch_data["word num poses"]]
+        span_length = torch.tensor(batch_data["span nums"]).to(self.device)
+        target_variable = torch.tensor(batch_data["equation"]).to(self.device)
+        tree = batch_data["deprel tree"]
+        if self.share_vacab:
+            target_variable = self.convert_in_idx_2_out_idx(target_variable)
+
+        num_pos = (span_num_pos, word_num_poses)
+        max_length = None
+        beam_width = None
         encoder_outputs, encoder_hidden = self.encoder(
             input_var=input_variable,
             input_lengths=input_lengths,
@@ -115,27 +127,36 @@ class HMS(nn.Module):
         loss = 0
         for step, step_output in enumerate(decoder_outputs):
             loss += self.loss(step_output.contiguous().view(batch_size, -1), target_variable[:, step].view(-1))
-        
+
         total_target_length = (target_variable != self.out_pad_token).sum().item()
         loss = loss / total_target_length
         loss.backward()
         return loss.item()
 
-    def model_test(self,batch_data):
-        input_variable=batch_data["spans"]
-        input_lengths=batch_data["spans len"]
-        span_num_pos=batch_data["span num pos"]
-        word_num_poses=batch_data["word num poses"]
-        span_length=batch_data["span nums"]
-        tree=batch_data["deprel tree"]
-        num_list = batch_data['num list']
-        target_variable=batch_data["equation"]
-        if self.share_vacab:
-            target_variable=self.convert_in_idx_2_out_idx(target_variable)
+    def model_test(self, batch_data:dict) -> tuple:
+        """Model test.
 
-        num_pos=(span_num_pos,word_num_poses)
-        max_length=self.output_length
-        beam_width=self.beam_size
+        :param batch_data: one batch data.
+        :return: predicted equation, target equation.
+
+        batch_data should include keywords 'spans', 'spans len', 'span num pos', 'word num poses',
+        'span nums', 'deprel tree', 'num pos', 'equation', 'num list'
+        """
+        input_variable = [torch.tensor(span_i_batch).to(self.device) for span_i_batch in batch_data["spans"]]
+        input_lengths = torch.tensor(batch_data["spans len"]).long()
+        span_num_pos = torch.LongTensor(batch_data["span num pos"]).to(self.device)
+        word_num_poses = [torch.LongTensor(word_num_pos).to(self.device) for word_num_pos in
+                          batch_data["word num poses"]]
+        span_length = torch.tensor(batch_data["span nums"]).to(self.device)
+        target_variable = torch.tensor(batch_data["equation"]).to(self.device)
+        tree = batch_data["deprel tree"]
+        num_list = batch_data['num list']
+        if self.share_vacab:
+            target_variable = self.convert_in_idx_2_out_idx(target_variable)
+
+        num_pos = (span_num_pos, word_num_poses)
+        max_length = self.output_length
+        beam_width = self.beam_size
         encoder_outputs, encoder_hidden = self.encoder(
             input_var=input_variable,
             input_lengths=input_lengths,
@@ -152,10 +173,25 @@ class HMS(nn.Module):
             max_length=max_length,
             beam_width=beam_width
         )
-        targets=self.convert_idx2symbol(target_variable,num_list)
-        outputs=torch.cat(sequence_symbols,dim=1)
-        outputs=self.convert_idx2symbol(outputs,num_list)
-        return outputs,targets
+        targets = self.convert_idx2symbol(target_variable, num_list)
+        outputs = torch.cat(sequence_symbols, dim=1)
+        outputs = self.convert_idx2symbol(outputs, num_list)
+        return outputs, targets
+
+    def _init_embedding_params(self, train_data, vocab, embedder):
+        sentences = []
+        for data in train_data:
+            sentence = [SpecialTokens.SOS_TOKEN]
+            for word in data['question']:
+                if word in vocab:
+                    sentence.append(word)
+                else:
+                    sentence.append(SpecialTokens.UNK_TOKEN)
+            sentence += [SpecialTokens.EOS_TOKEN]
+            sentences.append(sentence)
+        embedder.init_embedding_params(sentences, vocab)
+
+        return embedder
 
     def convert_out_idx_2_in_idx(self, output):
         device = output.device
@@ -186,6 +222,7 @@ class HMS(nn.Module):
             decoded_output.append(output_i)
         decoded_output = torch.tensor(decoded_output).to(device).view(batch_size, -1)
         return decoded_output
+
     def convert_idx2symbol(self, output, num_list):
         batch_size = output.size(0)
         seq_len = output.size(1)

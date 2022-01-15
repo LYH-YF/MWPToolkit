@@ -14,7 +14,7 @@ import torch
 import stanza
 from transformers import AutoTokenizer,AlbertTokenizer,BertTokenizer
 
-from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
+from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
 from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
 from mwptoolkit.utils.preprocess_tool.equation_operator import postfix_parser
@@ -24,7 +24,7 @@ from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, Nu
 
 
 
-class DatasetEPT(AbstractDataset):
+class DatasetEPT(TemplateDataset):
     """dataset class for deep-learning model EPT.
     """
     def __init__(self, config):

@@ -6,6 +6,7 @@ mwptoolkit.data.dataloader
 
    mwptoolkit.data.dataloader.abstract_dataloader
    mwptoolkit.data.dataloader.dataloader_ept
+   mwptoolkit.data.dataloader.dataloader_hms
    mwptoolkit.data.dataloader.dataloader_multiencdec
    mwptoolkit.data.dataloader.multi_equation_dataloader
    mwptoolkit.data.dataloader.pretrain_dataloader

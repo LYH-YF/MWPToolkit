@@ -6,6 +6,7 @@ mwptoolkit.data.dataset
 
    mwptoolkit.data.dataset.abstract_dataset
    mwptoolkit.data.dataset.dataset_ept
+   mwptoolkit.data.dataset.dataset_hms
    mwptoolkit.data.dataset.dataset_multiencdec
    mwptoolkit.data.dataset.multi_equation_dataset
    mwptoolkit.data.dataset.pretrain_dataset

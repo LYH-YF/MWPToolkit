@@ -7,7 +7,6 @@
 import copy
 
 from mwptoolkit.data.dataset.abstract_dataset import AbstractDataset
-from mwptoolkit.utils.enum_type import NumMask, SpecialTokens, FixType, Operators, MaskSymbol, SPECIAL_TOKENS
 
 
 class TemplateDataset(AbstractDataset):

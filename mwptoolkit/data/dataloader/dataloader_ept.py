@@ -8,7 +8,7 @@ import math
 import torch
 
 from mwptoolkit.config import Config
-from mwptoolkit.data.dataset import DatasetEPT
+from mwptoolkit.data.dataset.dataset_ept import DatasetEPT
 from mwptoolkit.utils.enum_type import EPT
 from mwptoolkit.data.dataloader.template_dataloader import TemplateDataLoader
 from mwptoolkit.utils.preprocess_tools import find_ept_numbers_in_text, pad_token_ept_inp, ept_equ_preprocess

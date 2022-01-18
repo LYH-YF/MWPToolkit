@@ -10,7 +10,7 @@ import math
 
 from mwptoolkit.config import Config
 from mwptoolkit.data.dataloader.template_dataloader import TemplateDataLoader
-from mwptoolkit.data.dataset import DatasetMultiEncDec
+from mwptoolkit.data.dataset.dataset_multiencdec import DatasetMultiEncDec
 from mwptoolkit.utils.utils import str2float
 from mwptoolkit.utils.enum_type import SpecialTokens
 

@@ -11,4 +11,4 @@ from mwptoolkit.data.dataloader.template_dataloader import TemplateDataLoader
 from mwptoolkit.data.dataloader.dataloader_ept import DataLoaderEPT
 from mwptoolkit.data.dataloader.dataloader_multiencdec import DataLoaderMultiEncDec
 from mwptoolkit.data.dataloader.pretrain_dataloader import PretrainDataLoader
-from mwptoolkit.data.dataloader.dataloader_hms import DatasetHMS
+from mwptoolkit.data.dataloader.dataloader_hms import DataLoaderHMS

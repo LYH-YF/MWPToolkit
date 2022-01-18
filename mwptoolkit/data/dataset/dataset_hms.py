@@ -12,7 +12,7 @@ from logging import getLogger
 
 import torch
 
-from mwptoolkit.data.dataset import TemplateDataset
+from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_multi_way_tree
 from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, \
     from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix

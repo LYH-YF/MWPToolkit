@@ -8,7 +8,7 @@
 
 [Doc](https://mwptoolkit.readthedocs.io/en/latest/)|[Model](#model)|[Dataset](#dataset)|[Paper](https://arxiv.org/pdf/2109.00799.pdf)
 
-MWPToolkit is a PyTorch-based toolkit for Math Word Problem (MWP) solving. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 
+MWPToolkit is a PyTorch-based toolkit for Math Word Problem (MWP) solving and has been accepted for publication in the AAAI 2022 demo track. It is a comprehensive framework for research purpose that integrates popular MWP benchmark datasets and typical deep learning-based MWP algorithms. 
 
 Our framework has the following architecture. You could utilize our toolkit to evaluate the build-in datasets, apply it to process your raw data copies or develop your own models. 
 

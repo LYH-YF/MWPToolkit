@@ -29,7 +29,11 @@ Our framework has the following architecture. You could utilize our toolkit to e
 
   (1)Seq2Tree model **BertTD**(it's under developing, and we will publish our experiment soon)
 
-* 3.Rewrite Dataloader
+* 3.Rewrite Dataloader and Config
+
+* 4.Implement function save_dataset() and load_from_pretrained() of Dataset
+
+* 5.Implement function save_config() and load_from_pretrained() of Config
 
 ## Characteristics
 

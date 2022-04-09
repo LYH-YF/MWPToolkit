@@ -4,7 +4,7 @@
 # @File: abstract_dataloader.py
 
 
-from mwptoolkit.utils.enum_type import FixType
+from mwptoolkit.utils.enum_type import FixType, SpecialTokens
 
 
 class AbstractDataLoader(object):
@@ -52,7 +52,6 @@ class AbstractDataLoader(object):
         self.filt_dirty = config["filt_dirty"]
 
         self.device = config["device"]
-        
 
         self.dataset = dataset
         self.in_pad_token = None
@@ -110,6 +109,16 @@ class AbstractDataLoader(object):
             sentence_idx.append(idx)
         return sentence_idx
 
+    def _idx2word(self, sentence_idx):
+        sentence = []
+        for idx in sentence_idx:
+            try:
+                word = self.dataset.in_idx2word[idx]
+            except:
+                word = SpecialTokens.UNK_TOKEN
+            sentence.append(word)
+        return sentence
+
     def _equ_symbol2idx(self, equation):
         equ_idx = []
         if self.equation_fix == FixType.MultiWayTree:
@@ -144,6 +153,40 @@ class AbstractDataLoader(object):
                 equ_idx.append(idx)
         return equ_idx
 
+    def _equ_idx2symbol(self, equation_idx):
+        equation = []
+        if self.equation_fix == FixType.MultiWayTree:
+            for idx in equation_idx:
+                if isinstance(idx, list):
+                    sub_equ = self._equ_idx2symbol(idx)
+                    equation.append(sub_equ)
+                else:
+                    if self.share_vocab:
+                        try:
+                            symbol = self.dataset.in_idx2word[idx]
+                        except:
+                            symbol = SpecialTokens.UNK_TOKEN
+                    else:
+                        try:
+                            symbol = self.dataset.out_idx2symbol[idx]
+                        except:
+                            symbol = SpecialTokens.UNK_TOKEN
+                    equation.append(symbol)
+        else:
+            for idx in equation_idx:
+                if self.share_vocab:
+                    try:
+                        symbol = self.dataset.in_idx2word[idx]
+                    except:
+                        symbol = self.in_unk_token
+                else:
+                    try:
+                        symbol = self.dataset.out_idx2symbol[idx]
+                    except:
+                        symbol = self.out_unk_token
+                equation.append(symbol)
+        return equation
+
     def _temp_symbol2idx(self, template):
         temp_idx = []
         if self.equation_fix == FixType.MultiWayTree:
@@ -177,6 +220,40 @@ class AbstractDataLoader(object):
                         idx = self.temp_unk_token
                 temp_idx.append(idx)
         return temp_idx
+
+    def _temp_idx2symbol(self, template_idx):
+        template = []
+        if self.equation_fix == FixType.MultiWayTree:
+            for idx in template_idx:
+                if isinstance(idx, list):
+                    sub_equ_idx = self._equ_idx2symbol(idx)
+                    template.append(sub_equ_idx)
+                else:
+                    if self.share_vocab:
+                        try:
+                            symbol = self.dataset.in_idx2word[idx]
+                        except:
+                            symbol = SpecialTokens.UNK_TOKEN
+                    else:
+                        try:
+                            symbol = self.dataset.temp_idx2symbol[idx]
+                        except:
+                            symbol = SpecialTokens.UNK_TOKEN
+                    template.append(symbol)
+        else:
+            for idx in template_idx:
+                if self.share_vocab:
+                    try:
+                        symbol = self.dataset.in_idx2word[idx]
+                    except:
+                        symbol = SpecialTokens.UNK_TOKEN
+                else:
+                    try:
+                        symbol = self.dataset.temp_idx2symbol[idx]
+                    except:
+                        symbol = SpecialTokens.UNK_TOKEN
+                template.append(symbol)
+        return template
 
     def _get_mask(self, batch_seq_len):
         max_length = max(batch_seq_len)
@@ -229,4 +306,24 @@ class AbstractDataLoader(object):
         """initialize batches.
         """
         raise NotImplementedError
+
+    def convert_word_2_idx(self,sentence):
+        if self.add_sos:
+            sentence = [SpecialTokens.SOS_TOKEN] + sentence
+        if self.add_eos:
+            sentence = sentence + [SpecialTokens.EOS_TOKEN]
+        sentence_idx = self._word2idx(sentence)
+        return sentence_idx
+
+    def convert_idx_2_word(self,sentence_idx):
+        sentence = self._idx2word(sentence_idx)
+        return sentence
+
+    def convert_symbol_2_idx(self,equation):
+        equation_idx = self._equ_symbol2idx(equation)
+        return equation_idx
+
+    def convert_idx_2_symbol(self,equation_idx):
+        equation = self._equ_idx2symbol(equation_idx)
+        return equation
 

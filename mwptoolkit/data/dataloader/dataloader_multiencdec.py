@@ -8,6 +8,8 @@ import numpy as np
 import torch
 import math
 
+from typing import List
+
 from mwptoolkit.config import Config
 from mwptoolkit.data.dataloader.template_dataloader import TemplateDataLoader
 from mwptoolkit.data.dataset.dataset_multiencdec import DatasetMultiEncDec
@@ -361,6 +363,26 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
             batch_graph.append(graph)
         # batch_graph = torch.tensor(batch_graph)
         return batch_graph
+
+    def build_batch_for_predict(self, batch_data: List[dict]):
+        for idx, data in enumerate(batch_data):
+            data['equation'] = []
+            data['template'] = []
+            data['infix equation'] = []
+            data['ans'] = None
+            if data.get('id', None) is None:
+                data['id'] = 'temp_{}'.format(idx)
+        batch = self.__build_batch(batch_data)
+        del batch['equation']
+        del batch['template']
+        del batch['equ len']
+        del batch['equ mask']
+        del batch['ans']
+        del batch['equ_source']
+        del batch['temp_source']
+        del batch['infix equation']
+
+        return batch
 
     # def load_batch(self, batch):
     #     """load one batch

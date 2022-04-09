@@ -7,7 +7,10 @@
 import random
 import os
 import copy
+import re
 import torch
+
+from mwptoolkit.config.configuration import Config
 from mwptoolkit.utils.utils import read_json_data, write_json_data
 from mwptoolkit.utils.preprocess_tools import get_group_nums, get_deprel_tree, get_span_level_deprel_tree
 from mwptoolkit.utils.preprocess_tools import id_reedit
@@ -68,7 +71,7 @@ class AbstractDataset(object):
         self.dataset = config["dataset"]
         self.equation_fix = config["equation_fix"]
         
-        self.dataset_path = config["dataset_path"]
+        self.dataset_path = config['dataset_dir'] if config['dataset_dir'] else config["dataset_path"]
         self.language = config["language"]
         self.single = config["single"]
         self.linear = config["linear"]
@@ -88,30 +91,48 @@ class AbstractDataset(object):
         self.shuffle = config["shuffle"]
         
         self.device = config["device"]
-        
-        self.root = config['root']
+
+        self.resume_training = config['resume_training'] if config['resume_training'] else config['resume']
+
         self.max_span_size = 1
+        self.fold_t = 0
+        self.the_fold_t = -1
+        self.from_pretrained = False
+        self.datas = []
+
+        self.trainset = []
+        self.validset = []
+        self.testset = []
+        self.validset_id = []
+        self.trainset_id = []
+        self.testset_id = []
+        self.folds = []
+        self.folds_id = []
+        if self.k_fold:
+            self._load_k_fold_dataset()
+        else:
+            self._load_dataset()
 
     def _load_dataset(self):
         '''
         read dataset from files
         '''
-        trainset_file = self.dataset_path + "/trainset.json"
-        validset_file = self.dataset_path + "/validset.json"
-        testset_file = self.dataset_path + "/testset.json"
+        trainset_file = os.path.join(self.dataset_path,'trainset.json')
+        validset_file = os.path.join(self.dataset_path, 'validset.json')
+        testset_file = os.path.join(self.dataset_path, 'testset.json')
         
         if os.path.isabs(trainset_file):
             self.trainset = read_json_data(trainset_file)
         else:
-            self.trainset = read_json_data(os.path.join(self.root,trainset_file))
+            self.trainset = read_json_data(os.path.join(os.getcwd(),trainset_file))
         if os.path.isabs(validset_file):
             self.validset = read_json_data(validset_file)
         else:
-            self.validset = read_json_data(os.path.join(self.root,validset_file))
+            self.validset = read_json_data(os.path.join(os.getcwd(),validset_file))
         if os.path.isabs(testset_file):
             self.testset = read_json_data(testset_file)
         else:
-            self.testset = read_json_data(os.path.join(self.root,testset_file))
+            self.testset = read_json_data(os.path.join(os.getcwd(),testset_file))
 
         if self.validset_divide is not True:
             self.testset = self.validset + self.testset
@@ -119,22 +140,109 @@ class AbstractDataset(object):
 
         if self.dataset in [DatasetName.hmwp]:
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
-        
+        id_key = 'id' if self.dataset != DatasetName.asdiv_a else '@ID'
+        if self.trainset_id and self.testset_id:
+            datas = self.trainset + self.validset + self.testset
+            self.trainset = []
+            self.validset = []
+            self.testset = []
+            for data_id in self.trainset_id:
+                for idx,data in enumerate(datas):
+                    if data_id == data[id_key]:
+                        self.trainset.append(data)
+                        datas.pop(idx)
+                        break
+            for data_id in self.validset_id:
+                for idx,data in enumerate(datas):
+                    if data_id == data[id_key]:
+                        self.validset.append(data)
+                        datas.pop(idx)
+                        break
+            for data_id in self.testset_id:
+                for idx,data in enumerate(datas):
+                    if data_id == data[id_key]:
+                        self.testset.append(data)
+                        datas.pop(idx)
+                        break
+        else:
+            self.trainset_id = []
+            self.validset_id = []
+            self.testset_id = []
+            for data in self.trainset:
+                self.trainset_id.append(data[id_key])
+            for data in self.validset:
+                self.validset_id.append(data[id_key])
+            for data in self.testset:
+                self.testset_id.append(data[id_key])
 
     def _load_fold_dataset(self):
         """read one fold of dataset from file. 
         """
-        trainset_file = self.dataset_path + "/trainset_fold{}.json".format(self.fold_t)
-        testset_file = self.dataset_path + "/testset_fold{}.json".format(self.fold_t)
+        trainset_file = os.path.join(self.dataset_path, "trainset_fold{}.json".format(self.fold_t))
+        testset_file = os.path.join(self.dataset_path, "testset_fold{}.json".format(self.fold_t))
+
         if os.path.isabs(trainset_file):
             self.trainset = read_json_data(trainset_file)
         else:
-            self.trainset = read_json_data(os.path.join(self.root,trainset_file))
+            self.trainset = read_json_data(os.path.join(os.getcwd(),trainset_file))
         if os.path.isabs(trainset_file):
             self.testset = read_json_data(testset_file)
         else:
-            self.testset = read_json_data(os.path.join(self.root,testset_file))
+            self.testset = read_json_data(os.path.join(os.getcwd(),testset_file))
         self.validset = []
+
+    def _load_k_fold_dataset(self):
+        id_key = 'id' if self.dataset != DatasetName.asdiv_a else '@ID'
+        if self.folds_id:
+            self._load_dataset()
+            datas = self.trainset + self.validset + self.testset
+            folds = []
+            for fold_t_id in self.folds:
+                split_fold_data=[]
+                for data_id in fold_t_id:
+                    for idx,data in enumerate(datas):
+                        if data_id==data[id_key]:
+                            split_fold_data.append(data)
+                            datas.pop(idx)
+                            break
+                folds.append(split_fold_data)
+        else:
+            if self.read_local_folds is not True:
+                self._load_dataset()
+                datas = self.trainset + self.validset + self.testset
+                random.shuffle(datas)
+                step_size = int(len(self.datas) / self.k_fold)
+                folds = []
+                for split_fold in range(self.k_fold - 1):
+                    fold_start = step_size * split_fold
+                    fold_end = step_size * (split_fold + 1)
+                    folds.append(datas[fold_start:fold_end])
+                folds.append(datas[(step_size * (self.k_fold - 1)):])
+                for split_fold_data in folds:
+                    fold_id = []
+                    for data in split_fold_data:
+                        fold_id.append(data[id_key])
+                    self.folds_id.append(fold_id)
+            else:
+                folds = []
+                for fold_t in range(self.k_fold):
+                    testset_file = self.dataset_path + "/testset_fold{}.json".format(fold_t)
+                    if os.path.isabs(testset_file):
+                        folds.append(read_json_data(testset_file))
+                    else:
+                        folds.append(read_json_data(os.path.join(os.getcwd(), testset_file)))
+                for split_fold_data in folds:
+                    fold_id = []
+                    for data in split_fold_data:
+                        fold_id.append(data[id_key])
+                    self.folds_id.append(fold_id)
+            self.folds = folds
+
+    def reset_dataset(self):
+        if self.k_fold:
+            self._load_k_fold_dataset()
+        else:
+            self._load_dataset()
 
     def fix_process(self, fix):
         r"""equation infix/postfix/prefix process.
@@ -242,21 +350,21 @@ class AbstractDataset(object):
         for idx, data in enumerate(self.testset):
             self.testset[idx]["equation"] = EN_rule2(data["equation"])
 
-    def cross_validation_load(self, k_fold, start_fold_t=0):
+    def cross_validation_load(self, k_fold, start_fold_t=None):
         r"""dataset load for cross validation
 
         Build folds for cross validation. Choose one of folds for testset and other folds for trainset.
         
         Args:
             k_fold (int): the number of folds, also the cross validation parameter k.
-            start_fold_t (int): default 0, training start from the training of t-th time.
+            start_fold_t (int): default None, training start from the training of t-th time.
         
         Returns:
             Generator including current training index of cross validation.
         """
-        if k_fold<=1:
+        if k_fold <= 1:
             raise ValueError("the cross validation parameter k shouldn't be less than one, it should be greater than one")
-        if self.read_local_folds != True:
+        if self.read_local_folds is not True:
             self._load_dataset()
             self.datas = self.trainset + self.validset + self.testset
             random.shuffle(self.datas)
@@ -267,9 +375,11 @@ class AbstractDataset(object):
                 fold_end = step_size * (split_fold + 1)
                 folds.append(self.datas[fold_start:fold_end])
             folds.append(self.datas[(step_size * (k_fold - 1)):])
-        self.start_fold_t = start_fold_t
-        for k in range(self.start_fold_t, k_fold):
+        if start_fold_t is not None:
+            self.fold_t = start_fold_t
+        for k in range(self.fold_t, k_fold):
             self.fold_t = k
+            self.the_fold_t = self.fold_t
             self.trainset = []
             self.validset = []
             self.testset = []
@@ -281,8 +391,14 @@ class AbstractDataset(object):
                         self.testset += copy.deepcopy(folds[fold_t])
                     else:
                         self.trainset += copy.deepcopy(folds[fold_t])
-            self._preprocess()
-            self._build_vocab()
+            parameters = self._preprocess()
+            if not self.resume_training and not self.from_pretrained:
+                for key, value in parameters.items():
+                    setattr(self, key, value)
+            parameters = self._build_vocab()
+            if not self.resume_training and not self.from_pretrained:
+                for key, value in parameters.items():
+                    setattr(self, key, value)
             if self.shuffle:
                 random.shuffle(self.trainset)
             yield k
@@ -290,11 +406,51 @@ class AbstractDataset(object):
     def dataset_load(self):
         r"""dataset process and build vocab
         """
-        self._load_dataset()
-        self._preprocess()
-        self._build_vocab()
+        if self.k_fold:
+            self.the_fold_t +=1
+            self.fold_t = self.the_fold_t
+            for fold_t in range(self.k_fold):
+                if fold_t == self.the_fold_t:
+                    self.testset += copy.deepcopy(self.folds[fold_t])
+                else:
+                    self.trainset += copy.deepcopy(self.folds[fold_t])
+
+            parameters = self._preprocess()
+            if not self.resume_training and not self.from_pretrained:
+                for key,value in parameters.items():
+                    setattr(self,key,value)
+            parameters = self._build_vocab()
+            if not self.resume_training and not self.from_pretrained:
+                for key, value in parameters.items():
+                    setattr(self, key, value)
+            if self.resume_training:
+                self.resume_training=False
+
+        else:
+            parameters = self._preprocess()
+            if not self.resume_training and not self.from_pretrained:
+                for key, value in parameters.items():
+                    setattr(self, key, value)
+            parameters = self._build_vocab()
+            if not self.resume_training and not self.from_pretrained:
+                for key, value in parameters.items():
+                    setattr(self, key, value)
+            if self.resume_training:
+                self.resume_training=False
         if self.shuffle:
             random.shuffle(self.trainset)
+
+    def parameters_to_dict(self):
+        parameters_dict = {}
+        for name, value in vars(self).items():
+            if hasattr(eval('self.{}'.format(name)), '__call__') or re.match('__.*?__', name):
+                continue
+            else:
+                parameters_dict[name] = value
+        return parameters_dict
+
+    def _load_pretrained_parameters(self):
+        raise NotImplementedError
 
     def _preprocess(self):
         raise NotImplementedError
@@ -303,4 +459,11 @@ class AbstractDataset(object):
         raise NotImplementedError
 
     def _update_vocab(self, vocab_list):
+        raise NotImplementedError
+
+    def save_dataset(self,trained_dir):
+        raise NotImplementedError
+
+    @classmethod
+    def load_from_pretrained(cls, pretrained_dir):
         raise NotImplementedError

@@ -22,5 +22,7 @@
     "add_sos":true,
     "add_eos":true,
     "train_batch_size":8,
-    "test_batch_size":8
+    "test_batch_size":8,
+    "add_num_symbol": true,
+    "embedding": "roberta"
 }

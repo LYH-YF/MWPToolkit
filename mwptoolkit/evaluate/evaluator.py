@@ -7,34 +7,14 @@
 import copy
 import re
 import threading
+from typing import Type, Union
+
 import sympy as sym
+
+from mwptoolkit.config.configuration import Config
 from mwptoolkit.utils.enum_type import SpecialTokens, OPERATORS, NumMask, MaskSymbol, FixType
 from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
 
-def get_evaluator(config):
-    """build evaluator 
-
-    Args:
-        config (Config): An instance object of Config, used to record parameter information.
-    
-    Returns:
-        Evaluator: Constructed evaluator.
-    """
-    if config["equation_fix"] == FixType.Prefix:
-        evaluator = PrefixEvaluator(config)
-    elif config["equation_fix"] == FixType.Nonfix or config["equation_fix"] == FixType.Infix:
-        evaluator = InfixEvaluator(config)
-    elif config["equation_fix"] == FixType.Postfix:
-        evaluator = PostfixEvaluator(config)
-    elif config["equation_fix"] == FixType.MultiWayTree:
-        evaluator = MultiWayTreeEvaluator(config)
-    else:
-        raise NotImplementedError
-    
-    if config['model'].lower() in ['multiencdec']:
-        evaluator = MultiEncDecEvaluator(config)
-    
-    return evaluator
 
 class Solver(threading.Thread):
     r"""time-limited equation-solving machanism based threading.
@@ -1306,3 +1286,53 @@ class MultiEncDecEvaluator(PostfixEvaluator, PrefixEvaluator):
 
     def result_multi(self, test_exp, tar_exp):
         raise NotImplementedError
+
+
+def get_evaluator(config):
+    """build evaluator
+
+    Args:
+        config (Config): An instance object of Config, used to record parameter information.
+
+    Returns:
+        Evaluator: Constructed evaluator.
+    """
+    if config["equation_fix"] == FixType.Prefix:
+        evaluator = PrefixEvaluator(config)
+    elif config["equation_fix"] == FixType.Nonfix or config["equation_fix"] == FixType.Infix:
+        evaluator = InfixEvaluator(config)
+    elif config["equation_fix"] == FixType.Postfix:
+        evaluator = PostfixEvaluator(config)
+    elif config["equation_fix"] == FixType.MultiWayTree:
+        evaluator = MultiWayTreeEvaluator(config)
+    else:
+        raise NotImplementedError
+
+    if config['model'].lower() in ['multiencdec']:
+        evaluator = MultiEncDecEvaluator(config)
+
+    return evaluator
+
+
+def get_evaluator_module(config: Config) -> Type[Union[PrefixEvaluator,InfixEvaluator,PostfixEvaluator,MultiWayTreeEvaluator,AbstractEvaluator,MultiEncDecEvaluator]]:
+    """return a evaluator module according to config
+
+    :param config: An instance object of Config, used to record parameter information.
+    :return: evaluator module
+    """
+    if config["equation_fix"] == FixType.Prefix:
+        evaluator_module = PrefixEvaluator
+    elif config["equation_fix"] == FixType.Nonfix or config["equation_fix"] == FixType.Infix:
+        evaluator_module = InfixEvaluator
+    elif config["equation_fix"] == FixType.Postfix:
+        evaluator_module = PostfixEvaluator
+    elif config["equation_fix"] == FixType.MultiWayTree:
+        evaluator_module = MultiWayTreeEvaluator
+    else:
+        evaluator_module = AbstractEvaluator
+
+    if config['model'].lower() in ['multiencdec']:
+        evaluator_module = MultiEncDecEvaluator
+
+    return evaluator_module
+

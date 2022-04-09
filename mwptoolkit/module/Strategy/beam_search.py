@@ -9,20 +9,27 @@ import torch
 from torch.nn import functional as F
 from mwptoolkit.utils.utils import copy_list
 
+
 class Beam:  # the class save the beam node
-    def __init__(self, score, input_var, hidden, all_output):
+    def __init__(self, score, input_var, hidden,token_logits,outputs, all_output=None):
         self.score = score
         self.input_var = input_var
         self.hidden = hidden
         self.all_output = all_output
-        
+        self.token_logits = token_logits
+        self.outputs = outputs
+
+
 class TreeBeam:  # the class save the beam node
-    def __init__(self, score, node_stack, embedding_stack, left_childs, out):
+    def __init__(self, score, node_stack, embedding_stack, left_childs, out, token_logit=None):
         self.score = score
         self.embedding_stack = copy_list(embedding_stack)
         self.node_stack = copy_list(node_stack)
         self.left_childs = copy_list(left_childs)
         self.out = copy.deepcopy(out)
+        self.token_logit = token_logit
+
+
 class BeamNode:
     def __init__(self, score, nodes_hidden, node_stacks, tree_stacks, decoder_outputs_list, sequence_symbols_list):
         self.score = score

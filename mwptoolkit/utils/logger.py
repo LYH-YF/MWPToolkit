@@ -19,7 +19,7 @@ def init_logger(config):
     """
     
 
-    logfilepath = config['log_path']
+    logfilepath =config['log_file'] if config['log_file'] else config['log_path']
 
     filefmt = "%(asctime)-15s %(levelname)s %(message)s"
     filedatefmt = "%a %d %b %Y %H:%M:%S"

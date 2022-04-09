@@ -11,7 +11,7 @@
     "bidirectional":false,
     "teacher_force_ratio":0.9,
 
-    "share_vocab":true,
+    "share_vocab":false,
     "mask_symbol":"number",
     "attention":false,
     "symbol_for_tree":false,

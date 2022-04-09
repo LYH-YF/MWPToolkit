@@ -2,13 +2,13 @@
 # @Author: Yihuai Lan
 # @Time: 2021/08/29 22:13:14
 # @File: abstract_trainer.py
-
-
+import os
 from logging import getLogger
 
 import torch
 
 from mwptoolkit.utils.utils import write_json_data
+
 
 class AbstractTrainer(object):
     """abstract trainer
@@ -31,6 +31,7 @@ class AbstractTrainer(object):
 
             >>> trainer.param_search()
     """
+
     def __init__(self, config, model, dataloader, evaluator):
         """
         Args:
@@ -52,8 +53,8 @@ class AbstractTrainer(object):
         self.dataloader = dataloader
         self.evaluator = evaluator
         self.logger = getLogger()
-        self.best_folds_accuracy=config["best_folds_accuracy"]
-        self.test_step=config["test_step"]
+        self.best_folds_accuracy = config["best_folds_accuracy"]
+        self.test_step = config["test_step"]
 
         self.best_valid_equ_accuracy = 0.
         self.best_valid_value_accuracy = 0.
@@ -61,7 +62,16 @@ class AbstractTrainer(object):
         self.best_test_value_accuracy = 0.
         self.start_epoch = 0
         self.epoch_i = 0
-        self.output_result=[]
+        self.output_result = []
+
+        if self.config['k_fold']:
+            if self.config['fold_t'] is None:
+                self.logger.warning("config should include a parameter 'fold_t', which is the value of current fold.")
+
+        self._build_optimizer()
+
+        if config["resume"] or config["training_resume"]:
+            self._load_checkpoint()
 
     def _save_checkpoint(self):
         raise NotImplementedError
@@ -71,28 +81,47 @@ class AbstractTrainer(object):
 
     def _save_model(self):
         state_dict = {"model": self.model.state_dict()}
+
+        trained_model_dir = self.config['trained_model_dir']
+        if not os.path.abspath(trained_model_dir):
+            trained_model_dir = os.path.join(os.getcwd(),trained_model_dir)
+        if not os.path.exists(trained_model_dir):
+            os.mkdir(trained_model_dir)
         if self.config["k_fold"]:
-            path=self.config["trained_model_path"][:-4]+"-fold{}.pth".format(self.config["fold_t"])
-            torch.save(state_dict,path)
+            save_dir = os.path.join(trained_model_dir, 'fold{}'.format(self.config['fold_t']))
         else:
-            torch.save(state_dict, self.config["trained_model_path"])
+            save_dir = trained_model_dir
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+        model_file = os.path.join(save_dir, 'model.pth')
+        torch.save(state_dict, model_file)
+        self.config.save_config(save_dir)
+        self.dataloader.dataset.save_dataset(save_dir)
 
     def _load_model(self):
         if self.config["k_fold"]:
-            path=self.config["trained_model_path"][:-4]+"-fold{}.pth".format(self.config["fold_t"])
-            state_dict = torch.load(path, map_location=self.config["map_location"])
+            load_dir = os.path.join(self.config['trained_model_dir'], 'fold{}'.format(self.config['fold_t']))
         else:
-            state_dict = torch.load(self.config["trained_model_path"], map_location=self.config["map_location"])
-        #self.model = nn.DataParallel(self.model)
-        self.model.load_state_dict(state_dict["model"],False)
-    
+            load_dir = self.config['trained_model_dir']
+        model_file = os.path.join(load_dir, 'model.pth')
+        state_dict = torch.load(model_file, map_location=self.config["map_location"])
+        self.model.load_state_dict(state_dict["model"], strict=False)
+
     def _save_output(self):
-        if self.config['output_path']:
-            if self.config["k_fold"]:
-                path=self.config["output_path"][:-5]+"-fold{}.json".format(self.config["fold_t"])
-                write_json_data(self.output_result,path)
-            else:
-                write_json_data(self.output_result,self.config['output_path'])
+        if not os.path.isabs(self.config['output_dir']):
+            output_dir = os.path.join(os.getcwd(),self.config['output_dir'])
+        else:
+            output_dir = self.config['output_dir']
+        if not os.path.exists(output_dir):
+            os.mkdir(output_dir)
+        if self.config["k_fold"]:
+            save_dir = os.path.join(output_dir, 'fold{}'.format(self.config['fold_t']))
+        else:
+            save_dir = output_dir
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+        output_file = os.path.join(save_dir, 'generation_result.json')
+        write_json_data(self.output_result, output_file)
 
     def _build_optimizer(self):
         raise NotImplementedError

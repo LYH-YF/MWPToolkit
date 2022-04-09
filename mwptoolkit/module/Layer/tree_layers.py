@@ -12,7 +12,7 @@ from mwptoolkit.utils.enum_type import SpecialTokens
 
 
 class TreeNode:  # the class save the tree node
-    def __init__(self, embedding, left_flag=False):
+    def __init__(self, embedding, left_flag=False,terminal=False):
         self.embedding = embedding
         self.left_flag = left_flag
 
@@ -673,3 +673,131 @@ class SemanticAlignmentModule(nn.Module):
         decoder_linear2 = self.decoder_linear2(decoder_linear1)
 
         return encoder_linear2, decoder_linear2
+
+
+# class ExtensionNet(nn.Module):
+#     def __init__(self,hidden_size,node_size,dropout_ratio):
+#         super(ExtensionNet, self).__init__()
+#         self.hidden_size=hidden_size
+#         self.node_size = node_size
+#         self.dropout_ratio=dropout_ratio
+#
+#         self.attn=TreeAttention(hidden_size,hidden_size)
+#
+#         self.dropout_net = nn.Dropout(self.dropout_ratio)
+#
+#         self.predict_net = nn.Linear(hidden_size,node_size)
+#
+#         self.left_ext = nn.Linear(hidden_size,hidden_size)
+#         self.left_ext_g = nn.Linear(hidden_size, hidden_size)
+#         self.right_ext = nn.Linear(hidden_size, hidden_size)
+#         self.right_ext_g = nn.Linear(hidden_size,hidden_size)
+#
+#     def forward(self,node_hidden,encoder_outputs,attention_mask):
+#         """
+#
+#         :param node_hidden:
+#         :param encoder_outputs:
+#         :param attention_mask:
+#         :return:
+#         """
+#         attn_weights = self.attn.forward(node_hidden,encoder_outputs,attention_mask)
+#         attn_node_hidden = attn_weights.bmm(encoder_outputs.transpose(0, 1))  # B x 1 x H
+#         attn_node_hidden = attn_node_hidden.transpose(0, 1)
+#         attn_node_hidden = torch.squeeze(attn_node_hidden)
+#         drp_node_hidden = self.dropout_net(attn_node_hidden)
+#         node_type_logits = self.predict_net(drp_node_hidden)
+#
+#         left_sub_tree = torch.tanh(self.left_ext(drp_node_hidden))
+#         left_sub_tree_g = torch.sigmoid(self.left_ext_g(drp_node_hidden))
+#         left_sub_tree = left_sub_tree * left_sub_tree_g
+#
+#         right_sub_tree = torch.tanh(self.right_ext(drp_node_hidden))
+#         right_sub_tree_g = torch.sigmoid(self.right_ext_g(drp_node_hidden))
+#         right_sub_tree = right_sub_tree * right_sub_tree_g
+#
+#         return attn_node_hidden,left_sub_tree,right_sub_tree,node_type_logits
+
+
+# class PredictionNet(nn.Module):
+#     # a seq2tree decoder with Problem aware dynamic encoding
+#
+#     def __init__(self, hidden_size, op_nums, input_size, dropout=0.5):
+#         super(PredictionNet, self).__init__()
+#
+#         # Keep for reference
+#         self.hidden_size = hidden_size
+#         self.input_size = input_size
+#         self.op_nums = op_nums
+#
+#         # Define layers
+#         self.embeddings = nn.Embedding(3,128)
+#         self.dropout = nn.Dropout(dropout)
+#
+#         self.embedding_weight = nn.Parameter(torch.randn(1, input_size, hidden_size))
+#
+#         # for Computational symbols and Generated numbers
+#         self.concat_l = nn.Linear(hidden_size, hidden_size)
+#         self.concat_r = nn.Linear(hidden_size * 2, hidden_size)
+#         self.concat_lg = nn.Linear(hidden_size, hidden_size)
+#         self.concat_rg = nn.Linear(hidden_size * 2, hidden_size)
+#
+#         self.ops = nn.Linear(hidden_size+128, op_nums)
+#
+#         self.attn = TreeAttention(hidden_size, hidden_size)
+#         self.score = Score(hidden_size+128, hidden_size)
+#
+#     def forward(self, current_embeddings,node_label, encoder_outputs, num_pades, padding_hidden, seq_mask, mask_nums):
+#         """
+#         Args:
+#             node_stacks (list): node stacks.
+#             left_childs (list): representation of left childs.
+#             encoder_outputs (torch.Tensor): output from encoder, shape [sequence_length, batch_size, hidden_size].
+#             num_pades (torch.Tensor): number representation, shape [batch_size, number_size, hidden_size].
+#             padding_hidden (torch.Tensor): padding hidden, shape [1,hidden_size].
+#             seq_mask (torch.BoolTensor): sequence mask, shape [batch_size, sequence_length].
+#             mask_nums (torch.BoolTensor): number mask, shape [batch_size, number_size].
+#
+#         Returns:
+#             tuple(torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor):
+#                 num_score, number score, shape [batch_size, number_size].
+#                 op, operator score, shape [batch_size, operator_size].
+#                 current_node, current node representation, shape [batch_size, 1, hidden_size].
+#                 current_context, current context representation, shape [batch_size, 1, hidden_size].
+#                 embedding_weight, embedding weight, shape [batch_size, number_size, hidden_size].
+#         """
+#         node_label_emb = self.embeddings(node_label)
+#         current_embeddings = torch.cat([current_embeddings,node_label_emb],dim=1) #[b,h+e]
+#         #node_label = self.em_dropout(node_label_)
+#         current_embeddings = self.dropout(current_embeddings)
+#         current_embeddings = torch.unsqueeze(current_embeddings,dim=0)
+#         # current_attn = self.attn(current_embeddings, encoder_outputs, seq_mask)
+#         # current_context = current_attn.bmm(encoder_outputs.transpose(0, 1))  # B x 1 x N
+#
+#         # the information to get the current quantity
+#         batch_size = current_embeddings.size(1)
+#         # predict the output (this node corresponding to output(number or operator)) with PADE
+#
+#         repeat_dims = [1] * self.embedding_weight.dim()
+#         repeat_dims[0] = batch_size
+#         embedding_weight = self.embedding_weight.repeat(*repeat_dims)  # B x input_size x N
+#         embedding_weight = torch.cat((embedding_weight, num_pades), dim=1)  # B x O x N
+#
+#         #leaf_input = torch.cat((current_embeddings.transpose(0,1), current_context), 2)
+#         leaf_input = current_embeddings.transpose(0,1)
+#         leaf_input = leaf_input.squeeze(1)
+#         #leaf_input = self.dropout(leaf_input)
+#
+#         # p_leaf = nn.functional.softmax(self.is_leaf(leaf_input), 1)
+#         # max pooling the embedding_weight
+#         embedding_weight_ = self.dropout(embedding_weight)
+#         num_score = self.score(leaf_input.unsqueeze(1), embedding_weight_, mask_nums)
+#
+#         # num_score = nn.functional.softmax(num_score, 1)
+#
+#         op = self.ops(leaf_input)
+#
+#         # return p_leaf, num_score, op, current_embeddings, current_attn
+#
+#         return num_score, op
+#

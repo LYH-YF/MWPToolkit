@@ -2,8 +2,7 @@
 # @Author: Yihuai Lan
 # @Time: 2021/08/18 11:33:00
 # @File: dataset_ept.py
-
-
+import json
 import os
 import re
 import copy
@@ -12,21 +11,25 @@ from collections import Counter
 
 import torch
 import stanza
-from transformers import AutoTokenizer,AlbertTokenizer,BertTokenizer
+from transformers import AutoTokenizer, AlbertTokenizer, BertTokenizer
 
+from mwptoolkit.config.configuration import Config
 from mwptoolkit.data.dataset.template_dataset import TemplateDataset
 from mwptoolkit.utils.preprocess_tool.number_transfer import number_transfer
-from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
+from mwptoolkit.utils.preprocess_tool.equation_operator import from_infix_to_postfix, from_infix_to_prefix, \
+    from_postfix_to_infix, from_postfix_to_prefix, from_prefix_to_infix, from_prefix_to_postfix
 from mwptoolkit.utils.preprocess_tool.equation_operator import postfix_parser
 from mwptoolkit.utils.preprocess_tool.dataset_operator import preprocess_ept_dataset_
-from mwptoolkit.utils.preprocess_tools import id_reedit,read_aux_jsonl_data
-from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, DatasetName, EPT
-
+from mwptoolkit.utils.preprocess_tools import id_reedit, read_aux_jsonl_data
+from mwptoolkit.utils.enum_type import MaskSymbol, Operators, SPECIAL_TOKENS, NumMask, SpecialTokens, FixType, \
+    DatasetName, EPT
+from mwptoolkit.utils.utils import read_json_data, write_json_data
 
 
 class DatasetEPT(TemplateDataset):
     """dataset class for deep-learning model EPT.
     """
+
     def __init__(self, config):
         """
         Args:
@@ -77,70 +80,73 @@ class DatasetEPT(TemplateDataset):
         shuffle (bool): whether to shuffle trainset before training.
         """
         super().__init__(config)
-        self.pretrained_model=config['pretrained_model_path']
-        self.decoder=config['decoder']
-        self.task_type=config['task_type']
-    
+        self.pretrained_model = config['pretrained_model_path']
+        self.decoder = config['decoder']
+        self.task_type = config['task_type']
+
     def _preprocess(self):
         if self.dataset in [DatasetName.hmwp]:
-            self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
-        
-        transfer = number_transfer
-        
-        self.trainset, generate_list, train_copy_nums,unk_symbol = transfer(self.trainset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
-        self.validset, _g, valid_copy_nums,_ = transfer(self.validset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
-        self.testset, _g, test_copy_nums,_ = transfer(self.testset, self.dataset, self.task_type, self.mask_symbol, self.min_generate_keep,";")
+            self.trainset, self.validset, self.testset = id_reedit(self.trainset, self.validset, self.testset)
 
-        source_equation_fix=self.source_equation_fix if self.source_equation_fix else FixType.Infix
-        if source_equation_fix==FixType.Infix:
+        transfer = number_transfer
+
+        self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.dataset,
+                                                                             self.task_type, self.mask_symbol,
+                                                                             self.min_generate_keep, ";")
+        self.validset, _g, valid_copy_nums, _ = transfer(self.validset, self.dataset, self.task_type, self.mask_symbol,
+                                                         self.min_generate_keep, ";")
+        self.testset, _g, test_copy_nums, _ = transfer(self.testset, self.dataset, self.task_type, self.mask_symbol,
+                                                       self.min_generate_keep, ";")
+
+        source_equation_fix = self.source_equation_fix if self.source_equation_fix else FixType.Infix
+        if source_equation_fix == FixType.Infix:
             fix = from_infix_to_postfix
-        elif source_equation_fix==FixType.Prefix:
+        elif source_equation_fix == FixType.Prefix:
             fix = from_prefix_to_postfix
-        elif source_equation_fix==FixType.Postfix:
+        elif source_equation_fix == FixType.Postfix:
             fix = None
         else:
             raise NotImplementedError()
         self.fix_process(fix)
         self.operator_mask_process()
 
-        self.generate_list = unk_symbol + generate_list
+        generate_list = unk_symbol + generate_list
         if self.symbol_for_tree:
-            self.copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
+            copy_nums = max([train_copy_nums, valid_copy_nums, test_copy_nums])
         else:
-            self.copy_nums = train_copy_nums
-        self.operator_nums = len(Operators.Multi)
-        self.operator_list = copy.deepcopy(Operators.Multi)
-        self.unk_symbol = unk_symbol
-        
+            copy_nums = train_copy_nums
+        operator_nums = len(Operators.Multi)
+        operator_list = copy.deepcopy(Operators.Multi)
+
         logger = getLogger()
         logger.info("build ept information ···")
         aux_trainset = []
         aux_testset = []
-        
+
         if self.dataset == DatasetName.alg514:
             for fold_t in range(1):
                 aux_trainset_file = self.dataset_path + "/alg514_fold{}_train.orig.jsonl".format(fold_t)
                 aux_testset_file = self.dataset_path + "/alg514_fold{}_test.orig.jsonl".format(fold_t)
                 if not os.path.isabs(aux_trainset_file):
-                    aux_trainset_file = os.path.join(self.root,aux_trainset_file)
+                    aux_trainset_file = os.path.join(os.getcwd(), aux_trainset_file)
                 if not os.path.isabs(aux_testset_file):
-                    aux_testset_file = os.path.join(self.root,aux_testset_file)
-                
+                    aux_testset_file = os.path.join(os.getcwd(), aux_testset_file)
+
                 aux_trainset += read_aux_jsonl_data(aux_trainset_file)
                 aux_testset += read_aux_jsonl_data(aux_testset_file)
-            dataset = aux_trainset+aux_testset
-            
-            for dataid, data in  enumerate(self.trainset):
+            dataset = aux_trainset + aux_testset
+
+            for dataid, data in enumerate(self.trainset):
                 for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
                         self.trainset[dataid]["aux"] = aux_data
                         break
-            for dataid, data in  enumerate(self.validset):
+            for dataid, data in enumerate(self.validset):
                 for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
                         self.validset[dataid]["aux"] = aux_data
                         break
-            for dataid, data in  enumerate(self.testset):
+            for dataid, data in enumerate(self.testset):
                 for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
                         self.testset[dataid]["aux"] = aux_data
@@ -150,28 +156,28 @@ class DatasetEPT(TemplateDataset):
             aux_testset_file = self.dataset_path + "/draw_test.orig.jsonl"
             aux_devset_file = self.dataset_path + "/draw_dev.orig.jsonl"
             if not os.path.isabs(aux_trainset_file):
-                aux_trainset_file = os.path.join(self.root,aux_trainset_file)
+                aux_trainset_file = os.path.join(os.getcwd(), aux_trainset_file)
             if not os.path.isabs(aux_testset_file):
-                aux_testset_file = os.path.join(self.root,aux_testset_file)
+                aux_testset_file = os.path.join(os.getcwd(), aux_testset_file)
             if not os.path.isabs(aux_devset_file):
-                aux_devset_file = os.path.join(self.root,aux_devset_file)
+                aux_devset_file = os.path.join(os.getcwd(), aux_devset_file)
 
             aux_trainset = read_aux_jsonl_data(aux_trainset_file)
             aux_testset = read_aux_jsonl_data(aux_testset_file)
             aux_devset = read_aux_jsonl_data(aux_devset_file)
-            dataset = aux_trainset+aux_testset +aux_devset
-            
-            for dataid, data in  enumerate(self.trainset):
+            dataset = aux_trainset + aux_testset + aux_devset
+
+            for dataid, data in enumerate(self.trainset):
                 for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
                         self.trainset[dataid]["aux"] = aux_data
                         break
-            for dataid, data in  enumerate(self.validset):
+            for dataid, data in enumerate(self.validset):
                 for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
                         self.validset[dataid]["aux"] = aux_data
                         break
-            for dataid, data in  enumerate(self.testset):
+            for dataid, data in enumerate(self.testset):
                 for aux_data in dataset:
                     if data['id'] == int(aux_data["iIndex"]):
                         self.testset[dataid]["aux"] = aux_data
@@ -182,34 +188,35 @@ class DatasetEPT(TemplateDataset):
                 aux_trainset_file = self.dataset_path + "/mawps_fold{}_train.orig.jsonl".format(fold_t)
                 aux_testset_file = self.dataset_path + "/mawps_fold{}_test.orig.jsonl".format(fold_t)
                 if not os.path.isabs(aux_trainset_file):
-                    aux_trainset_file = os.path.join(self.root,aux_trainset_file)
+                    aux_trainset_file = os.path.join(os.getcwd(), aux_trainset_file)
                 if not os.path.isabs(aux_testset_file):
-                    aux_testset_file = os.path.join(self.root,aux_testset_file)
-                
+                    aux_testset_file = os.path.join(os.getcwd(), aux_testset_file)
+
                 aux_trainset += read_aux_jsonl_data(aux_trainset_file)
                 aux_testset += read_aux_jsonl_data(aux_testset_file)
-            dataset = aux_trainset+aux_testset
-            
-            for dataid,data in enumerate(self.trainset):
+            dataset = aux_trainset + aux_testset
+
+            for dataid, data in enumerate(self.trainset):
                 for aux_data in dataset:
                     if data['original_text'].strip() == aux_data["new_text"].strip():
                         self.trainset[dataid]["aux"] = aux_data
                         break
-            for dataid,data in enumerate(self.validset):
+            for dataid, data in enumerate(self.validset):
                 for aux_data in dataset:
                     if data['original_text'].strip() == aux_data["new_text"].strip():
                         self.validset[dataid]["aux"] = aux_data
                         break
-            for dataid,data in enumerate(self.testset):
+            for dataid, data in enumerate(self.testset):
                 for aux_data in dataset:
                     if data['original_text'].strip() == aux_data["new_text"].strip():
                         self.testset[dataid]["aux"] = aux_data
                         break
 
-
-        
         self.trainset, self.validset, self.testset = \
             preprocess_ept_dataset_(self.trainset, self.validset, self.testset, self.dataset)
+
+        return {'generate_list': generate_list, 'copy_nums': copy_nums, 'operator_list': operator_list,
+                'operator_nums': operator_nums}
 
     def _build_vocab(self):
         words_count = {}
@@ -221,57 +228,60 @@ class DatasetEPT(TemplateDataset):
                 except:
                     words_count[word] = 1
 
-        self.in_idx2word = copy.deepcopy(SPECIAL_TOKENS)
+        in_idx2word = copy.deepcopy(SPECIAL_TOKENS)
 
         for key, value in words_count.items():
             if value > self.min_word_keep or "NUM" in key:
-                self.in_idx2word.append(key)
+                in_idx2word.append(key)
 
         if self.pretrained_model:
-            if self.dataset in ['math23k','hmwp']:
+            if self.dataset in ['math23k', 'hmwp']:
                 pretrained_tokenizer = BertTokenizer.from_pretrained(self.pretrained_model)
             else:
                 pretrained_tokenizer = AutoTokenizer.from_pretrained(self.pretrained_model)
-            self.in_idx2word = list(pretrained_tokenizer.get_vocab().keys())
-            self.in_idx2word.append('[N]')
+            in_idx2word = list(pretrained_tokenizer.get_vocab().keys())
+            in_idx2word.append('[N]')
             for key, value in words_count.items():
                 if "N_" in key:
-                    self.in_idx2word.append(key)
+                    in_idx2word.append(key)
 
-    
         if 'vall' in self.decoder:
-            self._build_symbol_for_ept_op()
+            equ_dict = self._build_symbol_for_ept_op()
+            out_idx2symbol = equ_dict['out_idx2symbol']
         elif 'expr' in self.decoder:
-            self._build_symbol_for_ept_expr(self.decoder)
-            self.out_opsym2idx = {}
-            self.out_consym2idx = {}
-            for idx, symbol in enumerate(self.out_idx2opsymbol):
-                self.out_opsym2idx[symbol] = idx
-            for idx, symbol in enumerate(self.out_idx2consymbol):
-                self.out_consym2idx[symbol] = idx
-        self._build_template_symbol()
+            equ_dict = self._build_symbol_for_ept_expr(self.decoder)
+            out_idx2consymbol = equ_dict['out_idx2consymbol']
+            out_idx2opsymbol = equ_dict['out_idx2opsymbol']
+            out_idx2symbol = equ_dict['out_idx2symbol']
 
-        # if self.share_vocab:
-        #     for symbol in self.out_idx2symbol:
-        #         if symbol in self.in_idx2word:
-        #             continue
-        #         else:
-        #             self.in_idx2word.append(symbol)
-        # for symbol in self.out_idx2symbol:
-        #     if symbol in self.in_idx2word:
-        #         continue
-        #     else:
-        #         self.in_idx2word.append(symbol)
+            out_opsym2idx = {}
+            out_consym2idx = {}
+            for idx, symbol in enumerate(out_idx2opsymbol):
+                out_opsym2idx[symbol] = idx
+            for idx, symbol in enumerate(out_idx2consymbol):
+                out_consym2idx[symbol] = idx
+        else:
+            raise NotImplementedError
+        temp_dict = self._build_template_symbol()
+        temp_idx2symbol = temp_dict['temp_idx2symbol']
+        temp_num_start = temp_dict['temp_num_start']
 
-        self.in_word2idx = {}
-        self.out_symbol2idx = {}
-        self.temp_symbol2idx = {}
-        for idx, word in enumerate(self.in_idx2word):
-            self.in_word2idx[word] = idx
-        for idx, symbol in enumerate(self.out_idx2symbol):
-            self.out_symbol2idx[symbol] = idx
-        for idx, symbol in enumerate(self.temp_idx2symbol):
-            self.temp_symbol2idx[symbol] = idx
+        in_word2idx = {}
+        out_symbol2idx = {}
+        temp_symbol2idx = {}
+        for idx, word in enumerate(in_idx2word):
+            in_word2idx[word] = idx
+        for idx, symbol in enumerate(out_idx2symbol):
+            out_symbol2idx[symbol] = idx
+        for idx, symbol in enumerate(temp_idx2symbol):
+            temp_symbol2idx[symbol] = idx
+
+        return_info = {'in_idx2word': in_idx2word, 'in_word2idx': in_word2idx, 'out_idx2symbol': out_idx2symbol,
+                       'temp_idx2symbol': temp_idx2symbol, 'out_symbol2idx': out_symbol2idx,
+                       'temp_symbol2idx': temp_symbol2idx,
+                       'temp_num_start': temp_num_start}
+        return_info.update(equ_dict)
+        return return_info
 
     def _build_symbol_for_ept_op(self):
         def preprocess(formulae):
@@ -324,6 +334,7 @@ class DatasetEPT(TemplateDataset):
                         tokens.append(token)
 
             return tokens
+
         equation_counter = Counter()
         for data in self.trainset:
             words_list = data["ept"]["expr"]
@@ -332,12 +343,13 @@ class DatasetEPT(TemplateDataset):
 
         special_tokens += [EPT.FORMAT_NUM % i for i in range(EPT.NUM_MAX)]
         special_tokens += [EPT.FORMAT_VAR % i for i in range(EPT.VAR_MAX)]
-        self.out_idx2symbol = special_tokens
-        #equation_counter.update(special_tokens)
+        out_idx2symbol = special_tokens
+        # equation_counter.update(special_tokens)
         for token in list(equation_counter.keys()):
             if token not in self.out_idx2symbol:
-                self.out_idx2symbol.append(token)
-    
+                out_idx2symbol.append(token)
+        return {'out_idx2symbol':out_idx2symbol}
+
     def _build_symbol_for_ept_expr(self, decoder_type):
         def preprocess(formulae):
             """
@@ -434,46 +446,51 @@ class DatasetEPT(TemplateDataset):
             for operand in operands:
                 # Count constant operands (all operands if self.force_generation)
                 constant_counter.update([const for t, const in operand if t == EPT.ARG_CON or 'gen' in decoder_type])
-        self.out_idx2opsymbol = EPT.FUN_TOKENS_WITH_EQ.copy()
-        self.out_idx2consymbol = constant_specials
+        out_idx2opsymbol = EPT.FUN_TOKENS_WITH_EQ.copy()
+        out_idx2consymbol = constant_specials
         for token in list(operator_counter.keys()):
-            if token not in self.out_idx2opsymbol:
-                self.out_idx2opsymbol.append(token)
+            if token not in out_idx2opsymbol:
+                out_idx2opsymbol.append(token)
         for token in list(constant_counter.keys()):
-            if token not in self.out_idx2consymbol:
-                self.out_idx2consymbol.append(token)
+            if token not in out_idx2consymbol:
+                out_idx2consymbol.append(token)
+        out_idx2symbol = out_idx2consymbol + out_idx2opsymbol
 
-        #operator_counter.update(EPT.FUN_TOKENS_WITH_EQ.copy())
-        #constant_counter.update(constant_specials)
-        #self.out_idx2opsymbol = list(operator_counter.keys())
-        #self.out_idx2consymbol = list(constant_counter.keys())
-        self.out_idx2symbol = self.out_idx2consymbol+self.out_idx2opsymbol
+        return {'out_idx2consymbol':out_idx2consymbol,'out_idx2opsymbol':out_idx2opsymbol,'out_idx2symbol':out_idx2symbol}
+
+        # operator_counter.update(EPT.FUN_TOKENS_WITH_EQ.copy())
+        # constant_counter.update(constant_specials)
+        # self.out_idx2opsymbol = list(operator_counter.keys())
+        # self.out_idx2consymbol = list(constant_counter.keys())
 
     def _build_template_symbol(self):
         if self.share_vocab:
-            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
+            temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
         else:
-            self.temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + [SpecialTokens.OPT_TOKEN]
+            temp_idx2symbol = [SpecialTokens.PAD_TOKEN] + [SpecialTokens.SOS_TOKEN] + [SpecialTokens.EOS_TOKEN] + [
+                SpecialTokens.OPT_TOKEN]
 
-        self.temp_num_start = len(self.temp_idx2symbol)
-        self.temp_idx2symbol += self.generate_list
+        temp_num_start = len(temp_idx2symbol)
+        temp_idx2symbol += self.generate_list
 
         if self.mask_symbol == MaskSymbol.NUM:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
+                temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
                 raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         elif self.mask_symbol == MaskSymbol.alphabet:
             mask_list = NumMask.alphabet
             try:
-                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
+                temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
-                raise IndexError("alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(self.copy_nums))
+                raise IndexError(
+                    "alphabet may not enough to mask {} numbers, changing the mask_symbol from alphabet to number may solve the problem.".format(
+                        self.copy_nums))
         elif self.mask_symbol == MaskSymbol.number:
             mask_list = NumMask.number
             try:
-                self.temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
+                temp_idx2symbol += [mask_list[i] for i in range(self.copy_nums)]
             except IndexError:
                 raise IndexError("{} numbers is not enough to mask {} numbers ".format(len(mask_list), self.copy_nums))
         else:
@@ -482,17 +499,18 @@ class DatasetEPT(TemplateDataset):
         for data in self.trainset:
             words_list = data["template"]
             for word in words_list:
-                if word in self.temp_idx2symbol:
+                if word in temp_idx2symbol:
                     continue
                 elif word[0].isdigit():
                     continue
                 elif (word[0].isalpha() or word[0].isdigit()) is not True:
-                    self.temp_idx2symbol.insert(self.temp_num_start, word)
-                    self.temp_num_start += 1
+                    temp_idx2symbol.insert(temp_num_start, word)
+                    temp_num_start += 1
                     continue
                 else:
-                    self.temp_idx2symbol.append(word)
-        self.temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
+                    temp_idx2symbol.append(word)
+        temp_idx2symbol += [SpecialTokens.UNK_TOKEN]
+        return {'temp_idx2symbol': temp_idx2symbol, 'temp_num_start': temp_num_start}
 
     def _update_vocab(self, vocab_list):
         index = len(self.in_idx2word)
@@ -508,3 +526,153 @@ class DatasetEPT(TemplateDataset):
             (tuple(int, int)): the length of input vocabulary and output symbols
         """
         return len(self.in_idx2word), len(self.out_idx2symbol)
+
+    def save_dataset(self, save_dir: str):
+        """
+        save dataset parameters to file.
+
+        :param save_dir: (str) folder which saves the parameter file
+        :return:
+        """
+        if not os.path.exists(save_dir):
+            os.mkdir(save_dir)
+        input_vocab_file = os.path.join(save_dir,'input_vocab.json')
+        write_json_data(
+            {'in_idx2word': self.in_idx2word},
+            input_vocab_file
+        )
+        output_vocab_file = os.path.join(save_dir,'output_vocab.json')
+        write_json_data(
+            {
+                'out_idx2symbol': self.out_idx2symbol,
+                'temp_idx2symbol': self.temp_idx2symbol
+            },
+            output_vocab_file
+        )
+        data_id_file = os.path.join(save_dir, 'data_split.json')
+        write_json_data(
+            {
+                'trainset_id': self.trainset_id,
+                'validset_id': self.validset_id,
+                'testset_id': self.testset_id,
+                'folds_id': self.folds_id
+            },
+            data_id_file
+        )
+        json_encoder = json.encoder.JSONEncoder()
+        parameters_dict = self.parameters_to_dict()
+        not_support_json=[]
+        not_to_save = ['in_idx2word', 'out_idx2symbol', 'temp_idx2symbol', 'in_word2idx', 'out_symbol2idx',
+                       'temp_symbol2idx', 'folds', 'trainset', 'testset', 'validset', 'datas', 'trainset_id',
+                       'validset_id', 'testset_id', 'folds_id']
+        for key,value in parameters_dict.items():
+            try:
+                json_encoder.encode({key:value})
+            except TypeError:
+                not_support_json.append(key)
+        for key in not_support_json:
+            del parameters_dict[key]
+        for key in not_to_save:
+            del parameters_dict[key]
+        parameter_file = os.path.join(save_dir, 'dataset.json')
+        write_json_data(parameters_dict,parameter_file)
+
+    @classmethod
+    def load_from_pretrained(cls, pretrained_dir: str, resume_training=False):
+        """
+        load dataset parameters from file.
+
+        :param pretrained_dir: (str) folder which saved the parameter file
+        :param resume_training: (bool) load parameter for resuming training or not.
+        :return: an instantiated object
+        """
+        config = Config.load_from_pretrained(pretrained_dir)
+        dataset = DatasetEPT(config)
+
+        input_vocab_file = os.path.join(pretrained_dir, 'input_vocab.json')
+        output_vocab_file = os.path.join(pretrained_dir, 'output_vocab.json')
+        parameter_file = os.path.join(pretrained_dir, 'dataset.json')
+        data_id_file = os.path.join(pretrained_dir, 'data_split.json')
+
+        input_vocab = read_json_data(input_vocab_file)
+        output_vocab = read_json_data(output_vocab_file)
+        parameter_dict = read_json_data(parameter_file)
+        data_id_dict = read_json_data(data_id_file)
+
+        in_idx2word = input_vocab['in_idx2word']
+        out_idx2symbol = output_vocab['out_idx2symbol']
+        temp_idx2symbol = output_vocab['temp_idx2symbol']
+
+        in_word2idx = {}
+        out_symbol2idx = {}
+        temp_symbol2idx = {}
+        for idx, word in enumerate(in_idx2word):
+            in_word2idx[word] = idx
+        for idx, symbol in enumerate(out_idx2symbol):
+            out_symbol2idx[symbol] = idx
+        for idx, symbol in enumerate(temp_idx2symbol):
+            temp_symbol2idx[symbol] = idx
+
+        setattr(dataset, 'in_idx2word', in_idx2word)
+        setattr(dataset, 'out_idx2symbol', out_idx2symbol)
+        setattr(dataset, 'temp_idx2symbol', temp_idx2symbol)
+        setattr(dataset, 'in_word2idx', in_word2idx)
+        setattr(dataset, 'out_symbol2idx', out_symbol2idx)
+        setattr(dataset, 'temp_symbol2idx', temp_symbol2idx)
+        for key, value in parameter_dict.items():
+            setattr(dataset, key, value)
+        for key,value in data_id_dict.items():
+            setattr(dataset, key, value)
+        if resume_training:
+            if config['k_fold']:
+                setattr(dataset,'fold_t',config['fold_t'])
+                setattr(dataset,'the_fold_t',config['fold_t']-1)
+                setattr(dataset, 'from_pretrained', False)
+                setattr(dataset, 'pretrained_dir', pretrained_dir)
+                setattr(dataset, 'resume_training', resume_training)
+            else:
+                setattr(dataset, 'from_pretrained', False)
+                setattr(dataset, 'pretrained_dir', pretrained_dir)
+                setattr(dataset, 'resume_training', resume_training)
+        else:
+            setattr(dataset,'from_pretrained', True)
+            setattr(dataset,'pretrained_dir', pretrained_dir)
+        dataset.reset_dataset()
+        return dataset
+
+    def __load_pretrained_parameters(self):
+        if self.k_fold:
+            load_dir = os.path.join(self.pretrained_dir, 'fold{}'.format(self.fold_t))
+        else:
+            load_dir = self.pretrained_dir
+
+        input_vocab_file = os.path.join(load_dir, 'input_vocab.json')
+        output_vocab_file = os.path.join(load_dir, 'output_vocab.json')
+        parameter_file = os.path.join(load_dir, 'dataset.json')
+
+        input_vocab = read_json_data(input_vocab_file)
+        output_vocab = read_json_data(output_vocab_file)
+        parameter_dict = read_json_data(parameter_file)
+
+        in_idx2word = input_vocab['in_idx2word']
+        out_idx2symbol = output_vocab['out_idx2symbol']
+        temp_idx2symbol = output_vocab['temp_idx2symbol']
+
+        in_word2idx = {}
+        out_symbol2idx = {}
+        temp_symbol2idx = {}
+        for idx, word in enumerate(in_idx2word):
+            in_word2idx[word] = idx
+        for idx, symbol in enumerate(out_idx2symbol):
+            out_symbol2idx[symbol] = idx
+        for idx, symbol in enumerate(temp_idx2symbol):
+            temp_symbol2idx[symbol] = idx
+
+        setattr(self,'in_idx2word',in_idx2word)
+        setattr(self, 'out_idx2symbol', out_idx2symbol)
+        setattr(self, 'temp_idx2symbol', temp_idx2symbol)
+        setattr(self, 'in_word2idx', in_word2idx)
+        setattr(self, 'out_symbol2idx', out_symbol2idx)
+        setattr(self, 'temp_symbol2idx', temp_symbol2idx)
+        for key,value in parameter_dict.items():
+            setattr(self,key,value)

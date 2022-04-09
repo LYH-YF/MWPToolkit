@@ -2,9 +2,10 @@
 # @Author: Yihuai Lan
 # @Time: 2021/08/18 11:35:43
 # @File: pretrain_dataloader.py
-
+import math
 
 import torch
+from typing import List
 
 from mwptoolkit.config import Config
 from mwptoolkit.data.dataset import PretrainDataset
@@ -345,6 +346,26 @@ class PretrainDataLoader(AbstractDataLoader):
         self.trainset_batch_nums=len(self.trainset_batches)
         self.validset_batch_nums=len(self.validset_batches)
         self.testset_batch_nums=len(self.testset_batches)
+
+    def build_batch_for_predict(self, batch_data: List[dict]):
+        for idx, data in enumerate(batch_data):
+            data['equation'] = []
+            data['template'] = []
+            data['infix equation'] = []
+            data['ans'] = None
+            if data.get('id', None) is None:
+                data['id'] = 'temp_{}'.format(idx)
+        batch = self.__build_batch(batch_data)
+        del batch['equation']
+        del batch['template']
+        del batch['equ len']
+        del batch['equ mask']
+        del batch['ans']
+        del batch['equ_source']
+        del batch['temp_source']
+        del batch['infix equation']
+
+        return batch
 
     # def load_batch(self, batch_data):
     #     """load one batch

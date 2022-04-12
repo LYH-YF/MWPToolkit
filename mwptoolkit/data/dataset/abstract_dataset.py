@@ -140,7 +140,14 @@ class AbstractDataset(object):
 
         if self.dataset in [DatasetName.hmwp]:
             self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
-        id_key = 'id' if self.dataset != DatasetName.asdiv_a else '@ID'
+        if self.dataset == DatasetName.asdiv_a:
+            id_key = '@ID'
+        elif self.dataset == DatasetName.mawps_single:
+            id_key = 'iIndex'
+        elif self.dataset == DatasetName.SVAMP:
+            id_key = 'ID'
+        else:
+            id_key = 'id'
         if self.trainset_id and self.testset_id:
             datas = self.trainset + self.validset + self.testset
             self.trainset = []
@@ -192,7 +199,14 @@ class AbstractDataset(object):
         self.validset = []
 
     def _load_k_fold_dataset(self):
-        id_key = 'id' if self.dataset != DatasetName.asdiv_a else '@ID'
+        if self.dataset == DatasetName.asdiv_a:
+            id_key = '@ID'
+        elif self.dataset == DatasetName.mawps_single:
+            id_key = 'iIndex'
+        elif self.dataset == DatasetName.SVAMP:
+            id_key = 'ID'
+        else:
+            id_key = 'id'
         if self.folds_id:
             self._load_dataset()
             datas = self.trainset + self.validset + self.testset

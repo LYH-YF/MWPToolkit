@@ -113,74 +113,58 @@ class AbstractDataset(object):
         else:
             self._load_dataset()
 
+    def _load_all_data(self):
+        trainset_file = os.path.join(self.dataset_path, 'trainset.json')
+        validset_file = os.path.join(self.dataset_path, 'validset.json')
+        testset_file = os.path.join(self.dataset_path, 'testset.json')
+
+        if os.path.isabs(trainset_file):
+            trainset = read_json_data(trainset_file)
+        else:
+            trainset = read_json_data(os.path.join(os.getcwd(), trainset_file))
+        if os.path.isabs(validset_file):
+            validset = read_json_data(validset_file)
+        else:
+            validset = read_json_data(os.path.join(os.getcwd(), validset_file))
+        if os.path.isabs(testset_file):
+            testset = read_json_data(testset_file)
+        else:
+            testset = read_json_data(os.path.join(os.getcwd(), testset_file))
+
+        return trainset + validset + testset
+
     def _load_dataset(self):
         '''
         read dataset from files
         '''
-        trainset_file = os.path.join(self.dataset_path,'trainset.json')
-        validset_file = os.path.join(self.dataset_path, 'validset.json')
-        testset_file = os.path.join(self.dataset_path, 'testset.json')
-        
-        if os.path.isabs(trainset_file):
-            self.trainset = read_json_data(trainset_file)
-        else:
-            self.trainset = read_json_data(os.path.join(os.getcwd(),trainset_file))
-        if os.path.isabs(validset_file):
-            self.validset = read_json_data(validset_file)
-        else:
-            self.validset = read_json_data(os.path.join(os.getcwd(),validset_file))
-        if os.path.isabs(testset_file):
-            self.testset = read_json_data(testset_file)
-        else:
-            self.testset = read_json_data(os.path.join(os.getcwd(),testset_file))
-
-        if self.validset_divide is not True:
-            self.testset = self.validset + self.testset
-            self.validset = []
-
-        if self.dataset in [DatasetName.hmwp]:
-            self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
-        if self.dataset == DatasetName.asdiv_a:
-            id_key = '@ID'
-        elif self.dataset == DatasetName.mawps_single:
-            id_key = 'iIndex'
-        elif self.dataset == DatasetName.SVAMP:
-            id_key = 'ID'
-        else:
-            id_key = 'id'
         if self.trainset_id and self.testset_id:
-            datas = self.trainset + self.validset + self.testset
-            self.trainset = []
-            self.validset = []
-            self.testset = []
-            for data_id in self.trainset_id:
-                for idx,data in enumerate(datas):
-                    if data_id == data[id_key]:
-                        self.trainset.append(data)
-                        datas.pop(idx)
-                        break
-            for data_id in self.validset_id:
-                for idx,data in enumerate(datas):
-                    if data_id == data[id_key]:
-                        self.validset.append(data)
-                        datas.pop(idx)
-                        break
-            for data_id in self.testset_id:
-                for idx,data in enumerate(datas):
-                    if data_id == data[id_key]:
-                        self.testset.append(data)
-                        datas.pop(idx)
-                        break
+            self._init_split_from_id()
         else:
-            self.trainset_id = []
-            self.validset_id = []
-            self.testset_id = []
-            for data in self.trainset:
-                self.trainset_id.append(data[id_key])
-            for data in self.validset:
-                self.validset_id.append(data[id_key])
-            for data in self.testset:
-                self.testset_id.append(data[id_key])
+            trainset_file = os.path.join(self.dataset_path,'trainset.json')
+            validset_file = os.path.join(self.dataset_path, 'validset.json')
+            testset_file = os.path.join(self.dataset_path, 'testset.json')
+        
+            if os.path.isabs(trainset_file):
+                self.trainset = read_json_data(trainset_file)
+            else:
+                self.trainset = read_json_data(os.path.join(os.getcwd(),trainset_file))
+            if os.path.isabs(validset_file):
+                self.validset = read_json_data(validset_file)
+            else:
+                self.validset = read_json_data(os.path.join(os.getcwd(),validset_file))
+            if os.path.isabs(testset_file):
+                self.testset = read_json_data(testset_file)
+            else:
+                self.testset = read_json_data(os.path.join(os.getcwd(),testset_file))
+
+            if self.validset_divide is not True:
+                self.testset = self.validset + self.testset
+                self.validset = []
+
+            if self.dataset in [DatasetName.hmwp]:
+                self.trainset,self.validset,self.testset = id_reedit(self.trainset, self.validset, self.testset)
+
+            self._init_id_from_split()
 
     def _load_fold_dataset(self):
         """read one fold of dataset from file. 
@@ -199,44 +183,19 @@ class AbstractDataset(object):
         self.validset = []
 
     def _load_k_fold_dataset(self):
-        if self.dataset == DatasetName.asdiv_a:
-            id_key = '@ID'
-        elif self.dataset == DatasetName.mawps_single:
-            id_key = 'iIndex'
-        elif self.dataset == DatasetName.SVAMP:
-            id_key = 'ID'
-        else:
-            id_key = 'id'
         if self.folds_id:
-            self._load_dataset()
-            datas = self.trainset + self.validset + self.testset
-            folds = []
-            for fold_t_id in self.folds:
-                split_fold_data=[]
-                for data_id in fold_t_id:
-                    for idx,data in enumerate(datas):
-                        if data_id==data[id_key]:
-                            split_fold_data.append(data)
-                            datas.pop(idx)
-                            break
-                folds.append(split_fold_data)
+            self._init_folds_form_id()
         else:
             if self.read_local_folds is not True:
-                self._load_dataset()
-                datas = self.trainset + self.validset + self.testset
+                datas = self._load_all_data()
                 random.shuffle(datas)
-                step_size = int(len(self.datas) / self.k_fold)
+                step_size = int(len(datas) / self.k_fold)
                 folds = []
                 for split_fold in range(self.k_fold - 1):
                     fold_start = step_size * split_fold
                     fold_end = step_size * (split_fold + 1)
                     folds.append(datas[fold_start:fold_end])
                 folds.append(datas[(step_size * (self.k_fold - 1)):])
-                for split_fold_data in folds:
-                    fold_id = []
-                    for data in split_fold_data:
-                        fold_id.append(data[id_key])
-                    self.folds_id.append(fold_id)
             else:
                 folds = []
                 for fold_t in range(self.k_fold):
@@ -245,12 +204,96 @@ class AbstractDataset(object):
                         folds.append(read_json_data(testset_file))
                     else:
                         folds.append(read_json_data(os.path.join(os.getcwd(), testset_file)))
-                for split_fold_data in folds:
-                    fold_id = []
-                    for data in split_fold_data:
-                        fold_id.append(data[id_key])
-                    self.folds_id.append(fold_id)
             self.folds = folds
+            self._init_id_from_folds()
+
+    def _init_split_from_id(self):
+        if self.dataset == DatasetName.asdiv_a:
+            id_key = '@ID'
+        elif self.dataset == DatasetName.mawps_single:
+            id_key = 'iIndex'
+        elif self.dataset == DatasetName.SVAMP:
+            id_key = 'ID'
+        else:
+            id_key = 'id'
+        datas = self._load_all_data()
+        self.trainset = []
+        self.validset = []
+        self.testset = []
+        for data_id in self.trainset_id:
+            for idx, data in enumerate(datas):
+                if data_id == data[id_key]:
+                    self.trainset.append(data)
+                    datas.pop(idx)
+                    break
+        for data_id in self.validset_id:
+            for idx, data in enumerate(datas):
+                if data_id == data[id_key]:
+                    self.validset.append(data)
+                    datas.pop(idx)
+                    break
+        for data_id in self.testset_id:
+            for idx, data in enumerate(datas):
+                if data_id == data[id_key]:
+                    self.testset.append(data)
+                    datas.pop(idx)
+                    break
+
+    def _init_id_from_split(self):
+        if self.dataset == DatasetName.asdiv_a:
+            id_key = '@ID'
+        elif self.dataset == DatasetName.mawps_single:
+            id_key = 'iIndex'
+        elif self.dataset == DatasetName.SVAMP:
+            id_key = 'ID'
+        else:
+            id_key = 'id'
+        self.trainset_id = []
+        self.validset_id = []
+        self.testset_id = []
+        for data in self.trainset:
+            self.trainset_id.append(data[id_key])
+        for data in self.validset:
+            self.validset_id.append(data[id_key])
+        for data in self.testset:
+            self.testset_id.append(data[id_key])
+
+    def _init_folds_form_id(self):
+        if self.dataset == DatasetName.asdiv_a:
+            id_key = '@ID'
+        elif self.dataset == DatasetName.mawps_single:
+            id_key = 'iIndex'
+        elif self.dataset == DatasetName.SVAMP:
+            id_key = 'ID'
+        else:
+            id_key = 'id'
+        datas = self._load_all_data()
+        self.folds = []
+        for fold_t_id in self.folds_id:
+            split_fold_data = []
+            for data_id in fold_t_id:
+                for idx, data in enumerate(datas):
+                    if data_id == data[id_key]:
+                        split_fold_data.append(data)
+                        datas.pop(idx)
+                        break
+            self.folds.append(split_fold_data)
+
+    def _init_id_from_folds(self):
+        if self.dataset == DatasetName.asdiv_a:
+            id_key = '@ID'
+        elif self.dataset == DatasetName.mawps_single:
+            id_key = 'iIndex'
+        elif self.dataset == DatasetName.SVAMP:
+            id_key = 'ID'
+        else:
+            id_key = 'id'
+        self.folds_id = []
+        for split_fold_data in self.folds:
+            fold_id = []
+            for data in split_fold_data:
+                fold_id.append(data[id_key])
+            self.folds_id.append(fold_id)
 
     def reset_dataset(self):
         if self.k_fold:
@@ -405,6 +448,7 @@ class AbstractDataset(object):
                         self.testset += copy.deepcopy(folds[fold_t])
                     else:
                         self.trainset += copy.deepcopy(folds[fold_t])
+            self._init_id_from_split()
             parameters = self._preprocess()
             if not self.resume_training and not self.from_pretrained:
                 for key, value in parameters.items():
@@ -423,11 +467,15 @@ class AbstractDataset(object):
         if self.k_fold:
             self.the_fold_t +=1
             self.fold_t = self.the_fold_t
+            self.testset = []
+            self.trainset = []
+            self.validset = []
             for fold_t in range(self.k_fold):
                 if fold_t == self.the_fold_t:
                     self.testset += copy.deepcopy(self.folds[fold_t])
                 else:
                     self.trainset += copy.deepcopy(self.folds[fold_t])
+            self._init_id_from_split()
 
             parameters = self._preprocess()
             if not self.resume_training and not self.from_pretrained:

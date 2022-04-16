@@ -27,8 +27,8 @@ Our framework has the following architecture. You could utilize our toolkit to e
 
 * 2.Update new models:
 
-  (1)Seq2Tree model **BertTD**(it's under developing, and we will publish our experiment soon)
-
+  (1)Seq2Tree model [**BertTD**](https://arxiv.org/abs/2110.08464)
+  (2)Seq2Tree model [**MWPBert**](https://arxiv.org/abs/2107.13435)
 * 3.Rewrite Dataloader and Config
 
 * 4.Implement function save_dataset() and load_from_pretrained() of Dataset
@@ -237,7 +237,7 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
             <td align="center"><a href="https://arxiv.org/abs/1706.03762">(Vaswani et al., 2017)</a></td>
         </tr>
         <tr>
-            <td rowspan="5">Seq2Tree</td>
+            <td rowspan="7">Seq2Tree</td>
             <td>TRNN</td>
             <td align="center"><a href="https://ojs.aaai.org//index.php/AAAI/article/view/4697">(Wang et al., 2019)</a></td>
         </tr>
@@ -256,6 +256,14 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
         <tr>
             <td>TSN</td>
             <td align="center"><a href="https://www.ijcai.org/proceedings/2020/555">(Zhang et al., 2020)</a></td>
+        </tr>
+        <tr>
+            <td>BertTD</td>
+            <td align="center"><a href="https://arxiv.org/abs/2110.08464">(Li et al., 2021)</a></td>
+        </tr>
+        <tr>
+            <td>MWPBert</td>
+            <td align="center"><a href="https://arxiv.org/abs/2107.13435">(Liang et al., 2021)</a></td>
         </tr>
         <tr>
             <td rowspan="2">Graph2Tree</td>
@@ -278,19 +286,6 @@ We have deployed **18** deep learning MWP models in our toolkit. Based on the fe
         <tr>
             <td>GPT-2</td>
             <td align="center"><a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf">(Radford et al., 2019)</a></td>
-        </tr>
-        <tr>
-            <td rowspan="3">Updating</td>
-            <td>KA-S2T</td>
-            <td align="center"><a href="https://aclanthology.org/2020.emnlp-main.579/">(Wu et al., 2020)</a></td>
-        </tr>
-        <tr>
-            <td>HMS</td>
-            <td align="center"><a href="https://ojs.aaai.org/index.php/AAAI/article/view/16547">(Lin et al., 2021)</a></td>
-        </tr>
-        <tr>
-            <td>NUM-S2T</td>
-            <td align="center"><a href="https://aclanthology.org/2021.acl-long.455/">(Wu et al., 2021)</a></td>
         </tr>
     </tbody>
 </table>

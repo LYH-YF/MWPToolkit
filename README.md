@@ -15,19 +15,19 @@ Our framework has the following architecture. You could utilize our toolkit to e
 ![](https://github.com/LYH-YF/MWPToolkit/blob/master/architecture1.png)
 <div align="center"> Figure: The Overall Framework of MWP Toolkit </div>
 
-## News
+## News in version 0.0.6
 
 * 1.Fix some bugs [Issue #12,#8]:
 
   (1)**from_prefix_to_infix**,**from_postfix_to_infix** in mwptoolkit/utils/preprocess_tool/equation_operator.py
 
   (2)the sequence length will be longer than pos_embedder's max length in **RobertGen**, **BertGen**.
-
   (3)data preprocessing for new dataset won't **automatically remove 'x=' or '=x'** in single equation.
 
 * 2.Update new models:
 
   (1)Seq2Tree model [**BertTD**](https://arxiv.org/abs/2110.08464)
+
   (2)Seq2Tree model [**MWPBert**](https://arxiv.org/abs/2107.13435)
 * 3.Rewrite Dataloader and Config
 

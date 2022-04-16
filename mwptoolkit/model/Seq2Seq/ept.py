@@ -81,16 +81,32 @@ class EPT(nn.Module):
         #self.out = nn.Linear(config["embedding_size"], config["symbol_size"])
         self.loss = SmoothCrossEntropyLoss()
 
-    def forward(self, src, src_mask, num_pos, num_size, equ_len=None, target=None):
-        encoder_outputs = self.encoder(input_ids=src, attention_mask=src_mask.float())
-        encoder_output = encoder_outputs[0]
-        num_size = max(num_size)
-        if target != None:
-            token_logits, targets = self.generate_t(target, encoder_output, num_pos, num_size, src_mask)
-            return token_logits, targets
+    def forward(self, src, src_mask, num_pos, num_size, target=None, output_all_layers=False):
+        """
+
+        :param torch.Tensor src: input sequence.
+        :param list src_mask: mask of input sequence.
+        :param list num_pos: number position of input sequence.
+        :param list num_size: number of numbers of input sequence.
+        :param torch.Tensor target: target, default None.
+        :param bool output_all_layers: return output of all layers if output_all_layers is True, default False.
+        :return: token_logits:[batch_size, output_length, output_size], symbol_outputs:[batch_size,output_length], model_all_outputs.
+        """
+        encoder_output, encoder_layer_outputs = self.encoder_forward(src, src_mask, output_all_layers)
+        max_numbers = max(num_size)
+        if num_pos is not None:
+            text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=max_numbers)
         else:
-            all_outputs, _ = self.generate_without_t(encoder_output, num_pos, num_size, src_mask, equ_len)
-            return all_outputs, _
+            text_num = text_numpad = None
+
+        token_logits, outputs, decoder_layer_outputs = self.decoder_forward(encoder_output, text_num, text_numpad, src_mask,
+                                                                        target, output_all_layers)
+        model_all_outputs = {}
+        if output_all_layers:
+            model_all_outputs.update(encoder_layer_outputs)
+            model_all_outputs.update(decoder_layer_outputs)
+
+        return token_logits, outputs, model_all_outputs
 
     def calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
@@ -102,20 +118,14 @@ class EPT(nn.Module):
         'num size' and 'max numbers'.
         """
         src = torch.tensor(batch_data["question"]).to(self.device)
-        src_mask = torch.bool(batch_data["ques mask"]).to(self.device)
+        src_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
         num_pos = batch_data["num pos"]
         target = torch.tensor(batch_data["equation"]).to(self.device)
-        encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())
-        encoder_output = encoder_outputs[0]
-        num_size = max(batch_data["num size"])
-        max_numbers = batch_data["max numbers"]
-        if batch_data["num pos"] is not None:
-            text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=max_numbers)
-        else:
-            text_num = text_numpad = None
-        token_logits, targets = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, equation=target)
+        num_size = batch_data["num size"]
 
-        batch_size = target.size(0)
+        token_logits, _, all_layers = self.forward(src,src_mask,num_pos,num_size,target,output_all_layers=True)
+        targets = all_layers['targets']
+
         self.loss.reset()
 
         for key, result in targets.items():
@@ -135,58 +145,55 @@ class EPT(nn.Module):
         :param batch_data: one batch data.
         :return: predicted equation, target equation.
 
-        batch_data should include keywords 'question', 'ques len', 'equation','ques mask', 'num pos',
+        batch_data should include keywords 'question', 'equation','ques mask', 'num pos',
         'num size'.
         """
         src = torch.tensor(batch_data["question"]).to(self.device)
-        src_mask = torch.bool(batch_data["ques mask"]).to(self.device)
+        src_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
         num_pos = batch_data["num pos"]
-        equ_len = max(batch_data["equ len"])
-        encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())
-        encoder_output = encoder_outputs[0]
+        num_size = batch_data["num size"]
 
-        max_numbers = max(batch_data["num size"])
-        if batch_data["num pos"] is not None:
-            text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=max_numbers)
-        else:
-            text_num = text_numpad = None
-        all_outputs, _ = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, beam=1, max_len=equ_len + 1)
-
-        shape = list(all_outputs.shape)
-        seq_len = shape[2]
-        if seq_len < equ_len + 1:
-            shape[2] = equ_len + 1
-            tensor = torch.full(shape, fill_value=-1, dtype=torch.long)
-            tensor[:, :, :seq_len] = all_outputs.cpu()
-            all_outputs = tensor
-
-        all_outputs = self.convert_idx2symbol(all_outputs.squeeze(1), batch_data["num list"])
+        _, symbol_outputs, _ = self.forward(src, src_mask, num_pos, num_size)
+        all_outputs = self.convert_idx2symbol(symbol_outputs, batch_data["num list"])
         targets = self.convert_idx2symbol(batch_data["equation"], batch_data["num list"])
         return all_outputs, targets
 
-    def generate_t(self, target, encoder_output, num_pos, num_size, src_mask):
-        if num_pos is not None:
-            text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=num_size)
-        else:
-            text_num = text_numpad = None
-        token_logits, targets = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, equation=target)
+    def encoder_forward(self, src, src_mask, output_all_layers=False):
+        encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())
+        encoder_output = encoder_outputs[0]
 
-        return token_logits, targets
+        all_layer_outputs = {}
+        if output_all_layers:
+            all_layer_outputs['encoder_outputs'] = encoder_output
+            all_layer_outputs['inputs_representation'] = encoder_output
+        return encoder_output, all_layer_outputs
 
-    def generate_without_t(self, encoder_output, num_pos, num_size, src_mask, max_len=128, beam: int = 1, function_arities=None):
-        if num_pos is not None:
-            text_num, text_numpad = self.gather_vectors(encoder_output, num_pos, max_len=num_size)
+    def decoder_forward(self, encoder_output, text_num, text_numpad, src_mask, target=None, output_all_layers=False):
+        if target is not None:
+            token_logits, targets = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad,
+                                                 text_pad=src_mask, equation=target)
+            outputs = None
         else:
-            text_num = text_numpad = None
-        all_outputs, _ = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad, text_pad=src_mask, beam=1, max_len=max_len + 1)
-        shape = list(all_outputs.shape)
-        seq_len = shape[2]
-        if seq_len < max_len + 1:
-            shape[2] = max_len + 1
-            tensor = torch.full(shape, fill_value=-1, dtype=torch.long)
-            tensor[:, :, :seq_len] = all_outputs.cpu()
-            all_outputs = tensor
-        return all_outputs, None
+            max_len = self.max_output_len
+            outputs, _ = self.decoder(text=encoder_output, text_num=text_num, text_numpad=text_numpad,
+                                      text_pad=src_mask, beam=1, max_len=max_len)
+
+            token_logits = None
+
+            shape = list(outputs.shape)
+            seq_len = shape[2]
+            if seq_len < max_len:
+                shape[2] = max_len
+                tensor = torch.full(shape, fill_value=-1, dtype=torch.long)
+                tensor[:, :, :seq_len] = outputs.cpu()
+                outputs = tensor
+            outputs.squeeze(1)
+            targets = None
+        all_layer_outputs = {}
+        if output_all_layers:
+            all_layer_outputs['targets'] = targets
+
+        return token_logits, outputs, all_layer_outputs
 
     def decode(self, output):
         device = output.device

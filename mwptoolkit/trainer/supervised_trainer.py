@@ -529,11 +529,11 @@ class GTSTrainer(AbstractTrainer):
         for epo in range(self.start_epoch, epoch_nums):
             self.epoch_i = epo + 1
             self.model.train()
-            # loss_total, train_time_cost = self._train_epoch()
-            # self._scheduler_step()
-            #
-            # self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s" \
-            #                  % (self.epoch_i, loss_total / self.train_batch_nums, train_time_cost))
+            loss_total, train_time_cost = self._train_epoch()
+            self._scheduler_step()
+
+            self.logger.info("epoch [%3d] avr loss [%2.8f] | train time %s" \
+                             % (self.epoch_i, loss_total / self.train_batch_nums, train_time_cost))
 
             if epo % self.test_step == 0 or epo > epoch_nums - 5:
                 if self.config["k_fold"] or self.config["validset_divide"] is not True:
@@ -1961,7 +1961,6 @@ class SalignedTrainer(SupervisedTrainer):
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
-            batch_loss.backward()
             self._optimizer_step()
         epoch_time_cost = time_since(time.time() - epoch_start_time)
         return loss_total, epoch_time_cost

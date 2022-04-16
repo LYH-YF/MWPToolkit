@@ -93,7 +93,6 @@ class BertEncoder(nn.Module):
         pade_outputs = self.linear(embedded)  # B x S x E
         pade_outputs = pade_outputs.transpose(0, 1)  # S x B x E
 
-        
         return pade_outputs
     
     def token_resize(self,input_size):

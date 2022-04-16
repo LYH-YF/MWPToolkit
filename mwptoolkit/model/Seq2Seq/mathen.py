@@ -4,6 +4,7 @@
 # @File: mathen.py
 
 import random
+from typing import Dict, Tuple, Any
 
 import torch
 from torch import nn
@@ -96,43 +97,41 @@ class MathEN(nn.Module):
         pad = self.out_pad_token
         self.loss = NLLLoss(weight, pad)
 
-    def forward(self, seq, seq_length, target=None):
+    def forward(self, seq, seq_length, seq_mask=None, target=None,output_all_layers=False) -> Tuple[
+            torch.Tensor, torch.Tensor, Dict[str, Any]]:
+        """
+
+        :param torch.Tensor seq: input sequence, shape: [batch_size, seq_length].
+        :param torch.Tensor seq_length: the length of sequence, shape: [batch_size].
+        :param torch.Tensor | None seq_mask: mask of sequence, shape: [batch_size, seq_length], default None.
+        :param torch.Tensor | None target: target, shape: [batch_size, target_length], default None.
+        :param bool output_all_layers: return output of all layers if output_all_layers is True, default False.
+        :return : token_logits:[batch_size, output_length, output_size], symbol_outputs:[batch_size,output_length], model_all_outputs.
+        :rtype: tuple(torch.Tensor, torch.Tensor, dict)
+        """
         batch_size = seq.size(0)
         device = seq.device
 
-        seq_emb = self.in_embedder(seq)
-        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
-
-        if self.self_attention:
-            pass
+        if self.embedding == 'roberta':
+            seq_emb = self.in_embedder(seq, seq_mask)
         else:
-            if self.bidirectional:
-                encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
-
-        if self.bidirectional:
-            if (self.encoder_rnn_cell_type == 'lstm'):
-                encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
-            else:
-                encoder_hidden = encoder_hidden[::2].contiguous()
-
-        if self.encoder.rnn_cell_type == self.decoder.rnn_cell_type:
-            pass
-        elif (self.encoder.rnn_cell_type == 'gru') and (self.decoder.rnn_cell_type == 'lstm'):
-            encoder_hidden = (encoder_hidden, encoder_hidden)
-        elif (self.encoder.rnn_cell_type == 'rnn') and (self.decoder.rnn_cell_type == 'lstm'):
-            encoder_hidden = (encoder_hidden, encoder_hidden)
-        elif (self.encoder.rnn_cell_type == 'lstm') and (self.decoder.rnn_cell_type == 'gru' or self.decoder.rnn_cell_type == 'rnn'):
-            encoder_hidden = encoder_hidden[0]
-        else:
-            pass
+            seq_emb = self.in_embedder(seq)
+        encoder_outputs, encoder_hidden, encoder_layer_outputs = self.encoder_forward(seq_emb, seq_length,
+                                                                                      output_all_layers)
 
         decoder_inputs = self.init_decoder_inputs(target, device, batch_size)
-        if target != None:
-            token_logits = self.generate_t(encoder_outputs, encoder_hidden, decoder_inputs)
-            return token_logits
-        else:
-            all_outputs = self.generate_without_t(encoder_outputs, encoder_hidden, decoder_inputs)
-            return all_outputs
+
+        token_logits, symbol_outputs, decoder_layer_outputs = self.decoder_forward(encoder_outputs, encoder_hidden,
+                                                                                   decoder_inputs, target,
+                                                                                   output_all_layers)
+
+        model_all_outputs = {}
+        if output_all_layers:
+            model_all_outputs['inputs_embedding'] = seq_emb
+            model_all_outputs.update(encoder_layer_outputs)
+            model_all_outputs.update(decoder_layer_outputs)
+
+        return token_logits, symbol_outputs, model_all_outputs
 
     def calculate_loss(self, batch_data:dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
@@ -145,41 +144,9 @@ class MathEN(nn.Module):
         seq = torch.tensor(batch_data['question']).to(self.device)
         seq_length = torch.tensor(batch_data['ques len']).long()
         target = torch.tensor(batch_data['equation']).to(self.device)
-        ques_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
+        seq_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
 
-        batch_size = seq.size(0)
-        device = seq.device
-
-        if self.embedding == 'roberta':
-            seq_emb = self.in_embedder(seq, ques_mask)
-        else:
-            seq_emb = self.in_embedder(seq)
-        encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
-
-        if self.self_attention:
-            pass
-        else:
-            if self.bidirectional:
-                encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
-
-        if self.bidirectional:
-            if (self.encoder_rnn_cell_type == 'lstm'):
-                encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
-            else:
-                encoder_hidden = encoder_hidden[::2].contiguous()
-        if self.encoder.rnn_cell_type == self.decoder.rnn_cell_type:
-            pass
-        elif (self.encoder.rnn_cell_type == 'gru') and (self.decoder.rnn_cell_type == 'lstm'):
-            encoder_hidden = (encoder_hidden, encoder_hidden)
-        elif (self.encoder.rnn_cell_type == 'rnn') and (self.decoder.rnn_cell_type == 'lstm'):
-            encoder_hidden = (encoder_hidden, encoder_hidden)
-        elif (self.encoder.rnn_cell_type == 'lstm') and (self.decoder.rnn_cell_type == 'gru' or self.decoder.rnn_cell_type == 'rnn'):
-            encoder_hidden = encoder_hidden[0]
-        else:
-            pass
-
-        decoder_inputs = self.init_decoder_inputs(target, device, batch_size)
-        token_logits = self.generate_t(encoder_outputs, encoder_hidden, decoder_inputs)
+        token_logits, _, _ = self.forward(seq, seq_length, seq_mask, target)
         if self.share_vocab:
             target = self.convert_in_idx_2_out_idx(target)
         self.loss.reset()
@@ -199,15 +166,22 @@ class MathEN(nn.Module):
         seq_length = torch.tensor(batch_data['ques len']).long()
         target = torch.tensor(batch_data['equation']).to(self.device)
         num_list = batch_data['num list']
-        ques_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
+        seq_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
 
-        batch_size = seq.size(0)
-        device = seq.device
+        _, symbol_outputs, _ = self.forward(seq, seq_length, seq_mask)
+        if self.share_vocab:
+            target = self.convert_in_idx_2_out_idx(target)
+        all_outputs = self.convert_idx2symbol(symbol_outputs, num_list)
+        targets = self.convert_idx2symbol(target, num_list)
+        return all_outputs, targets
 
-        if self.embedding == 'roberta':
-            seq_emb = self.in_embedder(seq, ques_mask)
-        else:
-            seq_emb = self.in_embedder(seq)
+    def predict(self,batch_data,output_all_layers=False):
+        seq = torch.tensor(batch_data['question']).to(self.device)
+        seq_length = torch.tensor(batch_data['ques len']).long()
+        token_logits, symbol_outputs, model_all_outputs = self.forward(seq,seq_length,output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_outputs
+
+    def encoder_forward(self,seq_emb,seq_length,output_all_layers=False):
         encoder_outputs, encoder_hidden = self.encoder(seq_emb, seq_length)
 
         if self.self_attention:
@@ -217,7 +191,7 @@ class MathEN(nn.Module):
                 encoder_outputs = encoder_outputs[:, :, self.hidden_size:] + encoder_outputs[:, :, :self.hidden_size]
 
         if self.bidirectional:
-            if (self.encoder_rnn_cell_type == 'lstm'):
+            if self.encoder_rnn_cell_type == 'lstm':
                 encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
             else:
                 encoder_hidden = encoder_hidden[::2].contiguous()
@@ -228,78 +202,58 @@ class MathEN(nn.Module):
             encoder_hidden = (encoder_hidden, encoder_hidden)
         elif (self.encoder.rnn_cell_type == 'rnn') and (self.decoder.rnn_cell_type == 'lstm'):
             encoder_hidden = (encoder_hidden, encoder_hidden)
-        elif (self.encoder.rnn_cell_type == 'lstm') and (self.decoder.rnn_cell_type == 'gru' or self.decoder.rnn_cell_type == 'rnn'):
+        elif (self.encoder.rnn_cell_type == 'lstm') and (
+                self.decoder.rnn_cell_type == 'gru' or self.decoder.rnn_cell_type == 'rnn'):
             encoder_hidden = encoder_hidden[0]
         else:
             pass
-        decoder_inputs = self.init_decoder_inputs(target=None, device=device, batch_size=batch_size)
-        all_outputs = self.generate_without_t(encoder_outputs, encoder_hidden, decoder_inputs)
-        if self.share_vocab:
-            target = self.convert_in_idx_2_out_idx(target)
-        all_outputs = self.convert_idx2symbol(all_outputs, num_list)
-        targets = self.convert_idx2symbol(target, num_list)
-        return all_outputs, targets
+        all_layer_outputs={}
+        if output_all_layers:
+            all_layer_outputs['encoder_outputs']=encoder_outputs
+            all_layer_outputs['encoder_hidden']=encoder_hidden
+        return encoder_outputs,encoder_hidden,all_layer_outputs
 
-    def generate_t(self, encoder_outputs, encoder_hidden, decoder_inputs):
-        with_t = random.random()
-        if with_t < self.teacher_force_ratio:
+    def decoder_forward(self,encoder_outputs, encoder_hidden, decoder_inputs, target=None,output_all_layers=False):
+        if target and random.random() < self.teacher_force_ratio:
             if self.attention:
                 decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden, encoder_outputs)
             else:
                 decoder_outputs, decoder_states = self.decoder(decoder_inputs, encoder_hidden)
             token_logits = self.generate_linear(decoder_outputs)
-            token_logits = token_logits.view(-1, token_logits.size(-1))
-            token_logits = torch.nn.functional.log_softmax(token_logits, dim=1)
-            #token_logits=torch.log_softmax(token_logits,dim=1)
+            outputs = token_logits.topk(1, dim=-1)[1]
         else:
-            seq_len = decoder_inputs.size(1)
+            seq_len = decoder_inputs.size(1) if target else self.max_gen_len
             decoder_hidden = encoder_hidden
             decoder_input = decoder_inputs[:, 0, :].unsqueeze(1)
+            decoder_outputs = []
             token_logits = []
+            outputs = []
             for idx in range(seq_len):
                 if self.attention:
                     decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 else:
                     decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
-                #attn_list.append(attn)
                 step_output = decoder_output.squeeze(1)
                 token_logit = self.generate_linear(step_output)
-                predict = torch.nn.functional.log_softmax(token_logit, dim=1)
-                #predict=torch.log_softmax(token_logit,dim=1)
-                output = predict.topk(1, dim=1)[1]
-                token_logits.append(predict)
+                output = token_logit.topk(1, dim=-1)[1]
+                decoder_outputs.append(step_output)
+                token_logits.append(token_logit)
+                outputs.append(output)
 
                 if self.share_vocab:
                     output = self.convert_out_idx_2_in_idx(output)
                     decoder_input = self.out_embedder(output)
                 else:
                     decoder_input = self.out_embedder(output)
+            decoder_outputs = torch.stack(decoder_outputs, dim=1)
             token_logits = torch.stack(token_logits, dim=1)
-            token_logits = token_logits.view(-1, token_logits.size(-1))
-        return token_logits
-
-    def generate_without_t(self, encoder_outputs, encoder_hidden, decoder_input):
-        all_outputs = []
-        decoder_hidden = encoder_hidden
-        for idx in range(self.max_gen_len):
-            if self.attention:
-                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
-            else:
-                decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
-            #attn_list.append(attn)
-            step_output = decoder_output.squeeze(1)
-            token_logits = self.generate_linear(step_output)
-            predict = torch.nn.functional.log_softmax(token_logits, dim=1)
-            output = predict.topk(1, dim=1)[1]
-
-            all_outputs.append(output)
-            if self.share_vocab:
-                output = self.convert_out_idx_2_in_idx(output)
-                decoder_input = self.out_embedder(output)
-            else:
-                decoder_input = self.out_embedder(output)
-        all_outputs = torch.cat(all_outputs, dim=1)
-        return all_outputs
+            outputs = torch.stack(outputs,dim=1)
+        all_layer_outputs = {}
+        if output_all_layers:
+            all_layer_outputs['decoder_outputs']=decoder_outputs
+            all_layer_outputs['token_logits']=token_logits
+            all_layer_outputs['outputs']=outputs
+        return token_logits,outputs,all_layer_outputs
 
     def init_decoder_inputs(self, target, device, batch_size):
         pad_var = torch.LongTensor([self.sos_token_idx] * batch_size).to(device).view(batch_size, 1)

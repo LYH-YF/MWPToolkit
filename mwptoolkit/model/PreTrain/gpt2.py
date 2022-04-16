@@ -2,6 +2,7 @@
 # @Author: Yihuai Lan
 # @Time: 2021/08/21 04:36:11
 # @File: gpt2.py
+from typing import Tuple, Dict, Any
 
 import torch
 from torch import nn
@@ -47,7 +48,15 @@ class GPT2(nn.Module):
     def _pretrained_model_resize(self):
         self.decoder.resize_token_embeddings(len(self.tokenizer))
 
-    def forward(self, seq, target=None,output_all_layers=False):
+    def forward(self, seq, target=None,output_all_layers=False) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
+        """
+
+        :param torch.Tensor seq: input sequence, shape: [batch_size, seq_length].
+        :param torch.Tensor | None target: target, shape: [batch_size,target_length].
+        :param bool output_all_layers: return output of all layers if output_all_layers is True, default False.
+        :return: token_logits: [batch_size, output_length, output_size], symbol_outputs: [batch_size,output_length], model_all_outputs.
+        :rtype: tuple(torch.Tensor, torch.Tensor, dict)
+        """
         token_logits, symbol_outputs, decoder_layer_outputs = self.decoder_forward(seq, target, output_all_layers)
         model_all_outputs = {}
         if output_all_layers:
@@ -100,90 +109,14 @@ class GPT2(nn.Module):
         targets = self.convert_idx2symbol(target, num_list)
         return outputs, targets
 
+    def predict(self, batch_data, output_all_layers=False):
+        seq = torch.tensor(batch_data['question']).to(self.device)
+        token_logits, symbol_outputs, model_all_outputs = self.forward(seq, output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_outputs
+
     def list2str(self, x):
         y = ''.join(x)
         return y
-
-    def generate_t(self, seq, target=None):
-        srcs = []
-        tgts = []
-        for idx, s in enumerate(seq):
-            src = self.tokenizer.encode(seq[idx])
-            tgt = self.tokenizer.encode(target[idx])
-            srcs.append(src)
-            tgts.append(tgt)
-
-        if self.max_input_len is not None:
-            src_length = self.max_input_len - 1
-        else:
-            src_length = max([len(_) for _ in srcs]) + 1
-        tgt_length = max([len(_) for _ in tgts]) + 1
-
-        for i in range(len(tgts)):
-            tgts[i] += (tgt_length - len(tgts[i])) * [self.eos_token_id]
-        tgts_tensor = torch.LongTensor(tgts)
-
-        for i in range(len(srcs)):
-            if src_length >= len(srcs[i]):
-                srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
-            else:
-                srcs[i] = srcs[i][:src_length] + self.tokenizer.encode(['<ans>'])
-        srcs_tensor = torch.LongTensor(srcs)
-        src_length += 1
-
-        seq_mask = (tgts_tensor != self.eos_token_id)[:, :-1].float()
-        seq_mask = torch.cat([torch.FloatTensor(seq_mask.shape[0], 1).fill_(1.), seq_mask], 1)
-
-        tgts_inputs_tensor = tgts_tensor[:, :-1]  # '[CLS] / * num_1 num_2 num_0 [SEP]
-        tgts_outputs_tensor = tgts_tensor  # '[CLS] / * num_1 num_2 num_0 [SEP] [SEP]'
-
-        srcs_tensor = srcs_tensor.to(self.device)
-        tgts_tensor = tgts_tensor.to(self.device)
-        tgts_inputs_tensor = tgts_inputs_tensor.to(self.device)
-        tgts_outputs_tensor = tgts_outputs_tensor.to(self.device)
-        seq_mask = seq_mask.to(self.device)
-
-        inputs = torch.cat([srcs_tensor, tgts_inputs_tensor], 1)
-        logits = self.decoder(inputs)[0]
-        logits = logits[:, -tgts_outputs_tensor.shape[1]:, :].contiguous()
-        logits = logits.view(-1, logits.shape[-1])
-        return logits, tgts_outputs_tensor
-
-    def generate_without_t(self, seq):
-
-        srcs = []
-        for idx, s in enumerate(seq):
-            src = self.tokenizer.encode(seq[idx])
-            srcs.append(src)
-        if self.max_input_len is not None:
-            src_length = self.max_input_len - 1
-        else:
-            src_length = max([len(_) for _ in srcs]) + 1
-
-        for i in range(len(srcs)):
-            if src_length >= len(srcs[i]):
-                srcs[i] = (src_length - len(srcs[i])) * [self.eos_token_id] + srcs[i] + self.tokenizer.encode(['<ans>'])
-            else:
-                srcs[i] = srcs[i][:src_length] + self.tokenizer.encode(['<ans>'])
-        srcs_tensor = torch.LongTensor(srcs)
-        src_length += 1
-
-        srcs_tensor = srcs_tensor.to(self.device)
-        inputs = srcs_tensor
-
-        all_output = []
-        for idx in range(self.max_out_len):
-            outputs = self.decoder(inputs)
-            token_logit = outputs[0][:, -1, :]
-            tokens = token_logit.topk(1, dim=1)[1]
-            # mask=tokens==self.tokenizer.pad_token_id
-            all_output.append(tokens)
-            inputs = torch.cat((inputs, tokens), dim=1)
-        all_output = torch.cat(all_output, dim=1)
-        all_output = self.decode_(all_output)
-        # print (all_output)
-        # print ("all_output:", all_output.size())
-        return all_output
 
     def decoder_forward(self,seq,target=None,output_all_layers=False):
         if target is not None:
@@ -280,8 +213,4 @@ class GPT2(nn.Module):
             output_list.append(res)
         return output_list
 
-    # def predict(self, batch_data, output_all_layers=False):
-    #     seq = torch.tensor(batch_data['question']).to(self.device)
-    #     token_logits, symbol_outputs, model_all_outputs = self.forward(seq, output_all_layers=output_all_layers)
-    #     return token_logits, symbol_outputs, model_all_outputs
 

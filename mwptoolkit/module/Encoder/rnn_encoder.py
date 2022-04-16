@@ -246,7 +246,7 @@ class HWCPEncoder(nn.Module):
         self.to_parent = Attention(self.hidden_size, mix=True, fn=True)
         return
 
-    def forward(self, input_var, input_lengths, span_length, tree=None):
+    def forward(self, input_var, input_lengths, span_length, tree=None, output_all_layers=False):
         """Not implemented"""
         device = span_length.device
 

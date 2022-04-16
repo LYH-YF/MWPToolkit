@@ -55,7 +55,21 @@ class HMS(nn.Module):
         self.loss = nn.NLLLoss(weight, pad, reduction='sum')
 
     def forward(self, input_variable, input_lengths, span_num_pos, word_num_poses, span_length=None, tree=None,
-                target_variable=None, max_length=None, beam_width=None):
+                target_variable=None, max_length=None, beam_width=None, output_all_layers=False):
+        """
+
+        :param input_variable:
+        :param input_lengths:
+        :param span_num_pos:
+        :param word_num_poses:
+        :param span_length:
+        :param tree:
+        :param target_variable:
+        :param max_length:
+        :param beam_width:
+        :param output_all_layers:
+        :return:
+        """
         num_pos = (span_num_pos, word_num_poses)
         if beam_width != None:
             beam_width = self.beam_size
@@ -77,7 +91,15 @@ class HMS(nn.Module):
             max_length=max_length,
             beam_width=beam_width
         )
-        return output
+        (token_logits, decoder_hidden, outputs) = output
+        model_all_outputs = {}
+        if output_all_layers:
+            model_all_outputs['encoder_outputs'] = encoder_outputs
+            model_all_outputs['encoder_hidden'] = encoder_hidden
+            model_all_outputs['decoder_hidden'] = decoder_hidden
+            model_all_outputs['token_logits'] = token_logits
+            model_all_outputs['outputs'] = outputs
+        return token_logits, outputs, model_all_outputs
 
     def calculate_loss(self, batch_data: dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
@@ -118,11 +140,6 @@ class HMS(nn.Module):
             max_length=max_length,
             beam_width=beam_width
         )
-        # outputs=torch.stack(decoder_outputs,dim=1)
-        # outputs=outputs.view(-1,outputs.size(-1))
-        # self.loss.reset()
-        # self.loss.eval_batch(outputs,target_variable.view(-1))
-        # self.loss.backward()
         batch_size = span_length.size(0)
         loss = 0
         for step, step_output in enumerate(decoder_outputs):
@@ -177,6 +194,19 @@ class HMS(nn.Module):
         outputs = torch.cat(sequence_symbols, dim=1)
         outputs = self.convert_idx2symbol(outputs, num_list)
         return outputs, targets
+
+    def predict(self, batch_data:dict, output_all_layers=False):
+        input_variable = [torch.tensor(span_i_batch).to(self.device) for span_i_batch in batch_data["spans"]]
+        input_lengths = torch.tensor(batch_data["spans len"]).long()
+        span_num_pos = torch.LongTensor(batch_data["span num pos"]).to(self.device)
+        word_num_poses = [torch.LongTensor(word_num_pos).to(self.device) for word_num_pos in
+                          batch_data["word num poses"]]
+        span_length = torch.tensor(batch_data["span nums"]).to(self.device)
+        tree = batch_data["deprel tree"]
+        token_logits, symbol_outputs, model_all_layers = self.forward(input_variable, input_lengths, span_num_pos,
+                                                                      word_num_poses, span_length, tree,
+                                                                      output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_layers
 
     def _init_embedding_params(self, train_data, vocab, embedder):
         sentences = []

@@ -4,6 +4,7 @@
 # @File: bertgen.py
 
 import random
+from typing import Tuple, Dict, Any
 
 import torch
 from torch import nn
@@ -80,7 +81,15 @@ class BERTGen(nn.Module):
     def _pretrained_model_resize(self):
         self.encoder.resize_token_embeddings(len(self.tokenizer))
 
-    def forward(self, seq, target=None, output_all_layers=False):
+    def forward(self, seq, target=None, output_all_layers=False) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
+        """
+
+        :param torch.Tensor seq: input sequence, shape: [batch_size, seq_length].
+        :param torch.Tensor | None target: target, shape: [batch_size,target_length].
+        :param bool output_all_layers: return output of all layers if output_all_layers is True, default False.
+        :return: token_logits: [batch_size, output_length, output_size], symbol_outputs: [batch_size,output_length], model_all_outputs.
+        :rtype: tuple(torch.Tensor, torch.Tensor, dict)
+        """
         src_feat, encoder_layer_outputs = self.encoder_forward(seq, output_all_layers)
 
         source_padding_mask = torch.eq(seq, self.tokenizer.pad_token_id)
@@ -141,81 +150,10 @@ class BERTGen(nn.Module):
         targets = self.convert_idx2symbol(target, num_list)
         return outputs, targets
 
-    def generate_t(self, encoder_outputs, target, source_padding_mask):
-        with_t = random.random()
-        seq_len = target.size(1)
-        batch_size = encoder_outputs.size(0)
-        device = encoder_outputs.device
-        if with_t < self.teacher_force_ratio:
-            input_seq = torch.LongTensor([self.out_sos_idx] * batch_size).view(batch_size, -1).to(device)
-            target = torch.cat((input_seq, target), dim=1)[:, :-1]
-
-            decoder_inputs = self.pos_embedder(self.out_embedder(target))
-            self_padding_mask = torch.eq(target, self.out_pad_idx)
-            self_attn_mask = self.self_attentioner(target.size(-1)).bool()
-            decoder_outputs = self.decoder(decoder_inputs,
-                                           self_padding_mask=self_padding_mask,
-                                           self_attn_mask=self_attn_mask,
-                                           external_states=encoder_outputs,
-                                           external_padding_mask=source_padding_mask)
-            token_logits = self.out(decoder_outputs)
-            token_logits = token_logits.view(-1, token_logits.size(-1))
-        else:
-            token_logits = []
-            input_seq = torch.LongTensor([self.out_sos_idx] * batch_size).view(batch_size, -1).to(device)
-            pre_tokens = [input_seq]
-            for idx in range(seq_len):
-                self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
-                decoder_input = self.pos_embedder(self.out_embedder(input_seq))
-                decoder_outputs = self.decoder(decoder_input, self_attn_mask=self_attn_mask, external_states=encoder_outputs, external_padding_mask=source_padding_mask)
-
-                token_logit = self.out(decoder_outputs[:, -1, :].unsqueeze(1))
-                token_logits.append(token_logit)
-                if self.decoding_strategy == "topk_sampling":
-                    output = topk_sampling(token_logit, top_k=5)
-                elif self.decoding_strategy == "greedy_search":
-                    output = greedy_search(token_logit)
-                else:
-                    raise NotImplementedError
-                if self.share_vocab:
-                    pre_tokens.append(self.decode(output))
-                else:
-                    pre_tokens.append(output)
-                input_seq = torch.cat(pre_tokens, dim=1)
-            token_logits = torch.cat(token_logits, dim=1)
-            token_logits = token_logits.view(-1, token_logits.size(-1))
-        return token_logits
-
-    def generate_without_t(self, encoder_outputs, source_padding_mask):
-        batch_size = encoder_outputs.size(0)
-        device = encoder_outputs.device
-        input_seq = torch.LongTensor([self.out_sos_idx] * batch_size).view(batch_size, -1).to(device)
-        pre_tokens = [input_seq]
-        all_outputs = []
-        for gen_idx in range(self.max_output_len):
-            self_attn_mask = self.self_attentioner(input_seq.size(-1)).bool()
-            # decoder_input = self.out_embedder(input_seq) + self.pos_embedder(input_seq)
-            decoder_input = self.pos_embedder(self.out_embedder(input_seq))
-            decoder_outputs = self.decoder(decoder_input, self_attn_mask=self_attn_mask, external_states=encoder_outputs, external_padding_mask=source_padding_mask)
-
-            token_logits = self.out(decoder_outputs[:, -1, :].unsqueeze(1))
-            if self.decoding_strategy == "topk_sampling":
-                output = topk_sampling(token_logits, top_k=5)
-            elif self.decoding_strategy == "greedy_search":
-                output = greedy_search(token_logits)
-            else:
-                raise NotImplementedError
-            all_outputs.append(output)
-            if self.share_vocab:
-                pre_tokens.append(self.decode(output))
-            else:
-                pre_tokens.append(output)
-            input_seq = torch.cat(pre_tokens, dim=1)
-        all_outputs = torch.cat(all_outputs, dim=1)
-        # print (all_outputs)
-        all_outputs = self.decode_(all_outputs)
-        # print ("2", all_outputs)
-        return all_outputs
+    def predict(self,batch_data,output_all_layers=False):
+        seq = torch.tensor(batch_data['question']).to(self.device)
+        token_logits, symbol_outputs, model_all_outputs = self.forward(seq,output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_outputs
 
     def encoder_forward(self, seq, output_all_layers=False):
         encoder_outputs = self.encoder(seq)
@@ -332,11 +270,6 @@ class BERTGen(nn.Module):
                     res.append(symbol)
             output_list.append(res)
         return output_list
-
-    # def predict(self,batch_data,output_all_layers=False):
-    #     seq = torch.tensor(batch_data['question']).to(self.device)
-    #     token_logits, symbol_outputs, model_all_outputs = self.forward(seq,output_all_layers=output_all_layers)
-    #     return token_logits, symbol_outputs, model_all_outputs
 
     def __str__(self):
         info = super().__str__()

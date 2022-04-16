@@ -1,60 +1,47 @@
-# -*- encoding: utf-8 -*-
-# @Author: Yihuai Lan
-# @Time: 2021/08/21 04:33:38
-# @File: graph2tree.py
-
 import copy
-import itertools
-import torch
-import stanza
-from torch import nn
-from torch.nn import functional
+import random
+from typing import Dict, Tuple, Any
 
-from mwptoolkit.module.Encoder.graph_based_encoder import GraphBasedEncoder
+import torch
+from torch import nn
+from transformers import BertModel, BertTokenizer
+
+from mwptoolkit.module.Encoder.rnn_encoder import BasicRNNEncoder
 from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.module.Embedder.roberta_embedder import RobertaEmbedder
 from mwptoolkit.module.Embedder.bert_embedder import BertEmbedder
 from mwptoolkit.module.Decoder.tree_decoder import TreeDecoder
-from mwptoolkit.module.Layer.tree_layers import NodeGenerater, SubTreeMerger, TreeNode, TreeEmbedding
-from mwptoolkit.module.Layer.tree_layers import Prediction, GenerateNode, Merge
+from mwptoolkit.module.Layer.tree_layers import *
 from mwptoolkit.module.Strategy.beam_search import TreeBeam
 from mwptoolkit.loss.masked_cross_entropy_loss import MaskedCrossEntropyLoss, masked_cross_entropy
-from mwptoolkit.utils.enum_type import SpecialTokens, NumMask
-from mwptoolkit.utils.utils import str2float, copy_list
+from mwptoolkit.utils.utils import copy_list
+from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
-class Graph2Tree(nn.Module):
-    """
-    Reference:
-        Zhang et al."Graph-to-Tree Learning for Solving Math Word Problems" in ACL 2020.
-    """
-
-    def __init__(self, config, dataset):
-        super(Graph2Tree, self).__init__()
+class MWPBert(nn.Module):
+    def __init__(self,config,dataset):
+        super(MWPBert, self).__init__()
+        self.hidden_size = config["hidden_size"]
         self.device = config["device"]
         self.USE_CUDA = True if self.device == torch.device('cuda') else False
-        # parameter
-        self.hidden_size = config["hidden_size"]
+        self.beam_size = config['beam_size']
+        self.max_out_len = config['max_output_len']
         self.embedding_size = config["embedding_size"]
         self.dropout_ratio = config["dropout_ratio"]
         self.num_layers = config["num_layers"]
         self.rnn_cell_type = config["rnn_cell_type"]
-        self.bidirectional = config["bidirectional"]
-        self.language = config["language"]
-        self.beam_size = config["beam_size"]
-        self.max_out_len = config["max_output_len"]
         self.embedding = config['embedding']
+        self.pretrained_model_path = config['pretrained_model_path']
 
         self.vocab_size = len(dataset.in_idx2word)
-        self.num_start = dataset.num_start
-
         self.out_symbol2idx = dataset.out_symbol2idx
         self.out_idx2symbol = dataset.out_idx2symbol
         generate_list = dataset.generate_list
         self.generate_nums = [self.out_symbol2idx[symbol] for symbol in generate_list]
+        self.mask_list = NumMask.number
+        self.num_start = dataset.num_start
         self.operator_nums = dataset.operator_nums
         self.generate_size = len(generate_list)
-        self.mask_list = NumMask.number
 
         self.unk_token = self.out_symbol2idx[SpecialTokens.UNK_TOKEN]
         try:
@@ -69,15 +56,13 @@ class Graph2Tree(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
-        # module
-        if config['embedding'] == 'roberta':
-            self.embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
-        elif config['embedding'] == 'bert':
-            self.embedder = BertEmbedder(self.vocab_size, config['pretrained_model_path'])
-        else:
-            self.embedder = BasicEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
-        self.encoder = GraphBasedEncoder(self.embedding_size, self.hidden_size, self.rnn_cell_type, \
-                                         self.bidirectional, self.num_layers, self.dropout_ratio)
+        try:
+            self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            self.in_pad_token = None
+        
+        self.encoder = BertModel.from_pretrained(self.pretrained_model_path)
+        self.encoder.resize_token_embeddings(self.vocab_size)
         self.decoder = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
         self.node_generater = GenerateNode(self.hidden_size, self.operator_nums, self.embedding_size,
                                            self.dropout_ratio)
@@ -85,9 +70,23 @@ class Graph2Tree(nn.Module):
 
         self.loss = MaskedCrossEntropyLoss()
 
-    def forward(self, seq, seq_length, nums_stack, num_size, num_pos, num_list, group_nums, target=None,
-                output_all_layers=False):
-        seq_mask = torch.eq(seq, self.in_pad_token).to(self.device)
+    def forward(self, seq, seq_length, nums_stack, num_size, num_pos, target=None, output_all_layers=False) -> Tuple[
+            torch.Tensor, torch.Tensor, Dict[str, Any]]:
+        """
+
+        :param torch.Tensor seq: input sequence, shape: [batch_size, seq_length].
+        :param torch.Tensor seq_length: the length of sequence, shape: [batch_size].
+        :param list nums_stack: different positions of the same number, length:[batch_size]
+        :param list num_size: number of numbers of input sequence, length:[batch_size].
+        :param list num_pos: number positions of input sequence, length:[batch_size].
+        :param torch.Tensor | None target: target, shape: [batch_size, target_length], default None.
+        :param bool output_all_layers: return output of all layers if output_all_layers is True, default False.
+        :return : token_logits:[batch_size, output_length, output_size], symbol_outputs:[batch_size,output_length], model_all_outputs.
+        :rtype: tuple(torch.Tensor, torch.Tensor, dict)
+        """
+        # sequence mask for attention
+        encoder_seq_mask = seq != self.in_pad_token
+        decoder_seq_mask = torch.eq(seq, self.in_pad_token).to(self.device)
 
         num_mask = []
         max_num_size = max(num_size) + len(self.generate_nums)
@@ -97,11 +96,10 @@ class Graph2Tree(nn.Module):
         num_mask = torch.BoolTensor(num_mask).to(self.device)
 
         batch_size = len(seq_length)
-        graph = self.build_graph(seq_length, num_list, num_pos, group_nums)
 
-        seq_emb = self.embedder(seq)
+        # seq_emb = self.embedder(seq)
 
-        problem_output, encoder_outputs, encoder_layer_outputs = self.encoder_forward(seq_emb, seq_length, graph,
+        problem_output, encoder_outputs, encoder_layer_outputs = self.encoder_forward(seq, encoder_seq_mask, seq_length,
                                                                                       output_all_layers)
 
         copy_num_len = [len(_) for _ in num_pos]
@@ -112,25 +110,25 @@ class Graph2Tree(nn.Module):
 
         token_logits, symbol_outputs, decoder_layer_outputs = self.decoder_forward(encoder_outputs, problem_output,
                                                                                    all_nums_encoder_outputs, nums_stack,
-                                                                                   seq_mask, num_mask, target,
+                                                                                   decoder_seq_mask, num_mask, target,
                                                                                    output_all_layers)
         model_all_outputs = {}
         if output_all_layers:
-            model_all_outputs['inputs_embedding'] = seq_emb
+            # model_all_outputs['inputs_embedding'] = seq_emb
             model_all_outputs.update(encoder_layer_outputs)
             model_all_outputs['number_representation'] = all_nums_encoder_outputs
             model_all_outputs.update(decoder_layer_outputs)
 
         return token_logits, symbol_outputs, model_all_outputs
 
-    def calculate_loss(self, batch_data: dict) -> float:
+    def calculate_loss(self,batch_data):
         """Finish forward-propagating, calculating loss and back-propagation.
 
         :param batch_data: one batch data.
         :return: loss value.
 
         batch_data should include keywords 'question', 'ques len', 'equation', 'equ len',
-        'num stack', 'num size', 'num pos', 'num list', 'group nums'
+        'num stack', 'num size', 'num pos'
         """
         seq = torch.tensor(batch_data["question"]).to(self.device)
         seq_length = torch.tensor(batch_data["ques len"]).long()
@@ -139,23 +137,23 @@ class Graph2Tree(nn.Module):
         nums_stack = copy.deepcopy(batch_data["num stack"])
         num_size = batch_data["num size"]
         num_pos = batch_data["num pos"]
-        num_list = batch_data['num list']
-        group_nums = batch_data['group nums']
 
-        token_logits, _, all_layer_outputs = self.forward(seq, seq_length, nums_stack, num_size, num_pos, num_list,
-                                                          group_nums, target, output_all_layers=True)
+        token_logits, _, all_layer_outputs = self.forward(seq, seq_length, nums_stack, num_size, num_pos, target,
+                                                          output_all_layers=True)
         target = all_layer_outputs['target']
 
         loss = masked_cross_entropy(token_logits, target, target_length)
+        loss.backward()
         return loss
 
-    def model_test(self, batch_data: dict) -> tuple:
+    def model_test(self,batch_data):
         """Model test.
-        
+
         :param batch_data: one batch data.
         :return: predicted equation, target equation.
+
         batch_data should include keywords 'question', 'ques len', 'equation',
-        'num stack', 'num pos', 'num list', 'num_size', 'group nums'
+        'num stack', 'num pos', 'num list','num size'
         """
         seq = torch.tensor(batch_data["question"]).to(self.device)
         seq_length = torch.tensor(batch_data["ques len"]).long()
@@ -163,32 +161,44 @@ class Graph2Tree(nn.Module):
         nums_stack = copy.deepcopy(batch_data["num stack"])
         num_pos = batch_data["num pos"]
         num_list = batch_data['num list']
-        num_size = batch_data['num_size']
-        group_nums = batch_data['group nums']
+        num_size = batch_data['num size']
+        _, outputs, _ = self.forward(seq, seq_length, nums_stack, num_size, num_pos)
 
-        _, symbol_outputs, all_layer_outputs = self.forward(seq, seq_length, nums_stack, num_size, num_pos, num_list,
-                                                            group_nums, output_all_layers=True)
-        all_output = self.convert_idx2symbol(symbol_outputs, num_list[0], copy_list(nums_stack[0]))
+        all_output = self.convert_idx2symbol(outputs[0], num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         return all_output, targets
 
-    def encoder_forward(self, seq_emb, input_length, graph, output_all_layers=False):
-        encoder_inputs = seq_emb.transpose(0, 1)
-        encoder_outputs, problem_output = self.encoder(encoder_inputs, input_length, graph)
+    def predict(self,batch_data,output_all_layers=False):
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        nums_stack = copy.deepcopy(batch_data["num stack"])
+        num_size = batch_data["num size"]
+        num_pos = batch_data["num pos"]
+        token_logits, symbol_outputs, model_all_outputs = self.forward(seq, seq_length, nums_stack, num_size, num_pos,
+                                                                       output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_outputs
+
+    def encoder_forward(self, seq, seq_mask, seq_length, output_all_layers=False):
+        encoder_outputs = self.encoder(seq, seq_mask)[0]
+        encoder_outputs = encoder_outputs.transpose(0,1)  # S, B, H
+        problem_output = []
+        batch_size = seq.size(0)
+        for b_i in range(batch_size):
+            problem_output.append(torch.mean(encoder_outputs[:seq_length[b_i], b_i, :], dim=0))
+        problem_output = torch.stack(problem_output, dim=0)
         all_layer_outputs = {}
         if output_all_layers:
-            all_layer_outputs['encoder_outputs'] = encoder_outputs
+            all_layer_outputs['encoder_outputs']=encoder_outputs
             all_layer_outputs['inputs_representation'] = problem_output
-        return problem_output, encoder_outputs, all_layer_outputs
+        return problem_output,encoder_outputs,all_layer_outputs
 
-    def decoder_forward(self, encoder_outputs, problem_output, all_nums_encoder_outputs, nums_stack, seq_mask, num_mask,
-                        target=None, output_all_layers=False):
-        batch_size = encoder_outputs.size(1)
+    def decoder_forward(self,encoder_outputs,problem_output,all_nums_encoder_outputs,nums_stack,seq_mask,num_mask,target=None,output_all_layers=False):
+        batch_size = problem_output.size(0)
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
-        token_logits = []
+        token_logits=[]
         outputs = []
         if target is not None:
             target = target.transpose(0, 1)
@@ -205,7 +215,7 @@ class Graph2Tree(nn.Module):
 
                 # all_leafs.append(p_leaf)
                 token_logit = torch.cat((op_score, num_score), 1)
-                output = torch.topk(token_logit, 1, dim=-1)[1]
+                output = torch.topk(token_logit,1,dim=-1)[1]
                 token_logits.append(token_logit)
                 outputs.append(output)
 
@@ -278,8 +288,9 @@ class Graph2Tree(nn.Module):
 
                         current_token_logit.append(token_logit)
 
+
                         out_token = int(ti)
-                        current_out.append(torch.squeeze(ti, dim=1))
+                        current_out.append(torch.squeeze(ti,dim=1))
 
                         node = current_node_stack[0].pop()
 
@@ -309,7 +320,7 @@ class Graph2Tree(nn.Module):
                             current_left_childs.append(None)
                         current_beams.append(
                             TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks,
-                                     current_left_childs, current_out, current_token_logit))
+                                     current_left_childs, current_out,current_token_logit))
                 beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
                 beams = beams[:self.beam_size]
                 flag = True
@@ -327,7 +338,7 @@ class Graph2Tree(nn.Module):
             all_layer_outputs['token_logits'] = token_logits
             all_layer_outputs['outputs'] = outputs
             all_layer_outputs['target'] = target
-        return token_logits, outputs, all_layer_outputs
+        return token_logits,outputs,all_layer_outputs
 
     def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, batch_size, num_size, hidden_size):
         indices = list()
@@ -368,56 +379,8 @@ class Graph2Tree(nn.Module):
                 target_input[i] = 0
         return torch.LongTensor(target), torch.LongTensor(target_input)
 
-    def build_graph(self, seq_length, num_list, num_pos, group_nums):
-        max_len = seq_length.max()
-        batch_size = len(seq_length)
-        batch_graph = []
-        for b_i in range(batch_size):
-            x = torch.zeros((max_len, max_len))
-            for idx in range(seq_length[b_i]):
-                x[idx, idx] = 1
-            quantity_cell_graph = torch.clone(x)
-            graph_greater = torch.clone(x)
-            graph_lower = torch.clone(x)
-            graph_quanbet = torch.clone(x)
-            graph_attbet = torch.clone(x)
-            for idx, n_pos in enumerate(num_pos[b_i]):
-                for pos in group_nums[b_i][idx]:
-                    quantity_cell_graph[n_pos, pos] = 1
-                    quantity_cell_graph[pos, n_pos] = 1
-                    graph_quanbet[n_pos, pos] = 1
-                    graph_quanbet[pos, n_pos] = 1
-                    graph_attbet[n_pos, pos] = 1
-                    graph_attbet[pos, n_pos] = 1
-            for idx_i in range(len(num_pos[b_i])):
-                for idx_j in range(len(num_pos[b_i])):
-                    num_i = str2float(num_list[b_i][idx_i])
-                    num_j = str2float(num_list[b_i][idx_j])
-                    if num_i > num_j:
-                        graph_greater[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
-                        graph_lower[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]] = 1
-                    else:
-                        graph_greater[num_pos[b_i][idx_j]][num_pos[b_i][idx_i]] = 1
-                        graph_lower[num_pos[b_i][idx_i]][num_pos[b_i][idx_j]] = 1
-            group_num_ = itertools.chain.from_iterable(group_nums[b_i])
-            combn = itertools.permutations(group_num_, 2)
-            for idx in combn:
-                graph_quanbet[idx] = 1
-                graph_quanbet[idx] = 1
-                graph_attbet[idx] = 1
-                graph_attbet[idx] = 1
-            quantity_cell_graph = quantity_cell_graph.to(self.device)
-            graph_greater = graph_greater.to(self.device)
-            graph_lower = graph_lower.to(self.device)
-            graph_quanbet = graph_quanbet.to(self.device)
-            graph_attbet = graph_attbet.to(self.device)
-            graph = torch.stack([quantity_cell_graph, graph_greater, graph_lower, graph_quanbet, graph_attbet], dim=0)
-            batch_graph.append(graph)
-        batch_graph = torch.stack(batch_graph)
-        return batch_graph
-
     def convert_idx2symbol(self, output, num_list, num_stack):
-        # batch_size=output.size(0)
+        #batch_size=output.size(0)
         '''batch_size=1'''
         seq_len = len(output)
         num_len = len(num_list)

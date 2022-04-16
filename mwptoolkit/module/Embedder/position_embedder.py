@@ -231,3 +231,29 @@ class EPTPositionalEncoding(nn.Module):
 
         # Return value. Shape [*, E]
         return result.contiguous()
+
+
+class DisPositionalEncoding(nn.Module):
+
+    def __init__(self, embedding_size, max_len):
+        super(DisPositionalEncoding, self).__init__()
+        pe = torch.zeros(max_len, embedding_size)
+        pe.require_grad = False
+
+        position = torch.arange(0, max_len).float().unsqueeze(1)
+        div_term = torch.exp(
+            torch.arange(0, embedding_size, 2).float() * (-torch.log(torch.tensor(10000.0)) / embedding_size))
+
+        pe[:, 0::2] = torch.sin(position * div_term)
+        pe[:, 1::2] = torch.cos(position * div_term)
+
+        self.position_encoding = nn.Embedding(max_len, embedding_size)
+        self.position_encoding.weight = nn.Parameter(pe, requires_grad=False)
+
+    def forward(self, dis_graph, category_num):
+        dis_graph_expend = dis_graph.unsqueeze(1)  # B*1*S*S
+        ZeroPad = nn.ZeroPad2d(padding=(0, category_num, 0, category_num))  # B*1*S+c*S+C
+        dis_graph_expend = ZeroPad(dis_graph_expend)
+        input_pos = dis_graph_expend.squeeze(1).long()
+        return self.position_encoding(input_pos)
+

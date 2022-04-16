@@ -119,7 +119,7 @@ class StackMachine:
             embed_res (torch.FloatTensor): Resulted embedding after transformation, with size (dim_embedding,).
         
         Returns:
-            torch.Tensor: embeding on the top of the stack.
+            torch.Tensor: embedding on the top of the stack.
         """
         if len(self._stack) < 2: return self._bottom_embed
         val1, embed1 = self._stack.pop()

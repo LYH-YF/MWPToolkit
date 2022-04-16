@@ -241,12 +241,19 @@ class RecursiveNN(nn.Module):
         return nodeProb, label
 
     def test(self, expression_tree, num_embedding, look_up, out_idx2symbol):
+        device = num_embedding.device
         self.out_idx2symbol = out_idx2symbol
         self.leaf_emb(expression_tree, num_embedding, look_up)
         self.nodeProbList = []
         self.labelList = []
         _ = self.test_traverse(expression_tree)
-        return expression_tree
+        if self.nodeProbList != []:
+            nodeProb = torch.cat(self.nodeProbList, dim=0).to(device)
+            label = torch.tensor(self.labelList).to(device)
+        else:
+            nodeProb = self.nodeProbList
+            label = self.labelList
+        return nodeProb, label, expression_tree
 
     def leaf_emb(self, node, num_embed, look_up):
         if node.is_leaf:
@@ -287,10 +294,9 @@ class RecursiveNN(nn.Module):
             currentNode, op_prob = self.RecurCell(combined_v)
             node.embedding = currentNode.squeeze(0)
             op_idx = torch.topk(op_prob, 1, 1)[1]
+            self.nodeProbList.append(op_prob)
             node.node_value = self.classes[op_idx]
-            #self.nodeProbList.append(op_prob)
-            #node.numclass_probs = proj_probs
-            #self.labelList.append(self.classes.index(node.node_value))
+            self.labelList.append(self.classes.index(node.node_value))
         return currentNode
 
     def RecurCell(self, combine_emb):

@@ -12,6 +12,7 @@ from mwptoolkit.module.Graph.graph_module import Graph_Module,Parse_Graph_Module
 from mwptoolkit.module.Layer.graph_layers import MeanAggregator
 from mwptoolkit.module.Embedder.basic_embedder import BasicEmbedder
 from mwptoolkit.utils.utils import clones
+
 def replace_masked_values(tensor, mask, replace_with):
     return tensor.masked_fill((1 - mask).bool(), replace_with)
 class GraphBasedEncoder(nn.Module):
@@ -350,3 +351,94 @@ class NumEncoder(nn.Module):
         
         return gnn_info_vec, num_embedding, problem_output
 
+
+# class EEHEncoder(nn.Module):
+#     def __init__(self,
+#                  input_size,
+#                  embedding_size,
+#                  pos_embedding_size,
+#                  hidden_size,
+#                  category_size,
+#                  pretrain_emb,
+#                  edge_size,
+#                  n_layers=2,
+#                  dropout=0.5,
+#                  use_self_attention=False,
+#                  use_glove_embedding=False,
+#                  use_kas2t_encoder=False,
+#                  use_g2t_stanford=False,
+#                  use_gate=False,
+#                  use_cate=False,
+#                  use_compare=False,
+#                  use_number_encoder=False
+#                  ):
+#         super(EEHEncoder, self).__init__()
+#
+#         self.input_size = input_size
+#         self.embedding_size = embedding_size
+#         self.hidden_size = hidden_size
+#         self.n_layers = n_layers
+#         self.dropout = dropout
+#         self.shrink_size = hidden_size
+#         self.pos_embedding_size = pos_embedding_size
+#         BasicRNNEncoder = importlib.import_module('mwptoolkit.module.Encoder.rnn_encoder','BasicRNNEncoder')
+#         if use_number_encoder == True:
+#             self.shrink_size = self.shrink_size - pos_embedding_size
+#         if use_self_attention == True:
+#             self.shrink_size = self.shrink_size - pos_embedding_size
+#
+#         self.embedding = nn.Embedding(input_size, embedding_size, padding_idx=0)
+#         if use_glove_embedding == True:
+#             self.embedding.weight.data.copy_(torch.from_numpy(pretrain_emb))
+#             self.embedding.weight.requires_grad = False
+#
+#         self.em_dropout = nn.Dropout(dropout)
+#         # self.gru_pade = nn.GRU(embedding_size, hidden_size, n_layers, dropout=dropout, bidirectional=True)
+#
+#         self.edge_embedding = nn.Embedding(edge_size, 32, padding_idx=0)
+#         self.edge_dense1 = nn.Linear(384, 32)
+#         self.edge_dense2 = nn.Linear(384, 32)
+#         if use_kas2t_encoder == False:
+#             self.rnn_encoder = BasicRNNEncoder()
+#             if use_g2t_stanford == True:
+#                 self.gcn = Graph_Module(self.shrink_size, self.shrink_size, self.shrink_size)
+#         else:
+#             self.category_embedding = nn.Embedding(category_size, 384, padding_idx=0)
+#             self.dis_embedding = DisPositionalEncoding(384, 160)
+#             self.dis_embedding1 = DisPositionalEncoding(384, 160)
+#             # self.dis_embedding = Dis_PositionalEncoding(384, 160)
+#
+#             self.gru_pade = nn.GRU(embedding_size, 384, n_layers, dropout=dropout, bidirectional=True)
+#
+#             if use_g2t_stanford == True:
+#                 self.gcn = Graph_Module(384, 384, 384)
+#             self.gat_n = [GraphAttentionLayer(384, 384, 0.5, 0.1, concat=False) for _ in range(8)]
+#             for i, attention in enumerate(self.gat_n):
+#                 self.add_module('attention_{}'.format(i), attention)
+#
+#             self.pos_embedding = PositionalEncoding(128, 160)
+#
+#             self.encoder_layers = EncoderLayer(self.shrink_size, 16, self.shrink_size, dropout)
+#             # self.encoder_layers2 = EncoderLayer(self.shrink_size, 4, self.shrink_size, dropout)
+#
+#         if use_gate == True:
+#             self.enc_linear = nn.Linear(self.shrink_size, self.shrink_size)
+#             self.enc_dense = nn.Linear(self.shrink_size, 1)
+#             self.num_pos_embedding = nn.Embedding(2, pos_embedding_size, padding_idx=0)
+#
+#         if use_cate == True:
+#             self.type_linear = nn.Linear(self.shrink_size, self.shrink_size)
+#             self.type_dense = nn.Linear(self.shrink_size, 5)
+#             self.type_pos_embedding = nn.Embedding(5, pos_embedding_size, padding_idx=0)
+#
+#         if use_compare == True:
+#             self.pair_score = nn.Linear(self.hidden_size, 1)
+#
+#         if use_number_encoder == True:
+#             self.dense_emb = nn.Linear(self.embedding_size, self.pos_embedding_size)
+#
+#             self.nums_char_embedding = nn.Embedding(16, pos_embedding_size, padding_idx=0)
+#             self.pade_embedding = nn.Embedding(2, pos_embedding_size, padding_idx=0)
+#             self.num_gru = nn.GRU(pos_embedding_size, pos_embedding_size, n_layers, dropout=dropout, bidirectional=True)
+#
+#             self.self_attn = SelfAttention(pos_embedding_size)

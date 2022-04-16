@@ -237,7 +237,7 @@ class MultiEncDec(nn.Module):
         tree_score = all_layer_outputs['tree_score']
         attn_score = all_layer_outputs['attn_score']
         if tree_score < attn_score:
-            output1 = self.convert_idx2symbol1(tree_outputs, num_list[0], copy_list(num_stack_batch[0]))
+            output1 = self.convert_idx2symbol1(tree_outputs[0], num_list[0], copy_list(num_stack_batch[0]))
             targets1 = self.convert_idx2symbol1(target1[0], num_list[0], copy_list(num_stack_batch[0]))
 
             result_type = 'tree'
@@ -251,6 +251,24 @@ class MultiEncDec(nn.Module):
             if self.USE_CUDA:
                 torch.cuda.empty_cache()
             return result_type, output2, targets2
+
+    def predict(self,batch_data,output_all_layers=False):
+        input1_var = torch.tensor(batch_data['input1']).to(self.device)
+        input2_var = torch.tensor(batch_data['input2']).to(self.device)
+        input_length = torch.tensor(batch_data['input1 len'])
+        parse_graph = torch.tensor(batch_data['parse graph']).to(self.device)
+
+        num_stack_batch = copy.deepcopy(batch_data['num stack'])
+        num_size_batch = batch_data['num size']
+        num_pos_batch = batch_data['num pos']
+        num_order_batch = batch_data['num order']
+
+        token_logits, symbol_outputs, model_all_outputs = self.forward(input1_var, input2_var, input_length,
+                                                                       num_size_batch,
+                                                                       num_pos_batch, num_order_batch, parse_graph,
+                                                                       num_stack_batch,
+                                                                       output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_outputs
 
     def generate_tree_input(self, target, decoder_output, nums_stack_batch, num_start, unk):
         # when the decoder input is copied num but the num has two pos, chose the max
@@ -706,20 +724,3 @@ class MultiEncDec(nn.Module):
             output_list.append(res)
         return output_list
 
-    # def predict(self,batch_data,output_all_layers=False):
-    #     input1_var = torch.tensor(batch_data['input1']).to(self.device)
-    #     input2_var = torch.tensor(batch_data['input2']).to(self.device)
-    #     input_length = torch.tensor(batch_data['input1 len'])
-    #     parse_graph = torch.tensor(batch_data['parse graph']).to(self.device)
-    #
-    #     num_stack_batch = copy.deepcopy(batch_data['num stack'])
-    #     num_size_batch = batch_data['num size']
-    #     num_pos_batch = batch_data['num pos']
-    #     num_order_batch = batch_data['num order']
-    #
-    #     token_logits, symbol_outputs, model_all_outputs = self.forward(input1_var, input2_var, input_length,
-    #                                                                    num_size_batch,
-    #                                                                    num_pos_batch, num_order_batch, parse_graph,
-    #                                                                    num_stack_batch,
-    #                                                                    output_all_layers=output_all_layers)
-    #     return token_logits, symbol_outputs, model_all_outputs

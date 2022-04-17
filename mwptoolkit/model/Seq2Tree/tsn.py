@@ -337,7 +337,7 @@ class TSN(nn.Module):
     def teacher_net_encoder_forward(self, seq_emb, seq_length, output_all_layers=False):
         encoder_inputs = seq_emb.transpose(0, 1)
         pade_outputs, hidden_states = self.t_encoder(encoder_inputs, seq_length)
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         all_layer_outputs = {}
         if output_all_layers:
@@ -495,7 +495,7 @@ class TSN(nn.Module):
     def student_net_encoder_forward(self, seq_emb, seq_length, output_all_layers=False):
         encoder_inputs = seq_emb.transpose(0, 1)
         pade_outputs, hidden_states = self.s_encoder(encoder_inputs, seq_length)
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         all_layer_outputs = {}
         if output_all_layers:

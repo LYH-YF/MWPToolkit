@@ -234,7 +234,7 @@ class GTS(nn.Module):
     def encoder_forward(self, seq_emb, seq_length, output_all_layers=False):
         encoder_inputs = seq_emb.transpose(0, 1)
         pade_outputs, hidden_states = self.encoder(encoder_inputs, seq_length)
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         all_layer_outputs = {}
         if output_all_layers:

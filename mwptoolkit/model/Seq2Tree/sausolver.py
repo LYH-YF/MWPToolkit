@@ -440,7 +440,7 @@ class SAUSolver(nn.Module):
         else:
             encoder_inputs = seq_emb
         pade_outputs, hidden_states = self.encoder(encoder_inputs, seq_length)
-        problem_output = pade_outputs[:, -1, :self.hidden_size] + pade_outputs[:, 0, self.hidden_size:]
+        problem_output = pade_outputs[-1, :, :self.hidden_size] + pade_outputs[0, :, self.hidden_size:]
         encoder_outputs = pade_outputs[:, :, :self.hidden_size] + pade_outputs[:, :, self.hidden_size:]
         all_layer_outputs = {}
         if output_all_layers:

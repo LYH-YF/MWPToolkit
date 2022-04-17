@@ -110,10 +110,10 @@ class TreeLSTM(nn.Module):
         all_nums_encoder_outputs = self.get_all_number_encoder_outputs(encoder_outputs, num_pos, num_size,
                                                                        self.hidden_size * self.num_layers)
 
-        token_logits, symbol_outputs, decoder_layer_outputs = self.decoder_forward(encoder_outputs, problem_output,
-                                                                                   initial_hidden,
-                                                                                   all_nums_encoder_outputs, nums_stack,
-                                                                                   seq_mask, num_mask, target,
+        token_logits, symbol_outputs, decoder_layer_outputs = self.decoder_forward(encoder_outputs, initial_hidden,
+                                                                                   problem_output,
+                                                                                   all_nums_encoder_outputs, seq_mask,
+                                                                                   num_mask, nums_stack, target,
                                                                                    output_all_layers)
         model_all_outputs = {}
         if output_all_layers:

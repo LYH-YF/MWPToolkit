@@ -79,12 +79,18 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
 
     logger.info("best config:{}".format(best_config))
     
-
     config_dict.update(best_config)
 
-    model_config=read_json_data(configs["model_config_path"])
+    model_config_path = configs["model_config_file"]
+    if not os.path.isabs(model_config_path):
+        model_config_path = os.path.join(os.getcwd(),model_config_path)
+    model_config=read_json_data(model_config_path)
+
     model_config.update(best_config)
-    write_json_data(model_config,configs["best_config_path"])
-    logger.info("best config saved at {}".format(configs["best_config_path"]))
+    best_config_path = configs["best_config_path"]
+    if not os.path.isabs(best_config_path):
+        best_config_path = os.path.join(os.getcwd(),best_config_path)
+    write_json_data(model_config,best_config_path)
+    logger.info("best config saved at {}".format(best_config_path))
 
     run_toolkit(model_name,dataset_name,task_type,config_dict)

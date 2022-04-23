@@ -100,7 +100,7 @@
             }
             //equation_fix
             var infix_model = new Array("DNS","BERTGen","RNNEncDec","RNNVAE","RobertaGen","Transformer");
-            var prefix_model = new Array("GPT2","Graph2Tree","GTS","SAUSolver","TreeLSTM","TSN");
+            var prefix_model = new Array("GPT2","Graph2Tree","GTS","SAUSolver","TreeLSTM","TSN","BertTD","MWPBert");
             var postfix_model = new Array("EPT","GroupATT","MathEN","Saligned","TRNN");
             var non_model = new Array("MultiEncDec");
             if (infix_model.includes(model)){
@@ -119,12 +119,12 @@
                 cmd_line = cmd_line + "--equation_fix=None ";
             }
             //pretrain model
-            var pretrain_model = new Array("BERTGen","GPT2","RobertaGen","EPT");
+            var pretrain_model = new Array("BERTGen","GPT2","RobertaGen","EPT","BertTD","MWPBert");
             var chinese_dataset = new Array("math23k","hmwp");
             var english_dataset = new Array("asdiv-a","mawps-single","mawps_asdiv-a_svamp","draw","mawps");
             if (pretrain_model.includes(model)){
                 switch (model){
-                    case "BERTGen":
+                    case "BERTGen" || "BertTD" || "MWPBert":
                         if (chinese_dataset.includes(dataset)){
                             cmd_line = cmd_line + "--pretrained_model_path=bert-base-chinese ";
                         }
@@ -292,6 +292,7 @@
                                 <datalist id="modellist" size="5">
                                     <option value="AST-Dec" />
                                     <option value="BERTGen" />
+                                    <option value="BertTD" />
                                     <option value="DNS" />
                                     <option value="GPT2" />
                                     <option value="Graph2Tree" />
@@ -299,6 +300,7 @@
                                     <option value="GTS" />
                                     <option value="MathEN" />
                                     <option value="MultiEncDec" />
+                                    <option value="MWPBert">
                                     <option value="RNNEncDec" />
                                     <option value="RNNVAE" />
                                     <option value="RobertaGen" />

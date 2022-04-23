@@ -54,7 +54,7 @@ class LSTM(nn.Module):
         except:
             self.out_pad_token = None
 
-        self.in_embedder = BasicEmbedder(self.share_vocab, self.embedding_size, self.dropout_ratio)
+        self.in_embedder = BasicEmbedder(self.vocab_size, self.embedding_size, self.dropout_ratio)
         if self.share_vocab:
             self.out_embedder = self.in_embedder
         else:
@@ -135,8 +135,9 @@ class LSTM(nn.Module):
         token_logits, _, _ = self.forward(seq, seq_length, target)
         if self.share_vocab:
             target = self.convert_in_idx_2_out_idx(target)
+        outputs = torch.nn.functional.log_softmax(token_logits, dim=-1)
         self.loss.reset()
-        self.loss.eval_batch(token_logits, target.view(-1))
+        self.loss.eval_batch(outputs.view(-1, outputs.size(-1)), target.view(-1))
         self.loss.backward()
         return self.loss.get_loss()
 
@@ -160,7 +161,14 @@ class LSTM(nn.Module):
         targets = self.convert_idx2symbol(target, num_list)
         return all_outputs, targets
 
-    def predict(self,batch_data,output_all_layers=False):
+    def predict(self,batch_data:dict,output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         seq = torch.tensor(batch_data['question']).to(self.device)
         seq_length = torch.tensor(batch_data['ques len']).long()
         token_logits, symbol_outputs, model_all_outputs = self.forward(seq,seq_length,output_all_layers=output_all_layers)
@@ -189,7 +197,7 @@ class LSTM(nn.Module):
             token_logits = self.generate_linear(decoder_outputs)
             outputs = token_logits.topk(1, dim=-1)[1]
         else:
-            seq_len = decoder_inputs.size(1) if target else self.max_gen_len
+            seq_len = decoder_inputs.size(1) if target is not None else self.max_gen_len
             decoder_hidden = encoder_hidden
             decoder_input = decoder_inputs[:, 0, :].unsqueeze(1)
             decoder_outputs = []

@@ -14,7 +14,7 @@
     "equation_fix":"postfix",
     "decoder": "expr_ptr",
     "force_generation": true,
-    "pretrained_model_path": "albert-base-v2",
+    "pretrained_model": "albert-base-v2",
     "fix_encoder_embedding": true,
     "epoch_warmup": 0,
     "train_batch_size":16,

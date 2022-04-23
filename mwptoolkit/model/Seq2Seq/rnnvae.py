@@ -152,8 +152,9 @@ class RNNVAE(nn.Module):
         token_logits, _, _ = self.forward(seq, seq_length, target)
         if self.share_vocab:
             target = self.convert_in_idx_2_out_idx(target)
+        outputs = torch.nn.functional.log_softmax(token_logits, dim=-1)
         self.loss.reset()
-        self.loss.eval_batch(token_logits, target.view(-1))
+        self.loss.eval_batch(outputs.view(-1, outputs.size(-1)), target.view(-1))
         self.loss.backward()
         return self.loss.get_loss()
 
@@ -177,7 +178,14 @@ class RNNVAE(nn.Module):
         targets = self.convert_idx2symbol(target, num_list)
         return all_outputs, targets
 
-    def predict(self,batch_data,output_all_layers=False):
+    def predict(self,batch_data:dict,output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         seq = torch.tensor(batch_data['question']).to(self.device)
         seq_length = torch.tensor(batch_data['ques len']).long()
         token_logits, symbol_outputs, model_all_outputs = self.forward(seq,seq_length,output_all_layers=output_all_layers)
@@ -226,7 +234,7 @@ class RNNVAE(nn.Module):
 
     def decoder_forward(self, encoder_outputs, encoder_hidden, decoder_inputs, z, target=None, output_all_layers=False):
         decoder_hidden = encoder_hidden
-        if target and random.random() < self.teacher_force_ratio:
+        if target is not None and random.random() < self.teacher_force_ratio:
             decoder_inputs = torch.cat((decoder_inputs, z.unsqueeze(1).repeat(1, decoder_inputs.size(1), 1)), dim=2)
             decoder_outputs, decoder_hidden = self.decoder(input_embeddings=decoder_inputs,
                                                            hidden_states=decoder_hidden,
@@ -234,7 +242,7 @@ class RNNVAE(nn.Module):
             token_logits = self.out(decoder_outputs)
             outputs = token_logits.topk(1, dim=-1)[1]
         else:
-            seq_len = decoder_inputs.size(1) if target else self.max_gen_len
+            seq_len = decoder_inputs.size(1) if target is not None else self.max_gen_len
             decoder_input = decoder_inputs[:, 0, :].unsqueeze(1)
             decoder_input = torch.cat((decoder_input, z.unsqueeze(1).repeat(1, decoder_input.size(1), 1)), dim=2)
             decoder_outputs = []

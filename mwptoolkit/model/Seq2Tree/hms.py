@@ -196,6 +196,13 @@ class HMS(nn.Module):
         return outputs, targets
 
     def predict(self, batch_data:dict, output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         input_variable = [torch.tensor(span_i_batch).to(self.device) for span_i_batch in batch_data["spans"]]
         input_lengths = torch.tensor(batch_data["spans len"]).long()
         span_num_pos = torch.LongTensor(batch_data["span num pos"]).to(self.device)

@@ -112,7 +112,23 @@ class MultiEncDec(nn.Module):
 
         self.loss = MaskedCrossEntropyLoss()
 
-    def forward(self,input1,input2,input_length,num_size,num_pos,num_order,parse_graph,num_stack,target1=None,target2=None,output_all_layers=False):
+    def forward(self, input1, input2, input_length, num_size, num_pos, num_order, parse_graph, num_stack, target1=None,
+                target2=None, output_all_layers=False):
+        """
+
+        :param torch.Tensor input1:
+        :param torch.Tensor input2:
+        :param torch.Tensor input_length:
+        :param list num_size:
+        :param list num_pos:
+        :param list num_order:
+        :param torch.Tensor parse_graph:
+        :param list num_stack:
+        :param torch.Tensor | None target1:
+        :param torch.Tensor | None target2:
+        :param bool output_all_layers:
+        :return:
+        """
         seq_mask = []
         max_len = max(input_length)
         for i in input_length:
@@ -145,13 +161,16 @@ class MultiEncDec(nn.Module):
 
         attn_decoder_hidden = encoder_hidden[:self.n_layers]  # Use last (forward) hidden state from encoder
 
-        token_logits,symbol_outputs,decoder_layer_outputs = self.decoder_forward(encoder_outputs,problem_output,attn_decoder_hidden,num_outputs,seq_mask,num_mask,num_stack,target1,target2,output_all_layers)
+        token_logits, symbol_outputs, decoder_layer_outputs = self.decoder_forward(encoder_outputs, problem_output,
+                                                                                   attn_decoder_hidden, num_outputs,
+                                                                                   seq_mask, num_mask, num_stack,
+                                                                                   target1, target2, output_all_layers)
 
         model_layer_outputs = {}
         if output_all_layers:
             model_layer_outputs.update(encoder_layer_outputs)
             model_layer_outputs.update(decoder_layer_outputs)
-        return token_logits,symbol_outputs,model_layer_outputs
+        return token_logits, symbol_outputs, model_layer_outputs
 
     def calculate_loss(self, batch_data: dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
@@ -174,15 +193,10 @@ class MultiEncDec(nn.Module):
         target1_length = torch.LongTensor(batch_data['output1 len']).to(self.device)
         target2_length = torch.LongTensor(batch_data['output2 len']).to(self.device)
         num_size_batch = batch_data['num size']
-        generate_list = self.generate_list
+
         num_pos_batch = batch_data['num pos']
         num_order_batch = batch_data['num order']
 
-        unk1 = self.unk1
-        unk2 = self.unk2
-        num_start1 = self.num_start1
-        num_start2 = self.num_start2
-        sos2 = self.sos2
         token_logits, _, all_layer_outputs = self.forward(input1_var, input2_var, input_length, num_size_batch,
                                                           num_pos_batch, num_order_batch, parse_graph, num_stack_batch,
                                                           target1, target2, output_all_layers=True)
@@ -217,18 +231,10 @@ class MultiEncDec(nn.Module):
 
         num_stack_batch = copy.deepcopy(batch_data['num stack'])
 
-        generate_list = self.generate_list
         num_size_batch = batch_data['num size']
         num_pos_batch = batch_data['num pos']
         num_order_batch = batch_data['num order']
         num_list = batch_data['num list']
-
-        unk1 = self.unk1
-        unk2 = self.unk2
-        num_start1 = self.num_start1
-        num_start2 = self.num_start2
-        sos2 = self.sos2
-        eos2 = self.eos2
 
         _, outputs, all_layer_outputs = self.forward(input1_var, input2_var, input_length, num_size_batch,
                                                      num_pos_batch, num_order_batch, parse_graph, num_stack_batch,

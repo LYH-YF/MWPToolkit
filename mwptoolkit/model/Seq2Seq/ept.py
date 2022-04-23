@@ -69,8 +69,9 @@ class EPT(nn.Module):
                 self.decoder = ExpressionPointerTransformer(config, self.out_opsym2idx, self.out_idx2opsym, self.out_consym2idx, self.out_idx2consym)
             #self.out_pad_idx = self.in_pad_idx
             #self.out_sos_idx = config["in_word2idx"]["<SOS>"]
-
-        self.encoder = AutoModel.from_pretrained(config['pretrained_model_path'])
+        pretrained_model_path = config['pretrained_model'] if config['pretrained_model'] else config[
+            'transformers_pretrained_model']
+        self.encoder = AutoModel.from_pretrained(pretrained_model_path)
         #self.encoder = TransformerEncoder(config["embedding_size"], config["ffn_size"], config["num_encoder_layers"], \
         #                                  config["num_heads"], config["attn_dropout_ratio"], \
         #                                  config["attn_weight_dropout_ratio"], config["ffn_dropout_ratio"])
@@ -157,6 +158,16 @@ class EPT(nn.Module):
         all_outputs = self.convert_idx2symbol(symbol_outputs, batch_data["num list"])
         targets = self.convert_idx2symbol(batch_data["equation"], batch_data["num list"])
         return all_outputs, targets
+
+    def predict(self,batch_data:dict,output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
+        raise NotImplementedError
 
     def encoder_forward(self, src, src_mask, output_all_layers=False):
         encoder_outputs = self.encoder(input_ids=src, attention_mask=(~src_mask).float())

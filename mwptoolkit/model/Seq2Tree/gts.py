@@ -182,7 +182,14 @@ class GTS(nn.Module):
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         return all_output, targets
 
-    def predict(self,batch_data,output_all_layers=False):
+    def predict(self,batch_data:dict,output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         seq = torch.tensor(batch_data["question"]).to(self.device)
         seq_length = torch.tensor(batch_data["ques len"]).long()
         nums_stack = copy.deepcopy(batch_data["num stack"])

@@ -5,8 +5,9 @@
 
 import copy
 import itertools
+from typing import Tuple, Dict, Any
+
 import torch
-import stanza
 from torch import nn
 from torch.nn import functional
 
@@ -86,7 +87,21 @@ class Graph2Tree(nn.Module):
         self.loss = MaskedCrossEntropyLoss()
 
     def forward(self, seq, seq_length, nums_stack, num_size, num_pos, num_list, group_nums, target=None,
-                output_all_layers=False):
+                output_all_layers=False) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
+        """
+        :param torch.Tensor seq: input sequence, shape: [batch_size, seq_length].
+        :param torch.Tensor seq_length: the length of sequence, shape: [batch_size].
+        :param list nums_stack: different positions of the same number, length:[batch_size]
+        :param list num_size: number of numbers of input sequence, length:[batch_size].
+        :param list num_pos: number positions of input sequence, length:[batch_size].
+        :param list num_list: numbers of input sequence, length:[batch_size].
+        :param list group_nums: group numbers of input sequence, length:[batch_size].
+        :param torch.Tensor | None target: target, shape: [batch_size, target_length], default None.
+        :param bool output_all_layers: return output of all layers if output_all_layers is True, default False.
+        :return : token_logits:[batch_size, output_length, output_size], symbol_outputs:[batch_size,output_length], model_all_outputs.
+        :rtype: tuple(torch.Tensor, torch.Tensor, dict)
+
+        """
         seq_mask = torch.eq(seq, self.in_pad_token).to(self.device)
 
         num_mask = []
@@ -171,6 +186,26 @@ class Graph2Tree(nn.Module):
         all_output = self.convert_idx2symbol(symbol_outputs, num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         return all_output, targets
+
+    def predict(self,batch_data:dict,output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        nums_stack = copy.deepcopy(batch_data["num stack"])
+        num_pos = batch_data["num pos"]
+        num_list = batch_data['num list']
+        num_size = batch_data['num_size']
+        group_nums = batch_data['group nums']
+        token_logits, symbol_outputs, model_all_outputs = self.forward(seq, seq_length, nums_stack, num_size, num_pos,
+                                                                       num_list, group_nums,
+                                                                       output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_outputs
 
     def encoder_forward(self, seq_emb, input_length, graph, output_all_layers=False):
         encoder_inputs = seq_emb.transpose(0, 1)

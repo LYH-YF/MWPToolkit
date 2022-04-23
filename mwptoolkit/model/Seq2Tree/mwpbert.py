@@ -19,7 +19,7 @@ from mwptoolkit.utils.enum_type import NumMask, SpecialTokens
 
 
 class MWPBert(nn.Module):
-    def __init__(self,config,dataset):
+    def __init__(self, config, dataset):
         super(MWPBert, self).__init__()
         self.hidden_size = config["hidden_size"]
         self.device = config["device"]
@@ -31,7 +31,8 @@ class MWPBert(nn.Module):
         self.num_layers = config["num_layers"]
         self.rnn_cell_type = config["rnn_cell_type"]
         self.embedding = config['embedding']
-        self.pretrained_model_path = config['pretrained_model_path']
+        self.pretrained_model_path = config['pretrained_model'] if config['pretrained_model'] else config[
+            'transformers_pretrained_model']
 
         self.vocab_size = len(dataset.in_idx2word)
         self.out_symbol2idx = dataset.out_symbol2idx
@@ -60,7 +61,7 @@ class MWPBert(nn.Module):
             self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.in_pad_token = None
-        
+
         self.encoder = BertModel.from_pretrained(self.pretrained_model_path)
         self.encoder.resize_token_embeddings(self.vocab_size)
         self.decoder = Prediction(self.hidden_size, self.operator_nums, self.generate_size, self.dropout_ratio)
@@ -71,7 +72,7 @@ class MWPBert(nn.Module):
         self.loss = MaskedCrossEntropyLoss()
 
     def forward(self, seq, seq_length, nums_stack, num_size, num_pos, target=None, output_all_layers=False) -> Tuple[
-            torch.Tensor, torch.Tensor, Dict[str, Any]]:
+        torch.Tensor, torch.Tensor, Dict[str, Any]]:
         """
 
         :param torch.Tensor seq: input sequence, shape: [batch_size, seq_length].
@@ -121,7 +122,7 @@ class MWPBert(nn.Module):
 
         return token_logits, symbol_outputs, model_all_outputs
 
-    def calculate_loss(self,batch_data):
+    def calculate_loss(self, batch_data: dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
 
         :param batch_data: one batch data.
@@ -144,9 +145,9 @@ class MWPBert(nn.Module):
 
         loss = masked_cross_entropy(token_logits, target, target_length)
         loss.backward()
-        return loss
+        return loss.item()
 
-    def model_test(self,batch_data):
+    def model_test(self, batch_data: dict) -> tuple:
         """Model test.
 
         :param batch_data: one batch data.
@@ -168,7 +169,14 @@ class MWPBert(nn.Module):
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         return all_output, targets
 
-    def predict(self,batch_data,output_all_layers=False):
+    def predict(self, batch_data: dict, output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         seq = torch.tensor(batch_data["question"]).to(self.device)
         seq_length = torch.tensor(batch_data["ques len"]).long()
         nums_stack = copy.deepcopy(batch_data["num stack"])
@@ -180,7 +188,7 @@ class MWPBert(nn.Module):
 
     def encoder_forward(self, seq, seq_mask, seq_length, output_all_layers=False):
         encoder_outputs = self.encoder(seq, seq_mask)[0]
-        encoder_outputs = encoder_outputs.transpose(0,1)  # S, B, H
+        encoder_outputs = encoder_outputs.transpose(0, 1)  # S, B, H
         problem_output = []
         batch_size = seq.size(0)
         for b_i in range(batch_size):
@@ -188,17 +196,18 @@ class MWPBert(nn.Module):
         problem_output = torch.stack(problem_output, dim=0)
         all_layer_outputs = {}
         if output_all_layers:
-            all_layer_outputs['encoder_outputs']=encoder_outputs
+            all_layer_outputs['encoder_outputs'] = encoder_outputs
             all_layer_outputs['inputs_representation'] = problem_output
-        return problem_output,encoder_outputs,all_layer_outputs
+        return problem_output, encoder_outputs, all_layer_outputs
 
-    def decoder_forward(self,encoder_outputs,problem_output,all_nums_encoder_outputs,nums_stack,seq_mask,num_mask,target=None,output_all_layers=False):
+    def decoder_forward(self, encoder_outputs, problem_output, all_nums_encoder_outputs, nums_stack, seq_mask, num_mask,
+                        target=None, output_all_layers=False):
         batch_size = problem_output.size(0)
         node_stacks = [[TreeNode(_)] for _ in problem_output.split(1, dim=0)]
         padding_hidden = torch.FloatTensor([0.0 for _ in range(self.hidden_size)]).unsqueeze(0).to(self.device)
         embeddings_stacks = [[] for _ in range(batch_size)]
         left_childs = [None for _ in range(batch_size)]
-        token_logits=[]
+        token_logits = []
         outputs = []
         if target is not None:
             target = target.transpose(0, 1)
@@ -215,7 +224,7 @@ class MWPBert(nn.Module):
 
                 # all_leafs.append(p_leaf)
                 token_logit = torch.cat((op_score, num_score), 1)
-                output = torch.topk(token_logit,1,dim=-1)[1]
+                output = torch.topk(token_logit, 1, dim=-1)[1]
                 token_logits.append(token_logit)
                 outputs.append(output)
 
@@ -288,9 +297,8 @@ class MWPBert(nn.Module):
 
                         current_token_logit.append(token_logit)
 
-
                         out_token = int(ti)
-                        current_out.append(torch.squeeze(ti,dim=1))
+                        current_out.append(torch.squeeze(ti, dim=1))
 
                         node = current_node_stack[0].pop()
 
@@ -320,7 +328,7 @@ class MWPBert(nn.Module):
                             current_left_childs.append(None)
                         current_beams.append(
                             TreeBeam(b.score + float(tv), current_node_stack, current_embeddings_stacks,
-                                     current_left_childs, current_out,current_token_logit))
+                                     current_left_childs, current_out, current_token_logit))
                 beams = sorted(current_beams, key=lambda x: x.score, reverse=True)
                 beams = beams[:self.beam_size]
                 flag = True
@@ -338,7 +346,7 @@ class MWPBert(nn.Module):
             all_layer_outputs['token_logits'] = token_logits
             all_layer_outputs['outputs'] = outputs
             all_layer_outputs['target'] = target
-        return token_logits,outputs,all_layer_outputs
+        return token_logits, outputs, all_layer_outputs
 
     def get_all_number_encoder_outputs(self, encoder_outputs, num_pos, batch_size, num_size, hidden_size):
         indices = list()
@@ -380,7 +388,7 @@ class MWPBert(nn.Module):
         return torch.LongTensor(target), torch.LongTensor(target_input)
 
     def convert_idx2symbol(self, output, num_list, num_stack):
-        #batch_size=output.size(0)
+        # batch_size=output.size(0)
         '''batch_size=1'''
         seq_len = len(output)
         num_len = len(num_list)

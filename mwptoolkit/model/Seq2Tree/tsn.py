@@ -334,6 +334,16 @@ class TSN(nn.Module):
     def model_test(self, batch_data):
         return
 
+    def predict(self, batch_data:dict, output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
+        raise NotImplementedError
+
     def teacher_net_encoder_forward(self, seq_emb, seq_length, output_all_layers=False):
         encoder_inputs = seq_emb.transpose(0, 1)
         pade_outputs, hidden_states = self.t_encoder(encoder_inputs, seq_length)

@@ -29,7 +29,8 @@ class RobertaGen(nn.Module):
     def __init__(self, config, dataset):
         super(RobertaGen, self).__init__()
         self.device = config["device"]
-        self.pretrained_model_path = config['pretrained_model_path']
+        self.pretrained_model_path = config['pretrained_model'] if config['pretrained_model'] else config[
+            'transformers_pretrained_model']
         self.max_input_len = config['max_len']
         self.max_output_len = config['max_output_len']
 
@@ -79,7 +80,7 @@ class RobertaGen(nn.Module):
     def _pretrained_model_resize(self):
         self.encoder.resize_token_embeddings(len(self.tokenizer))
 
-    def forward(self, seq, target=None,output_all_layers=False) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
+    def forward(self, seq, target=None, output_all_layers=False) -> Tuple[torch.Tensor, torch.Tensor, Dict[str, Any]]:
         """
 
         :param torch.Tensor seq: input sequence, shape: [batch_size, seq_length].
@@ -88,11 +89,12 @@ class RobertaGen(nn.Module):
         :return: token_logits: [batch_size, output_length, output_size], symbol_outputs: [batch_size,output_length], model_all_outputs.
         :rtype: tuple(torch.Tensor, torch.Tensor, dict)
         """
-        seq_feat,encoder_layer_outputs = self.encoder_forward(seq,output_all_layers)
+        seq_feat, encoder_layer_outputs = self.encoder_forward(seq, output_all_layers)
 
         source_padding_mask = torch.eq(seq, self.tokenizer.pad_token_id)
 
-        token_logits,symbol_outputs,decoder_layer_outputs = self.decoder_forward(seq_feat, source_padding_mask,target,output_all_layers)
+        token_logits, symbol_outputs, decoder_layer_outputs = self.decoder_forward(seq_feat, source_padding_mask,
+                                                                                   target, output_all_layers)
 
         model_all_outputs = {}
         if output_all_layers:
@@ -100,7 +102,7 @@ class RobertaGen(nn.Module):
             model_all_outputs.update(decoder_layer_outputs)
         return token_logits, symbol_outputs, model_all_outputs
 
-    def calculate_loss(self, batch_data):
+    def calculate_loss(self, batch_data: dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation.
 
         Args:
@@ -114,7 +116,7 @@ class RobertaGen(nn.Module):
         target = torch.LongTensor(target).to(self.device)
 
         token_logits, _, _ = self.forward(seq, target)
-        token_logits = token_logits.view(-1,token_logits.size(-1))
+        token_logits = token_logits.view(-1, token_logits.size(-1))
         outputs = torch.nn.functional.log_softmax(token_logits, dim=1)
 
         self.loss.reset()
@@ -123,7 +125,7 @@ class RobertaGen(nn.Module):
 
         return self.loss.get_loss()
 
-    def model_test(self, batch_data):
+    def model_test(self, batch_data: dict) -> tuple:
         """Model test.
 
         Args:
@@ -147,20 +149,27 @@ class RobertaGen(nn.Module):
         target = self.convert_idx2symbol(target, num_list)
         return outputs, target
 
-    def predict(self,batch_data,output_all_layers=False):
+    def predict(self, batch_data: dict, output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         seq = torch.tensor(batch_data['question']).to(self.device)
-        token_logits, symbol_outputs, model_all_outputs = self.forward(seq,output_all_layers=output_all_layers)
+        token_logits, symbol_outputs, model_all_outputs = self.forward(seq, output_all_layers=output_all_layers)
         return token_logits, symbol_outputs, model_all_outputs
 
-    def encoder_forward(self, seq,output_all_layers=False):
-        encoder_outputs = self.encoder(seq,return_dict=True)
+    def encoder_forward(self, seq, output_all_layers=False):
+        encoder_outputs = self.encoder(seq, return_dict=True)
         src_feat = encoder_outputs[0]
         all_layer_outputs = {}
         if output_all_layers:
             all_layer_outputs['encoder_outputs'] = encoder_outputs
-        return src_feat,all_layer_outputs
+        return src_feat, all_layer_outputs
 
-    def decoder_forward(self, encoder_outputs, source_padding_mask,target=None,output_all_layers=None):
+    def decoder_forward(self, encoder_outputs, source_padding_mask, target=None, output_all_layers=None):
         with_t = random.random()
         batch_size = encoder_outputs.size(0)
         device = encoder_outputs.device
@@ -177,7 +186,7 @@ class RobertaGen(nn.Module):
                                            external_states=encoder_outputs,
                                            external_padding_mask=source_padding_mask)
             token_logits = self.out(decoder_outputs)
-            outputs = torch.topk(token_logits,1,dim=-1)[1].squeeze(-1)
+            outputs = torch.topk(token_logits, 1, dim=-1)[1].squeeze(-1)
             # token_logits = token_logits.view(-1, token_logits.size(-1))
         else:
             token_logits = []
@@ -207,15 +216,15 @@ class RobertaGen(nn.Module):
                     pre_tokens.append(output)
                 input_seq = torch.cat(pre_tokens, dim=1)
             token_logits = torch.cat(token_logits, dim=1)
-            #token_logits = token_logits.view(-1, token_logits.size(-1))
-            outputs = torch.cat(outputs,dim=1)
+            # token_logits = token_logits.view(-1, token_logits.size(-1))
+            outputs = torch.cat(outputs, dim=1)
 
         all_layer_outputs = {}
         if output_all_layers:
             all_layer_outputs['decoder_outputs'] = decoder_outputs
             all_layer_outputs['token_logits'] = token_logits
             all_layer_outputs['outputs'] = outputs
-        return token_logits,outputs,all_layer_outputs
+        return token_logits, outputs, all_layer_outputs
 
     def decode_(self, outputs):
         batch_size = outputs.size(0)
@@ -277,5 +286,3 @@ class RobertaGen(nn.Module):
         trainable = sum(p.numel() for p in self.parameters() if p.requires_grad)
         parameters = "\ntotal parameters : {} \ntrainable parameters : {}".format(total, trainable)
         return info + parameters
-
-

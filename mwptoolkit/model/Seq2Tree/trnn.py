@@ -11,7 +11,7 @@ from typing import Tuple
 
 from mwptoolkit.module.Decoder.rnn_decoder import AttentionalRNNDecoder
 from mwptoolkit.loss.nll_loss import NLLLoss
-#from mwptoolkit.loss.cross_entropy_loss import CrossEntropyLoss
+# from mwptoolkit.loss.cross_entropy_loss import CrossEntropyLoss
 import torch
 from torch import nn
 
@@ -31,6 +31,7 @@ class TRNN(nn.Module):
     Reference:
         Wang et al. "Template-Based Math Word Problem Solvers with Recursive Neural Networks" in AAAI 2019.
     """
+
     def __init__(self, config, dataset):
         super(TRNN, self).__init__()
         self.device = config['device']
@@ -103,17 +104,23 @@ class TRNN(nn.Module):
             self.seq2seq_in_embedder = BertEmbedder(self.vocab_size, config['pretrained_model_path'])
             self.seq2seq_in_embedder.token_resize(self.vocab_size)
         else:
-            self.seq2seq_in_embedder = BasicEmbedder(self.vocab_size, self.seq2seq_embedding_size, self.seq2seq_dropout_ratio)
+            self.seq2seq_in_embedder = BasicEmbedder(self.vocab_size, self.seq2seq_embedding_size,
+                                                     self.seq2seq_dropout_ratio)
         if self.share_vocab:
             self.seq2seq_out_embedder = self.seq2seq_in_embedder
         else:
-            self.seq2seq_out_embedder = BasicEmbedder(self.temp_symbol_size, self.seq2seq_embedding_size, self.seq2seq_dropout_ratio)
-        self.seq2seq_encoder=BasicRNNEncoder(self.seq2seq_embedding_size,self.seq2seq_encode_hidden_size,self.num_layers,\
-                                                self.encoder_rnn_cell_type,self.seq2seq_dropout_ratio,self.bidirectional)
-        self.seq2seq_decoder=AttentionalRNNDecoder(self.seq2seq_embedding_size,self.seq2seq_decode_hidden_size,self.seq2seq_encode_hidden_size,\
-                                                    self.num_layers,self.decoder_rnn_cell_type,self.seq2seq_dropout_ratio)
+            self.seq2seq_out_embedder = BasicEmbedder(self.temp_symbol_size, self.seq2seq_embedding_size,
+                                                      self.seq2seq_dropout_ratio)
+        self.seq2seq_encoder = BasicRNNEncoder(self.seq2seq_embedding_size, self.seq2seq_encode_hidden_size,
+                                               self.num_layers, \
+                                               self.encoder_rnn_cell_type, self.seq2seq_dropout_ratio,
+                                               self.bidirectional)
+        self.seq2seq_decoder = AttentionalRNNDecoder(self.seq2seq_embedding_size, self.seq2seq_decode_hidden_size,
+                                                     self.seq2seq_encode_hidden_size, \
+                                                     self.num_layers, self.decoder_rnn_cell_type,
+                                                     self.seq2seq_dropout_ratio)
         self.seq2seq_gen_linear = nn.Linear(self.seq2seq_encode_hidden_size, self.temp_symbol_size)
-        #answer module
+        # answer module
         if config['embedding'] == 'roberta':
             self.answer_in_embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
             self.answer_in_embedder.token_resize(self.vocab_size)
@@ -122,8 +129,10 @@ class TRNN(nn.Module):
             self.answer_in_embedder.token_resize(self.vocab_size)
         else:
             self.answer_in_embedder = BasicEmbedder(self.vocab_size, self.ans_embedding_size, self.ans_dropout_ratio)
-        self.answer_encoder=SelfAttentionRNNEncoder(self.ans_embedding_size,self.ans_hidden_size,self.ans_embedding_size,self.num_layers,\
-                                                    self.encoder_rnn_cell_type,self.ans_dropout_ratio,self.bidirectional)
+        self.answer_encoder = SelfAttentionRNNEncoder(self.ans_embedding_size, self.ans_hidden_size,
+                                                      self.ans_embedding_size, self.num_layers, \
+                                                      self.encoder_rnn_cell_type, self.ans_dropout_ratio,
+                                                      self.bidirectional)
         self.answer_rnn = RecursiveNN(self.ans_embedding_size, self.operator_nums, self.operator_list)
 
         weight = torch.ones(self.temp_symbol_size).to(config["device"])
@@ -131,12 +140,15 @@ class TRNN(nn.Module):
         self.seq2seq_loss = NLLLoss(weight, pad)
         weight2 = torch.ones(self.operator_nums).to(config["device"])
         self.ans_module_loss = NLLLoss(weight2, size_average=True)
-        #self.ans_module_loss=CrossEntropyLoss(weight2,size_average=True)
+        # self.ans_module_loss=CrossEntropyLoss(weight2,size_average=True)
 
         self.wrong = 0
 
-    def forward(self,seq,seq_length,seq_mask,num_pos,template_target=None,equation_target=None,output_all_layers=False):
-        seq2seq_token_logits,seq2seq_outputs,seq2seq_layer_outputs = self.seq2seq_forward(seq,seq_length,template_target,output_all_layers)
+    def forward(self, seq, seq_length, seq_mask, num_pos, template_target=None, equation_target=None,
+                output_all_layers=False):
+        seq2seq_token_logits, seq2seq_outputs, seq2seq_layer_outputs = self.seq2seq_forward(seq, seq_length,
+                                                                                            template_target,
+                                                                                            output_all_layers)
         if equation_target:
             template = None
         else:
@@ -152,7 +164,7 @@ class TRNN(nn.Module):
 
         return (seq2seq_token_logits, ans_token_logits), (seq2seq_outputs, ans_outputs), model_all_outputs
 
-    def calculate_loss(self, batch_data:dict) -> Tuple[float, float]:
+    def calculate_loss(self, batch_data: dict) -> Tuple[float, float]:
         """Finish forward-propagating, calculating loss and back-propagation.
 
         :param batch_data: one batch data.
@@ -167,7 +179,7 @@ class TRNN(nn.Module):
 
         return seq2seq_loss, answer_loss
 
-    def model_test(self, batch_data:dict) -> tuple:
+    def model_test(self, batch_data: dict) -> tuple:
         """Model test.
 
         :param batch_data: one batch data.
@@ -200,7 +212,14 @@ class TRNN(nn.Module):
         temp_t = template_target
         return equations, targets, template, temp_t, ans_module_test, targets
 
-    def predict(self,batch_data,output_all_layers=False):
+    def predict(self, batch_data: dict, output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         seq = torch.tensor(batch_data["question"]).to(self.device)
         seq_length = torch.tensor(batch_data["ques len"]).long()
         ques_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
@@ -209,7 +228,7 @@ class TRNN(nn.Module):
                                                                        output_all_layers=output_all_layers)
         return token_logits, symbol_outputs, model_all_outputs
 
-    def seq2seq_calculate_loss(self, batch_data:dict) -> float:
+    def seq2seq_calculate_loss(self, batch_data: dict) -> float:
         """Finish forward-propagating, calculating loss and back-propagation of seq2seq module.
 
         :param batch_data: one batch data.
@@ -218,40 +237,15 @@ class TRNN(nn.Module):
         seq = torch.tensor(batch_data["question"]).to(self.device)
         seq_length = torch.tensor(batch_data["ques len"]).long()
         target = torch.tensor(batch_data["template"]).to(self.device)
-        ques_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
+        # ques_mask = torch.BoolTensor(batch_data["ques mask"]).to(self.device)
 
-        batch_size = seq.size(0)
-        device = seq.device
+        token_logits, _, _ = self.seq2seq_forward(seq, seq_length, target)
 
-        if self.embedding == 'roberta':
-            seq_emb = self.seq2seq_in_embedder(seq, ques_mask)
-        else:
-            seq_emb = self.seq2seq_in_embedder(seq)
-        encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
-
-        if self.bidirectional:
-            encoder_outputs = encoder_outputs[:, :, self.seq2seq_encode_hidden_size:] + encoder_outputs[:, :, :self.seq2seq_encode_hidden_size]
-            if (self.encoder_rnn_cell_type == 'lstm'):
-                encoder_hidden = (encoder_hidden[0][::2].contiguous(), encoder_hidden[1][::2].contiguous())
-            else:
-                encoder_hidden = encoder_hidden[::2].contiguous()
-        if self.encoder_rnn_cell_type == self.decoder_rnn_cell_type:
-            pass
-        elif (self.encoder_rnn_cell_type == 'gru') and (self.decoder_rnn_cell_type == 'lstm'):
-            encoder_hidden = (encoder_hidden, encoder_hidden)
-        elif (self.encoder_rnn_cell_type == 'rnn') and (self.decoder_rnn_cell_type == 'lstm'):
-            encoder_hidden = (encoder_hidden, encoder_hidden)
-        elif (self.encoder_rnn_cell_type == 'lstm') and (self.decoder_rnn_cell_type == 'gru' or self.decoder_rnn_cell_type == 'rnn'):
-            encoder_hidden = encoder_hidden[0]
-        else:
-            pass
-
-        decoder_inputs = self.init_seq2seq_decoder_inputs(target, device, batch_size)
-        token_logits = self.seq2seq_generate_t(encoder_outputs, encoder_hidden, decoder_inputs)
         if self.share_vocab:
             target = self.convert_in_idx_2_temp_idx(target)
+        outputs = torch.nn.functional.log_softmax(token_logits, dim=-1)
         self.seq2seq_loss.reset()
-        self.seq2seq_loss.eval_batch(token_logits, target.view(-1))
+        self.seq2seq_loss.eval_batch(outputs.view(-1, outputs.size(-1)), target.view(-1))
         self.seq2seq_loss.backward()
         return self.seq2seq_loss.get_loss()
 
@@ -300,14 +294,15 @@ class TRNN(nn.Module):
             token_logits = []
             for idx in range(seq_len):
                 if self.attention:
-                    decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden, encoder_outputs)
+                    decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden,
+                                                                          encoder_outputs)
                 else:
                     decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden)
-                #attn_list.append(attn)
+                # attn_list.append(attn)
                 step_output = decoder_output.squeeze(1)
                 token_logit = self.seq2seq_gen_linear(step_output)
                 predict = torch.nn.functional.log_softmax(token_logit, dim=1)
-                #predict=torch.log_softmax(token_logit,dim=1)
+                # predict=torch.log_softmax(token_logit,dim=1)
                 output = predict.topk(1, dim=1)[1]
                 token_logits.append(predict)
 
@@ -346,16 +341,17 @@ class TRNN(nn.Module):
         batch_size = seq.size(0)
         device = seq.device
 
-        seq_emb = self.in_embedder(seq)
+        seq_emb = self.seq2seq_in_embedder(seq)
 
         encoder_outputs, encoder_hidden, encoder_layer_outputs = self.seq2seq_encoder_forward(seq_emb, seq_length,
-                                                                                      output_all_layers)
+                                                                                              output_all_layers)
 
         decoder_inputs = self.init_seq2seq_decoder_inputs(target, device, batch_size)
 
-        token_logits, symbol_outputs, decoder_layer_outputs = self.seq2seq_decoder_forward(encoder_outputs, encoder_hidden,
-                                                                                   decoder_inputs, target,
-                                                                                   output_all_layers)
+        token_logits, symbol_outputs, decoder_layer_outputs = self.seq2seq_decoder_forward(encoder_outputs,
+                                                                                           encoder_hidden,
+                                                                                           decoder_inputs, target,
+                                                                                           output_all_layers)
 
         seq2seq_all_outputs = {}
         if output_all_layers:
@@ -365,7 +361,8 @@ class TRNN(nn.Module):
 
         return token_logits, symbol_outputs, seq2seq_all_outputs
 
-    def ans_module_forward(self,seq,seq_length,seq_mask,template,num_pos,equation_target=None,output_all_layers=False):
+    def ans_module_forward(self, seq, seq_length, seq_mask, template, num_pos, equation_target=None,
+                           output_all_layers=False):
         if self.embedding == 'roberta':
             seq_emb = self.answer_in_embedder(seq, seq_mask)
         else:
@@ -397,7 +394,7 @@ class TRNN(nn.Module):
                 prob, target = self.answer_rnn(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
                 batch_prob.append(prob)
                 batch_target.append(target)
-                if prob:
+                if prob is not []:
                     output = torch.topk(prob, 1)[1]
                     outputs.append(output)
                 else:
@@ -413,7 +410,7 @@ class TRNN(nn.Module):
                 num_encoding = seq_emb[b_i, num_pos[b_i]] + encoder_output[b_i, num_pos[b_i]]
                 num_embedding = torch.cat([generate_emb, num_encoding], dim=0)
                 assert len(look_up) == len(num_embedding)
-                prob, output,node_pred = self.answer_rnn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
+                prob, output, node_pred = self.answer_rnn.test(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
                 batch_prob.append(prob)
                 tree_i.root = node_pred
                 outputs.append(output)
@@ -427,7 +424,7 @@ class TRNN(nn.Module):
             all_layer_outputs['ans_model_equation_outputs'] = equations
         return batch_prob, outputs, all_layer_outputs
 
-    def seq2seq_encoder_forward(self,seq_emb, seq_length,output_all_layers=False):
+    def seq2seq_encoder_forward(self, seq_emb, seq_length, output_all_layers=False):
         encoder_outputs, encoder_hidden = self.seq2seq_encoder(seq_emb, seq_length)
 
         if self.bidirectional:
@@ -455,8 +452,9 @@ class TRNN(nn.Module):
             all_layer_outputs['seq2seq_encoder_hidden'] = encoder_hidden
         return encoder_outputs, encoder_hidden, all_layer_outputs
 
-    def seq2seq_decoder_forward(self,encoder_outputs, encoder_hidden, decoder_inputs, target=None,output_all_layers=False):
-        if target and random.random() < self.teacher_force_ratio:
+    def seq2seq_decoder_forward(self, encoder_outputs, encoder_hidden, decoder_inputs, target=None,
+                                output_all_layers=False):
+        if target is not None and random.random() < self.teacher_force_ratio:
             if self.attention:
                 decoder_outputs, decoder_states = self.seq2seq_decoder(decoder_inputs, encoder_hidden, encoder_outputs)
             else:
@@ -464,7 +462,7 @@ class TRNN(nn.Module):
             token_logits = self.seq2seq_gen_linear(decoder_outputs)
             outputs = token_logits.topk(1, dim=-1)[1]
         else:
-            seq_len = decoder_inputs.size(1) if target else self.max_gen_len
+            seq_len = decoder_inputs.size(1) if target is not None else self.max_gen_len
             decoder_hidden = encoder_hidden
             decoder_input = decoder_inputs[:, 0, :].unsqueeze(1)
             decoder_outputs = []
@@ -472,11 +470,12 @@ class TRNN(nn.Module):
             outputs = []
             for idx in range(seq_len):
                 if self.attention:
-                    decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden, encoder_outputs)
+                    decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden,
+                                                                          encoder_outputs)
                 else:
                     decoder_output, decoder_hidden = self.seq2seq_decoder(decoder_input, decoder_hidden)
                 step_output = decoder_output.squeeze(1)
-                token_logit = self.generate_linear(step_output)
+                token_logit = self.seq2seq_gen_linear(step_output)
                 output = token_logit.topk(1, dim=-1)[1]
                 decoder_outputs.append(step_output)
                 token_logits.append(token_logit)
@@ -508,7 +507,7 @@ class TRNN(nn.Module):
 
     def init_seq2seq_decoder_inputs(self, target, device, batch_size):
         pad_var = torch.LongTensor([self.sos_token_idx] * batch_size).to(device).view(batch_size, 1)
-        if target != None:
+        if target is not None:
             decoder_inputs = torch.cat((pad_var, target), dim=1)[:, :-1]
         else:
             decoder_inputs = pad_var
@@ -615,4 +614,3 @@ class TRNN(nn.Module):
                     res.append(symbol)
             output_list.append(res)
         return output_list
-

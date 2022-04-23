@@ -180,6 +180,22 @@ class SAUSolver(nn.Module):
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         return all_output, targets
 
+    def predict(self,batch_data:dict,output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
+        seq = torch.tensor(batch_data["question"]).to(self.device)
+        seq_length = torch.tensor(batch_data["ques len"]).long()
+        nums_stack = copy.deepcopy(batch_data["num stack"])
+        num_size = batch_data["num size"]
+        num_pos = batch_data["num pos"]
+        token_logits, symbol_outputs, model_all_outputs = self.forward(seq,seq_length,nums_stack,num_size,num_pos,output_all_layers=output_all_layers)
+        return token_logits, symbol_outputs, model_all_outputs
+
     def train_tree(self,input_batch, input_length, target_batch, target_length, nums_stack_batch, num_size_batch, generate_nums, num_pos, unk, num_start, 
                                                    english=False,var_nums=[], batch_first=False):
         # sequence mask for attention
@@ -458,7 +474,7 @@ class SAUSolver(nn.Module):
         token_logits=[]
         outputs = []
         all_sa_outputs = []
-        if target:
+        if target is not None:
             max_target_length = max(target.size(0))
             for t in range(max_target_length):
                 num_score, op_score, current_embeddings, current_context, current_nums_embeddings = self.decoder(
@@ -682,15 +698,6 @@ class SAUSolver(nn.Module):
                 res.append(symbol)
         output_list.append(res)
         return output_list
-
-    # def predict(self,batch_data,output_all_layers=False):
-    #     seq = torch.tensor(batch_data["question"]).to(self.device)
-    #     seq_length = torch.tensor(batch_data["ques len"]).long()
-    #     nums_stack = copy.deepcopy(batch_data["num stack"])
-    #     num_size = batch_data["num size"]
-    #     num_pos = batch_data["num pos"]
-    #     token_logits, symbol_outputs, model_all_outputs = self.forward(seq,seq_length,nums_stack,num_size,num_pos,output_all_layers=output_all_layers)
-    #     return token_logits, symbol_outputs, model_all_outputs
 
     # def evaluate_tree(self, input_batch, input_length, generate_nums, num_pos, num_start, beam_size=5, max_length=30,var_nums=[]):
     #     # sequence mask for attention

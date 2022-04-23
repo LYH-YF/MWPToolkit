@@ -1,5 +1,5 @@
 {
-    "pretrained_model_path":"albert-base-v2",
+    "pretrained_model":"albert-base-v2",
     "embedding_size": 768,
     "ffn_size": 1024,
     "num_decoder_layers": 2,

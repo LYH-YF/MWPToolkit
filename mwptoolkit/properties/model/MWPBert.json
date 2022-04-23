@@ -17,7 +17,7 @@
     "mask_symbol":"NUM",
     "symbol_for_tree":true,
     "equation_fix":"prefix",
-    "pretrained_model_path": "bert-base-uncased",
+    "pretrained_model": "bert-base-uncased",
     "add_sos": true,
     "add_eos": true,
     "vocab_level": "char",

@@ -1,5 +1,5 @@
 {
-    "pretrained_model_path":"bert-base-uncased",
+    "pretrained_model":"bert-base-uncased",
     "embedding_size": 768,
     "ffn_size": 1024,
     "num_decoder_layers": 2,

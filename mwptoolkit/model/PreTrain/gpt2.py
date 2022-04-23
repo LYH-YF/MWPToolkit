@@ -24,7 +24,8 @@ class GPT2(nn.Module):
         self.max_out_len = config['max_output_len']
         self.max_input_len = config["max_len"]
 
-        self.pretrained_model_path = config['pretrained_model_path']
+        self.pretrained_model_path = config['pretrained_model'] if config['pretrained_model'] else config[
+            'transformers_pretrained_model']
 
         self.tokenizer = dataset.tokenizer
         if config['dataset'] in [DatasetName.math23k, DatasetName.hmwp, DatasetName.ape200k]:
@@ -63,7 +64,7 @@ class GPT2(nn.Module):
             model_all_outputs.update(decoder_layer_outputs)
         return token_logits, symbol_outputs, model_all_outputs
 
-    def calculate_loss(self, batch_data):
+    def calculate_loss(self, batch_data:dict)->float:
         """Finish forward-propagating, calculating loss and back-propagation.
 
         Args:
@@ -85,7 +86,7 @@ class GPT2(nn.Module):
 
         return self.loss.get_loss()
 
-    def model_test(self, batch_data):
+    def model_test(self, batch_data:dict)->tuple:
         """Model test.
 
         Args:
@@ -109,7 +110,14 @@ class GPT2(nn.Module):
         targets = self.convert_idx2symbol(target, num_list)
         return outputs, targets
 
-    def predict(self, batch_data, output_all_layers=False):
+    def predict(self, batch_data:dict, output_all_layers=False):
+        """
+        predict samples without target.
+
+        :param dict batch_data: one batch data.
+        :param bool output_all_layers: return all layer outputs of model.
+        :return: token_logits, symbol_outputs, all_layer_outputs
+        """
         seq = torch.tensor(batch_data['question']).to(self.device)
         token_logits, symbol_outputs, model_all_outputs = self.forward(seq, output_all_layers=output_all_layers)
         return token_logits, symbol_outputs, model_all_outputs

@@ -40,7 +40,7 @@ def create_dataset(config):
         return eval('Dataset{}'.format(config['model']))(config)
     except:
         pass
-    if config['embedding'] is not None or config['pretrained_model_path'] is not None:
+    if config['transformers_pretrained_model'] is not None or config['pretrained_model'] is not None:
         return PretrainDataset(config)
     task_type = config['task_type'].lower()
     if task_type == TaskType.SingleEquation:
@@ -64,7 +64,7 @@ def create_dataloader(config):
         return eval('DataLoader{}'.format(config['model']))
     except:
         pass
-    if config['embedding'] is not None or config['pretrained_model_path'] is not None:
+    if config['transformers_pretrained_model'] is not None or config['pretrained_model'] is not None:
         return PretrainDataLoader
     task_type = config['task_type'].lower()
     if task_type == TaskType.SingleEquation:
@@ -88,7 +88,7 @@ def get_dataset_module(config: Config) \
         return eval('Dataset{}'.format(config['model']))
     except:
         pass
-    if config['embedding'] is not None or config['pretrained_model_path'] is not None:
+    if config['transformers_pretrained_model'] is not None or config['pretrained_model'] is not None:
         return PretrainDataset
     task_type = config['task_type'].lower()
     if task_type == TaskType.SingleEquation:
@@ -114,7 +114,7 @@ def get_dataloader_module(config: Config) \
         return eval('DataLoader{}'.format(config['model']))
     except:
         pass
-    if config['embedding'] is not None or config['pretrained_model_path'] is not None:
+    if config['transformers_pretrained_model'] is not None or config['pretrained_model'] is not None:
         return PretrainDataLoader
     task_type = config['task_type'].lower()
     if task_type == TaskType.SingleEquation:

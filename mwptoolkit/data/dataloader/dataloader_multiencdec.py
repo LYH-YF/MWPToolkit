@@ -42,9 +42,13 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
 
         max_len (int|None): max input length.
 
+        max_equ_len (int|None): max output length.
+
         add_sos (bool): add sos token at the head of input sequence.
 
         add_eos (bool): add eos token at the tail of input sequence.
+
+        device (torch.device):
         """
         super().__init__(config, dataset)
         try:
@@ -366,21 +370,19 @@ class DataLoaderMultiEncDec(TemplateDataLoader):
 
     def build_batch_for_predict(self, batch_data: List[dict]):
         for idx, data in enumerate(batch_data):
-            data['equation'] = []
-            data['template'] = []
+            data['prefix equation'] = []
+            data['postfix equation'] = []
             data['infix equation'] = []
             data['ans'] = None
             if data.get('id', None) is None:
                 data['id'] = 'temp_{}'.format(idx)
         batch = self.__build_batch(batch_data)
-        del batch['equation']
-        del batch['template']
-        del batch['equ len']
-        del batch['equ mask']
-        del batch['ans']
-        del batch['equ_source']
-        del batch['temp_source']
-        del batch['infix equation']
+        del batch['output1']
+        del batch['output2']
+        del batch['output1 len']
+        del batch['output2 len']
+        del batch['equ mask1']
+        del batch['equ mask2']
 
         return batch
 

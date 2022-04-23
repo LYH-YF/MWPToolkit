@@ -49,9 +49,13 @@ class DataLoaderGPT2(TemplateDataLoader):
 
         max_len (int|None): max input length.
 
+        max_equ_len (int|None): max output length.
+
         add_sos (bool): add sos token at the head of input sequence.
 
         add_eos (bool): add eos token at the tail of input sequence.
+
+        device (torch.device):
         """
         super().__init__(config, dataset)
         # self.dataset=PretrainDataset(config)

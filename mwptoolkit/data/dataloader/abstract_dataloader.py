@@ -2,7 +2,7 @@
 # @Author: Yihuai Lan
 # @Time: 2021/08/18 11:34:06
 # @File: abstract_dataloader.py
-
+from typing import List
 
 from mwptoolkit.utils.enum_type import FixType, SpecialTokens
 
@@ -33,9 +33,13 @@ class AbstractDataLoader(object):
 
         max_len (int|None): max input length.
 
+        max_equ_len (int|None): max output length.
+
         add_sos (bool): add sos token at the head of input sequence.
 
         add_eos (bool): add eos token at the tail of input sequence.
+
+        device (torch.device):
         """
         super().__init__()
         self.model = config["model"]
@@ -307,7 +311,12 @@ class AbstractDataLoader(object):
         """
         raise NotImplementedError
 
-    def convert_word_2_idx(self,sentence):
+    def convert_word_2_idx(self,sentence:List[str]):
+        """
+        convert token of input sequence to index.
+        :param sentence: List[str]
+        :return:
+        """
         if self.add_sos:
             sentence = [SpecialTokens.SOS_TOKEN] + sentence
         if self.add_eos:
@@ -315,15 +324,30 @@ class AbstractDataLoader(object):
         sentence_idx = self._word2idx(sentence)
         return sentence_idx
 
-    def convert_idx_2_word(self,sentence_idx):
+    def convert_idx_2_word(self,sentence_idx:List[int]):
+        """
+        convert token index of input sequence to token.
+        :param sentence_idx:
+        :return:
+        """
         sentence = self._idx2word(sentence_idx)
         return sentence
 
-    def convert_symbol_2_idx(self,equation):
+    def convert_symbol_2_idx(self,equation:List[str]):
+        """
+        convert symbol of equation to index.
+        :param equation:
+        :return:
+        """
         equation_idx = self._equ_symbol2idx(equation)
         return equation_idx
 
-    def convert_idx_2_symbol(self,equation_idx):
+    def convert_idx_2_symbol(self,equation_idx:List[int]):
+        """
+        convert symbol index of equation to symbol.
+        :param equation_idx:
+        :return:
+        """
         equation = self._equ_idx2symbol(equation_idx)
         return equation
 

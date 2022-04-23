@@ -34,6 +34,8 @@ class DataLoaderEPT(TemplateDataLoader):
 
         pretrained_model_path (str): road path of pretrained model.
 
+        decoder (str): decoder module name.
+
         model (str): model name.
 
         equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
@@ -251,24 +253,7 @@ class DataLoaderEPT(TemplateDataLoader):
         self.testset_batch_nums = len(self.testset_batches)
 
     def build_batch_for_predict(self, batch_data: List[dict]):
-        for idx, data in enumerate(batch_data):
-            data['equation'] = []
-            data['template'] = []
-            data['infix equation'] = []
-            data['ans'] = None
-            if data.get('id', None) is None:
-                data['id'] = 'temp_{}'.format(idx)
-        batch = self.__build_batch(batch_data)
-        del batch['equation']
-        del batch['template']
-        del batch['equ len']
-        del batch['equ mask']
-        del batch['ans']
-        del batch['equ_source']
-        del batch['temp_source']
-        del batch['infix equation']
-
-        return batch
+        raise NotImplementedError
 
     # def load_batch(self, batch_data):
     #     """load one batch

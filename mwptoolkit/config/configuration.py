@@ -21,7 +21,7 @@ from mwptoolkit.utils.utils import read_json_data, get_model, write_json_data
 class Config(object):
     """The class for loading pre-defined parameters.
 
-    Config will load the parameters internal config file, dataset config file, model config file, config dictionary and cmd line.
+    Config will load the parameters from internal config file, dataset config file, model config file, config dictionary and cmd line.
 
     The default road path of internal config file is 'mwptoolkit/config/config.json', and it's not supported to change.
 
@@ -46,10 +46,10 @@ class Config(object):
     def __init__(self, model_name=None, dataset_name=None, task_type=None, config_dict={}):
         """
         Args:
-            model (str): the model name, default is None, if it is None, config will search the parameter 'model'
+            model_name (str): the model name, default is None, if it is None, config will search the parameter 'model'
             from the external input as the model name.
 
-            dataset (str): the dataset name, default is None, if it is None, config will search the parameter 'dataset'
+            dataset_name (str): the dataset name, default is None, if it is None, config will search the parameter 'dataset'
             from the external input as the dataset name.
 
             task_type (str): the task type, default is None, if it is None, config will search the parameter 'task_type'
@@ -182,9 +182,11 @@ class Config(object):
             model_config_path = self.path_config_dict["best_config_file"]
         else:
             model_config_path = self.path_config_dict["model_config_file"]
+        if not os.path.isabs(model_config_path):
+            model_config_path = os.path.join(os.getcwd(),model_config_path)
         try:
             self.model_config_dict = read_json_data(model_config_path)
-        except FileExistsError:
+        except FileNotFoundError:
             warnings.warn('model config file is not exist, file path : {}'.format(model_config_path))
             self.model_config_dict = {}
         for key, value in self.model_config_dict.items():
@@ -198,15 +200,15 @@ class Config(object):
                 pass
 
     def _load_dataset_config(self):
+        dataset_config_file = self.path_config_dict["dataset_config_file"]
+        if not os.path.isabs(dataset_config_file):
+            dataset_config_file = os.path.join(os.getcwd(),dataset_config_file)
         try:
-            self.dataset_config_dict = read_json_data(self.path_config_dict["dataset_config_file"])
-        except KeyError:
+            self.dataset_config_dict = read_json_data(dataset_config_file)
+        except FileNotFoundError:
+            warnings.warn('dataset config file is not exist, file path : {}'.format(dataset_config_file))
             self.dataset_config_dict = {}
         for key, value in self.dataset_config_dict.items():
-            # try:
-            #     self.dataset_config_dict[key] = self.config_dict[key]
-            # except:
-            #     pass
             try:
                 self.dataset_config_dict[key] = self.external_config_dict[key]
             except KeyError:
@@ -225,12 +227,14 @@ class Config(object):
             model_name = self.cmd_config_dict["model"]
         if dataset_name is None:
             dataset_name = self.cmd_config_dict["dataset"]
-        path_config_dict["model_config_file"] = os.path.join(dir, "../properties/model/{}.json".format(model_name))
-        path_config_dict["best_config_file"] = os.path.join(dir,
-                                                            "../properties/best_config/{}_{}.json".format(model_name,
-                                                                                                          dataset_name))
-        path_config_dict["dataset_config_file"] = os.path.join(dir,
-                                                               "../properties/dataset/{}.json".format(dataset_name))
+
+        model_config_file = os.path.join(dir, "../properties/model/{}.json".format(model_name))
+        best_config_file = os.path.join(dir, "../properties/best_config/{}_{}.json".format(model_name, dataset_name))
+        dataset_config_file = os.path.join(dir, "../properties/dataset/{}.json".format(dataset_name))
+        path_config_dict["model_config_file"] = os.path.relpath(model_config_file,os.getcwd())
+        path_config_dict["best_config_file"] = os.path.relpath(best_config_file,os.getcwd())
+        path_config_dict["dataset_config_file"] = os.path.relpath(dataset_config_file,os.getcwd())
+
         path_config_dict["dataset_dir"] = "dataset/{}".format(dataset_name)
 
         path_config_dict["checkpoint_file"] = 'checkpoint/' + '{}-{}.pth'.format(model_name, dataset_name)
@@ -326,6 +330,8 @@ class Config(object):
         for key,value in config_dict.items():
             setattr(config,key,value)
         config._load_cmd_line()
+        config._build_path_config()
+        config._build_final_config_dict()
         config._init_device()
         return config
 

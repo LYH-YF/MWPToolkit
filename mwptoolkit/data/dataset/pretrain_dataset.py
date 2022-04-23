@@ -43,9 +43,9 @@ class PretrainDataset(AbstractDataset):
 
         rule2 (bool): convert equation according to rule 2.
 
-        parse_tree_file_name (str|None): the name of the file to save parse tree infomation.
+        parse_tree_file_name (str|None): the name of the file to save parse tree information.
 
-        pretrained_model (str|None): road path of pretrained model.
+        pretrained_model or transformers_pretrained_model (str|None): road path or name of pretrained model.
 
         model (str): model name.
 
@@ -53,7 +53,7 @@ class PretrainDataset(AbstractDataset):
 
         equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
         
-        dataset_path (str): the road path of dataset folder.
+        dataset_dir or dataset_path (str): the road path of dataset folder.
 
         language (str): a property of dataset, the language of dataset.
 
@@ -63,14 +63,14 @@ class PretrainDataset(AbstractDataset):
 
         source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
 
-        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+        rebuild (bool): when loading additional dataset information, this can decide to build information anew or load information built before.
 
         validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
 
         mask_symbol (str): [NUM | number], the symbol to mask numbers in equation.
-        
+
         min_word_keep (int): in dataset, words that count greater than the value, will be kept in input vocabulary.
-        
+
         min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
 
         symbol_for_tree (bool): build output symbols for tree or not.
@@ -83,6 +83,10 @@ class PretrainDataset(AbstractDataset):
 
         shuffle (bool): whether to shuffle trainset before training.
 
+        device (torch.device):
+
+        resume_training or resume (bool):
+
         """
         super().__init__(config)
         self.task_type = config['task_type']
@@ -90,7 +94,9 @@ class PretrainDataset(AbstractDataset):
         self.rule2 = config['rule2']
         self.vocab_level = config['vocab_level']
         self.embedding = config['embedding']
-        self.pretrained_model_path = config['pretrained_model_path']
+        self.pretrained_model_path = config["transformers_pretrained_model"] if config[
+            "transformers_pretrained_model"] else config["pretrained_model"]
+
         self.parse_tree_path = config['parse_tree_file_name']
         self.add_num_symbol = config['add_num_symbol']
         if self.parse_tree_path is not None:

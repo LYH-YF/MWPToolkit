@@ -32,9 +32,9 @@ class DatasetMultiEncDec(TemplateDataset):
 
         task_type (str): [single_equation | multi_equation], the type of task.
 
-        parse_tree_file_name (str|None): the name of the file to save parse tree infomation.
+        parse_tree_file_name (str|None): the name of the file to save parse tree information.
 
-        ltp_model_path (str|None): the road path of ltp model.
+        ltp_model_dir or ltp_model_path (str|None): the road path of ltp model.
 
         model (str): model name.
 
@@ -42,7 +42,7 @@ class DatasetMultiEncDec(TemplateDataset):
 
         equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
         
-        dataset_path (str): the road path of dataset folder.
+        dataset_dir or dataset_path (str): the road path of dataset folder.
 
         language (str): a property of dataset, the language of dataset.
 
@@ -52,14 +52,14 @@ class DatasetMultiEncDec(TemplateDataset):
 
         source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
 
-        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+        rebuild (bool): when loading additional dataset information, this can decide to build information anew or load information built before.
 
         validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
 
         mask_symbol (str): [NUM | number], the symbol to mask numbers in equation.
-        
+
         min_word_keep (int): in dataset, words that count greater than the value, will be kept in input vocabulary.
-        
+
         min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
 
         symbol_for_tree (bool): build output symbols for tree or not.
@@ -71,15 +71,20 @@ class DatasetMultiEncDec(TemplateDataset):
         read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
 
         shuffle (bool): whether to shuffle trainset before training.
+
+        device (torch.device):
+
+        resume_training or resume (bool):
         """
         super().__init__(config)
         self.task_type = config['task_type']
         self.parse_tree_path = config['parse_tree_file_name']
         if self.parse_tree_path is not None:
-            self.parse_tree_path = self.dataset_path + '/' + self.parse_tree_path + '.json'
+            self.parse_tree_path = os.path.join(self.dataset_path, self.parse_tree_path + '.json')
             if not os.path.isabs(self.parse_tree_path):
                 self.parse_tree_path = os.path.join(os.getcwd(), self.parse_tree_path)
-        self.ltp_model_path = config['ltp_model_path']
+
+        self.ltp_model_path = config['ltp_model_dir'] if config['ltp_model_dir'] else config['ltp_model_path']
         if self.ltp_model_path and not os.path.isabs(self.ltp_model_path):
             self.ltp_model_path = os.path.join(os.getcwd(), self.ltp_model_path)
 

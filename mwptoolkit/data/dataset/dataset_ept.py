@@ -39,7 +39,7 @@ class DatasetEPT(TemplateDataset):
 
         task_type (str): [single_equation | multi_equation], the type of task.
 
-        pretrained_model (str|None): road path of pretrained model.
+        pretrained_model or transformers_pretrained_model (str|None): road path or name of pretrained model.
 
         decoder (str): decoder module name.
 
@@ -49,7 +49,7 @@ class DatasetEPT(TemplateDataset):
 
         equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
         
-        dataset_path (str): the road path of dataset folder.
+        dataset_dir or dataset_path (str): the road path of dataset folder.
 
         language (str): a property of dataset, the language of dataset.
 
@@ -59,14 +59,14 @@ class DatasetEPT(TemplateDataset):
 
         source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
 
-        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+        rebuild (bool): when loading additional dataset information, this can decide to build information anew or load information built before.
 
         validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
 
         mask_symbol (str): [NUM | number], the symbol to mask numbers in equation.
-        
+
         min_word_keep (int): in dataset, words that count greater than the value, will be kept in input vocabulary.
-        
+
         min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
 
         symbol_for_tree (bool): build output symbols for tree or not.
@@ -78,6 +78,10 @@ class DatasetEPT(TemplateDataset):
         read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
 
         shuffle (bool): whether to shuffle trainset before training.
+
+        device (torch.device):
+
+        resume_training or resume (bool):
         """
         super().__init__(config)
         self.pretrained_model = config['pretrained_model_path']

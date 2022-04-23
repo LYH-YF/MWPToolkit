@@ -41,9 +41,11 @@ class DatasetGPT2(TemplateDataset):
 
         rule2 (bool): convert equation according to rule 2.
 
-        parse_tree_file_name (str|None): the name of the file to save parse tree infomation.
+        parse_tree_file_name (str|None): the name of the file to save parse tree information.
 
-        pretrained_model (str|None): road path of pretrained model.
+        pretrained_model or transformers_pretrained_model (str|None): road path of pretrained model.
+
+        add_num_symbol (bool): add number or operator symbols to pretrained tokenizer.
 
         model (str): model name.
 
@@ -51,7 +53,7 @@ class DatasetGPT2(TemplateDataset):
 
         equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
 
-        dataset_path (str): the road path of dataset folder.
+        dataset_dir or dataset_path (str): the road path of dataset folder.
 
         language (str): a property of dataset, the language of dataset.
 
@@ -61,7 +63,7 @@ class DatasetGPT2(TemplateDataset):
 
         source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
 
-        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+        rebuild (bool): when loading additional dataset information, this can decide to build information anew or load information built before.
 
         validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
 
@@ -81,6 +83,10 @@ class DatasetGPT2(TemplateDataset):
 
         shuffle (bool): whether to shuffle trainset before training.
 
+        device (torch.device):
+
+        resume_training or resume (bool):
+
         """
         super().__init__(config)
         self.task_type = config['task_type']
@@ -88,7 +94,8 @@ class DatasetGPT2(TemplateDataset):
         self.rule2 = config['rule2']
         self.vocab_level = config['vocab_level']
         self.embedding = config['embedding']
-        self.pretrained_model_path = config['pretrained_model_path']
+        self.pretrained_model_path = config['pretrained_model'] if config['pretrained_model'] else config[
+            'transformers_pretrained_model']
         self.parse_tree_path = config['parse_tree_file_name']
         self.add_num_symbol = config['add_num_symbol']
         if self.parse_tree_path is not None:

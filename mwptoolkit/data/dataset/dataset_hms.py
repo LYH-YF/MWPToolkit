@@ -41,9 +41,7 @@ class DatasetHMS(TemplateDataset):
 
         rule2 (bool): convert equation according to rule 2.
 
-        parse_tree_file_name (str|None): the name of the file to save parse tree infomation.
-
-        pretrained_model (str|None): road path of pretrained model.
+        parse_tree_file_name (str|None): the name of the file to save parse tree information.
 
         model (str): model name.
 
@@ -51,7 +49,7 @@ class DatasetHMS(TemplateDataset):
 
         equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
 
-        dataset_path (str): the road path of dataset folder.
+        dataset_dir or dataset_path (str): the road path of dataset folder.
 
         language (str): a property of dataset, the language of dataset.
 
@@ -61,7 +59,7 @@ class DatasetHMS(TemplateDataset):
 
         source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
 
-        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+        rebuild (bool): when loading additional dataset information, this can decide to build information anew or load information built before.
 
         validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
 
@@ -81,6 +79,10 @@ class DatasetHMS(TemplateDataset):
 
         shuffle (bool): whether to shuffle trainset before training.
 
+        device (torch.device):
+
+        resume_training or resume (bool):
+
         """
         super().__init__(config)
         self.rule1 = config["rule1"]
@@ -88,14 +90,9 @@ class DatasetHMS(TemplateDataset):
         self.task_type = config['task_type']
         self.parse_tree_path = config['parse_tree_file_name']
         if self.parse_tree_path is not None:
-            self.parse_tree_path = self.dataset_path + '/' + self.parse_tree_path + '.json'
+            self.parse_tree_path = os.path.join(self.dataset_path, self.parse_tree_path + '.json')
             if not os.path.isabs(self.parse_tree_path):
-                self.parse_tree_path = os.path.join(self.root, self.parse_tree_path)
-
-        if config["pretrained_model"] != None:
-            self.pretrained_model = config["pretrained_model"]
-        else:
-            self.pretrained_model = None
+                self.parse_tree_path = os.path.join(os.getcwd(), self.parse_tree_path)
 
     def _preprocess(self):
         transfer = number_transfer

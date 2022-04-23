@@ -36,7 +36,7 @@ class AbstractDataset(object):
 
         equation_fix (str): [infix | postfix | prefix], convert equation to specified format.
         
-        dataset_path (str): the road path of dataset folder.
+        dataset_dir or dataset_path (str): the road path of dataset folder.
 
         language (str): a property of dataset, the language of dataset.
 
@@ -46,7 +46,7 @@ class AbstractDataset(object):
 
         source_equation_fix (str): [infix | postfix | prefix], a property of dataset, the source format of equation of dataset.
 
-        rebuild (bool): when loading additional dataset infomation, this can decide to build infomation anew or load infomation built before.
+        rebuild (bool): when loading additional dataset information, this can decide to build information anew or load information built before.
 
         validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
 
@@ -65,6 +65,10 @@ class AbstractDataset(object):
         read_local_folds (bool): when running k-fold cross validation, if True, then loading split folds from dataset folder. if False, randomly split folds.
 
         shuffle (bool): whether to shuffle trainset before training.
+
+        device (torch.device):
+
+        resume_training or resume (bool):
         """
         super().__init__()
         self.model = config["model"]
@@ -462,7 +466,9 @@ class AbstractDataset(object):
             yield k
 
     def dataset_load(self):
-        r"""dataset process and build vocab
+        r"""dataset process and build vocab.
+
+        when running k-fold setting, this function required to call once per fold.
         """
         if self.k_fold:
             self.the_fold_t +=1
@@ -503,6 +509,10 @@ class AbstractDataset(object):
             random.shuffle(self.trainset)
 
     def parameters_to_dict(self):
+        """
+        return the parameters of dataset as format of dict.
+        :return:
+        """
         parameters_dict = {}
         for name, value in vars(self).items():
             if hasattr(eval('self.{}'.format(name)), '__call__') or re.match('__.*?__', name):
@@ -510,9 +520,6 @@ class AbstractDataset(object):
             else:
                 parameters_dict[name] = value
         return parameters_dict
-
-    def _load_pretrained_parameters(self):
-        raise NotImplementedError
 
     def _preprocess(self):
         raise NotImplementedError

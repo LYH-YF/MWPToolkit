@@ -30,6 +30,7 @@ deprel_tree_info.json
 make.bat
 Makefile
 run_setup.sh
+pypi_update.sh
 /pretrain/gpt2_cn
 /pretrain/gpt2_en
 *.log

@@ -70,6 +70,10 @@ class Graph2Tree(nn.Module):
             self.out_pad_token = self.out_symbol2idx[SpecialTokens.PAD_TOKEN]
         except:
             self.out_pad_token = None
+        try:
+            self.in_pad_token = dataset.in_word2idx[SpecialTokens.PAD_TOKEN]
+        except:
+            self.in_pad_token = None
         # module
         if config['embedding'] == 'roberta':
             self.embedder = RobertaEmbedder(self.vocab_size, config['pretrained_model_path'])
@@ -162,7 +166,8 @@ class Graph2Tree(nn.Module):
         target = all_layer_outputs['target']
 
         loss = masked_cross_entropy(token_logits, target, target_length)
-        return loss
+        loss.backward()
+        return loss.item()
 
     def model_test(self, batch_data: dict) -> tuple:
         """Model test.
@@ -170,7 +175,7 @@ class Graph2Tree(nn.Module):
         :param batch_data: one batch data.
         :return: predicted equation, target equation.
         batch_data should include keywords 'question', 'ques len', 'equation',
-        'num stack', 'num pos', 'num list', 'num_size', 'group nums'
+        'num stack', 'num pos', 'num list', 'num size', 'group nums'
         """
         seq = torch.tensor(batch_data["question"]).to(self.device)
         seq_length = torch.tensor(batch_data["ques len"]).long()
@@ -178,12 +183,12 @@ class Graph2Tree(nn.Module):
         nums_stack = copy.deepcopy(batch_data["num stack"])
         num_pos = batch_data["num pos"]
         num_list = batch_data['num list']
-        num_size = batch_data['num_size']
+        num_size = batch_data['num size']
         group_nums = batch_data['group nums']
 
         _, symbol_outputs, all_layer_outputs = self.forward(seq, seq_length, nums_stack, num_size, num_pos, num_list,
                                                             group_nums, output_all_layers=True)
-        all_output = self.convert_idx2symbol(symbol_outputs, num_list[0], copy_list(nums_stack[0]))
+        all_output = self.convert_idx2symbol(symbol_outputs[0], num_list[0], copy_list(nums_stack[0]))
         targets = self.convert_idx2symbol(target[0], num_list[0], copy_list(nums_stack[0]))
         return all_output, targets
 

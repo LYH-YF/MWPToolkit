@@ -15,6 +15,13 @@ Our framework has the following architecture. You could utilize our toolkit to e
 ![](https://github.com/LYH-YF/MWPToolkit/blob/master/architecture1.png)
 <div align="center"> Figure: The Overall Framework of MWP Toolkit </div>
 
+
+
+## News in version 0.0.7
+
+* 1.Fix some bugs [Issue #18]
+
+
 ## News in version 0.0.6
 
 * 1.Fix some bugs [Issue [#12](https://github.com/LYH-YF/MWPToolkit/issues/12), [#8](https://github.com/LYH-YF/MWPToolkit/issues/8)]:

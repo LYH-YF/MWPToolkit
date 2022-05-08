@@ -272,8 +272,9 @@ class TRNN(nn.Module):
 
         self.ans_module_loss.reset()
         for b_i in range(len(target)):
-            output = torch.nn.functional.log_softmax(token_logits[b_i], dim=1)
-            self.ans_module_loss.eval_batch(output, target[b_i].view(-1))
+            if not isinstance(token_logits[b_i],list):
+                output = torch.nn.functional.log_softmax(token_logits[b_i], dim=1)
+                self.ans_module_loss.eval_batch(output, target[b_i].view(-1))
         self.ans_module_loss.backward()
         return self.ans_module_loss.get_loss()
 
@@ -394,7 +395,7 @@ class TRNN(nn.Module):
                 prob, target = self.answer_rnn(tree_i.root, num_embedding, look_up, self.out_idx2symbol)
                 batch_prob.append(prob)
                 batch_target.append(target)
-                if prob is not []:
+                if not isinstance(prob,list):
                     output = torch.topk(prob, 1)[1]
                     outputs.append(output)
                 else:

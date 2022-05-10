@@ -77,10 +77,10 @@ class AbstractDataLoader(object):
         self.testset_batch_nums = 0
 
     def _pad_input_batch(self, batch_seq, batch_seq_len):
-        if self.max_len != None:
-            max_length = self.max_len
-        else:
-            max_length = max(batch_seq_len)
+        max_length = max(batch_seq_len)
+        if self.max_len is not None:
+            if self.max_len < max_length:
+                max_length = self.max_len
         for idx, length in enumerate(batch_seq_len):
             if length < max_length:
                 batch_seq[idx] += [self.in_pad_token for i in range(max_length - length)]
@@ -92,10 +92,10 @@ class AbstractDataLoader(object):
         return batch_seq
 
     def _pad_output_batch(self, batch_target, batch_target_len):
-        if self.max_equ_len != None:
-            max_length = self.max_equ_len
-        else:
-            max_length = max(batch_target_len)
+        max_length = max(batch_target_len)
+        if self.max_equ_len is not None:
+            if self.max_equ_len < max_length:
+                max_length = self.max_equ_len
         for idx, length in enumerate(batch_target_len):
             if length < max_length:
                 batch_target[idx] += [self.out_pad_token for i in range(max_length - length)]

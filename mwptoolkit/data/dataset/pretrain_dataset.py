@@ -233,9 +233,10 @@ class PretrainDataset(AbstractDataset):
             raise NotImplementedError
         if self.add_num_symbol:
             if self.mask_symbol == MaskSymbol.NUM:
-                tokenizer.add_tokens(['NUM'])
+                tokenizer.add_tokens(['NUM'],True)
             elif self.mask_symbol == MaskSymbol.number:
-                tokenizer.add_tokens(NumMask.number[:self.copy_nums])
+                tokenizer.add_tokens(NumMask.number[:self.copy_nums],True)
+                #tokenizer.add_special_tokens(token_dict)
         if self.model.lower() in ['trnn']:
             tokenizer.add_tokens(self.generate_list)
         # tokenizer.add_special_tokens({'additional_special_token':["NUM"]})
@@ -641,9 +642,9 @@ class PretrainDataset(AbstractDataset):
             raise NotImplementedError
         if dataset.add_num_symbol:
             if dataset.mask_symbol == MaskSymbol.NUM:
-                tokenizer.add_tokens(['NUM'])
+                tokenizer.add_tokens(['NUM'], True)
             elif dataset.mask_symbol == MaskSymbol.number:
-                tokenizer.add_tokens(NumMask.number[:dataset.copy_nums])
+                tokenizer.add_tokens(NumMask.number[:dataset.copy_nums], True)
         if dataset.model.lower() in ['trnn']:
             tokenizer.add_tokens(dataset.generate_list)
         setattr(dataset, 'tokenizer', tokenizer)

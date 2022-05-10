@@ -35,9 +35,9 @@ class BERTGen(nn.Module):
             'transformers_pretrained_model']
         self.max_input_len = config['max_len']
 
-        self.dataset = dataset
+        # self.dataset = dataset
 
-        self.tokenizer = BertTokenizer.from_pretrained(self.pretrained_model_path)
+        self.tokenizer = dataset.tokenizer
 
         self.eos_token_id = self.tokenizer.sep_token_id
         self.eos_token = self.tokenizer.sep_token

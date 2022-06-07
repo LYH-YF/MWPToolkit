@@ -160,7 +160,7 @@ class BertTD(nn.Module):
         nums_stack = copy.deepcopy(batch_data["num stack"])
         num_pos = batch_data["num pos"]
         num_list = batch_data['num list']
-        num_size = batch_data['num_size']
+        num_size = batch_data['num size']
 
         _, outputs, _ = self.forward(seq, seq_length, nums_stack, num_size, num_pos)
 

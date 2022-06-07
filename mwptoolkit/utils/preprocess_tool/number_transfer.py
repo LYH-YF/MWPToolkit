@@ -13,7 +13,7 @@ from mwptoolkit.utils.data_structure import DependencyTree
 from mwptoolkit.utils.preprocess_tool.number_operator import english_word_2_num
 
 
-def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep,linear_dataset, equ_split_symbol=';',vocab_level='word'):
+def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep,linear_dataset, equ_split_symbol=';',vocab_level='word', word_lower=False):
     """number transfer
 
     Args:
@@ -57,9 +57,9 @@ def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep
     unk_symbol = []
     for data in datas:
         if task_type == TaskType.SingleEquation:
-            new_data = transfer(data, mask_type, linear_dataset, vocab_level)
+            new_data = transfer(data, mask_type, linear_dataset, vocab_level,word_lower)
         elif task_type == TaskType.MultiEquation:
-            new_data = transfer(data, mask_type, equ_split_symbol,vocab_level)
+            new_data = transfer(data, mask_type, equ_split_symbol,vocab_level,word_lower)
         else:
             raise NotImplementedError
         if dataset_name == DatasetName.mawps_single and task_type == TaskType.SingleEquation and '=' in new_data["equation"]:
@@ -600,9 +600,11 @@ def seg_and_tag_mawps(st, nums_fraction, nums):  # seg the equation and tag the 
     return res
 
 
-def number_transfer_single(data, mask_type,linear,vocab_level='word'):
+def number_transfer_single(data, mask_type,linear,vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
-    
+
+    if word_lower:
+        data["question"] = data["question"].lower()
     seg = data["question"].split(" ")
     equations = data["equation"]
     if linear:
@@ -655,10 +657,12 @@ def number_transfer_single(data, mask_type,linear,vocab_level='word'):
     return new_data
 
 
-def number_transfer_math23k(data, mask_type,linear,vocab_level='word'):
+def number_transfer_math23k(data, mask_type,linear,vocab_level='word',word_lower=False):
     #pattern = re.compile("\data*\(\data+/\data+\)\data*|\data+\.\data+%?|\data+%?")
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
-    
+
+    if word_lower:
+        data["segmented_text"] = data["segmented_text"].lower()
     seg = data["segmented_text"].split(" ")
     equations = data["equation"][2:]
     if '千' in equations:
@@ -709,9 +713,12 @@ def number_transfer_math23k(data, mask_type,linear,vocab_level='word'):
     return new_data
 
 
-def number_transfer_asdiv_a(data, mask_type,linear,vocab_level='word'):
+def number_transfer_asdiv_a(data, mask_type,linear,vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
-    
+
+    if word_lower:
+        data["Body"] = data["Body"].lower()
+        data["Question"] = data["Question"].lower()
     seg = nltk.word_tokenize(data["Body"] + ' ' + data["Question"])
     formula = data["Formula"]
     equations = formula[:formula.index('=')]
@@ -769,9 +776,12 @@ def number_transfer_asdiv_a(data, mask_type,linear,vocab_level='word'):
     return new_data
 
 
-def number_transfer_svamp(data, mask_type,linear,vocab_level='word'):
+def number_transfer_svamp(data, mask_type,linear,vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
 
+    if word_lower:
+        data["Body"] = data["Body"].lower()
+        data["Question"] = data["Question"].lower()
     seg = nltk.word_tokenize(data["Body"] + ' ' + data["Question"])
     equations = data["Equation"]
     if equations.startswith('( ') and equations.endswith(' )'):
@@ -820,9 +830,11 @@ def number_transfer_svamp(data, mask_type,linear,vocab_level='word'):
     return new_data
 
 
-def number_transfer_mawps_single(data, mask_type,linear,vocab_level='word'):
+def number_transfer_mawps_single(data, mask_type,linear,vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
-    
+
+    if word_lower:
+        data["sQuestion"] = data["sQuestion"].lower()
     seg = nltk.word_tokenize(data["sQuestion"])
     equations = data["lEquations"][0]
     if equations[:2] == 'x=' or equations[:2] == 'X=':
@@ -874,9 +886,11 @@ def number_transfer_mawps_single(data, mask_type,linear,vocab_level='word'):
     return new_data
 
 
-def number_transfer_mawps(data, mask_type,linear,vocab_level='word'):
+def number_transfer_mawps(data, mask_type,linear,vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
-    
+
+    if word_lower:
+        data["original_text"] = data["original_text"].lower()
     seg = data["original_text"].split(" ")
     equations = data["equation"]
     equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
@@ -927,8 +941,11 @@ def number_transfer_mawps(data, mask_type,linear,vocab_level='word'):
     return new_data
 
 
-def num_transfer_multi(data, mask_type, equ_split_symbol=";",vocab_level='word'):
+def num_transfer_multi(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
+
+    if word_lower:
+        data["original_text"] = data["original_text"].lower()
     seg = data["original_text"].split(" ")
     equations = data["equation"]
     equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)
@@ -979,9 +996,11 @@ def num_transfer_multi(data, mask_type, equ_split_symbol=";",vocab_level='word')
     return new_data
 
 
-def num_transfer_alg514(data, mask_type, equ_split_symbol=";",vocab_level='word'):
+def num_transfer_alg514(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
 
+    if word_lower:
+        data["original_text"] = data["original_text"].lower()
     seg = nltk.word_tokenize(data["original_text"])
     for idx, word in enumerate(seg):
         if re.match(r"(\d+\,\d+)+", word):
@@ -1039,10 +1058,12 @@ def num_transfer_alg514(data, mask_type, equ_split_symbol=";",vocab_level='word'
     return new_data
 
 
-def num_transfer_draw(data, mask_type, equ_split_symbol=";",vocab_level='word'):
+def num_transfer_draw(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
     # pattern = re.compile(r"\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
     pattern = re.compile(r"\d+\/\d+|\d+\.\d+%?|\d+%?|(-\d+)")
 
+    if word_lower:
+        data["original_text"] = data["original_text"].lower()
     seg = data["original_text"].split(" ")
     for idx, word in enumerate(seg):
         if re.match(r"(\d+\,\d+)+", word):
@@ -1124,9 +1145,11 @@ def num_transfer_draw(data, mask_type, equ_split_symbol=";",vocab_level='word'):
     return new_data
 
 
-def num_transfer_hmwp(data, mask_type, equ_split_symbol=";",vocab_level='word'):
+def num_transfer_hmwp(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
 
+    if word_lower:
+        data["original_text"] = data["original_text"].lower()
     seg = data["original_text"].split(" ")
     equations = data["equation"]
     equations = re.sub(r"[a-zA-Z]{2,}", "x", equations)

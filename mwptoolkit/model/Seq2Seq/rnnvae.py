@@ -30,6 +30,7 @@ class RNNVAE(nn.Module):
         self.device = config['device']
         # load parameters info
         self.max_length = config["max_output_len"]
+        self.max_gen_len = config['max_output_len']
         self.share_vocab = config["share_vocab"]
 
         self.num_directions = 2 if config['bidirectional'] else 1

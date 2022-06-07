@@ -112,12 +112,12 @@ class DatasetGPT2(TemplateDataset):
 
         self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.dataset,
                                                                              self.task_type, self.mask_symbol,
-                                                                             self.min_generate_keep, ";",
+                                                                             self.min_generate_keep,self.linear, ";",
                                                                              self.vocab_level)
         self.validset, _g, valid_copy_nums, _ = transfer(self.validset, self.dataset, self.task_type, self.mask_symbol,
                                                          self.min_generate_keep, ";", self.vocab_level)
         self.testset, _g, test_copy_nums, _ = transfer(self.testset, self.dataset, self.task_type, self.mask_symbol,
-                                                       self.min_generate_keep, ";", self.vocab_level)
+                                                       self.min_generate_keep,self.linear, ";", self.vocab_level)
 
         target_equation_fix = self.equation_fix if self.equation_fix else FixType.Infix
         source_equation_fix = self.source_equation_fix if self.source_equation_fix else FixType.Infix

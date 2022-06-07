@@ -98,11 +98,11 @@ class DatasetMultiEncDec(TemplateDataset):
 
         self.trainset, generate_list, train_copy_nums, unk_symbol = transfer(self.trainset, self.dataset,
                                                                              self.task_type, self.mask_symbol,
-                                                                             self.min_generate_keep, ";")
+                                                                             self.min_generate_keep,self.linear, ";")
         self.validset, _g, valid_copy_nums, _ = transfer(self.validset, self.dataset, self.task_type, self.mask_symbol,
-                                                         self.min_generate_keep, ";")
+                                                         self.min_generate_keep,self.linear, ";")
         self.testset, _g, test_copy_nums, _ = transfer(self.testset, self.dataset, self.task_type, self.mask_symbol,
-                                                       self.min_generate_keep, ";")
+                                                       self.min_generate_keep,self.linear, ";")
         source_equation_fix = self.source_equation_fix if self.source_equation_fix else FixType.Infix
         if source_equation_fix == FixType.Infix:
             to_infix = None

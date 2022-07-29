@@ -1,34 +1,36 @@
 import re
-import json
-import random
 from copy import deepcopy
 from collections import OrderedDict
+from typing import Tuple
 
 import nltk
-import stanza
+from tqdm import tqdm
 
-from mwptoolkit.utils.utils import read_json_data, str2float, lists2dict
-from mwptoolkit.utils.enum_type import DatasetName, MaskSymbol, NumMask, SpecialTokens, EPT, TaskType
-from mwptoolkit.utils.data_structure import DependencyTree
-from mwptoolkit.utils.preprocess_tool.number_operator import english_word_2_num
+from mwptoolkit.utils.utils import str2float, lists2dict
+from mwptoolkit.utils.enum_type import DatasetName, MaskSymbol, NumMask, SpecialTokens, TaskType
+from mwptoolkit.utils.preprocess_tool.number_operator import english_word_2_num, joint_fraction
 
 
-def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep,linear_dataset, equ_split_symbol=';',vocab_level='word', word_lower=False):
-    """number transfer
+def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep, linear_dataset, equ_split_symbol=';',
+                    vocab_level='word', word_lower=False) -> Tuple[list, list, int, list]:
+    """
+    number transfer
 
-    Args:
-        datas (list): dataset.
-        dataset_name (str): dataset name.
-        task_type (str): [single_equation | multi_equation], task type.
-        min_generate_keep (int): generate number that count greater than the value, will be kept in output symbols.
-        equ_split_symbol (str): equation split symbol, in multiple-equation dataset, symbol to split equations, this symbol will be repalced with special token SpecialTokens.BRG.
-    
-    Returns:
-        tuple(list,list,int,list):
-        processed datas, generate number list, copy number, unk symbol list.
+    :param list datas: dataset.
+    :param str dataset_name: dataset name.
+    :param str task_type: [single_equation | multi_equation], task type.
+    :param mask_type:
+    :param int min_generate_keep: generate number that count greater than the value, will be kept in output symbols.
+    :param bool linear_dataset:
+    :param str equ_split_symbol: equation split symbol, in multiple-equation dataset, symbol to split equations, this symbol will be repalced with special token SpecialTokens.BRG
+    :param str vocab_level:
+    :param bool word_lower:
+    :return: processed datas, generate number list, copy number, unk symbol list.
     """
     if dataset_name == DatasetName.math23k:
         transfer = number_transfer_math23k
+    elif dataset_name == DatasetName.ape200k:
+        transfer = number_transfer_ape200k
     elif dataset_name == DatasetName.asdiv_a:
         transfer = number_transfer_asdiv_a
     elif dataset_name == DatasetName.SVAMP:
@@ -55,14 +57,15 @@ def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep
     copy_nums = 0
     processed_datas = []
     unk_symbol = []
-    for data in datas:
+    for data in tqdm(datas,desc='word segmentation and number mapping'):
         if task_type == TaskType.SingleEquation:
-            new_data = transfer(data, mask_type, linear_dataset, vocab_level,word_lower)
+            new_data = transfer(data, mask_type, linear_dataset, vocab_level, word_lower)
         elif task_type == TaskType.MultiEquation:
-            new_data = transfer(data, mask_type, equ_split_symbol,vocab_level,word_lower)
+            new_data = transfer(data, mask_type, equ_split_symbol, vocab_level, word_lower)
         else:
             raise NotImplementedError
-        if dataset_name == DatasetName.mawps_single and task_type == TaskType.SingleEquation and '=' in new_data["equation"]:
+        if dataset_name == DatasetName.mawps_single and task_type == TaskType.SingleEquation and '=' in new_data[
+            "equation"]:
             continue
         num_list = new_data["number list"]
         out_seq = new_data["equation"]
@@ -114,7 +117,7 @@ def number_transfer(datas, dataset_name, task_type, mask_type, min_generate_keep
 
 def seg_and_tag_single(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
-    pos_st = re.search(r"-\d+\.\d+%?|-\d+%?", st)  #search negative number but filtate minus symbol
+    pos_st = re.search(r"-\d+\.\d+%?|-\d+%?", st)  # search negative number but filtate minus symbol
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
@@ -157,7 +160,7 @@ def seg_and_tag_single(st, nums_fraction, nums):  # seg the equation and tag the
             res += seg_and_tag_single(st[p_end:], nums_fraction, nums)
         return res
     for ss in st:
-        if ss==' ':
+        if ss == ' ':
             continue
         res.append(ss)
     return res
@@ -165,7 +168,8 @@ def seg_and_tag_single(st, nums_fraction, nums):  # seg the equation and tag the
 
 def seg_and_tag_math23k(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
-    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-(([(]\d+\.\d+[)])|([(]\d+/\d+[)]))", st)  #search negative number but filtate minus symbol
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-(([(]\d+\.\d+[)])|([(]\d+/\d+[)]))",
+                       st)  # search negative number but filtate minus symbol
     if pos_st:
         p_start = pos_st.start() + 1
         p_end = pos_st.end()
@@ -220,6 +224,44 @@ def seg_and_tag_math23k(st, nums_fraction, nums):  # seg the equation and tag th
                 res.append(st_num)
         if p_end < len(st):
             res += seg_and_tag_math23k(st[p_end:], nums_fraction, nums)
+        return res
+    for ss in st:
+        res.append(ss)
+    return res
+
+
+def seg_and_tag_ape200k(st, nums_fraction, nums):  # seg the equation and tag the num
+    res = []
+    for n in nums_fraction:
+        if n in st:
+            p_start = st.find(n)
+            p_end = p_start + len(n)
+            if p_start > 0:
+                res += seg_and_tag_ape200k(st[:p_start], nums_fraction, nums)
+            try:
+                res.append(nums[n])
+            except:
+                res.append(n)
+            if p_end < len(st):
+                res += seg_and_tag_ape200k(st[p_end:], nums_fraction, nums)
+            return res
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)
+    if pos_st:
+        p_start = pos_st.start()
+        p_end = pos_st.end()
+        if p_start > 0:
+            res += seg_and_tag_ape200k(st[:p_start], nums_fraction, nums)
+        st_num = st[p_start:p_end]
+        try:
+            res.append(nums[st_num])
+        except:
+            try:
+                number = str(int(eval(st_num)))
+                res.append(nums[number])
+            except:
+                res.append(st_num)
+        if p_end < len(st):
+            res += seg_and_tag_ape200k(st[p_end:], nums_fraction, nums)
         return res
     for ss in st:
         res.append(ss)
@@ -313,7 +355,7 @@ def seg_and_tag_svamp(st, nums_fraction, nums):  # seg the equation and tag the 
 
 def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
-    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  # search negative number but filtate minus symbol
     if pos_st:
         p_start = pos_st.start() + 1
         p_end = pos_st.end()
@@ -347,7 +389,7 @@ def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the 
             if p_end < len(st):
                 res += seg_and_tag_multi(st[p_end:], nums_fraction, nums)
             return res
-    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  # search number including number with % symbol
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
@@ -390,7 +432,7 @@ def seg_and_tag_multi(st, nums_fraction, nums):  # seg the equation and tag the 
 
 def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
-    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)\s-\s((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)\s-\s((\d+\.?\d*))", st)  # search negative number but filtate minus symbol
     if pos_st:
         p_start = pos_st.start() + 2
         p_end = pos_st.end()
@@ -425,7 +467,7 @@ def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the n
             if p_end < len(st):
                 res += seg_and_tag_hmwp(st[p_end:], nums_fraction, nums)
             return res
-    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  # search number including number with % symbol
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
@@ -468,7 +510,7 @@ def seg_and_tag_hmwp(st, nums_fraction, nums):  # seg the equation and tag the n
 
 def seg_and_tag_mawps_single(st, nums_fraction, nums):
     res = []
-    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  # search negative number but filtate minus symbol
     if pos_st:
         p_start = pos_st.start() + 1
         p_end = pos_st.end()
@@ -502,7 +544,7 @@ def seg_and_tag_mawps_single(st, nums_fraction, nums):
             if p_end < len(st):
                 res += seg_and_tag_mawps_single(st[p_end:], nums_fraction, nums)
             return res
-    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  # search number including number with % symbol
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
@@ -535,7 +577,7 @@ def seg_and_tag_mawps_single(st, nums_fraction, nums):
 
 def seg_and_tag_mawps(st, nums_fraction, nums):  # seg the equation and tag the num
     res = []
-    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  #search negative number but filtate minus symbol
+    pos_st = re.search(r"([+]|-|[*]|/|[(]|=)-((\d+\.?\d*))", st)  # search negative number but filtate minus symbol
     if pos_st:
         p_start = pos_st.start() + 1
         p_end = pos_st.end()
@@ -569,7 +611,7 @@ def seg_and_tag_mawps(st, nums_fraction, nums):  # seg the equation and tag the 
             if p_end < len(st):
                 res += seg_and_tag_mawps(st[p_end:], nums_fraction, nums)
             return res
-    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  #search number including number with % symbol
+    pos_st = re.search("\d+\.\d+%?|\d+%?", st)  # search number including number with % symbol
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
@@ -600,7 +642,7 @@ def seg_and_tag_mawps(st, nums_fraction, nums):  # seg the equation and tag the 
     return res
 
 
-def number_transfer_single(data, mask_type,linear,vocab_level='word',word_lower=False):
+def number_transfer_single(data, mask_type, linear, vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
 
     if word_lower:
@@ -608,11 +650,11 @@ def number_transfer_single(data, mask_type,linear,vocab_level='word',word_lower=
     seg = data["question"].split(" ")
     equations = data["equation"]
     if linear:
-        if equations.startswith('x=') or equations.startswith('X='): 
+        if equations.startswith('x=') or equations.startswith('X='):
             equations = equations[2:]
         elif equations.endswith('=x') or equations.endswith('=X'):
             equations = equations[:-2]
-            
+
     # match and split number
     input_seq = []
     for s in seg:
@@ -632,7 +674,9 @@ def number_transfer_single(data, mask_type,linear,vocab_level='word',word_lower=
             else:
                 input_seq.append(s)
 
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_single(equations, nums_fraction, nums)
 
@@ -657,8 +701,8 @@ def number_transfer_single(data, mask_type,linear,vocab_level='word',word_lower=
     return new_data
 
 
-def number_transfer_math23k(data, mask_type,linear,vocab_level='word',word_lower=False):
-    #pattern = re.compile("\data*\(\data+/\data+\)\data*|\data+\.\data+%?|\data+%?")
+def number_transfer_math23k(data, mask_type, linear, vocab_level='word', word_lower=False):
+    # pattern = re.compile("\data*\(\data+/\data+\)\data*|\data+\.\data+%?|\data+%?")
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
 
     if word_lower:
@@ -687,7 +731,9 @@ def number_transfer_math23k(data, mask_type,linear,vocab_level='word',word_lower
             else:
                 input_seq.append(s)
 
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_math23k(equations, nums_fraction, nums)
 
@@ -713,7 +759,61 @@ def number_transfer_math23k(data, mask_type,linear,vocab_level='word',word_lower
     return new_data
 
 
-def number_transfer_asdiv_a(data, mask_type,linear,vocab_level='word',word_lower=False):
+def number_transfer_ape200k(data, mask_type, linear, vocab_level='word', word_lower=False):
+    pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
+    if word_lower:
+        data["segmented_text"] = data["segmented_text"].lower()
+    seg = data["segmented_text"].split(" ")
+    seg = joint_fraction(seg)
+    equations = data["equation"]
+    if "x=" == equations[:2] or "X=" == equations[:2]:
+        equations = equations[2:]
+    input_seq = []
+    for s in seg:
+        pos = re.search(pattern, s)
+        if pos and pos.start() == 0:
+            input_seq.append(s[pos.start():pos.end()])
+            if pos.end() < len(s):
+                if vocab_level == 'char':
+                    input_seq += [c for c in s[pos.end():]]
+                else:
+                    input_seq.append(s[pos.end():])
+        else:
+            if s == '　' or s == '':
+                continue
+            if vocab_level == 'char':
+                input_seq += [c for c in s]
+            else:
+                input_seq.append(s)
+
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
+    out_seq = seg_and_tag_ape200k(equations, nums_fraction, nums)
+
+    source = deepcopy(input_seq)
+    for pos in all_pos:
+        for key, value in num_pos_dict.items():
+            if pos in value:
+                num_str = key
+                break
+        num = str(str2float(num_str))
+        source[pos] = num
+    source = ' '.join(source)
+
+    assert len(num_list) == len(num_pos)
+
+    new_data = data
+    new_data["question"] = input_seq
+    new_data["ques source 1"] = source
+    new_data["equation"] = out_seq
+    new_data["number list"] = num_list
+    new_data["number position"] = num_pos
+
+    return new_data
+
+
+def number_transfer_asdiv_a(data, mask_type, linear, vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
 
     if word_lower:
@@ -748,7 +848,9 @@ def number_transfer_asdiv_a(data, mask_type,linear,vocab_level='word',word_lower
             else:
                 input_seq.append(s)
 
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_asdiv_a(equations, nums_fraction, nums)
 
@@ -776,7 +878,7 @@ def number_transfer_asdiv_a(data, mask_type,linear,vocab_level='word',word_lower
     return new_data
 
 
-def number_transfer_svamp(data, mask_type,linear,vocab_level='word',word_lower=False):
+def number_transfer_svamp(data, mask_type, linear, vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
 
     if word_lower:
@@ -804,7 +906,9 @@ def number_transfer_svamp(data, mask_type,linear,vocab_level='word',word_lower=F
             else:
                 input_seq.append(s)
 
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_svamp(equations, nums_fraction, nums)
 
@@ -830,7 +934,7 @@ def number_transfer_svamp(data, mask_type,linear,vocab_level='word',word_lower=F
     return new_data
 
 
-def number_transfer_mawps_single(data, mask_type,linear,vocab_level='word',word_lower=False):
+def number_transfer_mawps_single(data, mask_type, linear, vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?")
 
     if word_lower:
@@ -858,7 +962,9 @@ def number_transfer_mawps_single(data, mask_type,linear,vocab_level='word',word_
                 continue
             input_seq.append(s)
 
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_mawps_single(equations, nums_fraction, nums)
 
@@ -886,7 +992,7 @@ def number_transfer_mawps_single(data, mask_type,linear,vocab_level='word',word_
     return new_data
 
 
-def number_transfer_mawps(data, mask_type,linear,vocab_level='word',word_lower=False):
+def number_transfer_mawps(data, mask_type, linear, vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
 
     if word_lower:
@@ -915,7 +1021,9 @@ def number_transfer_mawps(data, mask_type,linear,vocab_level='word',word_lower=F
                 input_seq.append(s)
     if data['id'] == 46:
         x = 1
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_mawps(equations, nums_fraction, nums)
 
@@ -931,7 +1039,7 @@ def number_transfer_mawps(data, mask_type,linear,vocab_level='word',word_lower=F
 
     assert len(num_list) == len(num_pos)
 
-    #copy data
+    # copy data
     new_data = data
     new_data["question"] = input_seq
     new_data["equation"] = out_seq
@@ -941,7 +1049,7 @@ def number_transfer_mawps(data, mask_type,linear,vocab_level='word',word_lower=F
     return new_data
 
 
-def num_transfer_multi(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
+def num_transfer_multi(data, mask_type, equ_split_symbol=";", vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
 
     if word_lower:
@@ -969,8 +1077,10 @@ def num_transfer_multi(data, mask_type, equ_split_symbol=";",vocab_level='word',
                 input_seq += [c for c in s]
             else:
                 input_seq.append(s)
-    
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_multi(equations, nums_fraction, nums)
 
@@ -986,7 +1096,7 @@ def num_transfer_multi(data, mask_type, equ_split_symbol=";",vocab_level='word',
 
     assert len(num_list) == len(num_pos)
 
-    #copy data
+    # copy data
     new_data = data
     new_data["question"] = input_seq
     new_data["equation"] = out_seq
@@ -996,7 +1106,7 @@ def num_transfer_multi(data, mask_type, equ_split_symbol=";",vocab_level='word',
     return new_data
 
 
-def num_transfer_alg514(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
+def num_transfer_alg514(data, mask_type, equ_split_symbol=";", vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
 
     if word_lower:
@@ -1016,7 +1126,7 @@ def num_transfer_alg514(data, mask_type, equ_split_symbol=";",vocab_level='word'
     for s in seg:
         pos = re.search(pattern, s)
         if pos and pos.start() == 0:
-            #input_seq.append(s[pos.start():pos.end()])
+            # input_seq.append(s[pos.start():pos.end()])
             input_seq.append(str(str2float(s[pos.start():pos.end()])))
             if pos.end() < len(s):
                 if vocab_level == 'char':
@@ -1028,7 +1138,9 @@ def num_transfer_alg514(data, mask_type, equ_split_symbol=";",vocab_level='word'
                 input_seq += [c for c in s]
             else:
                 input_seq.append(s)
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_multi(equations, nums_fraction, nums)
 
@@ -1058,7 +1170,7 @@ def num_transfer_alg514(data, mask_type, equ_split_symbol=";",vocab_level='word'
     return new_data
 
 
-def num_transfer_draw(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
+def num_transfer_draw(data, mask_type, equ_split_symbol=";", vocab_level='word', word_lower=False):
     # pattern = re.compile(r"\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
     pattern = re.compile(r"\d+\/\d+|\d+\.\d+%?|\d+%?|(-\d+)")
 
@@ -1093,10 +1205,12 @@ def num_transfer_draw(data, mask_type, equ_split_symbol=";",vocab_level='word',w
                 input_seq += [c for c in s]
             else:
                 input_seq.append(s)
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = []
-    pos_st = re.search(r"^-((\d+\.?\d*))", equations)  #search negative number starting
+    pos_st = re.search(r"^-((\d+\.?\d*))", equations)  # search negative number starting
     if pos_st:
         p_start = pos_st.start()
         p_end = pos_st.end()
@@ -1131,7 +1245,7 @@ def num_transfer_draw(data, mask_type, equ_split_symbol=";",vocab_level='word',w
 
     assert len(num_list) == len(num_pos)
 
-    #copy data
+    # copy data
     new_data = data
     new_data["question"] = input_seq
     new_data["equation"] = out_seq
@@ -1145,7 +1259,7 @@ def num_transfer_draw(data, mask_type, equ_split_symbol=";",vocab_level='word',w
     return new_data
 
 
-def num_transfer_hmwp(data, mask_type, equ_split_symbol=";",vocab_level='word',word_lower=False):
+def num_transfer_hmwp(data, mask_type, equ_split_symbol=";", vocab_level='word', word_lower=False):
     pattern = re.compile("\d*\(\d+/\d+\)\d*|\d+\.\d+%?|\d+%?|(-\d+)")
 
     if word_lower:
@@ -1160,7 +1274,7 @@ def num_transfer_hmwp(data, mask_type, equ_split_symbol=";",vocab_level='word',w
     for s in seg:
         pos = re.search(pattern, s)
         if pos and pos.start() == 0:
-            #input_seq.append(s[pos.start():pos.end()])
+            # input_seq.append(s[pos.start():pos.end()])
             input_seq.append(str(str2float(s[pos.start():pos.end()])))
             if pos.end() < len(s):
                 if vocab_level == 'char':
@@ -1173,7 +1287,9 @@ def num_transfer_hmwp(data, mask_type, equ_split_symbol=";",vocab_level='word',w
             else:
                 input_seq.append(s)
 
-    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq, mask_type, pattern)
+    input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
+                                                                                                          mask_type,
+                                                                                                          pattern)
 
     out_seq = seg_and_tag_hmwp(equations, nums_fraction, nums)
 
@@ -1188,7 +1304,7 @@ def num_transfer_hmwp(data, mask_type, equ_split_symbol=";",vocab_level='word',w
     source = ' '.join(source)
 
     assert len(num_list) == len(num_pos)
-    #copy data
+    # copy data
     new_data = data
     new_data["question"] = input_seq
     new_data["equation"] = out_seq
@@ -1289,4 +1405,3 @@ def get_num_pos(input_seq, mask_type, pattern):
     nums_fraction = sorted(nums_fraction, key=lambda x: len(x), reverse=True)
 
     return input_seq, num_list, final_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction
-

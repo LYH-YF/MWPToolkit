@@ -17,7 +17,7 @@ from mwptoolkit.utils.preprocess_tools import from_infix_to_postfix
 
 
 class Solver(threading.Thread):
-    r"""time-limited equation-solving machanism based threading.
+    r"""time-limited equation-solving mechanism based threading.
     """
     def __init__(self, func, equations, unk_symbol):
         super(Solver, self).__init__()

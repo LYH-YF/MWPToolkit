@@ -20,6 +20,7 @@ Our framework has the following architecture. You could utilize our toolkit to e
 ## News in version 0.0.7
 
 * 1.Fix some bugs [Issue #18]
+* 2.New dataset APE200k
 
 
 ## News in version 0.0.6

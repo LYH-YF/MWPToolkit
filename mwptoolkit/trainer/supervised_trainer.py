@@ -6,15 +6,15 @@ import os
 import time
 import math
 from itertools import groupby
+from tqdm import tqdm
 
 import torch
 import transformers
 from ray import tune
 
 from mwptoolkit.trainer.abstract_trainer import AbstractTrainer
-from mwptoolkit.trainer.template_trainer import TemplateTrainer
-from mwptoolkit.utils.enum_type import TaskType, DatasetType, SpecialTokens
-from mwptoolkit.utils.utils import time_since, write_json_data
+from mwptoolkit.utils.enum_type import TaskType, DatasetType
+from mwptoolkit.utils.utils import time_since
 
 
 class SupervisedTrainer(AbstractTrainer):
@@ -61,11 +61,13 @@ class SupervisedTrainer(AbstractTrainer):
 
         resume (bool): start training from last checkpoint.
 
-        validset_divide (bool): whether to split validset. if True, the dataset is split to trainset-validset-testset. if False, the dataset is split to trainset-testset.
+        validset_divide (bool): whether to split validset. if True, the dataset is split to
+        trainset-validset-testset. if False, the dataset is split to trainset-testset.
 
         test_step (int): the epoch number of training after which conducts the evaluation on test.
 
-        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
+        best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that
+        already run.
         """
         super().__init__(config, model, dataloader, evaluator)
         self._build_optimizer()
@@ -90,7 +92,7 @@ class SupervisedTrainer(AbstractTrainer):
         }
         checkpoint_dir = self.config['checkpoint_dir']
         if not os.path.abspath(checkpoint_dir):
-            checkpoint_dir = os.path.join(os.getcwd(),checkpoint_dir)
+            checkpoint_dir = os.path.join(os.getcwd(), checkpoint_dir)
         if not os.path.exists(checkpoint_dir):
             os.mkdir(checkpoint_dir)
         if self.config["k_fold"]:
@@ -171,8 +173,10 @@ class SupervisedTrainer(AbstractTrainer):
         epoch_start_time = time.time()
         loss_total = 0.
         self.model.train()
-        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        # for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        for batch_idx in tqdm(range(self.dataloader.trainset_batch_nums), desc='train epoch {}'.format(self.epoch_i)):
             self.batch_idx = batch_idx + 1
+            batch = self.dataloader.load_next_batch(DatasetType.Train)
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
@@ -253,9 +257,17 @@ class SupervisedTrainer(AbstractTrainer):
         equation_ac = 0
         eval_total = 0
         self.output_result = []
-        test_start_time = time.time()
 
-        for batch in self.dataloader.load_data(eval_set):
+        if eval_set == DatasetType.Valid:
+            batch_nums = self.dataloader.validset_batch_nums
+        elif eval_set == DatasetType.Test:
+            batch_nums = self.dataloader.testset_batch_nums
+        else:
+            raise ValueError("{} type not in ['valid', 'test'].".format(eval_set))
+        test_start_time = time.time()
+        # for batch in self.dataloader.load_data(eval_set):
+        for batch_idx in tqdm(range(batch_nums),desc='test {}set'.format(eval_set)):
+            batch = self.dataloader.load_next_batch(eval_set)
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
@@ -509,8 +521,11 @@ class GTSTrainer(AbstractTrainer):
         epoch_start_time = time.time()
         loss_total = 0.
         self.model.train()
-        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        # for batch_idx, batch in enumerate(
+        #         tqdm(self.dataloader.load_data(DatasetType.Train), desc='epoch {}'.format(self.epoch_i))):
+        for batch_idx in tqdm(range(self.dataloader.trainset_batch_nums), desc='train epoch {}'.format(self.epoch_i)):
             self.batch_idx = batch_idx + 1
+            batch = self.dataloader.load_next_batch(DatasetType.Train)
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
@@ -590,13 +605,21 @@ class GTSTrainer(AbstractTrainer):
         equation_ac = 0
         eval_total = 0
         self.output_result = []
+
+        if eval_set == DatasetType.Valid:
+            batch_nums = self.dataloader.validset_batch_nums
+        elif eval_set == DatasetType.Test:
+            batch_nums = self.dataloader.testset_batch_nums
+        else:
+            raise ValueError("{} type not in ['valid', 'test'].".format(eval_set))
         test_start_time = time.time()
-        for batch in self.dataloader.load_data(eval_set):
+        # for batch in self.dataloader.load_data(eval_set):
+        for batch_idx in tqdm(range(batch_nums),desc='test {}set'.format(eval_set)):
+            batch = self.dataloader.load_next_batch(eval_set)
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
             eval_total += len(batch_val_ac)
-            pass
 
         test_time_cost = time_since(time.time() - test_start_time)
         return equation_ac / eval_total, value_ac / eval_total, eval_total, test_time_cost
@@ -705,10 +728,12 @@ class MultiEncDecTrainer(GTSTrainer):
                                                   weight_decay=self.config["weight_decay"])
         self.numencoder_optimizer = torch.optim.Adam(self.model.numencoder.parameters(), self.config["learning_rate"],
                                                      weight_decay=self.config["weight_decay"])
-        self.tree_decoder_optimizer = torch.optim.Adam(self.model.tree_decoder.parameters(), self.config["learning_rate"],
-                                                  weight_decay=self.config["weight_decay"])
-        self.attn_decoder_optimizer = torch.optim.Adam(self.model.attn_decoder.parameters(), self.config["learning_rate"],
-                                                  weight_decay=self.config["weight_decay"])
+        self.tree_decoder_optimizer = torch.optim.Adam(self.model.tree_decoder.parameters(),
+                                                       self.config["learning_rate"],
+                                                       weight_decay=self.config["weight_decay"])
+        self.attn_decoder_optimizer = torch.optim.Adam(self.model.attn_decoder.parameters(),
+                                                       self.config["learning_rate"],
+                                                       weight_decay=self.config["weight_decay"])
         self.generate_optimizer = torch.optim.Adam(self.model.generate.parameters(), self.config["learning_rate"],
                                                    weight_decay=self.config["weight_decay"])
         self.merge_optimizer = torch.optim.Adam(self.model.merge.parameters(), self.config["learning_rate"],
@@ -721,9 +746,9 @@ class MultiEncDecTrainer(GTSTrainer):
         self.numencoder_scheduler = torch.optim.lr_scheduler.StepLR(self.numencoder_optimizer,
                                                                     step_size=self.config["step_size"], gamma=0.5)
         self.tree_decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.tree_decoder_optimizer,
-                                                                 step_size=self.config["step_size"], gamma=0.5)
+                                                                      step_size=self.config["step_size"], gamma=0.5)
         self.attn_decoder_scheduler = torch.optim.lr_scheduler.StepLR(self.attn_decoder_optimizer,
-                                                                 step_size=self.config["step_size"], gamma=0.5)
+                                                                      step_size=self.config["step_size"], gamma=0.5)
         self.generate_scheduler = torch.optim.lr_scheduler.StepLR(self.generate_optimizer,
                                                                   step_size=self.config["step_size"], gamma=0.5)
         self.merge_scheduler = torch.optim.lr_scheduler.StepLR(self.merge_optimizer, step_size=self.config["step_size"],
@@ -1098,8 +1123,10 @@ class TreeLSTMTrainer(AbstractTrainer):
         epoch_start_time = time.time()
         loss_total = 0.
         self.model.train()
-        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        # for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        for batch_idx in tqdm(range(self.dataloader.trainset_batch_nums), desc='train epoch {}'.format(self.epoch_i)):
             self.batch_idx = batch_idx + 1
+            batch = self.dataloader.load_next_batch(DatasetType.Train)
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
@@ -1179,8 +1206,17 @@ class TreeLSTMTrainer(AbstractTrainer):
         equation_ac = 0
         eval_total = 0
         self.output_result = []
+
+        if eval_set == DatasetType.Valid:
+            batch_nums = self.dataloader.validset_batch_nums
+        elif eval_set == DatasetType.Test:
+            batch_nums = self.dataloader.testset_batch_nums
+        else:
+            raise ValueError("{} type not in ['valid', 'test'].".format(eval_set))
         test_start_time = time.time()
-        for batch in self.dataloader.load_data(eval_set):
+        # for batch in self.dataloader.load_data(eval_set):
+        for batch_idx in tqdm(range(batch_nums),desc='test {}set'.format(eval_set)):
+            batch = self.dataloader.load_next_batch(eval_set)
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
@@ -1495,21 +1531,21 @@ class TRNNTrainer(SupervisedTrainer):
         # self.optimizer = torch.optim.Adam(self.model.parameters(),self.config["learning_rate"])
         self.optimizer = torch.optim.Adam(
             [
-                {'params': self.model.seq2seq_in_embedder.parameters()}, \
-                {'params': self.model.seq2seq_out_embedder.parameters()}, \
-                {'params': self.model.seq2seq_encoder.parameters()}, \
-                {'params': self.model.seq2seq_decoder.parameters()}, \
-                {'params': self.model.seq2seq_gen_linear.parameters()} \
-                ],
+                {'params': self.model.seq2seq_in_embedder.parameters()},
+                {'params': self.model.seq2seq_out_embedder.parameters()},
+                {'params': self.model.seq2seq_encoder.parameters()},
+                {'params': self.model.seq2seq_decoder.parameters()},
+                {'params': self.model.seq2seq_gen_linear.parameters()}
+            ],
             self.config["seq2seq_learning_rate"]
         )
 
         self.answer_module_optimizer = torch.optim.SGD(
             [
-                {'params': self.model.answer_in_embedder.parameters()}, \
-                {'params': self.model.answer_encoder.parameters()}, \
-                {'params': self.model.answer_rnn.parameters()} \
-                ],
+                {'params': self.model.answer_in_embedder.parameters()},
+                {'params': self.model.answer_encoder.parameters()},
+                {'params': self.model.answer_rnn.parameters()}
+            ],
             self.config["ans_learning_rate"],
             momentum=0.9
         )
@@ -1546,8 +1582,10 @@ class TRNNTrainer(SupervisedTrainer):
         epoch_start_time = time.time()
         loss_total_seq2seq = 0.
         loss_total_ans_module = 0.
-        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        # for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        for batch_idx in tqdm(range(self.dataloader.trainset_batch_nums), desc='train epoch {}'.format(self.epoch_i)):
             self.batch_idx = batch_idx + 1
+            batch = self.dataloader.load_next_batch(DatasetType.Train)
             # first stage
             self._seq2seq_train()
             self.model.zero_grad()
@@ -1593,8 +1631,8 @@ class TRNNTrainer(SupervisedTrainer):
                 equs_acc.append(False)
             if x:
                 self.logger.info(
-                    '{}\n{}\n{} {} {}\n{} {} {}'.format([batch["ques source 1"][idx]], [batch["ques source"][idx]], \
-                                                        equ_out[idx], temp_out[idx], test_out[idx], \
+                    '{}\n{}\n{} {} {}\n{} {} {}'.format([batch["ques source 1"][idx]], [batch["ques source"][idx]],
+                                                        equ_out[idx], temp_out[idx], test_out[idx],
                                                         equ_tar[idx], temp_tar[idx], target[idx]))
 
         return val_acc, equ_acc, temp_acc, equs_acc
@@ -1615,8 +1653,9 @@ class TRNNTrainer(SupervisedTrainer):
             self.logger.info(
                 "epoch [%3d] avr seq2seq module loss [%2.8f] | avr answer module loss [%2.8f] | train time %s" \
                 % (
-                self.epoch_i, loss_total_seq2seq / self.train_batch_nums, loss_total_ans_module / self.train_batch_nums,
-                train_time_cost))
+                    self.epoch_i, loss_total_seq2seq / self.train_batch_nums,
+                    loss_total_ans_module / self.train_batch_nums,
+                    train_time_cost))
             self.logger.info(
                 "target wrong: {} target total: {}".format(self.model.wrong, self.dataloader.trainset_nums))
             self.model.wrong = 0
@@ -1683,9 +1722,17 @@ class TRNNTrainer(SupervisedTrainer):
         equations_ac = 0
         eval_total = 0
         self.output_result = []
-        test_start_time = time.time()
 
-        for batch in self.dataloader.load_data(eval_set):
+        if eval_set == DatasetType.Valid:
+            batch_nums = self.dataloader.validset_batch_nums
+        elif eval_set == DatasetType.Test:
+            batch_nums = self.dataloader.testset_batch_nums
+        else:
+            raise ValueError("{} type not in ['valid', 'test'].".format(eval_set))
+        test_start_time = time.time()
+        # for batch in self.dataloader.load_data(eval_set):
+        for batch_idx in tqdm(range(batch_nums),desc='test {}set'.format(eval_set)):
+            batch = self.dataloader.load_next_batch(eval_set)
             batch_val_ac, batch_equ_ac, batch_temp_acc, batch_equs_acc = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
@@ -1953,11 +2000,13 @@ class SalignedTrainer(SupervisedTrainer):
         loss_total = 0.
         self.model.train()
         # print(self.dataloader.dataset.out_symbol2idx); #exit()
-        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        # for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        for batch_idx in tqdm(range(self.dataloader.trainset_batch_nums), desc='train epoch {}'.format(self.epoch_i)):
             # if batch_idx >= 100: continue
             # print('batch_idx', batch_idx)
             # batch["raw_equation"] = batch["equation"].clone()
             self.batch_idx = batch_idx + 1
+            batch = self.dataloader.load_next_batch(DatasetType.Train)
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
@@ -2037,12 +2086,17 @@ class SalignedTrainer(SupervisedTrainer):
         equation_ac = 0
         eval_total = 0
         self.output_result = []
+
+        if eval_set == DatasetType.Valid:
+            batch_nums = self.dataloader.validset_batch_nums
+        elif eval_set == DatasetType.Test:
+            batch_nums = self.dataloader.testset_batch_nums
+        else:
+            raise ValueError("{} type not in ['valid', 'test'].".format(eval_set))
         test_start_time = time.time()
-        for batch_idx, batch in enumerate(self.dataloader.load_data(eval_set)):
-            # if batch_idx >= 3000: continue
-            # batch["raw_equation"] = batch["equation"].clone()
-            # batch["equation"], batch['equ len'] = self.adjust_equ(batch["raw_equation"], batch['equ len'],
-            #                                                       batch['num list'])
+        # for batch in self.dataloader.load_data(eval_set):
+        for batch_idx in tqdm(range(batch_nums),desc='test {}set'.format(eval_set)):
+            batch = self.dataloader.load_next_batch(eval_set)
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
@@ -2876,8 +2930,10 @@ class EPTTrainer(AbstractTrainer):
         loss_total = 0.
         self.all_grad_applied = True
         self.model.train()
-        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        # for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        for batch_idx in tqdm(range(self.dataloader.trainset_batch_nums), desc='train epoch {}'.format(self.epoch_i)):
             self.batch_idx = batch_idx + 1
+            batch = self.dataloader.load_next_batch(DatasetType.Train)
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss
@@ -2964,7 +3020,7 @@ class EPTTrainer(AbstractTrainer):
         self.logger.info('''training finished.
                             best valid result: equation accuracy [%2.3f] | value accuracy [%2.3f]
                             best test result : equation accuracy [%2.3f] | value accuracy [%2.3f]''' \
-                         % (self.best_valid_equ_accuracy, self.best_valid_value_accuracy, \
+                         % (self.best_valid_equ_accuracy, self.best_valid_value_accuracy,
                             self.best_test_equ_accuracy, self.best_test_value_accuracy))
 
     def evaluate(self, eval_set):
@@ -2982,9 +3038,17 @@ class EPTTrainer(AbstractTrainer):
         equation_ac = 0
         eval_total = 0
         self.output_result = []
-        test_start_time = time.time()
 
-        for batch in self.dataloader.load_data(eval_set):
+        if eval_set == DatasetType.Valid:
+            batch_nums = self.dataloader.validset_batch_nums
+        elif eval_set == DatasetType.Test:
+            batch_nums = self.dataloader.testset_batch_nums
+        else:
+            raise ValueError("{} type not in ['valid', 'test'].".format(eval_set))
+        test_start_time = time.time()
+        # for batch in self.dataloader.load_data(eval_set):
+        for batch_idx in tqdm(range(batch_nums),desc='test {}set'.format(eval_set)):
+            batch = self.dataloader.load_next_batch(eval_set)
             batch_val_ac, batch_equ_ac = self._eval_batch(batch)
             value_ac += batch_val_ac.count(True)
             equation_ac += batch_equ_ac.count(True)
@@ -3134,32 +3198,30 @@ class PretrainTRNNTrainer(TRNNTrainer):
             self.optimizer = torch.optim.Adam(
                 [
                     {'params': self.model.seq2seq_in_embedder.parameters(),
-                     'lr': self.config["embedding_learning_rate"]}, \
-                    {'params': self.model.seq2seq_encoder.parameters()}, \
-                    {'params': self.model.seq2seq_decoder.parameters()}, \
-                    {'params': self.model.seq2seq_gen_linear.parameters()} \
-                    ],
+                     'lr': self.config["embedding_learning_rate"]}, {'params': self.model.seq2seq_encoder.parameters()},
+                    {'params': self.model.seq2seq_decoder.parameters()},
+                    {'params': self.model.seq2seq_gen_linear.parameters()}],
                 lr=self.config["seq2seq_learning_rate"]
             )
         else:
             self.optimizer = torch.optim.Adam(
                 [
                     {'params': self.model.seq2seq_in_embedder.parameters(),
-                     'lr': self.config["embedding_learning_rate"]}, \
-                    {'params': self.model.seq2seq_out_embedder.parameters()}, \
-                    {'params': self.model.seq2seq_encoder.parameters()}, \
-                    {'params': self.model.seq2seq_decoder.parameters()}, \
-                    {'params': self.model.seq2seq_gen_linear.parameters()} \
-                    ],
+                     'lr': self.config["embedding_learning_rate"]},
+                    {'params': self.model.seq2seq_out_embedder.parameters()},
+                    {'params': self.model.seq2seq_encoder.parameters()},
+                    {'params': self.model.seq2seq_decoder.parameters()},
+                    {'params': self.model.seq2seq_gen_linear.parameters()}
+                ],
                 lr=self.config["seq2seq_learning_rate"]
             )
 
         self.answer_module_optimizer = torch.optim.SGD(
             [
-                {'params': self.model.answer_in_embedder.parameters(), 'lr': self.config["embedding_learning_rate"]}, \
-                {'params': self.model.answer_encoder.parameters()}, \
-                {'params': self.model.answer_rnn.parameters()} \
-                ],
+                {'params': self.model.answer_in_embedder.parameters(), 'lr': self.config["embedding_learning_rate"]},
+                {'params': self.model.answer_encoder.parameters()},
+                {'params': self.model.answer_rnn.parameters()}
+            ],
             lr=self.config["ans_learning_rate"],
             momentum=0.9
         )
@@ -3346,8 +3408,10 @@ class BertTDTrainer(SupervisedTrainer):
         epoch_start_time = time.time()
         loss_total = 0.
         self.model.train()
-        for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        # for batch_idx, batch in enumerate(self.dataloader.load_data(DatasetType.Train)):
+        for batch_idx in tqdm(range(self.dataloader.trainset_batch_nums), desc='train epoch {}'.format(self.epoch_i)):
             self.batch_idx = batch_idx + 1
+            batch = self.dataloader.load_next_batch(DatasetType.Train)
             self.model.zero_grad()
             batch_loss = self._train_batch(batch)
             loss_total += batch_loss

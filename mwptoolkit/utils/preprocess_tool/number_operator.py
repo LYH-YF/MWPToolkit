@@ -294,6 +294,7 @@ def joint_fraction(text_list: List[str]) -> List[str]:
                 new_list_2.append(new_list[i] + new_list[j])
                 i = j + 1
             else:
+                new_list_2.append(new_list[i])
                 i = i + 1
         else:
             new_list_2.append(new_list[i])

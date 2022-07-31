@@ -27,6 +27,7 @@ class TemplateDataset(AbstractDataset):
     overwrite TemplateDataset._build_vocab() if necessary
     
     """
+
     def __init__(self, config):
         super().__init__(config)
         self.generate_list = []
@@ -149,12 +150,12 @@ class TemplateDataset(AbstractDataset):
         """
         if not os.path.exists(save_dir):
             os.mkdir(save_dir)
-        input_vocab_file = os.path.join(save_dir,'input_vocab.json')
+        input_vocab_file = os.path.join(save_dir, 'input_vocab.json')
         write_json_data(
             {'in_idx2word': self.in_idx2word},
             input_vocab_file
         )
-        output_vocab_file = os.path.join(save_dir,'output_vocab.json')
+        output_vocab_file = os.path.join(save_dir, 'output_vocab.json')
         write_json_data(
             {
                 'out_idx2symbol': self.out_idx2symbol,
@@ -174,13 +175,13 @@ class TemplateDataset(AbstractDataset):
         )
         json_encoder = json.encoder.JSONEncoder()
         parameters_dict = self.parameters_to_dict()
-        not_support_json=[]
+        not_support_json = []
         not_to_save = ['in_idx2word', 'out_idx2symbol', 'temp_idx2symbol', 'in_word2idx', 'out_symbol2idx',
                        'temp_symbol2idx', 'folds', 'trainset', 'testset', 'validset', 'datas', 'trainset_id',
                        'validset_id', 'testset_id', 'folds_id']
-        for key,value in parameters_dict.items():
+        for key, value in parameters_dict.items():
             try:
-                json_encoder.encode({key:value})
+                json_encoder.encode({key: value})
             except TypeError:
                 not_support_json.append(key)
         for key in not_support_json:
@@ -188,10 +189,10 @@ class TemplateDataset(AbstractDataset):
         for key in not_to_save:
             del parameters_dict[key]
         parameter_file = os.path.join(save_dir, 'dataset.json')
-        write_json_data(parameters_dict,parameter_file)
+        write_json_data(parameters_dict, parameter_file)
 
     @classmethod
-    def load_from_pretrained(cls,pretrained_dir:str,resume_training=False):
+    def load_from_pretrained(cls, pretrained_dir: str, resume_training=False):
         """
         load dataset parameters from file.
 
@@ -234,12 +235,12 @@ class TemplateDataset(AbstractDataset):
         setattr(dataset, 'temp_symbol2idx', temp_symbol2idx)
         for key, value in parameter_dict.items():
             setattr(dataset, key, value)
-        for key,value in data_id_dict.items():
+        for key, value in data_id_dict.items():
             setattr(dataset, key, value)
         if resume_training:
             if config['k_fold']:
-                setattr(dataset,'fold_t',config['fold_t'])
-                setattr(dataset,'the_fold_t',config['fold_t']-1)
+                setattr(dataset, 'fold_t', config['fold_t'])
+                setattr(dataset, 'the_fold_t', config['fold_t'] - 1)
                 setattr(dataset, 'from_pretrained', False)
                 setattr(dataset, 'pretrained_dir', pretrained_dir)
                 setattr(dataset, 'resume_training', resume_training)
@@ -248,8 +249,8 @@ class TemplateDataset(AbstractDataset):
                 setattr(dataset, 'pretrained_dir', pretrained_dir)
                 setattr(dataset, 'resume_training', resume_training)
         else:
-            setattr(dataset,'from_pretrained', True)
-            setattr(dataset,'pretrained_dir', pretrained_dir)
+            setattr(dataset, 'from_pretrained', True)
+            setattr(dataset, 'pretrained_dir', pretrained_dir)
         dataset.reset_dataset()
         return dataset
 
@@ -281,11 +282,11 @@ class TemplateDataset(AbstractDataset):
         for idx, symbol in enumerate(temp_idx2symbol):
             temp_symbol2idx[symbol] = idx
 
-        setattr(self,'in_idx2word',in_idx2word)
+        setattr(self, 'in_idx2word', in_idx2word)
         setattr(self, 'out_idx2symbol', out_idx2symbol)
         setattr(self, 'temp_idx2symbol', temp_idx2symbol)
         setattr(self, 'in_word2idx', in_word2idx)
         setattr(self, 'out_symbol2idx', out_symbol2idx)
         setattr(self, 'temp_symbol2idx', temp_symbol2idx)
-        for key,value in parameter_dict.items():
-            setattr(self,key,value)
+        for key, value in parameter_dict.items():
+            setattr(self, key, value)

@@ -123,22 +123,22 @@ class DatasetGPT2(TemplateDataset):
         source_equation_fix = self.source_equation_fix if self.source_equation_fix else FixType.Infix
         if self.rule1:
             if source_equation_fix != FixType.Infix:
-                warnings.warn("non-infix-equation datasets may not surport en rule1 process, already ignored it. ")
+                warnings.warn("non-infix-equation datasets may not support en rule1 process, already ignored it. ")
             elif self.linear and self.single:
                 self.en_rule1_process(k=max([train_copy_nums, valid_copy_nums, test_copy_nums]))
             else:
                 warnings.warn(
-                    "non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
+                    "non-linear or non-single datasets may not support EN rule1 process, already ignored it. ")
                 # raise Warning("non-linear or non-single datasets may not surport en rule1 process, already ignored it. ")
 
         if self.rule2:
             if source_equation_fix != FixType.Infix:
-                warnings.warn("non-infix-equation datasets may not surport en rule2 process, already ignored it. ")
+                warnings.warn("non-infix-equation datasets may not support EN rule2 process, already ignored it. ")
             elif self.linear and self.single:
                 self.en_rule2_process()
             else:
                 warnings.warn(
-                    "non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
+                    "non-linear or non-single datasets may not support EN rule2 process, already ignored it. ")
                 # raise Warning("non-linear or non-single datasets may not surport en rule2 process, already ignored it. ")
 
         if source_equation_fix == target_equation_fix:

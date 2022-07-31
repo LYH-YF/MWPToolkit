@@ -119,10 +119,10 @@ class MultiEquationDataLoader(AbstractDataLoader):
             self.__trainset_batch_idx = (self.__trainset_batch_idx + 1) % self.trainset_batch_nums
             return self.trainset_batches[self.__trainset_batch_idx]
         elif type == "valid":
-            self.__validset_batch_idx = (self.__validset_batch_idx + 1) % self.trainset_batch_nums
+            self.__validset_batch_idx = (self.__validset_batch_idx + 1) % self.validset_batch_nums
             return self.validset_batches[self.__validset_batch_idx]
         elif type == "test":
-            self.__testset_batch_idx = (self.__testset_batch_idx + 1) % self.trainset_batch_nums
+            self.__testset_batch_idx = (self.__testset_batch_idx + 1) % self.testset_batch_nums
             return self.testset_batches[self.__testset_batch_idx]
         else:
             raise ValueError("{} type not in ['train', 'valid', 'test'].".format(type))

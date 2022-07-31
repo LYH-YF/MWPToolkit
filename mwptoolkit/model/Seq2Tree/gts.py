@@ -165,6 +165,7 @@ class GTS(nn.Module):
 
         :param batch_data: one batch data.
         :return: predicted equation, target equation.
+
         batch_data should include keywords 'question', 'ques len', 'equation',
         'num stack', 'num pos', 'num list','num size'
         """

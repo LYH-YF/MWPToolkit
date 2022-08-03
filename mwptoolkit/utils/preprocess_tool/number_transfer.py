@@ -768,6 +768,7 @@ def number_transfer_ape200k(data, mask_type, linear, vocab_level='word', word_lo
     equations = data["equation"]
     if "x=" == equations[:2] or "X=" == equations[:2]:
         equations = equations[2:]
+    equations = equations.replace('**','^',100)
     input_seq = []
     for s in seg:
         pos = re.search(pattern, s)
@@ -789,7 +790,21 @@ def number_transfer_ape200k(data, mask_type, linear, vocab_level='word', word_lo
     input_seq, num_list, num_pos, all_pos, nums, num_pos_dict, nums_for_ques, nums_fraction = get_num_pos(input_seq,
                                                                                                           mask_type,
                                                                                                           pattern)
-    out_seq = seg_and_tag_ape200k(equations, nums_fraction, nums)
+    out_seq_ = seg_and_tag_ape200k(equations, nums_fraction, nums)
+    out_seq = []
+    i = 0
+    while i<len(out_seq_):
+        s = out_seq_[i]
+        if s == '%':
+            out_seq.append('/')
+            out_seq.append('100')
+            i+=1
+        elif s == ':':
+            out_seq.append('/')
+            i+=1
+        else:
+            out_seq.append(s)
+            i+=1
 
     source = deepcopy(input_seq)
     for pos in all_pos:

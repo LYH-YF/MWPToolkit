@@ -491,7 +491,6 @@ class GTSTrainer(AbstractTrainer):
     def _eval_batch(self, batch):
         gen_start = time.time()
         test_out, target = self.model.model_test(batch)
-        gen_time_cost = (time.time() - gen_start) * 1000000
 
         batch_size = len(test_out)
         val_acc = []
@@ -511,8 +510,7 @@ class GTSTrainer(AbstractTrainer):
                 'target': ' '.join(target[idx]),
                 'number list': batch['num list'][idx],
                 'value acc': val_ac,
-                'equ acc': equ_ac,
-                'time_cost': gen_time_cost
+                'equ acc': equ_ac
             }
             self.output_result.append(result)
         return val_acc, equ_acc

@@ -518,7 +518,7 @@ class AbstractDataset(object):
             if hasattr(eval('self.{}'.format(name)), '__call__') or re.match('__.*?__', name):
                 continue
             else:
-                parameters_dict[name] = value
+                parameters_dict[name] = copy.deepcopy(value)
         return parameters_dict
 
     def _preprocess(self):

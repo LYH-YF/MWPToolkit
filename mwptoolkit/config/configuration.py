@@ -3,8 +3,7 @@
 # @Time: 2022/2/16 22:02
 # @File: configuration.py
 # @Update Time: 2022/2/16 22:02
-
-
+import copy
 import sys
 import os
 import re
@@ -357,7 +356,7 @@ class Config(object):
             if hasattr(eval('self.{}'.format(name)), '__call__') or re.match('__.*?__', name):
                 continue
             else:
-                config_dict[name]=value
+                config_dict[name]=copy.deepcopy(value)
         return config_dict
 
     def __setitem__(self, key, value):

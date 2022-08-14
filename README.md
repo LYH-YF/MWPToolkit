@@ -504,6 +504,17 @@ We have implemented the models on the datasets that are integrated within our to
         <td>32.4</td>
     </tr>
     <tr>
+        <td>MWPBert</td>
+        <td>70.9</td>
+        <td>82.5</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+    </tr>
+    <tr>
         <td>BERTGen</td>
         <td>64.8</td>
         <td>76.6</td>
@@ -651,6 +662,13 @@ We have implemented the models on the datasets that are integrated within our to
         <td>39.2</td>
         <td>34.6</td>
         <td>45.3</td>
+    </tr>
+    <tr>
+        <td>MWPBert</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
     </tr>
     <tr>
         <td>BERTGen</td>

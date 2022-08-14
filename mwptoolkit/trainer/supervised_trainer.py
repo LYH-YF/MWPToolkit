@@ -373,9 +373,6 @@ class GTSTrainer(AbstractTrainer):
         best_folds_accuracy (list|None): when running k-fold cross validation, this keeps the accuracy of folds that already run. 
         """
         super().__init__(config, model, dataloader, evaluator)
-        self._build_optimizer()
-        if self.config["resume"]:
-            self._load_checkpoint()
 
     def _build_optimizer(self):
         self.embedder_optimizer = torch.optim.Adam(self.model.embedder.parameters(),

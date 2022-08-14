@@ -1,8 +1,8 @@
 {
     "embedding_size":128,
     "hidden_size":768,
-    "learning_rate":5e-5,
-    "encoding_learning_rate":5e-5,
+    "learning_rate":3e-4,
+    "encoding_learning_rate":3e-5,
     "encoding": "bert",
     "embedding": "bert",
     "num_layers":2,
@@ -20,6 +20,6 @@
     "pretrained_model": "bert-base-uncased",
     "add_sos": true,
     "add_eos": true,
-    "vocab_level": "char",
+    "vocab_level": "word",
     "add_num_symbol": true
 }

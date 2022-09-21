@@ -147,8 +147,8 @@ class Transformer(nn.Module):
 
         batch_data should include keywords 'question', 'equation' and 'num list'.
         """
-        src = batch_data['question']
-        target = batch_data['equation']
+        src = torch.tensor(batch_data['question']).to(self.device)
+        target = torch.tensor(batch_data['equation']).to(self.device)
         num_list = batch_data['num list']
 
         _, symbol_outputs, _ = self.forward(src)

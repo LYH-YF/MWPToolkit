@@ -87,7 +87,7 @@ def hyper_search_process(model_name, dataset_name, task_type, search_parameter, 
     model_config=read_json_data(model_config_path)
 
     model_config.update(best_config)
-    best_config_path = configs["best_config_path"]
+    best_config_path = configs["best_config_file"]
     if not os.path.isabs(best_config_path):
         best_config_path = os.path.join(os.getcwd(),best_config_path)
     write_json_data(model_config,best_config_path)

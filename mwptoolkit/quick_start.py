@@ -162,8 +162,8 @@ def train_with_cross_validation(temp_config):
         trainer.fit()
         best_folds_accuracy.append({"fold_t": fold_t, "best_equ_accuracy": trainer.best_test_equ_accuracy,
                                     "best_value_accuracy": trainer.best_test_value_accuracy})
-        temp_config["resume"] = False
-        temp_config['training_resume'] = False
+        config["resume"] = False
+        config['training_resume'] = False
     best_folds_accuracy = sorted(best_folds_accuracy, key=lambda x: x["best_value_accuracy"], reverse=True)
     logger.info("{} fold cross validation finished.".format(config["k_fold"]))
     best_equ_accuracy = []
